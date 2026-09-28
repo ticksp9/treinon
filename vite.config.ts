@@ -19,13 +19,17 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'TacticaFlow - Gestão de Futebol',
-        short_name: 'TacticaFlow',
-        description: 'Gestão completa para treinadores e clubes de futebol',
+        id: '/',
+        name: 'TreinON — O treinador ligado ao jogo',
+        short_name: 'TreinON',
+        description: 'Jogo ao vivo, treinos, plantéis e gestão do clube — para treinadores de formação e seniores.',
+        lang: 'pt-PT',
+        categories: ['sports', 'productivity'],
         theme_color: '#1a7f37',
         background_color: '#f5f7f5',
         display: 'standalone',
-        orientation: 'portrait',
+        // 'any' so tablets can use the tactical board in landscape
+        orientation: 'any',
         start_url: '/',
         icons: [
           {
@@ -49,15 +53,19 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit
+        navigateFallback: '/index.html',
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            // Only REST data reads. Never cache auth or edge-function responses.
+            urlPattern: ({ url, request }) =>
+              request.method === 'GET' && url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxAgeSeconds: 60 * 60 * 12 // 12 hours
               },
               networkTimeoutSeconds: 10
             }

@@ -108,7 +108,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
   const templateContext: TemplateContext = useMemo(() => ({
     recipient_name: recipientName || '[Nome]',
-    app_name: 'TaticalSoccer',
+    app_name: 'TreinON',
     team_name: selectedTeam?.name || '[Equipa]',
     age_group: selectedTeam?.category || '',
     player_name: selectedPlayer?.name || '',

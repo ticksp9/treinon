@@ -408,7 +408,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                   {channel === 'email' ? (
                     <div className="border rounded-lg overflow-hidden">
                       <div className="bg-muted/50 px-3 py-2 border-b">
-                        <p className="text-[10px] text-muted-foreground">De: TaticalSoccer</p>
+                        <p className="text-[10px] text-muted-foreground">De: TreinON</p>
                         <p className="text-xs font-medium">{subjectPreview || '(sem assunto)'}</p>
                       </div>
                       <div className="p-3">

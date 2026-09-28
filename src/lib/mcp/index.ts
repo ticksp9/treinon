@@ -10,10 +10,10 @@ const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unse
 
 export default defineMcp({
   name: "tacticaflow-mcp",
-  title: "TacticaFlow MCP",
+  title: "TreinON MCP",
   version: "0.1.0",
   instructions:
-    "Ferramentas do TacticaFlow (gestão desportiva). Permite consultar equipas, jogadores, jogos, treinos e relatórios de jogo do utilizador autenticado. Todas as leituras respeitam as permissões do clube/treinador.",
+    "Ferramentas do TreinON (gestão desportiva). Permite consultar equipas, jogadores, jogos, treinos e relatórios de jogo do utilizador autenticado. Todas as leituras respeitam as permissões do clube/treinador.",
   auth: auth.oauth.issuer({
     issuer: `https://${projectRef}.supabase.co/auth/v1`,
     acceptedAudiences: "authenticated",

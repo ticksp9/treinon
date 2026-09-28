@@ -64,7 +64,7 @@ export function supabaseForUser(ctx: ToolContext) {
 export function unauthenticated() {
   return {
     content: [
-      { type: "text" as const, text: "Não autenticado. Liga a tua conta TacticaFlow via OAuth." },
+      { type: "text" as const, text: "Não autenticado. Liga a tua conta TreinON via OAuth." },
     ],
     isError: true,
   };

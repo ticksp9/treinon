@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { clearCachedData } from '@/lib/offlineStorage';
 
 interface AuthContextType {
   user: User | null;
@@ -85,6 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Shared club tablets: do not leave the previous user's data on the device.
+    // Pending (unsynced) operations are kept so no match data is lost.
+    await clearCachedData();
+    try {
+      if ('caches' in window) await caches.delete('supabase-cache');
+    } catch { /* ignore */ }
   };
 
   return (

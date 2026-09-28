@@ -22,7 +22,7 @@ export const MOCK_IDS = {
 
 export const MOCK_TEMPLATE_DATA: Record<string, string> = {
   recipient_name: 'João Silva',
-  app_name: 'TaticalSoccer',
+  app_name: 'TreinON',
   club_name: 'Academia Desportiva',
   team_name: 'Sub-15 A',
   age_group: 'Sub-15',

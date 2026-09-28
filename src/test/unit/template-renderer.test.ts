@@ -38,7 +38,7 @@ describe('Template Renderer', () => {
       const data = { ...MOCK_TEMPLATE_DATA };
       delete data.app_name;
       const result = renderTemplate('{{app_name}}', data);
-      expect(result.renderedText).toBe('TaticalSoccer');
+      expect(result.renderedText).toBe('TreinON');
       expect(result.variablesWithFallback).toContain('app_name');
     });
 

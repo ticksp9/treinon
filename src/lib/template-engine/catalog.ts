@@ -23,8 +23,8 @@ export const VARIABLE_CATALOG: TemplateVariableDefinition[] = [
     required: false,
     supportedChannels: ALL_CHANNELS,
     supportedProfiles: ALL_PROFILES,
-    defaultFallback: 'TaticalSoccer',
-    exampleValue: 'TaticalSoccer',
+    defaultFallback: 'TreinON',
+    exampleValue: 'TreinON',
   },
   {
     key: 'club_name',

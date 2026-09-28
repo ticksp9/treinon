@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ProtectedRoute } from "@/components/route-guards/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/route-guards/RoleProtectedRoute";
@@ -99,6 +100,7 @@ function AppContent() {
       <Toaster />
       <Sonner />
       <OfflineIndicator />
+      <InstallPrompt />
       <BrowserRouter>
         <SeasonProvider>
         <Suspense fallback={<PageLoader />}>

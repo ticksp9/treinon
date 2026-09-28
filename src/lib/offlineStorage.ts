@@ -179,6 +179,22 @@ export async function hasPendingOperations(): Promise<boolean> {
   return ops.length > 0;
 }
 
+// Remove cached (read-only) data, e.g. on sign-out. Pending operations are kept.
+export async function clearCachedData(): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('cache', 'readwrite');
+    await new Promise<void>((resolve, reject) => {
+      const request = tx.objectStore('cache').clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+  } catch (error) {
+    console.error('Error clearing cached data:', error);
+  }
+}
+
 // Persist a changed pending operation (e.g. attempt counter)
 export async function updatePendingOperation(op: PendingOperation): Promise<void> {
   try {

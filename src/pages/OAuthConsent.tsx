@@ -102,10 +102,10 @@ export default function OAuthConsent() {
                 <ShieldCheck className="w-5 h-5 text-primary" />
               </div>
               <CardTitle>
-                Ligar {details.client?.name ?? "aplicação"} ao TacticaFlow
+                Ligar {details.client?.name ?? "aplicação"} ao TreinON
               </CardTitle>
               <CardDescription>
-                {details.client?.name ?? "Esta aplicação"} vai poder usar as ferramentas do TacticaFlow em teu nome.
+                {details.client?.name ?? "Esta aplicação"} vai poder usar as ferramentas do TreinON em teu nome.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -154,7 +154,7 @@ export function createTestMembership(overrides: Partial<TestMembership> = {}): T
 export function createTestDelivery(overrides: Partial<TestDelivery> = {}): TestDelivery {
   return {
     id: nextId(), invite_id: MOCK_IDS.inviteA, delivery_channel: 'email',
-    template_key: 'guardian_email_default', rendered_subject: 'Convite para TaticalSoccer',
+    template_key: 'guardian_email_default', rendered_subject: 'Convite para TreinON',
     rendered_message: 'Olá João Silva, foi convidado...', recipient_email: 'joao@teste.pt',
     recipient_phone: null, provider_name: 'resend', provider_message_id: null,
     send_status: 'queued', failure_reason: null, retry_count: 0, max_retries: 3,

@@ -1,73 +1,52 @@
-# Welcome to your Lovable project
+# TreinON — O treinador ligado ao jogo
 
-## Project info
+App para treinadores e clubes de futebol/futsal (formação e seniores): jogo ao vivo com
+minutos jogados, treinos e presenças, convocatórias, plantéis por época, transição de
+época, quadro tático, comunicação com pais, gestão do clube.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Tecnologia: React + Vite + TypeScript, Supabase (base de dados, login, funções),
+instalável como app (PWA) em Windows, Android, iPhone/iPad.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 1. Publicar no Vercel (uma vez)
 
-**Use Lovable**
+1. Pôr esta pasta num repositório GitHub (privado).
+2. Em <https://vercel.com> → **Add New → Project** → importar o repositório.
+   O Vercel deteta Vite sozinho (`vercel.json` já está configurado).
+3. Em **Settings → Environment Variables** criar (valores iguais aos do ficheiro `.env`, ver `.env.example`):
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_SUPABASE_PROJECT_ID`
+4. **Deploy**. Cada `git push` publica uma nova versão; as apps instaladas atualizam-se sozinhas.
+5. No Supabase → **Authentication → URL Configuration**: acrescentar o endereço do Vercel
+   (ex.: `https://treinon.vercel.app`) em *Site URL* / *Redirect URLs* (convites e recuperação de password).
+6. Atualizar o endereço em `distribuicao/windows/Install-TreinON.cmd` (linha `APP_URL`).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 2. Instalar nos aparelhos
 
-Changes made via Lovable will be committed automatically to this repo.
+| Aparelho | Como |
+|---|---|
+| **Android** (Chrome) | Abrir o endereço → aparece **Instalar TreinON** (ou menu ⋮ → *Instalar app*). |
+| **iPhone / iPad** (Safari) | Abrir o endereço no **Safari** → botão **Partilhar** → **Adicionar ao ecrã principal**. |
+| **Windows** (Edge ou Chrome) | Abrir o endereço → ícone de instalar na barra de endereço (ou menu → *Aplicações → Instalar TreinON*). Alternativa: `distribuicao/windows/Install-TreinON.cmd`. |
 
-**Use your preferred IDE**
+A app instalada abre em janela própria, fica com ícone e funciona no campo **sem rede**:
+golos, cartões, substituições e fim de parte ficam guardados no aparelho e são enviados
+automaticamente quando voltar a haver rede.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 3. Desenvolvimento
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+npm install
+npm run dev        # http://localhost:8080
+npm test           # 1055+ testes
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## 4. Notas de época
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- A **época** é calculada automaticamente (começa a 1 de julho).
+- **Escalões**: a elegibilidade usa a regra das federações (ano de nascimento), p.ex. em
+  2026/27 os Sub-13 são os nascidos em 2014 e 2015. Escalões com "Sub-N"/"U-N" no nome ou
+  código ajustam os anos de nascimento sozinhos a cada época.

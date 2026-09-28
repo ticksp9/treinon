@@ -136,7 +136,7 @@ export function AppSidebar() {
             <Zap className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-sidebar-foreground">TacticaFlow</h1>
+            <h1 className="font-display font-bold text-sidebar-foreground">TreinON</h1>
             <p className="text-xs text-sidebar-foreground/60">Gestão Desportiva</p>
           </div>
         </div>

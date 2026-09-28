@@ -36,7 +36,7 @@ describe('Template Full Flow — Integration', () => {
 
     it('should render subject correctly', () => {
       const result = renderTemplate(subject, MOCK_TEMPLATE_DATA);
-      expect(result.renderedText).toContain('TaticalSoccer');
+      expect(result.renderedText).toContain('TreinON');
       expect(result.renderedText).toContain('Academia Desportiva');
     });
 

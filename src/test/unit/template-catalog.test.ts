@@ -81,7 +81,7 @@ describe('Variable Catalog', () => {
 
   describe('getFallback', () => {
     it('should return fallback for app_name', () => {
-      expect(getFallback('app_name')).toBe('TaticalSoccer');
+      expect(getFallback('app_name')).toBe('TreinON');
     });
 
     it('should return fallback for inviter_name', () => {
