@@ -3,13 +3,19 @@
 const DB_NAME = 'tacticaflow-offline';
 const DB_VERSION = 1;
 
-interface PendingOperation {
+export type PendingOperationType = 'insert' | 'update' | 'delete' | 'rpc';
+
+export interface PendingOperation {
   id: string;
+  /** Table name, or the function name for 'rpc' operations. */
   table: string;
-  operation: 'insert' | 'update' | 'delete';
+  operation: PendingOperationType;
   data: Record<string, unknown>;
   timestamp: number;
+  attempts?: number;
 }
+
+export const PENDING_OP_EVENT = 'treinon:pending-op';
 
 // Open IndexedDB
 function openDB(): Promise<IDBDatabase> {
@@ -79,7 +85,7 @@ export async function getCachedData<T>(key: string): Promise<T | null> {
 // Add pending operation for later sync
 export async function addPendingOperation(
   table: string,
-  operation: 'insert' | 'update' | 'delete',
+  operation: PendingOperationType,
   data: Record<string, unknown>
 ): Promise<void> {
   try {
@@ -102,6 +108,7 @@ export async function addPendingOperation(
     });
     
     db.close();
+    window.dispatchEvent(new Event(PENDING_OP_EVENT));
   } catch (error) {
     console.error('Error adding pending operation:', error);
   }
@@ -121,7 +128,7 @@ export async function getPendingOperations(): Promise<PendingOperation[]> {
     });
     
     db.close();
-    return result;
+    return result.sort((a, b) => a.timestamp - b.timestamp);
   } catch (error) {
     console.error('Error getting pending operations:', error);
     return [];
@@ -170,4 +177,28 @@ export async function clearPendingOperations(): Promise<void> {
 export async function hasPendingOperations(): Promise<boolean> {
   const ops = await getPendingOperations();
   return ops.length > 0;
+}
+
+// Persist a changed pending operation (e.g. attempt counter)
+export async function updatePendingOperation(op: PendingOperation): Promise<void> {
+  try {
+    const db = await openDB();
+    const tx = db.transaction('pendingOperations', 'readwrite');
+    const store = tx.objectStore('pendingOperations');
+    await new Promise<void>((resolve, reject) => {
+      const request = store.put(op);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+  } catch (error) {
+    console.error('Error updating pending operation:', error);
+  }
+}
+
+/** True when an error looks like "no network" rather than a server-side rejection. */
+export function isNetworkError(error: unknown): boolean {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return true;
+  const msg = String((error as { message?: string })?.message ?? error ?? '');
+  return /failed to fetch|networkerror|network request failed|load failed|fetch failed|timeout|aborted/i.test(msg);
 }

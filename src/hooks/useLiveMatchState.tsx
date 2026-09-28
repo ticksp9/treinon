@@ -70,14 +70,16 @@ export function useLiveMatchState(matchId: string) {
   // Sync minimal state to backend (for cross-device recovery)
   const syncToBackend = useCallback(async (state: LiveMatchMinimalState) => {
     try {
-      await supabase
+      // NOTE: starter_ids is the ORIGINAL starting XI and is written once when the
+      // match starts. It must not be overwritten with the current on-field players,
+      // otherwise playing time is recalculated with the wrong starters.
+      const { error } = await supabase
         .from('matches')
         .update({
           match_phase: state.phase,
           current_part: state.currentPart,
           part_elapsed_seconds: state.partElapsedSeconds,
           part_started_at_ms: state.partStartedAtMs,
-          starter_ids: state.starterIds,
           bench_ids: state.benchIds,
           on_field_ids: state.onFieldIds,
           last_timer_start: state.partStartedAtMs && state.isTimerRunning 
@@ -85,10 +87,11 @@ export function useLiveMatchState(matchId: string) {
             : null,
         })
         .eq('id', matchId);
-      
-      console.log('[useLiveMatchState] Synced to backend');
+      if (error) throw error;
+      return true;
     } catch (error) {
       console.error('[useLiveMatchState] Failed to sync to backend:', error);
+      return false;
     }
   }, [matchId]);
 

@@ -65,11 +65,6 @@ export function useMatchPlayingTime(input: UseMatchPlayingTimeInput): UseMatchPl
     const matchEndMinute = realPartMinutes.reduce((s, m) => s + m, 0);
     const totalRegulationMinutes = regulationPartMinutes.reduce((s, m) => s + m, 0);
 
-    const starterInfos: StarterInfo[] = input.lineups.map(l => ({
-      player_id: l.player_id,
-      is_starter: wasOriginalStarter(l.player_id, input.events, l.is_starter),
-    }));
-
     const normalisedPartStarters = input.partStartersByIndex
       ? Object.fromEntries(
           Object.entries(input.partStartersByIndex)
@@ -77,6 +72,14 @@ export function useMatchPlayingTime(input: UseMatchPlayingTimeInput): UseMatchPl
             .map(([idx, ids]) => [idx, ids as string[]]),
         )
       : null;
+
+    // The recorded first-part snapshot is authoritative; is_starter in the DB is
+    // toggled by substitutions/half-time changes, so it is only a fallback.
+    const firstPart = normalisedPartStarters?.['1'] ? new Set(normalisedPartStarters['1']) : null;
+    const starterInfos: StarterInfo[] = input.lineups.map(l => ({
+      player_id: l.player_id,
+      is_starter: firstPart ? firstPart.has(l.player_id) : wasOriginalStarter(l.player_id, input.events, l.is_starter),
+    }));
 
     const stats = computeMatchPlayerStatsWithHalves(
       starterInfos,

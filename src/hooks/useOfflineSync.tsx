@@ -5,9 +5,15 @@ import { useOnlineStatus } from './useOnlineStatus';
 import { 
   getPendingOperations, 
   removePendingOperation,
+  updatePendingOperation,
+  isNetworkError,
+  PENDING_OP_EVENT,
   cacheData,
   getCachedData
 } from '@/lib/offlineStorage';
+
+const MAX_ATTEMPTS = 8;
+const RETRY_INTERVAL_MS = 30_000;
 import { toast } from 'sonner';
 
 export function useOfflineSync() {
@@ -46,6 +52,9 @@ export function useOfflineSync() {
               .update(updateData)
               .eq('id', id);
             if (error) throw error;
+          } else if (op.operation === 'rpc') {
+            const { error } = await (supabase as any).rpc(op.table, op.data);
+            if (error) throw error;
           } else if (op.operation === 'delete') {
             const { error } = await (supabase as any)
               .from(op.table)
@@ -58,7 +67,20 @@ export function useOfflineSync() {
           successCount++;
         } catch (error) {
           console.error('Error syncing operation:', error);
+          if (isNetworkError(error)) {
+            // Still no real connection: keep order and try again later.
+            break;
+          }
+          const attempts = (op.attempts ?? 0) + 1;
+          if (attempts >= MAX_ATTEMPTS) {
+            await removePendingOperation(op.id);
+            toast.error('Um registo offline não pôde ser gravado no servidor e foi descartado. Verifique o jogo/treino.');
+          } else {
+            await updatePendingOperation({ ...op, attempts });
+          }
           errorCount++;
+          // Preserve ordering: later operations may depend on this one.
+          break;
         }
       }
 
@@ -84,6 +106,20 @@ export function useOfflineSync() {
       syncPendingOperations();
     }
   }, [isOnline, syncPendingOperations]);
+
+  // Weak signal on the pitch: navigator.onLine can stay "true" while requests fail,
+  // so also retry periodically and whenever something new is queued.
+  useEffect(() => {
+    const trigger = () => { if (navigator.onLine) syncPendingOperations(); };
+    const timer = setInterval(trigger, RETRY_INTERVAL_MS);
+    window.addEventListener(PENDING_OP_EVENT, trigger);
+    document.addEventListener('visibilitychange', trigger);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener(PENDING_OP_EVENT, trigger);
+      document.removeEventListener('visibilitychange', trigger);
+    };
+  }, [syncPendingOperations]);
 
   // Cache query data for offline use
   const cacheQueryData = useCallback(async (key: string, data: unknown) => {

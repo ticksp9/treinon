@@ -34,6 +34,16 @@ import { FieldPlayerCounter } from './FieldPlayerCounter';
 import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { checkMatchConsistency, type ConsistencyIssue } from '@/lib/match-playing-time';
+import { cacheData, getCachedData, addPendingOperation, isNetworkError } from '@/lib/offlineStorage';
+
+const LIVE_DATA_KEY = (matchId: string) => `live_match_data_${matchId}`;
+
+interface CachedLiveData {
+  match: Match;
+  team: Team;
+  lineups: Lineup[];
+  events: MatchEvent[];
+}
 interface LiveMatchProps {
   matchId: string;
   teamId: string;
@@ -327,8 +337,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     
     // Calculate current part elapsed
     const currentPartElapsed = [...partElapsedSeconds];
+    const exactElapsed = timer.getExactElapsedSeconds();
     if (currentPart > 0) {
-      currentPartElapsed[currentPart - 1] = timer.elapsedSeconds;
+      currentPartElapsed[currentPart - 1] = exactElapsed;
     }
     
     return {
@@ -339,7 +350,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       partDurationMinutes,
       matchType,
       partStartedAtMs: timer.isRunning ? timer.getTimerState().startTime : null,
-      partElapsedBeforePause: timer.isRunning ? 0 : timer.elapsedSeconds,
+      partElapsedBeforePause: timer.isRunning ? 0 : exactElapsed,
       isTimerRunning: timer.isRunning,
       starterIds: currentStarters.map(l => l.player_id),
       benchIds: currentBench.map(l => l.player_id),
@@ -360,23 +371,29 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     // Always save locally first (offline-first)
     await liveState.saveLocal(state);
     
-    // Sync to backend if online
-    if (isOnline) {
-      await liveState.syncToBackend(state);
-    }
-    setSyncStatus(isOnline ? 'saved' : 'pending');
+    // Sync to backend if online (state is also kept locally, so a failure is recoverable)
+    const synced = isOnline ? await liveState.syncToBackend(state) : false;
+    setSyncStatus(synced ? 'saved' : 'pending');
   }, [buildCurrentState, liveState, isOnline, phase]);
+
+  // Always point the auto-save at the latest state. Without this the interval kept
+  // saving the snapshot from when it was started (old lineup after substitutions),
+  // and a reload restored the wrong players on the field.
+  const saveCurrentStateRef = useRef(saveCurrentState);
+  useEffect(() => {
+    saveCurrentStateRef.current = saveCurrentState;
+  }, [saveCurrentState]);
 
   // Auto-save interval
   const startAutoSave = useCallback(() => {
     if (autoSaveIntervalRef.current) return;
-    
+
     autoSaveIntervalRef.current = setInterval(() => {
-      saveCurrentState();
+      saveCurrentStateRef.current();
     }, 5000);
-    
+
     console.log('[LiveMatch] Auto-save started');
-  }, [saveCurrentState]);
+  }, []);
 
   const stopAutoSave = useCallback(() => {
     if (autoSaveIntervalRef.current) {
@@ -386,11 +403,55 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     }
   }, []);
 
-  // Save state whenever critical game state changes
+  // Save state whenever critical game state changes (including who is on the
+  // field and pause/resume — previously only the lineup *length* was watched,
+  // so substitutions and pauses were not persisted immediately).
+  const onFieldSignature = lineups.filter(l => l.is_starter).map(l => l.player_id).sort().join(',');
   useEffect(() => {
     if (!isGameActiveRef.current || phase === 'setup' || phase === 'finished') return;
     saveCurrentState();
-  }, [phase, currentPart, lineups.length]);
+  }, [phase, currentPart, onFieldSignature, timer.isRunning]);
+
+  // Phone locked / app sent to background: save right away (iOS may kill the PWA).
+  useEffect(() => {
+    const flush = () => {
+      if (document.visibilityState === 'hidden') saveCurrentStateRef.current();
+    };
+    const onPageHide = () => saveCurrentStateRef.current();
+    document.addEventListener('visibilitychange', flush);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      document.removeEventListener('visibilitychange', flush);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, []);
+
+  // Keep the screen on during the match so the phone does not sleep mid-game.
+  useEffect(() => {
+    if (phase !== 'playing' || !('wakeLock' in navigator)) return;
+    let lock: { release: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const acquire = async () => {
+      try {
+        const l = await (navigator as any).wakeLock.request('screen');
+        if (cancelled) l.release(); else lock = l;
+      } catch { /* not allowed (battery saver, etc.) */ }
+    };
+    const onVisible = () => { if (document.visibilityState === 'visible') acquire(); };
+    acquire();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      lock?.release().catch(() => {});
+    };
+  }, [phase]);
+
+  // Keep an offline copy of the match so it can be reopened without network.
+  useEffect(() => {
+    if (!match || !team) return;
+    cacheData(LIVE_DATA_KEY(matchId), { match, team, lineups, events });
+  }, [matchId, match, team, lineups, events]);
 
   // =================== FETCH DATA ===================
 
@@ -460,7 +521,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
     } catch (error) {
       console.error('[LiveMatch] Error fetching match data:', error);
-      toast.error('Erro ao carregar dados do jogo');
+      const cached = await getCachedData<CachedLiveData>(LIVE_DATA_KEY(matchId));
+      if (cached?.match) {
+        setMatch(prev => prev ?? cached.match);
+        setTeam(prev => prev ?? cached.team);
+        setLineups(prev => (prev.length > 0 ? prev : cached.lineups));
+        setEvents(prev => (prev.length > 0 ? prev : cached.events));
+        setPartsCount(cached.match.parts_count || 2);
+        setPartDurationMinutes(cached.match.part_duration_minutes || getHalfDurationForCategory(cached.team?.category));
+        toast.warning('Sem rede: a usar a cópia do jogo guardada neste aparelho.');
+      } else {
+        toast.error('Erro ao carregar dados do jogo');
+      }
     } finally {
       setLoading(false);
     }
@@ -476,9 +548,31 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const elapsedSec = partElapsedSeconds[i] || 0;
       totalMinutes += Math.floor(elapsedSec / 60);
     }
-    totalMinutes += timer.getMinutes();
+    // Exact wall-clock time (the rendered tick can lag after the phone sleeps)
+    totalMinutes += Math.floor(timer.getExactElapsedSeconds() / 60);
     return totalMinutes;
   }, [currentPart, partElapsedSeconds, timer]);
+
+  /**
+   * Persist a change to the match row. The local copy is updated first so later
+   * calculations (e.g. 2nd-half starters for playing time) never use stale data;
+   * without network the update is queued and synced later.
+   */
+  const updateMatchRecord = useCallback(async (patch: Record<string, unknown>) => {
+    setMatch(prev => (prev ? ({ ...prev, ...patch } as Match) : prev));
+    try {
+      const { error } = await supabase.from('matches').update(patch as any).eq('id', matchId);
+      if (error) throw error;
+    } catch (error) {
+      if (isNetworkError(error)) {
+        await addPendingOperation('matches', 'update', { id: matchId, ...patch });
+        setSyncStatus('pending');
+      } else {
+        console.error('[LiveMatch] Error updating match:', error);
+        setSyncStatus('error');
+      }
+    }
+  }, [matchId]);
 
   const buildRegulationPartMinutes = useCallback((count: number = partsCount) => {
     const stored = (match as any)?.part_regulation_minutes as number[] | null | undefined;
@@ -543,9 +637,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       // Update match in database
       const initialPartStarters = { '1': starterPlayerIds };
       const initialRegulationMinutes = Array(config.partsCount).fill(config.partDurationMinutes);
-      await supabase
-        .from('matches')
-        .update({ 
+      await updateMatchRecord({ 
           status: 'in_progress',
           match_phase: 'playing',
           current_part: 1,
@@ -562,8 +654,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           starter_ids: starterPlayerIds,
           bench_ids: currentBench.map(l => l.player_id),
           on_field_ids: starterPlayerIds,
-        } as any)
-        .eq('id', matchId);
+        });
 
       // Set active match
       await setActiveMatchId(matchId);
@@ -643,8 +734,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   };
 
   const handleEndPart = async () => {
-    timer.pauseTimer();
-    const partSeconds = timer.elapsedSeconds;
+    const partSeconds = timer.pauseTimer();
     const newPartElapsed = [...partElapsedSeconds];
     newPartElapsed[currentPart - 1] = partSeconds;
     const newPartRealSeconds = [...(((match as any)?.part_real_seconds as number[] | null) ?? partElapsedSeconds)];
@@ -663,22 +753,19 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     } else {
       setPhase('interval');
       
-      await supabase
-        .from('matches')
-        .update({ 
+      await updateMatchRecord({ 
           match_phase: 'interval',
           part_elapsed_seconds: newPartElapsed,
           part_real_seconds: newPartRealSeconds,
           part_regulation_minutes: newPartRegulationMinutes,
           last_timer_start: null,
           part_started_at_ms: null,
-        } as any)
-        .eq('id', matchId);
+        });
       
       // Save state
       await saveCurrentState();
       
-      toast.info(`${getPartLabel(currentPart, partsCount)} terminada: ${timer.getMinutes()}'`);
+      toast.info(`${getPartLabel(currentPart, partsCount)} terminada: ${Math.floor(partSeconds / 60)}'`);
     }
   };
 
@@ -709,9 +796,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       return;
     }
     
-    await supabase
-      .from('matches')
-      .update({ 
+    await updateMatchRecord({ 
         match_phase: 'playing',
         current_part: nextPart,
         part_elapsed_seconds: newPartElapsed,
@@ -725,8 +810,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         last_paused_seconds: 0,
         part_started_at_ms: nowMs,
           on_field_ids: onFieldPlayerIds,
-      })
-      .eq('id', matchId);
+      });
 
     isGameActiveRef.current = true;
     
@@ -773,9 +857,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const finalMatchEndMinute = calculateMatchEndMinute(finalPartElapsed);
       await updateMinutesPlayed(finalMatchEndMinute);
 
-      await supabase
-        .from('matches')
-        .update({ 
+      await updateMatchRecord({ 
           status: 'completed',
           match_phase: 'finished',
           goals_for: goalsFor,
@@ -786,8 +868,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           last_timer_start: null,
           part_started_at_ms: null,
           report_status: 'pending_completion',
-        })
-        .eq('id', matchId);
+        });
 
       // Also update match_reports status
       await supabase
@@ -830,7 +911,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const count = partsCount || ((match as any)?.parts_count as number | undefined) || 2;
       const regulationPartMinutes = buildRegulationPartMinutes(count);
       const realSeconds = [...(((match as any)?.part_real_seconds as number[] | null | undefined) ?? partElapsedSeconds)];
-      if (currentPart > 0 && timer.elapsedSeconds > 0) realSeconds[currentPart - 1] = timer.elapsedSeconds;
+      const exactElapsed = timer.getExactElapsedSeconds();
+      if (currentPart > 0 && exactElapsed > 0) realSeconds[currentPart - 1] = exactElapsed;
       const realPartMinutes = realSeconds.length > 0
         ? realSeconds.slice(0, count).map(s => Math.floor((s || 0) / 60))
         : Array(count).fill(partDurationMinutes);
@@ -853,10 +935,19 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     for (const stat of playerStats) {
       const lineup = lineups.find(l => l.player_id === stat.playerId);
       if (lineup) {
-        await supabase
-          .from('match_lineups')
-          .update({ minutes_played: stat.totalMinutes })
-          .eq('id', lineup.id);
+        try {
+          const { error } = await supabase
+            .from('match_lineups')
+            .update({ minutes_played: stat.totalMinutes })
+            .eq('id', lineup.id);
+          if (error) throw error;
+        } catch (error) {
+          if (isNetworkError(error)) {
+            await addPendingOperation('match_lineups', 'update', { id: lineup.id, minutes_played: stat.totalMinutes });
+          } else {
+            console.error('[LiveMatch] Error saving minutes:', error);
+          }
+        }
       }
     }
     fetchMatchData();
@@ -866,12 +957,32 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     if (!user) return;
     
     const minute = getCurrentMinute();
-    const second = timer.getSeconds();
+    const second = timer.getExactElapsedSeconds() % 60;
+    // Client-generated id so the same event can be queued offline and synced later
+    const eventId = crypto.randomUUID();
+    const row = {
+      id: eventId,
+      match_id: matchId,
+      event_type: eventType as 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'substitution_in' | 'substitution_out',
+      minute,
+      second,
+      player_id: playerId,
+      assist_player_id: assistPlayerId,
+      is_opponent: isOpponent,
+      owner_id: user.id,
+    };
+    const eventLabels: Record<string, string> = {
+      goal: 'Golo registado',
+      own_goal: 'Auto-golo registado',
+      yellow_card: 'Cartão amarelo registado',
+      red_card: 'Cartão vermelho registado',
+    };
 
     try {
       const { data, error } = await supabase
         .from('match_events')
         .insert([{
+          id: eventId,
           match_id: matchId,
           event_type: eventType as 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'substitution_in' | 'substitution_out',
           minute,
@@ -897,18 +1008,26 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       } as MatchEvent;
 
       setEvents(prev => [...prev, formattedEvent].sort((a, b) => a.minute - b.minute));
-      
-      const eventLabels: Record<string, string> = {
-        goal: 'Golo registado',
-        own_goal: 'Auto-golo registado',
-        yellow_card: 'Cartão amarelo registado',
-        red_card: 'Cartão vermelho registado',
-      };
-      
+
       toast.success(eventLabels[eventType] || 'Evento registado');
     } catch (error) {
-      console.error('[LiveMatch] Error recording event:', error);
-      toast.error('Erro ao registar evento');
+      if (!isNetworkError(error)) {
+        console.error('[LiveMatch] Error recording event:', error);
+        toast.error('Erro ao registar evento');
+        return;
+      }
+      // No network: keep the event on this device and sync it later.
+      await addPendingOperation('match_events', 'insert', row);
+      const findPlayer = (id: string | null) => lineups.find(l => l.player_id === id)?.player;
+      const localEvent: MatchEvent = {
+        ...row,
+        notes: null,
+        player: findPlayer(playerId),
+        assist_player: findPlayer(assistPlayerId),
+      };
+      setEvents(prev => [...prev, localEvent].sort((a, b) => a.minute - b.minute));
+      setSyncStatus('pending');
+      toast.success(`${eventLabels[eventType] || 'Evento registado'} (sem rede — será enviado depois)`);
     }
   };
 
@@ -916,7 +1035,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     if (!user || substitutions.length === 0) return;
 
     const minute = getCurrentMinute();
-    const second = timer.getSeconds();
+    const second = timer.getExactElapsedSeconds() % 60;
 
     try {
       // Local pre-validation for immediate feedback (no DB write if it fails).
@@ -940,14 +1059,44 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       }
 
       // Atomic server-side commit (single transaction, deterministic ordering via second).
-      const { error: rpcError } = await supabase.rpc('commit_substitution_batch', {
+      const rpcParams = {
         p_match_id: matchId,
         p_owner_id: user.id,
         p_minute: minute,
         p_second_base: second,
         p_subs: substitutions.map(s => ({ out: s.playerOutId, in: s.playerInId })),
-      });
-      if (rpcError) throw rpcError;
+      };
+      let queuedOffline = false;
+      try {
+        const { error: rpcError } = await supabase.rpc('commit_substitution_batch', rpcParams);
+        if (rpcError) throw rpcError;
+      } catch (rpcError) {
+        if (!isNetworkError(rpcError)) throw rpcError;
+        await addPendingOperation('commit_substitution_batch', 'rpc', rpcParams);
+        queuedOffline = true;
+      }
+
+      if (queuedOffline) {
+        // Apply locally so the coach keeps working; the server copy follows when online.
+        const outIds = new Set(substitutions.map(s => s.playerOutId));
+        const inIds = new Set(substitutions.map(s => s.playerInId));
+        setLineups(prev => prev.map(l =>
+          outIds.has(l.player_id) ? { ...l, is_starter: false }
+            : inIds.has(l.player_id) ? { ...l, is_starter: true } : l));
+        const findPlayer = (id: string) => lineups.find(l => l.player_id === id)?.player;
+        const localSubEvents: MatchEvent[] = substitutions.flatMap((s, i) => ([
+          { id: `local-${crypto.randomUUID()}`, event_type: 'substitution_out', minute, second: second + i, player_id: s.playerOutId, assist_player_id: null, is_opponent: false, notes: null, player: findPlayer(s.playerOutId) },
+          { id: `local-${crypto.randomUUID()}`, event_type: 'substitution_in', minute, second: second + i, player_id: s.playerInId, assist_player_id: null, is_opponent: false, notes: null, player: findPlayer(s.playerInId) },
+        ]));
+        setEvents(prev => [...prev, ...localSubEvents].sort((a, b) => a.minute - b.minute));
+        presenceTracker.handleSubstitutionBatch(
+          substitutions.map(s => ({ playerOutId: s.playerOutId, playerInId: s.playerInId })),
+          minute,
+        );
+        setSyncStatus('pending');
+        toast.success('Substituição guardada neste aparelho (sem rede — será enviada depois).');
+        return;
+      }
 
       // Update presence intervals atomically (single setState)
       presenceTracker.handleSubstitutionBatch(
@@ -1010,12 +1159,23 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
+    if (eventId.startsWith('local-')) {
+      toast.error('Esta substituição ainda não foi enviada. Poderá corrigi-la quando houver rede.');
+      return;
+    }
     try {
-      await supabase.from('match_events').delete().eq('id', eventId);
+      const { error } = await supabase.from('match_events').delete().eq('id', eventId);
+      if (error) throw error;
       setEvents(prev => prev.filter(e => e.id !== eventId));
       toast.success('Evento removido');
     } catch (error) {
-      toast.error('Erro ao remover evento');
+      if (isNetworkError(error)) {
+        await addPendingOperation('match_events', 'delete', { id: eventId });
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+        toast.success('Evento removido (sem rede — será sincronizado depois)');
+      } else {
+        toast.error('Erro ao remover evento');
+      }
     }
   };
 
@@ -1039,7 +1199,21 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const matchEndEstimate = partElapsedSeconds.reduce((s, sec) => s + Math.floor(sec / 60), 0) + (phase === 'playing' ? timer.getMinutes() : 0);
   const starterInfosForCheck = lineups.map(l => ({ player_id: l.player_id, is_starter: l.is_starter }));
   const eventsForCheck = events.map(e => ({ event_type: e.event_type, minute: e.minute, player_id: e.player_id, is_opponent: e.is_opponent }));
-  const consistencyIssues = phase !== 'setup' ? checkMatchConsistency(starterInfosForCheck, eventsForCheck, matchEndEstimate || 90, team?.sport_type) : [];
+  const livePartStarters = buildPartStartersByIndex();
+  const firstPartIds = new Set(livePartStarters['1'] ?? []);
+  const consistencyIssues = phase !== 'setup'
+    ? checkMatchConsistency(
+        firstPartIds.size > 0 ? lineups.map(l => ({ player_id: l.player_id, is_starter: firstPartIds.has(l.player_id) })) : starterInfosForCheck,
+        eventsForCheck,
+        matchEndEstimate || 90,
+        team?.sport_type,
+        {
+          partStarters: livePartStarters,
+          // completed parts + the part in progress (open-ended)
+          realPartMinutes: [...partElapsedSeconds.slice(0, Math.max(0, currentPart - 1)).map(sec => Math.floor(sec / 60)), 999],
+        },
+      )
+    : [];
 
   // =================== RENDER ===================
 

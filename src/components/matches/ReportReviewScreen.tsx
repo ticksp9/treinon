@@ -201,10 +201,17 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
 
   // Compute issues
   const localIssues = (() => {
-    const matchEnd = partElapsed.length > 0 ? getPartTimesFromElapsed(partElapsed).totalMinutes : partDuration * 2;
+    const { totalMinutes: matchEnd, partMinutes } = partElapsed.length > 0
+      ? getPartTimesFromElapsed(partElapsed)
+      : { totalMinutes: partDuration * partsCount, partMinutes: Array(partsCount).fill(partDuration) };
+    const firstPart = partStartersByIndex['1'] ? new Set(partStartersByIndex['1']) : null;
     return checkMatchConsistency(
-      lineups.map((l: any) => ({ player_id: l.player_id, is_starter: wasOriginalStarter(l.player_id, events as MatchEventForCalc[], l.is_starter) })),
-      events as MatchEventForCalc[], matchEnd, sportType
+      lineups.map((l: any) => ({
+        player_id: l.player_id,
+        is_starter: firstPart ? firstPart.has(l.player_id) : wasOriginalStarter(l.player_id, events as MatchEventForCalc[], l.is_starter),
+      })),
+      events as MatchEventForCalc[], matchEnd, sportType,
+      { partStarters: partStartersByIndex, realPartMinutes: partMinutes },
     );
   })();
 

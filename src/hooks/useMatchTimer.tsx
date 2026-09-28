@@ -37,7 +37,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
     }
 
     // Regulation time ended
-    if (elapsedSeconds >= regulationSeconds && elapsedSeconds < regulationSeconds + 5) {
+    if (elapsedSeconds >= regulationSeconds && elapsedSeconds < overtimeSeconds) {
       if (!alertsTriggeredRef.current.has('regulation_end')) {
         alertsTriggeredRef.current.add('regulation_end');
         onTimeAlert?.('regulation_end');
@@ -49,7 +49,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
     }
 
     // 5 minutes overtime
-    if (elapsedSeconds >= overtimeSeconds && elapsedSeconds < overtimeSeconds + 5) {
+    if (elapsedSeconds >= overtimeSeconds) {
       if (!alertsTriggeredRef.current.has('overtime')) {
         alertsTriggeredRef.current.add('overtime');
         onTimeAlert?.('overtime');
@@ -114,11 +114,31 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    pausedAtRef.current = elapsedSeconds;
+    if (startTimeRef.current) {
+      pausedAtRef.current = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    }
     startTimeRef.current = null;
+    setElapsedSeconds(pausedAtRef.current);
     setIsRunning(false);
-    return elapsedSeconds;
-  }, [elapsedSeconds]);
+    return pausedAtRef.current;
+  }, []);
+
+  /** Exact elapsed seconds right now (does not wait for the next 1s tick). */
+  const getExactElapsedSeconds = useCallback(() => {
+    if (startTimeRef.current) return Math.floor((Date.now() - startTimeRef.current) / 1000);
+    return pausedAtRef.current;
+  }, []);
+
+  // When the phone wakes up / the app comes back to the foreground, refresh immediately.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && startTimeRef.current) {
+        setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   const resetTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -183,6 +203,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
     resetTimer,
     restoreTimer,
     getTimerState,
+    getExactElapsedSeconds,
     formatTime,
     getMinutes,
     getSeconds,

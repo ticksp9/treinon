@@ -297,10 +297,43 @@ export interface ReconciliationLog {
  * For formats without re-entry (football_11) the original events are returned
  * unchanged so the strict consistency checker still flags issues.
  */
+/**
+ * Build a function that, given a game minute, returns the authoritative on-field
+ * snapshot to reset to when that minute is the first one seen in a new part
+ * (half-time lineup changes are not recorded as events). Mirrors the engine:
+ * part k covers [start_k, end_k).
+ */
+function makePartSnapshotResolver(options?: PlayingTimeOptions) {
+  const realParts = options?.realPartMinutes ?? options?.partRealMinutes;
+  const raw = options?.partStarters;
+  const snapshots = new Map<number, string[]>();
+  if (raw instanceof Map) {
+    raw.forEach((v, k) => { if (v?.length) snapshots.set(Number(k), v); });
+  } else if (raw) {
+    Object.entries(raw).forEach(([k, v]) => { if (Array.isArray(v) && v.length) snapshots.set(Number(k), v); });
+  }
+  if (!snapshots.has(2) && options?.secondHalfStarters?.length) snapshots.set(2, options.secondHalfStarters);
+  const ends: number[] = [];
+  if (realParts && realParts.length > 0) {
+    let cursor = 0;
+    for (const m of realParts) { cursor += m || 0; ends.push(cursor); }
+  }
+  let part = 1;
+  return (minute: number): string[] | null => {
+    let entered: string[] | null = null;
+    while (ends.length > 0 && part < ends.length && minute >= ends[part - 1]) {
+      part++;
+      entered = snapshots.get(part) ?? entered;
+    }
+    return entered;
+  };
+}
+
 export function reconcileSubstitutionEvents(
   lineups: StarterInfo[],
   events: MatchEventForCalc[],
-  sportType?: string | null
+  sportType?: string | null,
+  options?: PlayingTimeOptions,
 ): { events: MatchEventForCalc[]; logs: ReconciliationLog[] } {
   const rules = getSportFormatRules(sportType);
   const logs: ReconciliationLog[] = [];
@@ -321,11 +354,9 @@ export function reconcileSubstitutionEvents(
     .map(e => ({ ...e }))
     .sort(compareSubstitutionEvents);
 
-  // Track who is currently on field, starting from starters.
-  const onField = new Set<string>();
-  lineups.forEach(l => {
-    if (l.is_starter) onField.add(l.player_id);
-  });
+  // Track who is currently on field, starting from the first-part starters.
+  const onField = new Set<string>(getFirstPartStarters(lineups, options));
+  const snapshotFor = makePartSnapshotResolver(options);
 
   // Group by minute so we can inspect OUT/IN pairs together.
   const byMinute = new Map<number, MatchEventForCalc[]>();
@@ -339,6 +370,11 @@ export function reconcileSubstitutionEvents(
 
   for (const minute of minutes) {
     const group = byMinute.get(minute)!;
+    const partSnapshot = snapshotFor(minute);
+    if (partSnapshot) {
+      onField.clear();
+      partSnapshot.forEach(id => onField.add(id));
+    }
     const outs = group.filter(e => e.event_type === 'substitution_out');
     const ins = group.filter(e => e.event_type === 'substitution_in');
 
@@ -647,12 +683,12 @@ export function computeMatchPlayerStats(
   sportType?: string | null,
   options?: PlayingTimeOptions,
 ): PlayerMatchStats[] {
-  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType);
   const opts: PlayingTimeOptions = {
     ...options,
     realPartMinutes: options?.realPartMinutes ?? options?.partRealMinutes ?? partMinutes,
     regulationPartMinutes: options?.regulationPartMinutes ?? options?.partRegulationMinutesByIndex ?? partMinutes,
   };
+  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType, opts);
   const intervals = computePlayerIntervals(lineups, reconciledEvents, matchEndMinute, sportType, opts);
 
   return lineups.map(lineup => {
@@ -682,12 +718,12 @@ export function computeMatchPlayerStatsWithReconciliation(
   sportType?: string | null,
   options?: PlayingTimeOptions,
 ): { stats: PlayerMatchStats[]; reconciliationLogs: ReconciliationLog[] } {
-  const { events: reconciledEvents, logs } = reconcileSubstitutionEvents(lineups, events, sportType);
   const opts: PlayingTimeOptions = {
     ...options,
     realPartMinutes: options?.realPartMinutes ?? options?.partRealMinutes ?? partMinutes,
     regulationPartMinutes: options?.regulationPartMinutes ?? options?.partRegulationMinutesByIndex ?? partMinutes,
   };
+  const { events: reconciledEvents, logs } = reconcileSubstitutionEvents(lineups, events, sportType, opts);
   const intervals = computePlayerIntervals(lineups, reconciledEvents, matchEndMinute, sportType, opts);
 
   const stats = lineups.map(lineup => {
@@ -720,12 +756,12 @@ export function computeMatchPlayerStatsWithHalves(
   sportType?: string | null,
   options?: PlayingTimeOptions,
 ): PlayerMatchStatsWithHalves[] {
-  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType);
   const opts: PlayingTimeOptions = {
     ...options,
     realPartMinutes: options?.realPartMinutes ?? options?.partRealMinutes ?? partMinutes,
     regulationPartMinutes: options?.regulationPartMinutes ?? options?.partRegulationMinutesByIndex ?? partMinutes,
   };
+  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType, opts);
   const { summaries } = computeMatchPlayingTimeFull(
     lineups,
     reconciledEvents,
@@ -830,14 +866,15 @@ export function checkMatchConsistency(
   lineups: StarterInfo[],
   events: MatchEventForCalc[],
   matchEndMinute: number,
-  sportType?: string | null
+  sportType?: string | null,
+  options?: PlayingTimeOptions,
 ): ConsistencyIssue[] {
   const issues: ConsistencyIssue[] = [];
   const rules = getSportFormatRules(sportType);
   
   // Track who is on field at each point
-  const onField = new Set<string>();
-  lineups.filter(l => l.is_starter).forEach(l => onField.add(l.player_id));
+  const onField = new Set<string>(getFirstPartStarters(lineups, options));
+  const snapshotFor = makePartSnapshotResolver(options);
 
   if (onField.size > rules.playersOnField) {
     issues.push({
@@ -851,7 +888,7 @@ export function checkMatchConsistency(
 
   // Auto-reconcile OUT/IN inversions for free-reentry formats so the consistency
   // checker reports the *real* remaining issues, not the typos we already fixed.
-  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType);
+  const { events: reconciledEvents } = reconcileSubstitutionEvents(lineups, events, sportType, options);
 
   const sorted = [...reconciledEvents]
     .filter(e => !e.is_opponent && e.player_id &&
@@ -860,6 +897,11 @@ export function checkMatchConsistency(
   
   for (const event of sorted) {
     const pid = event.player_id!;
+    const partSnapshot = snapshotFor(event.minute);
+    if (partSnapshot) {
+      onField.clear();
+      partSnapshot.forEach(id => onField.add(id));
+    }
     
     if (event.event_type === 'substitution_out') {
       if (!onField.has(pid)) {
@@ -903,7 +945,7 @@ export function checkMatchConsistency(
   }
   
   // Check total minutes don't exceed match length
-  const stats = computeMatchPlayerStats(lineups, events, matchEndMinute);
+  const stats = computeMatchPlayerStats(lineups, events, matchEndMinute, undefined, sportType, options);
   for (const s of stats) {
     if (s.totalMinutes > matchEndMinute) {
       issues.push({

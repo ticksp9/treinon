@@ -232,12 +232,21 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   }, [lineups, events, partElapsed, partDuration, sportType, manual2ndHalfStarters, partStartersByIndex, partRegulationMinutes, partsCount]);
 
   const localIssues = useMemo(() => {
-    const matchEnd = partElapsed.length > 0 ? getPartTimesFromElapsed(partElapsed).totalMinutes : partDuration * 2;
+    const { totalMinutes: matchEnd, partMinutes } = partElapsed.length > 0
+      ? getPartTimesFromElapsed(partElapsed)
+      : { totalMinutes: partDuration * partsCount, partMinutes: Array(partsCount).fill(partDuration) };
+    const mergedPartStarters = { ...partStartersByIndex };
+    if (manual2ndHalfStarters) mergedPartStarters['2'] = Array.from(manual2ndHalfStarters);
+    const firstPart = mergedPartStarters['1'] ? new Set(mergedPartStarters['1']) : null;
     return checkMatchConsistency(
-      lineups.map(l => ({ player_id: l.player_id, is_starter: wasOriginalStarter(l.player_id, events as MatchEventForCalc[], l.is_starter) })),
-      events as MatchEventForCalc[], matchEnd, sportType
+      lineups.map(l => ({
+        player_id: l.player_id,
+        is_starter: firstPart ? firstPart.has(l.player_id) : wasOriginalStarter(l.player_id, events as MatchEventForCalc[], l.is_starter),
+      })),
+      events as MatchEventForCalc[], matchEnd, sportType,
+      { partStarters: mergedPartStarters, realPartMinutes: partMinutes },
     );
-  }, [lineups, events, partElapsed, partDuration, sportType]);
+  }, [lineups, events, partElapsed, partDuration, partsCount, sportType, partStartersByIndex, manual2ndHalfStarters]);
 
   const hasBlockingIssues = localIssues.some(i => i.type === 'error');
 
