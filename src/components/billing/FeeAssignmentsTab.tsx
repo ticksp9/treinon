@@ -13,6 +13,7 @@ import { useFeeAssignments, useFeePlans, useCreateFeeAssignment, useBulkAssignPl
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
+import { getCurrentSeasonName } from '@/lib/constants';
 
 interface Props { clubId: string; }
 
@@ -26,7 +27,7 @@ export function FeeAssignmentsTab({ clubId }: Props) {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [form, setForm] = useState({ fee_plan_id: '', player_id: '', discount_type: '', discount_value: '', is_scholarship: false, is_exempt: false, season: '2025/2026' });
+  const [form, setForm] = useState({ fee_plan_id: '', player_id: '', discount_type: '', discount_value: '', is_scholarship: false, is_exempt: false, season: getCurrentSeasonName() });
 
   const { data: teams } = useQuery({
     queryKey: ['billing-teams', clubId],
@@ -59,7 +60,7 @@ export function FeeAssignmentsTab({ clubId }: Props) {
   };
 
   const handleBulkAssign = () => {
-    bulkAssign.mutate({ planId: selectedPlan, playerIds: selectedPlayers, season: '2025/2026' }, { onSuccess: () => { setBulkOpen(false); setSelectedPlayers([]); } });
+    bulkAssign.mutate({ planId: selectedPlan, playerIds: selectedPlayers, season: getCurrentSeasonName() }, { onSuccess: () => { setBulkOpen(false); setSelectedPlayers([]); } });
   };
 
   const togglePlayer = (pid: string) => setSelectedPlayers(prev => prev.includes(pid) ? prev.filter(p => p !== pid) : [...prev, pid]);

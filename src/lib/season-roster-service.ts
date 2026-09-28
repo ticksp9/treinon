@@ -73,11 +73,19 @@ export async function loadTransitionSource(fromSeasonId: string | null, clubId: 
 
   if (base.length === 0) return { players: [], ageGroups, teams };
 
-  const { data: info } = await supabase
-    .from('players')
-    .select('id, name, birth_date')
-    .in('id', base.map((b) => b.player_id));
-  const infoMap = new Map((info || []).map((p) => [p.id, p]));
+  // Fetch in chunks: a single `.in()` with hundreds of ids exceeds the URL limit
+  // and silently returns nothing (names showed as "—" in big academies).
+  const ids = base.map((b) => b.player_id);
+  const info: Array<{ id: string; name: string; birth_date: string | null }> = [];
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supabase
+      .from('players')
+      .select('id, name, birth_date')
+      .in('id', ids.slice(i, i + 150));
+    if (error) throw error;
+    info.push(...(data || []));
+  }
+  const infoMap = new Map(info.map((p) => [p.id, p]));
 
   const players: RosterPlayer[] = base.map((b) => ({
     player_id: b.player_id,

@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowRight, Users, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AGE_CATEGORIES, calculateAge, Gender, CURRENT_SEASONS } from '@/lib/constants';
+import { AGE_CATEGORIES, Gender, CURRENT_SEASONS, getSportingAge, getSeasonStartYear, parseSeasonStartYear } from '@/lib/constants';
 import { differenceInYears } from 'date-fns';
 
 interface Team {
@@ -97,7 +97,7 @@ export default function SeasonTransition() {
   const calculatePromotions = useMemo(() => {
     if (!players || !teams) return [];
 
-    const seasonStart = new Date(parseInt(selectedSeason.split('/')[0]) + 1, 0, 1);
+    const seasonStartYear = parseSeasonStartYear(selectedSeason) ?? getSeasonStartYear();
 
     return players.map(player => {
       if (!player.birth_date) {
@@ -113,7 +113,7 @@ export default function SeasonTransition() {
         };
       }
 
-      const playerAge = calculateAge(player.birth_date, seasonStart);
+      const playerAge = getSportingAge(player.birth_date, seasonStartYear) ?? 0;
       const currentCategory = player.team.category;
 
       // Find the correct category for this age

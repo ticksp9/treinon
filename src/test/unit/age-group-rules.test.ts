@@ -18,7 +18,8 @@ const groups: AgeGroupRule[] = [
   { id: 'sub15', code: 'SUB15', name: 'Sub-15', min_birth_year: 2011, max_birth_year: 2012, display_order: 3, is_active: true },
 ];
 
-const REF = '2026-12-31';
+// Windows below are the federation windows for 2025/2026 (Sub-13 = 2013–2014)
+const REF = '2025-12-31';
 
 describe('age-group-rules', () => {
   it('ageAt calculates birthday-aware age', () => {
@@ -32,7 +33,7 @@ describe('age-group-rules', () => {
     expect(getBirthYear('not-a-date')).toBeNull();
   });
 
-  it('resolves the group by birth year (season 2026/2027)', () => {
+  it('resolves the group by birth year (season 2025/2026)', () => {
     const res = resolveAgeGroupForPlayer('2013-05-10', REF, groups);
     expect(res.reason).toBe('matched');
     expect(res.ageGroup?.id).toBe('sub13');

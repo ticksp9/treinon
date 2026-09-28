@@ -32,6 +32,7 @@ import { Plus, Pencil, Trash2, Users, UserPlus, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { TeamPlayersDialog } from "./TeamPlayersDialog";
 import { TeamCoachesDialog } from "./TeamCoachesDialog";
+import { getCurrentSeasonName } from '@/lib/constants';
 
 interface TeamsTabProps {
   clubId: string;
@@ -75,7 +76,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
     name: "",
     age_group_id: "",
     sport_variant: "football_11",
-    season: "2024/2025",
+    season: getCurrentSeasonName(),
   });
 
   // Fetch age groups for dropdown
@@ -207,7 +208,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
       name: "",
       age_group_id: "",
       sport_variant: "football_11",
-      season: "2024/2025",
+      season: getCurrentSeasonName(),
     });
     setEditingTeam(null);
     setIsDialogOpen(false);
@@ -313,7 +314,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                     id="season"
                     value={formData.season}
                     onChange={(e) => setFormData({ ...formData, season: e.target.value })}
-                    placeholder="Ex: 2024/2025"
+                    placeholder={`Ex: ${getCurrentSeasonName()}`}
                     required
                   />
                 </div>

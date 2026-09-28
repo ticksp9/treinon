@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFeePlans, useCreateFeePlan, useUpdateFeePlan } from '@/hooks/useBilling';
 import { Plus, Edit, Settings2 } from 'lucide-react';
+import { getCurrentSeasonName } from '@/lib/constants';
 
 interface Props { clubId: string; }
 
@@ -35,7 +36,7 @@ export function FeePlansTab({ clubId }: Props) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', description: '', plan_type: 'monthly_fee', amount: '', billing_frequency: 'monthly',
-    due_day: '8', season: '2025/2026', applies_to_scope: 'club', is_mandatory: true, auto_generate: true, send_alerts: true,
+    due_day: '8', season: getCurrentSeasonName(), applies_to_scope: 'club', is_mandatory: true, auto_generate: true, send_alerts: true,
   });
 
   const handleCreate = () => {
@@ -44,7 +45,7 @@ export function FeePlansTab({ clubId }: Props) {
       amount: parseFloat(form.amount) || 0, billing_frequency: form.billing_frequency,
       due_day: parseInt(form.due_day) || 8, season: form.season, applies_to_scope: form.applies_to_scope,
       is_mandatory: form.is_mandatory, auto_generate: form.auto_generate, send_alerts: form.send_alerts,
-    }, { onSuccess: () => { setOpen(false); setForm({ name: '', description: '', plan_type: 'monthly_fee', amount: '', billing_frequency: 'monthly', due_day: '8', season: '2025/2026', applies_to_scope: 'club', is_mandatory: true, auto_generate: true, send_alerts: true }); } });
+    }, { onSuccess: () => { setOpen(false); setForm({ name: '', description: '', plan_type: 'monthly_fee', amount: '', billing_frequency: 'monthly', due_day: '8', season: getCurrentSeasonName(), applies_to_scope: 'club', is_mandatory: true, auto_generate: true, send_alerts: true }); } });
   };
 
   const toggleActive = (plan: any) => {

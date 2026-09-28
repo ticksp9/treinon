@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle, CheckCircle, Clock, FileText, Archive } from 'lucide-react';
 import { format } from 'date-fns';
+import { getCurrentSeasonName, getSeasonStartYear } from '@/lib/constants';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   draft: { label: 'Rascunho', variant: 'secondary' },
@@ -22,7 +23,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 export function BudgetCycleManager({ clubId }: { clubId: string }) {
   const { cycles, createCycle, approveCycle } = useBudget(clubId);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', season: '2025/2026', start_date: '2025-07-01', end_date: '2026-06-30', budget_scope: 'club' });
+  const [form, setForm] = useState({ name: '', season: getCurrentSeasonName(), start_date: `${getSeasonStartYear()}-07-01`, end_date: `${getSeasonStartYear() + 1}-06-30`, budget_scope: 'club' });
 
   const handleCreate = () => {
     createCycle.mutate(form, { onSuccess: () => setOpen(false) });
@@ -41,7 +42,7 @@ export function BudgetCycleManager({ clubId }: { clubId: string }) {
             <div className="space-y-4 mt-4">
               <div>
                 <Label>Nome</Label>
-                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Orçamento 2025/2026" />
+                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder={`Orçamento ${getCurrentSeasonName()}`} />
               </div>
               <div>
                 <Label>Época</Label>

@@ -36,7 +36,7 @@ describe('season suggestion', () => {
 });
 
 describe('club proposals', () => {
-  const rows = buildClubProposals(source, '2026-12-31');
+  const rows = buildClubProposals(source, '2025-12-31');
   it('promotes a player whose birth year no longer fits the group', () => {
     const ana = rows.find((r) => r.player_id === 'p1')!;
     expect(ana.target_age_group_id).toBe('sub15');
@@ -58,21 +58,21 @@ describe('club proposals', () => {
 
 describe('coach proposals', () => {
   it('keeps only still-eligible players when staying in the same group', () => {
-    const rows = buildCoachProposals(source, '2026-12-31', { keepSameAgeGroup: true, targetAgeGroupId: null, targetTeamId: null });
+    const rows = buildCoachProposals(source, '2025-12-31', { keepSameAgeGroup: true, targetAgeGroupId: null, targetTeamId: null });
     expect(rows.find((r) => r.player_id === 'p1')!.selected).toBe(false); // 2012 out of Sub-13
     expect(rows.find((r) => r.player_id === 'p1')!.action).toBe('promotes');
     expect(rows.find((r) => r.player_id === 'p2')!.selected).toBe(true);
     expect(rows.find((r) => r.player_id === 'p2')!.action).toBe('stays');
   });
   it('marks players without birth date as "unknown" and keeps them by default', () => {
-    const rows = buildCoachProposals(source, '2026-12-31', { keepSameAgeGroup: true, targetAgeGroupId: 'sub13', targetTeamId: 't13' });
+    const rows = buildCoachProposals(source, '2025-12-31', { keepSameAgeGroup: true, targetAgeGroupId: 'sub13', targetTeamId: 't13' });
     const caio = rows.find((r) => r.player_id === 'p3')!;
     expect(caio.action).toBe('unknown');
     expect(caio.selected).toBe(true);
     expect(caio.target_age_group_id).toBe('sub13');
   });
   it('moves eligible players to the chosen group and team', () => {
-    const rows = buildCoachProposals(source, '2026-12-31', { keepSameAgeGroup: false, targetAgeGroupId: 'sub15', targetTeamId: 't15' });
+    const rows = buildCoachProposals(source, '2025-12-31', { keepSameAgeGroup: false, targetAgeGroupId: 'sub15', targetTeamId: 't15' });
     const ana = rows.find((r) => r.player_id === 'p1')!;
     expect(ana.selected).toBe(true);
     expect(ana.target_team_id).toBe('t15');

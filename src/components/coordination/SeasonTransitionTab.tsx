@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowUpRight, Users, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AGE_CATEGORIES, calculateAge } from "@/lib/constants";
+import { AGE_CATEGORIES, getSportingAge, getSeasonStartYear, parseCalendarDate } from "@/lib/constants";
+import { alignAgeGroupsToSeason, type AgeGroupRule } from "@/lib/age-group-rules";
 
 interface SeasonTransitionTabProps {
   clubId: string;
@@ -83,8 +84,8 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
   const projections = useMemo(() => {
     if (!players) return [];
 
-    const nextSeasonYear = new Date().getFullYear() + 1;
-    const seasonStart = new Date(nextSeasonYear, 0, 1);
+    // Next season relative to the one running today (season starts in July)
+    const nextSeasonStartYear = getSeasonStartYear() + 1;
 
     return players.map(player => {
       if (!player.birth_date || !player.team) {
@@ -100,7 +101,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
         } as PlayerProjection;
       }
 
-      const playerAge = calculateAge(player.birth_date, seasonStart);
+      const playerAge = getSportingAge(player.birth_date, nextSeasonStartYear) ?? 0;
       const currentCategory = player.team.category;
 
       // Find the correct category for this age
@@ -113,9 +114,10 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
       // Check if there's a youth team for the suggested category
       const hasTargetTeam = needsPromotion && youthTeams?.some(yt => {
         if (!yt.youth_age_groups) return false;
-        const birthYear = new Date(player.birth_date!).getFullYear();
-        return birthYear >= yt.youth_age_groups.min_birth_year && 
-               birthYear <= yt.youth_age_groups.max_birth_year;
+        const birthYear = parseCalendarDate(player.birth_date)!.getFullYear();
+        const [win] = alignAgeGroupsToSeason([{ id: '', code: '', ...yt.youth_age_groups } as AgeGroupRule], nextSeasonStartYear);
+        return birthYear >= (win.min_birth_year ?? -Infinity) && 
+               birthYear <= (win.max_birth_year ?? Infinity);
       });
 
       return {

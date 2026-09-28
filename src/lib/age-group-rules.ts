@@ -3,6 +3,8 @@
 // vs the age group's [min_birth_year, max_birth_year] window, defined per
 // season by the club. The season reference_date is used for age display.
 
+import { parseCalendarDate, getSeasonStartYear } from './constants';
+
 export interface AgeGroupRule {
   id: string;
   code: string;
@@ -34,10 +36,9 @@ export interface AgeGroupResolution {
 }
 
 export function ageAt(birthDate: string | Date | null, referenceDate: string | Date): number | null {
-  if (!birthDate) return null;
-  const b = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
-  const r = typeof referenceDate === 'string' ? new Date(referenceDate) : referenceDate;
-  if (isNaN(b.getTime()) || isNaN(r.getTime())) return null;
+  const b = parseCalendarDate(birthDate);
+  const r = parseCalendarDate(referenceDate);
+  if (!b || !r) return null;
   let age = r.getFullYear() - b.getFullYear();
   const mDiff = r.getMonth() - b.getMonth();
   if (mDiff < 0 || (mDiff === 0 && r.getDate() < b.getDate())) age--;
@@ -46,10 +47,8 @@ export function ageAt(birthDate: string | Date | null, referenceDate: string | D
 
 /** Birth year of a player, or null when the birth date is missing/invalid. */
 export function getBirthYear(birthDate: string | Date | null): number | null {
-  if (!birthDate) return null;
-  const b = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
-  if (isNaN(b.getTime())) return null;
-  return b.getFullYear();
+  const b = parseCalendarDate(birthDate);
+  return b ? b.getFullYear() : null;
 }
 
 function activeSorted(ageGroups: AgeGroupRule[]): AgeGroupRule[] {
@@ -80,6 +79,34 @@ export function resolveAgeGroupByBirthYear(
   return { ageGroup: matches[0], warning };
 }
 
+/** "Sub-13", "sub13", "U-13", "U13 A" → 13; null when the group has no age number. */
+export function extractAgeLimit(group: Pick<AgeGroupRule, 'code' | 'name'>): number | null {
+  for (const text of [group.code, group.name]) {
+    const m = /\b(?:sub|u)[\s-]?(\d{1,2})\b/i.exec(text ?? '');
+    if (m) return Number(m[1]);
+  }
+  return null;
+}
+
+/**
+ * Age groups store fixed birth-year windows (e.g. Sub-13 = 2013–2014) that are not
+ * tied to a season. If the club forgets to shift them every summer, nobody is
+ * promoted in the season transition. For groups whose code/name carries the age
+ * limit (Sub-N / U-N) we re-derive the window for the target season using the
+ * federation rule — oldest birth year = season start year − (N − 1) — while keeping
+ * the club's window width (1 or 2 birth years). Groups without an age number
+ * (Seniores, Veteranos, custom names) are left exactly as configured.
+ */
+export function alignAgeGroupsToSeason(ageGroups: AgeGroupRule[], seasonStartYear: number): AgeGroupRule[] {
+  return (ageGroups || []).map((g) => {
+    const limit = extractAgeLimit(g);
+    if (limit == null || g.min_birth_year == null || g.max_birth_year == null) return g;
+    const width = Math.max(0, g.max_birth_year - g.min_birth_year);
+    const min = seasonStartYear - (limit - 1);
+    return { ...g, min_birth_year: min, max_birth_year: min + width };
+  });
+}
+
 /** Central resolution used by the season transition engine. */
 export function resolveAgeGroupForPlayer(
   birthDate: string | Date | null,
@@ -87,7 +114,8 @@ export function resolveAgeGroupForPlayer(
   ageGroups: AgeGroupRule[],
 ): AgeGroupResolution {
   const birthYear = getBirthYear(birthDate);
-  const groups = activeSorted(ageGroups);
+  const ref = parseCalendarDate(referenceDate);
+  const groups = activeSorted(ref ? alignAgeGroupsToSeason(ageGroups, getSeasonStartYear(ref)) : ageGroups);
   if (birthYear == null) {
     return { ageGroup: null, birthYear: null, ageAtReference: null, reason: 'no_birth_date', warning: null };
   }

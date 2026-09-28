@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Download, RefreshCw, Globe, Trophy, Loader2 } from 'lucide-react';
+import { getSeasonStartYear, getSeasonName } from '@/lib/constants';
 
 // AF Associations with their IDs in the FPF system
 const ASSOCIATIONS = [
@@ -34,33 +35,18 @@ const ASSOCIATIONS = [
   { id: '238', name: 'AF Açores' },
 ];
 
-// Seasons with their IDs in the FPF system
-// The FPF uses incrementing IDs per season
-const SEASONS = [
-  { id: '99', name: '2025/2026' },
-  { id: '98', name: '2024/2025' },
-  { id: '97', name: '2023/2024' },
-];
+// Seasons with their IDs in the FPF system.
+// The FPF increments the id by one per season: 97 = 2023/2024, 98 = 2024/2025,
+// 99 = 2025/2026 → id = start year − 1926. Previously this list and the
+// "current season" were hardcoded and stuck on 2025/2026.
+const FPF_SEASON_ID_OFFSET = 1926;
+const fpfSeasonId = (startYear: number) => String(startYear - FPF_SEASON_ID_OFFSET);
+const SEASONS = [0, 1, 2].map(k => {
+  const start = getSeasonStartYear() - k;
+  return { id: fpfSeasonId(start), name: getSeasonName(start) };
+});
 
-// Get current season based on date (season changes in August)
-const getCurrentSeasonId = () => {
-  const now = new Date();
-  const month = now.getMonth(); // 0-11
-  const year = now.getFullYear();
-  
-  // If we're between August and December, it's the new season
-  // 2025/2026 season would be season 99 (assuming 2024/2025 is 98)
-  if (month >= 7) { // August onwards
-    // Current year / next year season
-    if (year >= 2025) return '99';
-    return '98';
-  } else {
-    // January-July, still in previous season
-    if (year >= 2026) return '99';
-    if (year >= 2025) return '99'; // We're in Jan-Jul 2025, so still in 2024/2025 -> actually 2025/2026 if after start
-    return '98';
-  }
-};
+const getCurrentSeasonId = () => fpfSeasonId(getSeasonStartYear());
 
 interface Competition {
   id: string;

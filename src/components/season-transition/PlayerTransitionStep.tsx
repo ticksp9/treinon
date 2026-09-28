@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Users, ArrowRight, UserMinus, UserCheck, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { AGE_CATEGORIES, calculateAge } from '@/lib/constants';
+import { AGE_CATEGORIES, getSportingAge, getSeasonStartYear, parseSeasonStartYear } from '@/lib/constants';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Database } from '@/integrations/supabase/types';
 
@@ -121,8 +121,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
   useEffect(() => {
     if (!players || !existingPlans) return;
 
-    const seasonStartYear = parseInt(seasonName.split('/')[0]) + 1;
-    const seasonStart = new Date(seasonStartYear, 0, 1);
+    const seasonStartYear = parseSeasonStartYear(seasonName) ?? getSeasonStartYear();
 
     const plans = new Map<string, PlayerPlan>();
     
@@ -143,7 +142,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
         // Calculate suggested category based on age
         let suggestedCategory = player.team?.category || null;
         if (player.birth_date) {
-          const playerAge = calculateAge(player.birth_date, seasonStart);
+          const playerAge = getSportingAge(player.birth_date, seasonStartYear) ?? 0;
           const correctCategory = AGE_CATEGORIES.find(cat => 
             playerAge >= cat.minAge && playerAge <= cat.maxAge
           );
@@ -346,7 +345,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                           const plan = playerPlans.get(player.id);
                           const targetTeams = getTargetTeams(player, plan?.target_category || null);
                           const playerAge = player.birth_date 
-                            ? calculateAge(player.birth_date, new Date(parseInt(seasonName.split('/')[0]) + 1, 0, 1))
+                            ? getSportingAge(player.birth_date, parseSeasonStartYear(seasonName) ?? getSeasonStartYear())
                             : null;
 
                           return (

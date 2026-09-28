@@ -23,6 +23,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import { getSeasonStartYear, getCurrentSeasonName } from "@/lib/constants";
+import { alignAgeGroupsToSeason, type AgeGroupRule } from "@/lib/age-group-rules";
 
 interface AgeGroupsTabProps {
   clubId: string;
@@ -258,7 +260,20 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                   </TableCell>
                   <TableCell className="font-medium">{group.name}</TableCell>
                   <TableCell>
-                    {group.min_birth_year} - {group.max_birth_year}
+                    {(() => {
+                      const [aligned] = alignAgeGroupsToSeason([{ ...group, code: '' } as AgeGroupRule], getSeasonStartYear());
+                      const changed = aligned.min_birth_year !== group.min_birth_year || aligned.max_birth_year !== group.max_birth_year;
+                      return (
+                        <div>
+                          <span>{aligned.min_birth_year} - {aligned.max_birth_year}</span>
+                          {changed && (
+                            <div className="text-xs text-muted-foreground">
+                              Ajustado para {getCurrentSeasonName()} (guardado: {group.min_birth_year} - {group.max_birth_year})
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     <Badge variant={group.is_active ? "default" : "secondary"}>

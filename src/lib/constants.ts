@@ -78,17 +78,71 @@ export const GENDERS = [
 
 export type Gender = 'male' | 'female';
 
-export const CURRENT_SEASONS = [
-  '2024/2025',
-  '2025/2026',
-  '2023/2024',
-] as const;
+/** Month (0-based) in which a new sporting season starts: July. */
+export const SEASON_START_MONTH = 6;
+
+/**
+ * Parse a date without timezone surprises. 'YYYY-MM-DD' strings from the database
+ * are treated as local calendar dates (new Date('2014-01-01') is UTC midnight,
+ * which is still 31 Dec in timezones west of UTC).
+ */
+export function parseCalendarDate(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** First calendar year of the season that contains `date` (e.g. Sept 2026 → 2026, Mar 2027 → 2026). */
+export function getSeasonStartYear(date: Date = new Date()): number {
+  return date.getMonth() >= SEASON_START_MONTH ? date.getFullYear() : date.getFullYear() - 1;
+}
+
+/** "2026/2027" */
+export function getSeasonName(startYear: number): string {
+  return `${startYear}/${startYear + 1}`;
+}
+
+export function getCurrentSeasonName(date: Date = new Date()): string {
+  return getSeasonName(getSeasonStartYear(date));
+}
+
+/** Start year of a season name like "2026/2027" or "2026/27"; null when unparseable. */
+export function parseSeasonStartYear(seasonName: string | null | undefined): number | null {
+  const m = /^(\d{4})/.exec(seasonName ?? '');
+  return m ? Number(m[1]) : null;
+}
+
+/** Current season first, then next and the previous ones (always up to date). */
+export const CURRENT_SEASONS: readonly string[] = (() => {
+  const y = getSeasonStartYear();
+  return [getSeasonName(y), getSeasonName(y + 1), getSeasonName(y - 1), getSeasonName(y - 2)];
+})();
+
+/**
+ * "Sporting age" used by the federations to decide age groups: it depends only on
+ * the birth YEAR and the season (born 2014 → 12 in 2026/27 → Sub-13), never on
+ * the birthday or on the current month.
+ */
+export function getSportingAge(birthDate: string | Date | null | undefined, seasonStartYear: number): number | null {
+  const birth = parseCalendarDate(birthDate);
+  if (!birth) return null;
+  return seasonStartYear - birth.getFullYear();
+}
+
+/** Age group that corresponds to a player's birth year in a given season. */
+export function getSuggestedCategory(birthDate: string | Date | null | undefined, seasonStartYear: number) {
+  const age = getSportingAge(birthDate, seasonStartYear);
+  if (age == null) return undefined;
+  return AGE_CATEGORIES.find(cat => age >= cat.minAge && age <= cat.maxAge);
+}
 
 /**
  * Calcula a idade de um jogador numa determinada data (ex: início da época)
  */
 export function calculateAge(birthDate: string, referenceDate?: Date): number {
-  const birth = new Date(birthDate);
+  const birth = parseCalendarDate(birthDate) ?? new Date(birthDate);
   const ref = referenceDate || new Date();
   let age = ref.getFullYear() - birth.getFullYear();
   const monthDiff = ref.getMonth() - birth.getMonth();
@@ -118,9 +172,14 @@ export function canPlayerPlayInCategory(
     return { eligible: false, reason: 'Escalão não encontrado' };
   }
 
-  // Calcular idade no início da época (1 de Janeiro)
-  const seasonStart = seasonStartDate || new Date(new Date().getFullYear(), 0, 1);
-  const playerAge = calculateAge(playerBirthDate, seasonStart);
+  // Idade desportiva: ano da época − ano de nascimento (regra das federações).
+  // Antes usava a idade exata a 1 de janeiro do ano civil, o que aceitava
+  // jogadores um ano acima entre setembro e dezembro e mudava a meio da época.
+  const seasonStartYear = getSeasonStartYear(seasonStartDate ?? new Date());
+  const playerAge = getSportingAge(playerBirthDate, seasonStartYear);
+  if (playerAge == null) {
+    return { eligible: true, reason: 'Sem data de nascimento' };
+  }
 
   // Jogadores mais novos podem sempre jogar em escalões superiores
   if (playerAge < ageCategory.minAge) {

@@ -30,7 +30,7 @@ describe('Constants & Business Rules', () => {
 
   describe('canPlayerPlayInCategory', () => {
     it('should allow player in correct age group', () => {
-      const result = canPlayerPlayInCategory('2011-05-01', 'Sub-15', 'male');
+      const result = canPlayerPlayInCategory('2011-05-01', 'Sub-15', 'male', false, new Date('2025-09-15'));
       expect(result.eligible).toBe(true);
     });
 
@@ -46,8 +46,8 @@ describe('Constants & Business Rules', () => {
 
     it('should give female players 2 extra years in male teams', () => {
       // Player who would be too old normally but allowed with +2 exception
-      const result = canPlayerPlayInCategory('2009-01-01', 'Sub-15', 'male', true, new Date('2026-01-01'));
-      // Age at season start = 17, maxAge for Sub-15 = 14, +2 = 16, still too old at 17
+      const result = canPlayerPlayInCategory('2008-01-01', 'Sub-15', 'male', true, new Date('2026-01-01'));
+      // Season 2025/26: sporting age 2025-2008 = 17, maxAge Sub-15 = 14, +2 = 16 → too old
       expect(result.eligible).toBe(false);
     });
   });

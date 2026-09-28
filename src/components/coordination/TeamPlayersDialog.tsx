@@ -23,6 +23,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { parseCalendarDate, getSeasonStartYear, getCurrentSeasonName } from '@/lib/constants';
+import { alignAgeGroupsToSeason, type AgeGroupRule } from '@/lib/age-group-rules';
+
+/** Birth-year window of a coordination age group for the season running today. */
+function windowForCurrentSeason<T extends { name: string; min_birth_year: number; max_birth_year: number }>(g: T): T {
+  const [aligned] = alignAgeGroupsToSeason([{ id: '', code: '', ...g } as AgeGroupRule], getSeasonStartYear());
+  return { ...g, min_birth_year: aligned.min_birth_year ?? g.min_birth_year, max_birth_year: aligned.max_birth_year ?? g.max_birth_year };
+}
 import { UserPlus, UserMinus, AlertTriangle, Ban } from "lucide-react";
 import { useOverduePlayersBlock } from "@/hooks/useOverduePlayersBlock";
 
@@ -120,9 +128,11 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
   });
 
   // Find the age group below the current one
-  const lowerAgeGroup = ageGroups?.find(
+  const lowerAgeGroupRaw = ageGroups?.find(
     ag => ag.display_order === team.youth_age_groups.display_order - 1
   );
+  const lowerAgeGroup = lowerAgeGroupRaw ? windowForCurrentSeason(lowerAgeGroupRaw) : undefined;
+  const teamWindow = windowForCurrentSeason(team.youth_age_groups);
 
   // Fetch eligible players from current age group
   const { data: eligiblePlayers, isLoading: loadingEligible } = useQuery({
@@ -147,9 +157,9 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
       // Filter by birth year
       const eligible = allPlayers?.filter(player => {
         if (!player.birth_date) return false;
-        const birthYear = new Date(player.birth_date).getFullYear();
-        return birthYear >= team.youth_age_groups.min_birth_year && 
-               birthYear <= team.youth_age_groups.max_birth_year;
+        const birthYear = parseCalendarDate(player.birth_date)!.getFullYear();
+        return birthYear >= teamWindow.min_birth_year && 
+               birthYear <= teamWindow.max_birth_year;
       });
 
       // Exclude players already in this team
@@ -183,7 +193,7 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
       // Filter by birth year of lower age group
       const eligible = allPlayers?.filter(player => {
         if (!player.birth_date) return false;
-        const birthYear = new Date(player.birth_date).getFullYear();
+        const birthYear = parseCalendarDate(player.birth_date)!.getFullYear();
         return birthYear >= lowerAgeGroup.min_birth_year && 
                birthYear <= lowerAgeGroup.max_birth_year;
       });
@@ -418,7 +428,7 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
-                  Jogadores nascidos entre {team.youth_age_groups.min_birth_year} e {team.youth_age_groups.max_birth_year}
+                  Jogadores nascidos entre {teamWindow.min_birth_year} e {teamWindow.max_birth_year} (época {getCurrentSeasonName()})
                 </p>
                 <Button
                   onClick={() => handleAddPlayers(false)}

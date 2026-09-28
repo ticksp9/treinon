@@ -16,6 +16,7 @@ import {
   Edit, Trash2, Save, X, Calendar, Globe
 } from 'lucide-react';
 import { FPFImport } from './FPFImport';
+import { getCurrentSeasonName } from '@/lib/constants';
 
 interface Team {
   id: string;
@@ -96,7 +97,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
   
   // Form states
   const [newChampName, setNewChampName] = useState('');
-  const [newChampSeason, setNewChampSeason] = useState('2024/2025');
+  const [newChampSeason, setNewChampSeason] = useState(getCurrentSeasonName());
   const [newChampSeries, setNewChampSeries] = useState('');
   const [newTeamName, setNewTeamName] = useState('');
   const [newResult, setNewResult] = useState({
@@ -436,7 +437,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                     <Input
                       value={newChampSeason}
                       onChange={(e) => setNewChampSeason(e.target.value)}
-                      placeholder="2024/2025"
+                      placeholder={getCurrentSeasonName()}
                     />
                   </div>
                   <div className="space-y-2">

@@ -1,3 +1,5 @@
+import { getCurrentSeasonName } from './constants';
+
 /**
  * Centralized application configuration.
  * Business values that were previously hardcoded in UI components.
@@ -5,7 +7,7 @@
 
 // Default values
 export const DEFAULTS = {
-  season: '2024/2025',
+  season: getCurrentSeasonName(),
   sportType: 'football_11' as const,
   gender: 'male' as const,
   partDurationMinutes: 45,
