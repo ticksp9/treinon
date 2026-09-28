@@ -1,0 +1,1520 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+import { 
+  Play, Pause, Square, ArrowLeft, 
+  UserMinus, RotateCcw,
+  Clock, Pencil, AlertTriangle
+} from 'lucide-react';
+import { LineupSelector } from './LineupSelector';
+import { MatchEvents } from './MatchEvents';
+import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
+import type { PendingSubstitution } from '@/lib/substitution-batch-service';
+import { LiveActionBar } from './LiveActionBar';
+import { MatchContextBar } from './MatchContextBar';
+import { EventSheet } from './EventSheet';
+import { MatchReport } from './MatchReport';
+import { MatchConfigModal } from './MatchConfigModal';
+import { getHalfDurationForCategory } from '@/lib/constants';
+import { useMatchTimer } from '@/hooks/useMatchTimer';
+import { useActiveMatch } from '@/hooks/useActiveMatch';
+import { useLiveMatchState, LiveMatchMinimalState } from '@/hooks/useLiveMatchState';
+import { usePlayerPresenceIntervals, PlayerPresenceMap } from '@/hooks/usePlayerPresenceIntervals';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { getPartLabel, getEndPartLabel, getStartPartLabel, getDisplayMinute as calcDisplayMinute } from '@/lib/match-constants';
+import { getSportFormatRules, validateStarterCount } from '@/lib/match-playing-time';
+import { getMatchRuleSnapshot, saveMatchRuleSnapshot, buildSnapshotFromFallback, getDefaultRuleProfile, normalizeAgeGroupCode, buildSnapshotFromProfile, logConflictAlert, type MatchRuleSnapshot } from '@/lib/match-rules-service';
+import { FieldPlayerCounter } from './FieldPlayerCounter';
+import { MatchRulesPanel } from './MatchRulesPanel';
+import { ConflictAlertsPanel } from './ConflictAlertsPanel';
+import { checkMatchConsistency, type ConsistencyIssue } from '@/lib/match-playing-time';
+interface LiveMatchProps {
+  matchId: string;
+  teamId: string;
+  onExit: () => void;
+  isResume?: boolean;
+}
+
+interface Player {
+  id: string;
+  name: string;
+  number: number | null;
+  position: string | null;
+}
+
+interface Lineup {
+  id: string;
+  player_id: string;
+  is_starter: boolean;
+  minutes_played: number | null;
+  position_played: string | null;
+  player: Player;
+}
+
+interface MatchEvent {
+  id: string;
+  event_type: string;
+  minute: number;
+  second: number | null;
+  player_id: string | null;
+  assist_player_id: string | null;
+  is_opponent: boolean;
+  notes: string | null;
+  player?: Player;
+  assist_player?: Player;
+}
+
+interface Match {
+  id: string;
+  opponent_name: string;
+  is_home: boolean;
+  status: string;
+  goals_for: number | null;
+  goals_against: number | null;
+  match_date?: string;
+  competition?: string | null;
+  location?: string | null;
+  match_type?: string;
+  parts_count?: number;
+  part_duration_minutes?: number | null;
+  tournament_locked?: boolean;
+  current_part?: number;
+  match_phase?: string;
+  part_elapsed_seconds?: number[];
+  part_starter_ids?: Record<string, string[]> | null;
+  part_real_seconds?: number[] | null;
+  part_regulation_minutes?: number[] | null;
+  starter_ids?: string[] | null;
+  last_timer_start?: string | null;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  category: string | null;
+  sport_type?: string | null;
+}
+
+type MatchPhase = 'setup' | 'playing' | 'interval' | 'finished';
+
+export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
+  const { user } = useAuth();
+  const { isOnline } = useOnlineStatus();
+  const isMobile = useIsMobile();
+  const [match, setMatch] = useState<Match | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
+  const [lineups, setLineups] = useState<Lineup[]>([]);
+  const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [phase, setPhase] = useState<MatchPhase>('setup');
+  const [currentPart, setCurrentPart] = useState(0);
+  const [partElapsedSeconds, setPartElapsedSeconds] = useState<number[]>([]);
+  const [substitutionOpen, setSubstitutionOpen] = useState(false);
+  const [editLineupOpen, setEditLineupOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [eventSheetOpen, setEventSheetOpen] = useState(false);
+  const [eventSheetDefaults, setEventSheetDefaults] = useState<{ type?: string; playerId?: string }>({});
+  const [syncStatus, setSyncStatus] = useState<'saving' | 'saved' | 'pending' | 'error'>('saved');
+  
+  // CRITICAL: Flags to control restoration and prevent unwanted resets
+  const hasRestoredRef = useRef(false);
+  const isGameActiveRef = useRef(false);
+  const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Match configuration
+  const [partsCount, setPartsCount] = useState(2);
+  const [partDurationMinutes, setPartDurationMinutes] = useState(45);
+  const [matchType, setMatchType] = useState<'championship' | 'friendly' | 'tournament'>('championship');
+  const [isLocked, setIsLocked] = useState(false);
+  const [categoryDuration, setCategoryDuration] = useState(45);
+  const [ruleSnapshot, setRuleSnapshot] = useState<MatchRuleSnapshot | null>(null);
+
+  // New hooks for proper persistence
+  const { setActiveMatchId, clearActiveMatch } = useActiveMatch();
+  const liveState = useLiveMatchState(matchId);
+
+  // Timer hook - must be before presenceTracker
+  const timer = useMatchTimer({
+    partDurationMinutes,
+    onTimeAlert: (type) => {
+      console.log('[LiveMatch] Time alert:', type);
+    },
+  });
+
+  // Calculate total game minutes for presence tracking
+  const getCurrentGameMinutes = useCallback(() => {
+    if (currentPart === 0) return 0;
+    let total = 0;
+    for (let i = 0; i < currentPart - 1; i++) {
+      total += Math.floor((partElapsedSeconds[i] || 0) / 60);
+    }
+    total += Math.floor(timer.elapsedSeconds / 60);
+    return total;
+  }, [currentPart, partElapsedSeconds, timer.elapsedSeconds]);
+
+  // Player presence intervals hook for accurate playing time
+  const presenceTracker = usePlayerPresenceIntervals({
+    starterIds: lineups.filter(l => l.is_starter).map(l => l.player_id),
+    onFieldIds: lineups.filter(l => l.is_starter).map(l => l.player_id),
+    currentGameMinutes: getCurrentGameMinutes(),
+    isPlaying: phase === 'playing' && timer.isRunning,
+  });
+
+  // =================== INITIALIZATION ===================
+  
+  useEffect(() => {
+    console.log('[LiveMatch] Component mounted for match:', matchId);
+    fetchMatchData();
+    
+    return () => {
+      console.log('[LiveMatch] Component unmounting, saving state...');
+      stopAutoSave();
+      // Save state on unmount if game is active
+      if (isGameActiveRef.current) {
+        saveCurrentState();
+      }
+    };
+  }, [matchId]);
+
+  // =================== CRITICAL: Restore state when match data is loaded ===================
+  
+  useEffect(() => {
+    if (!match || !team || loading || hasRestoredRef.current) return;
+
+    const restore = async () => {
+      console.log('[LiveMatch] Starting restoration check...', { 
+        matchStatus: match.status, 
+        matchId,
+        hasRestored: hasRestoredRef.current 
+      });
+
+      // If match is completed, just show finished
+      if (match.status === 'completed') {
+        setPhase('finished');
+        hasRestoredRef.current = true;
+        return;
+      }
+
+      // If match is in_progress, MUST restore state and skip setup
+      if (match.status === 'in_progress') {
+        hasRestoredRef.current = true;
+        isGameActiveRef.current = true;
+        
+        // Try to restore from local storage first (offline-first)
+        const localState = await liveState.loadLocal();
+        
+        if (localState && localState.phase !== 'setup' && localState.currentPart > 0) {
+          console.log('[LiveMatch] Restoring from LOCAL state:', {
+            phase: localState.phase,
+            currentPart: localState.currentPart,
+            isTimerRunning: localState.isTimerRunning,
+            partStartedAtMs: localState.partStartedAtMs,
+          });
+          
+          applyRestoredState(localState);
+        } else {
+          // Fallback: try to restore from backend
+          const backendState = await liveState.loadFromBackend();
+          
+          if (backendState && backendState.phase !== 'setup' && (backendState.currentPart || 0) > 0) {
+            console.log('[LiveMatch] Restoring from BACKEND state:', {
+              phase: backendState.phase,
+              currentPart: backendState.currentPart,
+            });
+            
+            applyRestoredState(backendState as LiveMatchMinimalState);
+          } else {
+            // Last fallback: use match record directly
+            console.log('[LiveMatch] Restoring from MATCH record:', {
+              phase: match.match_phase,
+              currentPart: match.current_part,
+            });
+            
+            const matchPhase = (match.match_phase as MatchPhase) || 'playing';
+            const matchCurrentPart = match.current_part || 1;
+            const matchPartElapsed = (match.part_elapsed_seconds as number[]) || [];
+            
+            setPhase(matchPhase);
+            setCurrentPart(matchCurrentPart);
+            setPartElapsedSeconds(matchPartElapsed);
+            
+            // Restore timer
+            if (matchPhase === 'playing' && match.last_timer_start) {
+              const startMs = new Date(match.last_timer_start).getTime();
+              const elapsedSinceStart = Math.floor((Date.now() - startMs) / 1000);
+              timer.restoreTimer(elapsedSinceStart, startMs);
+            }
+            
+            startAutoSave();
+          }
+        }
+        return;
+      }
+
+      // Match is not in_progress - show setup screen
+      hasRestoredRef.current = true;
+      console.log('[LiveMatch] Match not in_progress, showing setup');
+    };
+
+    restore();
+  }, [match, team, loading]);
+
+  // Apply restored state to component
+  const applyRestoredState = (state: LiveMatchMinimalState | Partial<LiveMatchMinimalState>) => {
+    const restoredPhase = (state.phase || 'playing') as MatchPhase;
+    const restoredPart = state.currentPart || 1;
+    const restoredPartElapsed = state.partElapsedSeconds || [];
+    
+    setPhase(restoredPhase);
+    setCurrentPart(restoredPart);
+    setPartElapsedSeconds(restoredPartElapsed);
+    setPartsCount(state.partsCount || partsCount);
+    setPartDurationMinutes(state.partDurationMinutes || partDurationMinutes);
+    setMatchType((state.matchType || matchType) as 'championship' | 'friendly' | 'tournament');
+
+    // Restore player presence intervals for accurate playing time
+    if (state.playerPresenceIntervals && Object.keys(state.playerPresenceIntervals).length > 0) {
+      presenceTracker.restoreIntervals(state.playerPresenceIntervals);
+      console.log('[LiveMatch] Restored player presence intervals');
+    }
+
+    // Restore timer based on phase
+    if (restoredPhase === 'playing') {
+      const partStartedAtMs = state.partStartedAtMs;
+      const isTimerRunning = state.isTimerRunning !== false;
+      const partElapsedBeforePause = state.partElapsedBeforePause || 0;
+      
+      if (partStartedAtMs && isTimerRunning) {
+        // Timer was running - calculate elapsed from timestamp
+        const elapsedSinceStart = Math.floor((Date.now() - partStartedAtMs) / 1000);
+        console.log('[LiveMatch] Restoring RUNNING timer:', { 
+          partStartedAtMs, 
+          elapsedSinceStart,
+          partElapsedBeforePause 
+        });
+        timer.restoreTimer(elapsedSinceStart, partStartedAtMs);
+      } else {
+        // Timer was paused
+        const savedElapsed = restoredPartElapsed[restoredPart - 1] || partElapsedBeforePause || 0;
+        console.log('[LiveMatch] Restoring PAUSED timer:', { savedElapsed });
+        timer.restoreTimer(savedElapsed, null);
+      }
+      
+      startAutoSave();
+    }
+    
+    console.log('[LiveMatch] State restoration complete:', {
+      phase: restoredPhase,
+      currentPart: restoredPart,
+      timerRunning: timer.isRunning,
+    });
+  };
+
+  // =================== SAVE STATE FUNCTIONS ===================
+
+  const buildCurrentState = useCallback((): LiveMatchMinimalState => {
+    const currentStarters = lineups.filter(l => l.is_starter);
+    const currentBench = lineups.filter(l => !l.is_starter);
+    
+    // On-field is same as starters (after substitutions, is_starter reflects current field state)
+    const onFieldIds = currentStarters.map(l => l.player_id);
+    
+    // Calculate current part elapsed
+    const currentPartElapsed = [...partElapsedSeconds];
+    if (currentPart > 0) {
+      currentPartElapsed[currentPart - 1] = timer.elapsedSeconds;
+    }
+    
+    return {
+      matchId,
+      phase,
+      currentPart,
+      partsCount,
+      partDurationMinutes,
+      matchType,
+      partStartedAtMs: timer.isRunning ? timer.getTimerState().startTime : null,
+      partElapsedBeforePause: timer.isRunning ? 0 : timer.elapsedSeconds,
+      isTimerRunning: timer.isRunning,
+      starterIds: currentStarters.map(l => l.player_id),
+      benchIds: currentBench.map(l => l.player_id),
+      onFieldIds,
+      partElapsedSeconds: currentPartElapsed,
+      lastSavedAt: Date.now(),
+      // Include player presence intervals for accurate playing time
+      playerPresenceIntervals: presenceTracker.getIntervalsForPersistence(),
+    };
+  }, [matchId, phase, currentPart, partsCount, partDurationMinutes, matchType, timer, lineups, partElapsedSeconds, presenceTracker]);
+
+  const saveCurrentState = useCallback(async () => {
+    if (!isGameActiveRef.current || phase === 'setup' || phase === 'finished') return;
+    
+    const state = buildCurrentState();
+    
+    setSyncStatus('saving');
+    // Always save locally first (offline-first)
+    await liveState.saveLocal(state);
+    
+    // Sync to backend if online
+    if (isOnline) {
+      await liveState.syncToBackend(state);
+    }
+    setSyncStatus(isOnline ? 'saved' : 'pending');
+  }, [buildCurrentState, liveState, isOnline, phase]);
+
+  // Auto-save interval
+  const startAutoSave = useCallback(() => {
+    if (autoSaveIntervalRef.current) return;
+    
+    autoSaveIntervalRef.current = setInterval(() => {
+      saveCurrentState();
+    }, 5000);
+    
+    console.log('[LiveMatch] Auto-save started');
+  }, [saveCurrentState]);
+
+  const stopAutoSave = useCallback(() => {
+    if (autoSaveIntervalRef.current) {
+      clearInterval(autoSaveIntervalRef.current);
+      autoSaveIntervalRef.current = null;
+      console.log('[LiveMatch] Auto-save stopped');
+    }
+  }, []);
+
+  // Save state whenever critical game state changes
+  useEffect(() => {
+    if (!isGameActiveRef.current || phase === 'setup' || phase === 'finished') return;
+    saveCurrentState();
+  }, [phase, currentPart, lineups.length]);
+
+  // =================== FETCH DATA ===================
+
+  const fetchMatchData = async () => {
+    try {
+      const [matchRes, teamRes, lineupsRes, eventsRes] = await Promise.all([
+        supabase.from('matches').select('*').eq('id', matchId).single(),
+        supabase.from('teams').select('id, name, category, sport_type').eq('id', teamId).single(),
+        supabase.from('match_lineups')
+          .select(`
+            id, player_id, is_starter, minutes_played, position_played,
+            player:players(id, name, number, position)
+          `)
+          .eq('match_id', matchId),
+        supabase.from('match_events')
+          .select(`
+            id, event_type, minute, second, player_id, assist_player_id, is_opponent, notes,
+            player:players!match_events_player_id_fkey(id, name, number, position),
+            assist_player:players!match_events_assist_player_id_fkey(id, name, number, position)
+          `)
+          .eq('match_id', matchId)
+          .order('minute', { ascending: true })
+      ]);
+
+      if (matchRes.error) throw matchRes.error;
+      const matchData = matchRes.data as Match;
+      setMatch(matchData);
+
+      // Set match configuration
+      const catDuration = getHalfDurationForCategory(teamRes.data?.category);
+      setCategoryDuration(catDuration);
+      setPartsCount(matchData.parts_count || 2);
+      setPartDurationMinutes(matchData.part_duration_minutes || catDuration);
+      setMatchType((matchData.match_type as any) || 'championship');
+      setIsLocked(matchData.tournament_locked || matchData.match_type === 'championship' || (matchData.match_type === 'tournament' && matchData.status === 'in_progress'));
+
+      // Load rule snapshot for this match
+      const snapshot = await getMatchRuleSnapshot(matchId);
+      if (snapshot) {
+        setRuleSnapshot(snapshot);
+        // Override duration from snapshot if available and no match-specific override
+        if (!matchData.part_duration_minutes && snapshot.period_1_minutes) {
+          setPartDurationMinutes(snapshot.period_1_minutes);
+        }
+      }
+
+      if (teamRes.data) {
+        setTeam(teamRes.data);
+      }
+
+      if (lineupsRes.data) {
+        const formattedLineups = lineupsRes.data.map(l => ({
+          ...l,
+          player: Array.isArray(l.player) ? l.player[0] : l.player
+        })) as Lineup[];
+        setLineups(formattedLineups);
+      }
+
+      if (eventsRes.data) {
+        const formattedEvents = eventsRes.data.map(e => ({
+          ...e,
+          player: Array.isArray(e.player) ? e.player[0] : e.player,
+          assist_player: Array.isArray(e.assist_player) ? e.assist_player[0] : e.assist_player
+        })) as MatchEvent[];
+        setEvents(formattedEvents);
+      }
+
+    } catch (error) {
+      console.error('[LiveMatch] Error fetching match data:', error);
+      toast.error('Erro ao carregar dados do jogo');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =================== MATCH CONTROL HANDLERS ===================
+
+  const getCurrentMinute = useCallback(() => {
+    if (currentPart === 0) return 0;
+    let totalMinutes = 0;
+    for (let i = 0; i < currentPart - 1; i++) {
+      // Use actual elapsed time for completed parts, not configured duration
+      const elapsedSec = partElapsedSeconds[i] || 0;
+      totalMinutes += Math.floor(elapsedSec / 60);
+    }
+    totalMinutes += timer.getMinutes();
+    return totalMinutes;
+  }, [currentPart, partElapsedSeconds, timer]);
+
+  const buildRegulationPartMinutes = useCallback((count: number = partsCount) => {
+    const stored = (match as any)?.part_regulation_minutes as number[] | null | undefined;
+    if (Array.isArray(stored) && stored.length === count) return stored;
+    return Array(count).fill(partDurationMinutes);
+  }, [match, partsCount, partDurationMinutes]);
+
+  const buildPartStartersByIndex = useCallback((): Record<string, string[]> => {
+    const stored = ((match as any)?.part_starter_ids ?? {}) as Record<string, string[]>;
+    const out: Record<string, string[]> = {};
+    Object.entries(stored).forEach(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) out[key] = value;
+    });
+    if (!out['1']) {
+      const first = ((match as any)?.starter_ids as string[] | null | undefined) ?? lineups.filter(l => l.is_starter).map(l => l.player_id);
+      out['1'] = first;
+    }
+    const secondHalf = ((match as any)?.second_half_starter_ids as string[] | null | undefined) ?? null;
+    if (!out['2'] && Array.isArray(secondHalf) && secondHalf.length > 0) out['2'] = secondHalf;
+    return out;
+  }, [match, lineups]);
+
+  const handlePrepareStartMatch = () => {
+    const starters = lineups.filter(l => l.is_starter);
+    if (starters.length === 0) {
+      toast.error('Selecione pelo menos um jogador titular');
+      return;
+    }
+
+    const starterValidation = validateStarterCount(starters.length, team?.sport_type);
+    if (!starterValidation.allowed) {
+      toast.error(starterValidation.reason || 'Escalação inválida');
+      return;
+    }
+
+    // Always show config modal so coach can review/edit duration
+    setConfigModalOpen(true);
+  };
+
+  const handleStartMatchWithConfig = async (config: { partsCount: number; partDurationMinutes: number }) => {
+    try {
+      const now = new Date().toISOString();
+      const nowMs = Date.now();
+      
+      const currentStarters = lineups.filter(l => l.is_starter);
+      const currentBench = lineups.filter(l => !l.is_starter);
+      const starterPlayerIds = currentStarters.map(l => l.player_id);
+
+      const starterValidation = validateStarterCount(starterPlayerIds.length, team?.sport_type);
+      if (!starterValidation.allowed) {
+        toast.error(starterValidation.reason || 'Escalação inválida');
+        logConflictAlert({
+          matchId,
+          alertType: 'invalid_lineup',
+          severity: 'blocking',
+          message: starterValidation.reason || 'Escalação inválida',
+          metadata: { starterCount: starterPlayerIds.length, sportType: team?.sport_type },
+        });
+        return;
+      }
+      
+      // Update match in database
+      const initialPartStarters = { '1': starterPlayerIds };
+      const initialRegulationMinutes = Array(config.partsCount).fill(config.partDurationMinutes);
+      await supabase
+        .from('matches')
+        .update({ 
+          status: 'in_progress',
+          match_phase: 'playing',
+          current_part: 1,
+          part_elapsed_seconds: [0],
+          part_starter_ids: initialPartStarters,
+          part_real_seconds: [0],
+          part_regulation_minutes: initialRegulationMinutes,
+          last_timer_start: now,
+          last_paused_seconds: 0,
+          parts_count: config.partsCount,
+          part_duration_minutes: config.partDurationMinutes,
+          tournament_locked: matchType === 'tournament',
+          part_started_at_ms: nowMs,
+          starter_ids: starterPlayerIds,
+          bench_ids: currentBench.map(l => l.player_id),
+          on_field_ids: starterPlayerIds,
+        } as any)
+        .eq('id', matchId);
+
+      // Set active match
+      await setActiveMatchId(matchId);
+
+      // Initialize player presence intervals - starters start at minute 0
+      const initialIntervals = presenceTracker.initializeIntervals(starterPlayerIds, 0);
+
+      // Update local state
+      setPartsCount(config.partsCount);
+      setPartDurationMinutes(config.partDurationMinutes);
+      setPhase('playing');
+      setCurrentPart(1);
+      setPartElapsedSeconds([0]);
+      setMatch(prev => prev ? { ...prev, status: 'in_progress', last_timer_start: now } : null);
+      
+      if (matchType === 'tournament') {
+        setIsLocked(true);
+      }
+      
+      // Mark game as active
+      hasRestoredRef.current = true;
+      isGameActiveRef.current = true;
+      
+      // Start timer
+      timer.startTimer(0);
+      
+      // Save state immediately with presence intervals
+      const state: LiveMatchMinimalState = {
+        matchId,
+        phase: 'playing',
+        currentPart: 1,
+        partsCount: config.partsCount,
+        partDurationMinutes: config.partDurationMinutes,
+        matchType,
+        partStartedAtMs: nowMs,
+        partElapsedBeforePause: 0,
+        isTimerRunning: true,
+        starterIds: starterPlayerIds,
+        benchIds: currentBench.map(l => l.player_id),
+        onFieldIds: starterPlayerIds,
+        partElapsedSeconds: [0],
+        lastSavedAt: nowMs,
+        playerPresenceIntervals: initialIntervals,
+      };
+      await liveState.saveLocal(state);
+
+      // Save/update rule snapshot if not already present
+      if (!ruleSnapshot) {
+        const ageCode = normalizeAgeGroupCode(team?.category);
+        const profile = await getDefaultRuleProfile(
+          team?.sport_type || 'football_7',
+          ageCode,
+          null,
+          match?.competition
+        );
+        const snapshot = profile
+          ? buildSnapshotFromProfile(profile)
+          : buildSnapshotFromFallback(team?.sport_type || 'football_7', config.partDurationMinutes, config.partsCount);
+        // Apply config overrides
+        snapshot.period_1_minutes = config.partDurationMinutes;
+        snapshot.period_2_minutes = config.partDurationMinutes;
+        snapshot.period_count = config.partsCount;
+        await saveMatchRuleSnapshot(matchId, snapshot, profile?.id);
+        setRuleSnapshot(snapshot);
+      }
+      
+      startAutoSave();
+      toast.success(`${getPartLabel(1, config.partsCount)} iniciada!`);
+    } catch (error) {
+      console.error('[LiveMatch] Error starting match:', error);
+      toast.error('Erro ao iniciar jogo');
+    }
+  };
+
+  const handleStartMatch = async () => {
+    handlePrepareStartMatch();
+  };
+
+  const handleEndPart = async () => {
+    timer.pauseTimer();
+    const partSeconds = timer.elapsedSeconds;
+    const newPartElapsed = [...partElapsedSeconds];
+    newPartElapsed[currentPart - 1] = partSeconds;
+    const newPartRealSeconds = [...(((match as any)?.part_real_seconds as number[] | null) ?? partElapsedSeconds)];
+    newPartRealSeconds[currentPart - 1] = partSeconds;
+    const newPartRegulationMinutes = buildRegulationPartMinutes(partsCount);
+    newPartRegulationMinutes[currentPart - 1] = partDurationMinutes;
+    setPartElapsedSeconds(newPartElapsed);
+
+    // Close all open presence intervals at current minute
+    presenceTracker.handleEndPart(getCurrentMinute());
+
+    await updateMinutesPlayed(getCurrentMinute());
+
+    if (currentPart >= partsCount) {
+      await finishMatch(newPartElapsed, newPartRealSeconds, newPartRegulationMinutes);
+    } else {
+      setPhase('interval');
+      
+      await supabase
+        .from('matches')
+        .update({ 
+          match_phase: 'interval',
+          part_elapsed_seconds: newPartElapsed,
+          part_real_seconds: newPartRealSeconds,
+          part_regulation_minutes: newPartRegulationMinutes,
+          last_timer_start: null,
+          part_started_at_ms: null,
+        } as any)
+        .eq('id', matchId);
+      
+      // Save state
+      await saveCurrentState();
+      
+      toast.info(`${getPartLabel(currentPart, partsCount)} terminada: ${timer.getMinutes()}'`);
+    }
+  };
+
+  const handleStartNextPart = async () => {
+    const nextPart = currentPart + 1;
+    timer.resetTimer();
+    
+    setPhase('playing');
+    setCurrentPart(nextPart);
+    
+    const newPartElapsed = [...partElapsedSeconds, 0];
+    setPartElapsedSeconds(newPartElapsed);
+    
+    const now = new Date().toISOString();
+    const nowMs = Date.now();
+    
+    const currentStarters = lineups.filter(l => l.is_starter);
+    const currentBench = lineups.filter(l => !l.is_starter);
+    const onFieldPlayerIds = currentStarters.map(l => l.player_id);
+    const previousPartStarters = buildPartStartersByIndex();
+    const nextPartStarters = { ...previousPartStarters, [String(nextPart)]: onFieldPlayerIds };
+    const regulationPartMinutes = buildRegulationPartMinutes(Math.max(partsCount, nextPart));
+    regulationPartMinutes[nextPart - 1] = regulationPartMinutes[nextPart - 1] ?? partDurationMinutes;
+
+    const starterValidation = validateStarterCount(currentStarters.length, team?.sport_type);
+    if (!starterValidation.allowed) {
+      toast.error(starterValidation.reason || 'Escalação inválida');
+      return;
+    }
+    
+    await supabase
+      .from('matches')
+      .update({ 
+        match_phase: 'playing',
+        current_part: nextPart,
+        part_elapsed_seconds: newPartElapsed,
+          part_starter_ids: nextPartStarters,
+          second_half_starter_ids: nextPart === 2 ? onFieldPlayerIds : ((match as any)?.second_half_starter_ids ?? null),
+          second_half_starter_set_at: nextPart === 2 ? now : ((match as any)?.second_half_starter_set_at ?? null),
+          second_half_starter_set_by: nextPart === 2 ? user?.id : ((match as any)?.second_half_starter_set_by ?? null),
+          part_regulation_minutes: regulationPartMinutes,
+          parts_count: Math.max(partsCount, nextPart),
+        last_timer_start: now,
+        last_paused_seconds: 0,
+        part_started_at_ms: nowMs,
+          on_field_ids: onFieldPlayerIds,
+      })
+      .eq('id', matchId);
+
+    isGameActiveRef.current = true;
+    
+    timer.startTimer(0);
+    
+    // Save state immediately
+    // Re-open presence intervals for players on field at start of new part
+    presenceTracker.handleStartPart(onFieldPlayerIds, getCurrentMinute(), true);
+
+    // Save state immediately with updated intervals
+    const state: LiveMatchMinimalState = {
+      matchId,
+      phase: 'playing',
+      currentPart: nextPart,
+      partsCount,
+      partDurationMinutes,
+      matchType,
+      partStartedAtMs: nowMs,
+      partElapsedBeforePause: 0,
+      isTimerRunning: true,
+      starterIds: currentStarters.map(l => l.player_id),
+      benchIds: currentBench.map(l => l.player_id),
+      onFieldIds: onFieldPlayerIds,
+      partElapsedSeconds: newPartElapsed,
+      lastSavedAt: nowMs,
+      playerPresenceIntervals: presenceTracker.getIntervalsForPersistence(),
+    };
+    await liveState.saveLocal(state);
+    
+    startAutoSave();
+    toast.success(`${getPartLabel(nextPart, partsCount)} iniciada!`);
+  };
+
+  const finishMatch = async (finalPartElapsed: number[], finalPartRealSeconds?: number[], finalPartRegulationMinutes?: number[]) => {
+    const goalsFor = events.filter(e => e.event_type === 'goal' && !e.is_opponent).length;
+    const goalsAgainst = events.filter(e => 
+      (e.event_type === 'goal' && e.is_opponent) || 
+      (e.event_type === 'own_goal' && !e.is_opponent)
+    ).length;
+
+    try {
+      // Final recalculation using definitive part_elapsed_seconds
+      const { calculateMatchEndMinute } = await import('@/lib/match-playing-time');
+      const finalMatchEndMinute = calculateMatchEndMinute(finalPartElapsed);
+      await updateMinutesPlayed(finalMatchEndMinute);
+
+      await supabase
+        .from('matches')
+        .update({ 
+          status: 'completed',
+          match_phase: 'finished',
+          goals_for: goalsFor,
+          goals_against: goalsAgainst,
+          part_elapsed_seconds: finalPartElapsed,
+          part_real_seconds: finalPartRealSeconds ?? finalPartElapsed,
+          part_regulation_minutes: finalPartRegulationMinutes ?? buildRegulationPartMinutes(partsCount),
+          last_timer_start: null,
+          part_started_at_ms: null,
+          report_status: 'pending_completion',
+        })
+        .eq('id', matchId);
+
+      // Also update match_reports status
+      await supabase
+        .from('match_reports')
+        .update({ 
+          report_status: 'pending_completion',
+          ended_at: new Date().toISOString(),
+          updated_by: user?.id,
+        })
+        .eq('match_id', matchId);
+
+      // Clear active match
+      await clearActiveMatch();
+      
+      // Clear local state
+      await liveState.clearLocal();
+
+      setPhase('finished');
+      stopAutoSave();
+      isGameActiveRef.current = false;
+      
+      setMatch(prev => prev ? { 
+        ...prev, 
+        status: 'completed',
+        goals_for: goalsFor,
+        goals_against: goalsAgainst
+      } : null);
+      toast.success('Jogo terminado!');
+    } catch (error) {
+      console.error('[LiveMatch] Error finishing match:', error);
+      toast.error('Erro ao terminar jogo');
+    }
+  };
+
+  const updateMinutesPlayed = async (matchEndMinute: number) => {
+    // Use the interval-based engine for accurate playing time calculation
+      const { computeMatchPlayerStatsWithHalves } = await import('@/lib/match-playing-time');
+      const partStarters = buildPartStartersByIndex();
+      const firstPartStarters = new Set(partStarters['1'] ?? []);
+      const count = partsCount || ((match as any)?.parts_count as number | undefined) || 2;
+      const regulationPartMinutes = buildRegulationPartMinutes(count);
+      const realSeconds = [...(((match as any)?.part_real_seconds as number[] | null | undefined) ?? partElapsedSeconds)];
+      if (currentPart > 0 && timer.elapsedSeconds > 0) realSeconds[currentPart - 1] = timer.elapsedSeconds;
+      const realPartMinutes = realSeconds.length > 0
+        ? realSeconds.slice(0, count).map(s => Math.floor((s || 0) / 60))
+        : Array(count).fill(partDurationMinutes);
+    
+    const starterInfos = lineups.map(l => ({
+      player_id: l.player_id,
+        is_starter: firstPartStarters.has(l.player_id),
+    }));
+    
+    const secondHalfStarters = ((match as any)?.second_half_starter_ids as string[] | null) ?? null;
+    const playerStats = computeMatchPlayerStatsWithHalves(
+      starterInfos,
+      events as any,
+      matchEndMinute,
+      undefined,
+      team?.sport_type,
+      { secondHalfStarters, partStarters, realPartMinutes, regulationPartMinutes, numberOfParts: count },
+    );
+    
+    for (const stat of playerStats) {
+      const lineup = lineups.find(l => l.player_id === stat.playerId);
+      if (lineup) {
+        await supabase
+          .from('match_lineups')
+          .update({ minutes_played: stat.totalMinutes })
+          .eq('id', lineup.id);
+      }
+    }
+    fetchMatchData();
+  };
+
+  const handleEvent = async (eventType: string, playerId: string | null, isOpponent: boolean = false, assistPlayerId: string | null = null) => {
+    if (!user) return;
+    
+    const minute = getCurrentMinute();
+    const second = timer.getSeconds();
+
+    try {
+      const { data, error } = await supabase
+        .from('match_events')
+        .insert([{
+          match_id: matchId,
+          event_type: eventType as 'goal' | 'own_goal' | 'yellow_card' | 'red_card' | 'substitution_in' | 'substitution_out',
+          minute,
+          second,
+          player_id: playerId,
+          assist_player_id: assistPlayerId,
+          is_opponent: isOpponent,
+          owner_id: user.id
+        }])
+        .select(`
+          id, event_type, minute, second, player_id, assist_player_id, is_opponent, notes,
+          player:players!match_events_player_id_fkey(id, name, number, position),
+          assist_player:players!match_events_assist_player_id_fkey(id, name, number, position)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      const formattedEvent = {
+        ...data,
+        player: Array.isArray(data.player) ? data.player[0] : data.player,
+        assist_player: Array.isArray(data.assist_player) ? data.assist_player[0] : data.assist_player
+      } as MatchEvent;
+
+      setEvents(prev => [...prev, formattedEvent].sort((a, b) => a.minute - b.minute));
+      
+      const eventLabels: Record<string, string> = {
+        goal: 'Golo registado',
+        own_goal: 'Auto-golo registado',
+        yellow_card: 'Cartão amarelo registado',
+        red_card: 'Cartão vermelho registado',
+      };
+      
+      toast.success(eventLabels[eventType] || 'Evento registado');
+    } catch (error) {
+      console.error('[LiveMatch] Error recording event:', error);
+      toast.error('Erro ao registar evento');
+    }
+  };
+
+  const handleSubstitutionBatch = async (substitutions: PendingSubstitution[], _minute: number) => {
+    if (!user || substitutions.length === 0) return;
+
+    const minute = getCurrentMinute();
+    const second = timer.getSeconds();
+
+    try {
+      // Local pre-validation for immediate feedback (no DB write if it fails).
+      const lineupByPlayer = new Map(lineups.map(l => [l.player_id, l] as const));
+      const projectedOnField = new Set(lineups.filter(l => l.is_starter).map(l => l.player_id));
+      for (const sub of substitutions) {
+        if (!projectedOnField.has(sub.playerOutId)) {
+          toast.error('Substituição inválida: jogador que sai não está em campo.');
+          return;
+        }
+        if (projectedOnField.has(sub.playerInId)) {
+          toast.error('Substituição inválida: jogador que entra já está em campo.');
+          return;
+        }
+        if (!lineupByPlayer.has(sub.playerOutId) || !lineupByPlayer.has(sub.playerInId)) {
+          toast.error('Substituição inválida: jogador não pertence à convocatória.');
+          return;
+        }
+        projectedOnField.delete(sub.playerOutId);
+        projectedOnField.add(sub.playerInId);
+      }
+
+      // Atomic server-side commit (single transaction, deterministic ordering via second).
+      const { error: rpcError } = await supabase.rpc('commit_substitution_batch', {
+        p_match_id: matchId,
+        p_owner_id: user.id,
+        p_minute: minute,
+        p_second_base: second,
+        p_subs: substitutions.map(s => ({ out: s.playerOutId, in: s.playerInId })),
+      });
+      if (rpcError) throw rpcError;
+
+      // Update presence intervals atomically (single setState)
+      presenceTracker.handleSubstitutionBatch(
+        substitutions.map(s => ({ playerOutId: s.playerOutId, playerInId: s.playerInId })),
+        minute,
+      );
+
+      toast.success(
+        substitutions.length === 1
+          ? 'Substituição confirmada.'
+          : `${substitutions.length} substituições confirmadas.`,
+      );
+
+      await refreshLineupsAndEvents();
+      await saveCurrentState();
+    } catch (error) {
+      console.error('[LiveMatch] Error committing substitution batch:', error);
+      toast.error('Erro ao guardar substituições. Tente novamente.');
+    }
+  };
+
+  const refreshLineupsAndEvents = async () => {
+    try {
+      const [lineupsRes, eventsRes] = await Promise.all([
+        supabase.from('match_lineups')
+          .select(`
+            id, player_id, is_starter, minutes_played, position_played,
+            player:players(id, name, number, position)
+          `)
+          .eq('match_id', matchId),
+        supabase.from('match_events')
+          .select(`
+            id, event_type, minute, second, player_id, assist_player_id, is_opponent, notes,
+            player:players!match_events_player_id_fkey(id, name, number, position),
+            assist_player:players!match_events_assist_player_id_fkey(id, name, number, position)
+          `)
+          .eq('match_id', matchId)
+          .order('minute', { ascending: true })
+      ]);
+
+      if (lineupsRes.data) {
+        const formattedLineups = lineupsRes.data.map(l => ({
+          ...l,
+          player: Array.isArray(l.player) ? l.player[0] : l.player
+        })) as Lineup[];
+        setLineups(formattedLineups);
+      }
+
+      if (eventsRes.data) {
+        const formattedEvents = eventsRes.data.map(e => ({
+          ...e,
+          player: Array.isArray(e.player) ? e.player[0] : e.player,
+          assist_player: Array.isArray(e.assist_player) ? e.assist_player[0] : e.assist_player
+        })) as MatchEvent[];
+        setEvents(formattedEvents);
+      }
+    } catch (error) {
+      console.error('[LiveMatch] Error refreshing lineups and events:', error);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await supabase.from('match_events').delete().eq('id', eventId);
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      toast.success('Evento removido');
+    } catch (error) {
+      toast.error('Erro ao remover evento');
+    }
+  };
+
+  // =================== DISPLAY CALCULATIONS ===================
+
+  const displayMinute = calcDisplayMinute(partDurationMinutes, partElapsedSeconds, currentPart, timer.elapsedSeconds);
+  const goalsFor = events.filter(e => e.event_type === 'goal' && !e.is_opponent).length;
+  const goalsAgainst = events.filter(e => 
+    (e.event_type === 'goal' && e.is_opponent) || 
+    (e.event_type === 'own_goal' && !e.is_opponent)
+  ).length;
+  const starters = lineups.filter(l => l.is_starter);
+  const substitutes = lineups.filter(l => !l.is_starter);
+  const isOvertime = timer.elapsedSeconds > partDurationMinutes * 60;
+  const sportRules = getSportFormatRules(team?.sport_type);
+
+  // Use presence intervals for accurate real-time playing minutes
+  const playerPlayTimes = presenceTracker.playerPlayingMinutes;
+
+  // Compute consistency issues for conflict display
+  const matchEndEstimate = partElapsedSeconds.reduce((s, sec) => s + Math.floor(sec / 60), 0) + (phase === 'playing' ? timer.getMinutes() : 0);
+  const starterInfosForCheck = lineups.map(l => ({ player_id: l.player_id, is_starter: l.is_starter }));
+  const eventsForCheck = events.map(e => ({ event_type: e.event_type, minute: e.minute, player_id: e.player_id, is_opponent: e.is_opponent }));
+  const consistencyIssues = phase !== 'setup' ? checkMatchConsistency(starterInfosForCheck, eventsForCheck, matchEndEstimate || 90, team?.sport_type) : [];
+
+  // =================== RENDER ===================
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <div className="animate-pulse">A carregar...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (phase === 'finished' && match) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={onExit}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+          <Badge variant="outline" className="text-lg px-4 py-2">
+            Terminado
+          </Badge>
+        </div>
+        
+        <MatchReport 
+          match={match}
+          lineups={lineups}
+          events={events}
+          teamName={team?.name}
+          partElapsedSeconds={partElapsedSeconds}
+          halfDuration={partDurationMinutes}
+          partRegulationMinutes={(match as any)?.part_regulation_minutes ?? null}
+          partStartersByIndex={(match as any)?.part_starter_ids ?? null}
+          partsCount={(match as any)?.parts_count ?? partsCount}
+          sportType={team?.sport_type}
+          ruleSnapshot={ruleSnapshot}
+          secondHalfStarterIds={(match as any)?.second_half_starter_ids ?? null}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${phase === 'playing' && isMobile ? 'pb-20' : ''}`}>
+      {/* Mobile context bar - sticky top */}
+      {phase !== 'setup' && phase !== 'finished' && (
+        <MatchContextBar
+          opponentName={match?.opponent_name || ''}
+          goalsFor={goalsFor}
+          goalsAgainst={goalsAgainst}
+          currentPeriod={phase === 'playing' ? getPartLabel(currentPart, partsCount) : phase === 'interval' ? 'Intervalo' : undefined}
+          displayMinute={phase === 'playing' ? displayMinute : undefined}
+          modality={team?.sport_type || undefined}
+          ageGroup={team?.category || undefined}
+          isOnline={isOnline}
+          syncStatus={syncStatus}
+          compact={isMobile}
+        />
+      )}
+
+      <div className="p-4 md:p-6 space-y-4">
+        {/* Header - only in setup or desktop */}
+        {(phase === 'setup' || !isMobile) && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <Button variant="outline" size={isMobile ? 'sm' : 'default'} onClick={onExit}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {ruleSnapshot && (
+                <MatchRulesPanel snapshot={ruleSnapshot} compact />
+              )}
+              {!ruleSnapshot && (
+                <Badge variant="secondary" className="text-sm">
+                  {team?.category || 'Escalão'} ({partsCount}x{partDurationMinutes}')
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-lg px-4 py-2">
+                {phase === 'setup' && 'Preparação'}
+                {phase === 'playing' && getPartLabel(currentPart, partsCount)}
+                {phase === 'interval' && 'Intervalo'}
+              </Badge>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Scoreboard - hidden on mobile playing (context bar shows it) */}
+        {phase !== 'setup' && !isMobile && (
+          <Card className={`border-primary/20 ${isOvertime ? 'bg-destructive/5 border-destructive/30' : 'bg-primary/5'}`}>
+            <CardContent className="py-6">
+              <div className="flex items-center justify-center gap-8">
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground mb-1">
+                    {match?.is_home ? 'Casa' : 'Visitante'}
+                  </div>
+                  <div className="text-4xl font-bold">{goalsFor}</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-4xl font-mono font-bold ${isOvertime ? 'text-destructive' : 'text-primary'}`}>
+                    {displayMinute}'
+                  </div>
+                  <div className="text-lg text-muted-foreground">
+                    {timer.formatTime(timer.elapsedSeconds)}
+                  </div>
+                  {isOvertime && (
+                    <div className="text-xs text-destructive mt-1 flex items-center justify-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Tempo extra
+                    </div>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground mb-1">
+                    {match?.opponent_name}
+                  </div>
+                  <div className="text-4xl font-bold">{goalsAgainst}</div>
+                </div>
+              </div>
+
+              {/* Desktop Timer Controls */}
+              {phase === 'playing' && (
+                <div className="flex justify-center gap-2 mt-4 flex-wrap">
+                  {!timer.isRunning ? (
+                    <Button onClick={() => timer.startTimer()} size="sm">
+                      <Play className="w-4 h-4 mr-1" />
+                      Continuar
+                    </Button>
+                  ) : (
+                    <Button onClick={() => timer.pauseTimer()} variant="outline" size="sm">
+                      <Pause className="w-4 h-4 mr-1" />
+                      Pausar
+                    </Button>
+                  )}
+                  {!isLocked && (
+                    <Button onClick={() => timer.resetTimer()} variant="outline" size="sm">
+                      <RotateCcw className="w-4 h-4 mr-1" />
+                      Reiniciar
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={handleEndPart} 
+                    variant={currentPart >= partsCount ? 'destructive' : 'secondary'} 
+                    size="sm"
+                  >
+                    {currentPart >= partsCount ? (
+                      <Square className="w-4 h-4 mr-1" />
+                    ) : (
+                      <Clock className="w-4 h-4 mr-1" />
+                    )}
+                    {getEndPartLabel(currentPart, partsCount)}
+                  </Button>
+                </div>
+              )}
+
+              {phase === 'interval' && (
+                <div className="flex justify-center gap-2 mt-4">
+                  <Button onClick={handleStartNextPart} size="sm">
+                    <Play className="w-4 h-4 mr-1" />
+                    {getStartPartLabel(currentPart + 1, partsCount)}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Setup Phase */}
+        {phase === 'setup' && (
+          <LineupSelector
+            matchId={matchId}
+            teamId={teamId}
+            lineups={lineups}
+            onLineupsChange={fetchMatchData}
+            onStartMatch={handleStartMatch}
+            sportType={team?.sport_type}
+          />
+        )}
+
+        {/* Interval Phase */}
+        {phase === 'interval' && (
+          <>
+            {isMobile && (
+              <div className="flex justify-center py-3">
+                <Button onClick={handleStartNextPart} size="lg" className="w-full max-w-sm h-14 text-lg">
+                  <Play className="w-5 h-5 mr-2" />
+                  {getStartPartLabel(currentPart + 1, partsCount)}
+                </Button>
+              </div>
+            )}
+            <LineupSelector
+              matchId={matchId}
+              teamId={teamId}
+              lineups={lineups}
+              onLineupsChange={fetchMatchData}
+              onStartMatch={handleStartNextPart}
+              isHalftime
+              sportType={team?.sport_type}
+            />
+          </>
+        )}
+
+        {/* Playing Phase - Mobile-first layout */}
+        {phase === 'playing' && (
+          <div className="space-y-3">
+            {/* Mobile: compact scoreboard with timer */}
+            {isMobile && (
+              <div className={`text-center py-2 rounded-lg ${isOvertime ? 'bg-destructive/10' : 'bg-primary/5'}`}>
+                <div className="text-lg text-muted-foreground font-mono">
+                  {timer.formatTime(timer.elapsedSeconds)}
+                </div>
+                {isOvertime && (
+                  <div className="text-xs text-destructive flex items-center justify-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    Tempo extra
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Players on Field */}
+            <Card>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="flex items-center justify-between text-base">
+                  <div className="flex items-center gap-2">
+                    <span>Em Campo</span>
+                    <FieldPlayerCounter current={starters.length} max={sportRules.playersOnField} />
+                  </div>
+                  {!isMobile && (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setEditLineupOpen(true)}>
+                        <Pencil className="w-4 h-4 mr-1" />
+                        Editar
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setSubstitutionOpen(true)}>
+                        <UserMinus className="w-4 h-4 mr-1" />
+                        Substituir
+                      </Button>
+                    </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 space-y-1.5">
+                {starters.map(lineup => {
+                  const playTime = playerPlayTimes.get(lineup.player_id) || 0;
+                  return (
+                    <div 
+                      key={lineup.id}
+                      className="flex items-center justify-between p-2.5 bg-secondary/30 rounded-lg"
+                      onClick={() => {
+                        if (isMobile) {
+                          setEventSheetDefaults({ playerId: lineup.player_id });
+                          setEventSheetOpen(true);
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="outline" className="min-w-[32px] justify-center text-xs shrink-0">
+                          {lineup.player.number || '-'}
+                        </Badge>
+                        <div className="min-w-0">
+                          <span className="font-medium text-sm truncate block">{lineup.player.name}</span>
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {playTime}' {lineup.player.position && `• ${lineup.player.position}`}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Desktop quick actions */}
+                      {!isMobile && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-green-100"
+                            onClick={(e) => { e.stopPropagation(); handleEvent('goal', lineup.player_id); }}
+                            title="Golo"
+                          >
+                            <span className="text-lg">⚽</span>
+                          </Button>
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-yellow-100"
+                            onClick={(e) => { e.stopPropagation(); handleEvent('yellow_card', lineup.player_id); }}
+                            title="Cartão Amarelo"
+                          >
+                            <div className="w-4 h-5 bg-yellow-400 rounded-sm shadow-sm border border-yellow-500" />
+                          </Button>
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-red-100"
+                            onClick={(e) => { e.stopPropagation(); handleEvent('red_card', lineup.player_id); }}
+                            title="Cartão Vermelho"
+                          >
+                            <div className="w-4 h-5 bg-red-600 rounded-sm shadow-sm border border-red-700" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {!isMobile && (
+                  <>
+                    <Separator className="my-3" />
+                    <Button variant="outline" className="w-full" onClick={() => handleEvent('goal', null, true)}>
+                      <span className="text-lg mr-2">⚽</span>
+                      Golo do Adversário
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Substitutes */}
+            <Card>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-base">Suplentes ({substitutes.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 space-y-1.5">
+                {substitutes.map(lineup => {
+                  const playTime = playerPlayTimes.get(lineup.player_id) || 0;
+                  return (
+                    <div key={lineup.id} className="flex items-center justify-between p-2.5 bg-secondary/20 rounded-lg">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="secondary" className="min-w-[32px] justify-center text-xs shrink-0">
+                          {lineup.player.number || '-'}
+                        </Badge>
+                        <div className="min-w-0">
+                          <span className="text-sm truncate block">{lineup.player.name}</span>
+                          {playTime > 0 && (
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {playTime}' jogados
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {substitutes.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Sem suplentes disponíveis
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Interval Info - Mobile */}
+        {phase === 'interval' && isMobile && (
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="py-3 text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Clock className="w-5 h-5 text-muted-foreground" />
+                <span className="font-semibold">Intervalo</span>
+                <span className="text-muted-foreground">
+                  • {getPartLabel(currentPart, partsCount)}: {Math.floor((partElapsedSeconds[currentPart - 1] || 0) / 60)}'
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Events Timeline */}
+        {phase !== 'setup' && (
+          <MatchEvents 
+            events={events} 
+            onDeleteEvent={handleDeleteEvent}
+            canEdit={phase !== 'finished'}
+          />
+        )}
+
+        {/* Conflict Alerts */}
+        {phase !== 'setup' && consistencyIssues.length > 0 && (
+          <ConflictAlertsPanel matchId={matchId} localIssues={consistencyIssues} />
+        )}
+      </div>
+
+      {/* Mobile Bottom Action Bar */}
+      {phase === 'playing' && isMobile && (
+        <LiveActionBar
+          onGoal={() => {
+            setEventSheetDefaults({ type: 'goal' });
+            setEventSheetOpen(true);
+          }}
+          onOpponentGoal={() => handleEvent('goal', null, true)}
+          onSubstitution={() => setSubstitutionOpen(true)}
+          onYellowCard={() => {
+            setEventSheetDefaults({ type: 'yellow_card' });
+            setEventSheetOpen(true);
+          }}
+          onRedCard={() => {
+            setEventSheetDefaults({ type: 'red_card' });
+            setEventSheetOpen(true);
+          }}
+          onEndPart={handleEndPart}
+          onPauseResume={() => timer.isRunning ? timer.pauseTimer() : timer.startTimer()}
+          isTimerRunning={timer.isRunning}
+          isLastPart={currentPart >= partsCount}
+          endPartLabel={getEndPartLabel(currentPart, partsCount)}
+        />
+      )}
+
+      {/* Substitution Batch Dialog (mobile + desktop) */}
+      <SubstitutionBatchDialog
+        open={substitutionOpen}
+        onOpenChange={setSubstitutionOpen}
+        matchId={matchId}
+        starters={starters}
+        substitutes={substitutes}
+        defaultMinute={getCurrentMinute()}
+        editableMinute={false}
+        maxOnField={sportRules.playersOnField}
+        reentryAllowed={sportRules.reentryAllowed}
+        events={events as any}
+        sportType={team?.sport_type}
+        playerPlayTimes={playerPlayTimes}
+        onCommit={handleSubstitutionBatch}
+      />
+
+      {/* Event Sheet (Mobile) */}
+      <EventSheet
+        open={eventSheetOpen}
+        onOpenChange={setEventSheetOpen}
+        players={lineups.map(l => l.player)}
+        currentMinute={getCurrentMinute()}
+        defaultEventType={eventSheetDefaults.type}
+        defaultPlayerId={eventSheetDefaults.playerId}
+        onSubmit={(evt) => {
+          handleEvent(evt.event_type, evt.player_id, evt.is_opponent, evt.assist_player_id);
+        }}
+      />
+
+      {/* Edit Lineup Dialog */}
+      {editLineupOpen && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-4 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-start justify-center p-4">
+              <div className="w-full max-w-4xl bg-background rounded-lg border shadow-lg">
+                <div className="flex items-center justify-between p-4 border-b">
+                  <h2 className="text-lg font-semibold">Editar Equipa</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setEditLineupOpen(false)}>
+                    Fechar
+                  </Button>
+                </div>
+                <div className="p-4">
+                  <LineupSelector
+                    matchId={matchId}
+                    teamId={teamId}
+                    lineups={lineups}
+                    onLineupsChange={fetchMatchData}
+                    onStartMatch={() => setEditLineupOpen(false)}
+                    isEditing
+                    sportType={team?.sport_type}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Match Config Modal */}
+      <MatchConfigModal
+        open={configModalOpen}
+        onOpenChange={setConfigModalOpen}
+        matchType={matchType}
+        defaultPartDuration={categoryDuration}
+        savedPartDuration={match?.part_duration_minutes}
+        savedPartsCount={match?.parts_count}
+        onConfirm={handleStartMatchWithConfig}
+      />
+    </div>
+  );
+}

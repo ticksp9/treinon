@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.prevent_season_delete_with_data() FROM PUBLIC, anon, authenticated;

@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.3",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://cxeoebdqbbckpcncpeqm.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "tacticaflow-mcp",
+      "version": "0.1.0",
+      "title": "TacticaFlow MCP"
+    },
+    "tools": [
+      {
+        "name": "list_teams",
+        "title": "Listar equipas",
+        "description": "Lista as equipas acessíveis ao utilizador autenticado (nome, escalão, modalidade, época).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Número máximo de equipas a devolver (por omissão 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_players",
+        "title": "Listar jogadores",
+        "description": "Lista jogadores acessíveis ao utilizador, opcionalmente filtrados por equipa. Não devolve dados pessoais sensíveis de menores.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "team_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da equipa para filtrar."
+            },
+            "only_active": {
+              "type": "boolean",
+              "description": "Se verdadeiro, devolve apenas jogadores ativos."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Máximo de jogadores (por omissão 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_matches",
+        "title": "Listar jogos",
+        "description": "Lista jogos (passados ou futuros) acessíveis ao utilizador, com resultado e estado do relatório.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from_date": {
+              "type": "string",
+              "description": "Data mínima ISO (YYYY-MM-DD)."
+            },
+            "to_date": {
+              "type": "string",
+              "description": "Data máxima ISO (YYYY-MM-DD)."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Máximo de jogos (por omissão 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_trainings",
+        "title": "Listar treinos",
+        "description": "Lista sessões de treino acessíveis ao utilizador, opcionalmente filtradas por equipa e intervalo de datas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "team_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da equipa para filtrar."
+            },
+            "from_date": {
+              "type": "string",
+              "description": "Data mínima ISO (YYYY-MM-DD)."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Máximo de sessões (por omissão 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_match_report",
+        "title": "Obter relatório de jogo",
+        "description": "Devolve os detalhes de um jogo específico, incluindo titulares, banco, partes e minutos configurados.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "match_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID do jogo."
+            }
+          },
+          "required": [
+            "match_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
