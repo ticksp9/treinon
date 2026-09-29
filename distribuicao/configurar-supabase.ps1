@@ -22,35 +22,24 @@ function Sb {
 }
 
 Write-Host "`n[1/5] Acesso à conta Supabase da TreinON" -ForegroundColor Cyan
-# The access token lives only in this terminal session, so another Supabase
-# account already logged in on this PC (another app) is not touched.
-Write-Host "Precisa de um Access Token PESSOAL (começa por sbp_, 44 caracteres):"
-Write-Host "  https://supabase.com/dashboard/account/tokens  ->  Generate new token"
-Write-Host "  (NÃO serve a anon key, service_role nem sb_secret das definições do projeto)"
-for ($try = 1; -not ($env:SUPABASE_ACCESS_TOKEN -match '^sbp_[0-9a-f]{40}$'); $try++) {
-  if ($try -gt 3) { throw "Chave inválida 3 vezes. Gere um Access Token novo e volte a correr o script." }
-  Write-Host "`nCole o token aqui (não aparece no ecrã) e carregue Enter:"
-  $sec = Read-Host -AsSecureString
-  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
-  $tok = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim()
-  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
-  if ($tok -match '^sbp_[0-9a-f]{40}$') {
-    $env:SUPABASE_ACCESS_TOKEN = $tok
-  } else {
-    $kind = if ($tok.StartsWith('eyJ')) { 'uma chave de API do projeto (anon/service_role)' }
-            elseif ($tok.StartsWith('sb_')) { 'uma chave de API do projeto (sb_publishable/sb_secret)' }
-            elseif ($tok.Length -eq 0) { 'vazio' }
-            else { "texto com $($tok.Length) caracteres" }
-    Write-Host "Isso não é um Access Token pessoal (parece $kind). Tente de novo." -ForegroundColor Yellow
-  }
-}
+# Tokens are only set for this process (another Supabase account on this PC is not
+# touched) and, after the first time, read from the encrypted store (DPAPI).
+. (Join-Path $PSScriptRoot "_segredos.ps1")
+$env:SUPABASE_ACCESS_TOKEN = Get-TreinonToken 'supabase' `
+  "Access Token PESSOAL da Supabase (sbp_..., https://supabase.com/dashboard/account/tokens):" `
+  { param($x) $x -match '^sbp_[0-9a-f]{40}$' }
 $ErrorActionPreference = "Continue"   # the CLI writes progress to stderr
 $projects = (& npx -y supabase@latest projects list 2>&1) | Out-String
 $ErrorActionPreference = "Stop"
 if ($projects -notmatch $ProjectRef) {
-  throw "Esta chave não dá acesso ao projeto $ProjectRef. Confirme que criou a chave com a conta da TreinON."
+  Remove-TreinonSecret 'supabase'
+  throw "O token não dá acesso ao projeto $ProjectRef (expirado ou de outra conta; foi apagado). Volte a correr e cole um novo."
 }
 Write-Host "OK: projeto $ProjectRef encontrado nesta conta." -ForegroundColor Green
+# Database password (asked by 'link' / 'db push'); stored encrypted as well
+$env:SUPABASE_DB_PASSWORD = Get-TreinonToken 'supabase-db' `
+  "Palavra-passe da BASE DE DADOS (a que escolheu ao criar o projeto na Supabase):" `
+  { param($x) $x.Length -ge 6 }
 
 Write-Host "`n[2/5] Ligar ao projeto $ProjectRef ..." -ForegroundColor Cyan
 $cfgPath = Join-Path (Get-Location) "supabase\config.toml"
@@ -59,7 +48,7 @@ $cfg = [IO.File]::ReadAllText($cfgPath) -replace 'project_id = ".*"', "project_i
 Sb link --project-ref $ProjectRef
 
 Write-Host "`n[3/5] Criar a base de dados (migrações)..." -ForegroundColor Cyan
-Sb db push
+Sb db push --yes
 
 Write-Host "`n[4/5] Publicar funções do servidor..." -ForegroundColor Cyan
 $functions = @("auth-lookup", "verify-pin", "manage-invites", "send-invite", "billing-engine",

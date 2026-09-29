@@ -43,6 +43,7 @@ import {
   type MatchEventForCalc,
   type StarterInfo,
 } from '@/lib/match-playing-time';
+import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { getMatchRuleSnapshot, type MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
@@ -221,13 +222,21 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     if (manual2ndHalfStarters) mergedPartStarters['2'] = Array.from(manual2ndHalfStarters);
     const secondHalfIds = mergedPartStarters['2'] ?? null;
     const regulationPartMinutes = partRegulationMinutes.length === partsCount ? partRegulationMinutes : Array(partsCount).fill(partDuration);
-    return computeMatchPlayerStatsWithHalves(
-      starterInfos,
-      events as MatchEventForCalc[],
-      totalMinutes,
-      partMinutes,
-      sportType,
-      { secondHalfStarters: secondHalfIds, partStarters: mergedPartStarters, regulationPartMinutes, numberOfParts: partsCount },
+    return applyPreciseMinutes(
+      computeMatchPlayerStatsWithHalves(
+        starterInfos,
+        events as MatchEventForCalc[],
+        totalMinutes,
+        partMinutes,
+        sportType,
+        { secondHalfStarters: secondHalfIds, partStarters: mergedPartStarters, regulationPartMinutes, numberOfParts: partsCount },
+      ),
+      {
+        partSeconds: partElapsed,
+        partStarters: mergedPartStarters,
+        firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
+        events: events as MatchEventForCalc[],
+      },
     );
   }, [lineups, events, partElapsed, partDuration, sportType, manual2ndHalfStarters, partStartersByIndex, partRegulationMinutes, partsCount]);
 

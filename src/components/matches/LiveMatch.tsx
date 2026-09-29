@@ -12,6 +12,7 @@ import {
   Clock, Pencil, AlertTriangle, Share2
 } from 'lucide-react';
 import { shareText } from '@/lib/share';
+import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -20,7 +21,7 @@ import { LiveActionBar } from './LiveActionBar';
 import { MatchContextBar } from './MatchContextBar';
 import { EventSheet } from './EventSheet';
 import { MatchReport } from './MatchReport';
-import { MatchConfigModal } from './MatchConfigModal';
+import { MatchConfigModal, type MatchFormatConfig } from './MatchConfigModal';
 import { getHalfDurationForCategory } from '@/lib/constants';
 import { useMatchTimer } from '@/hooks/useMatchTimer';
 import { useActiveMatch } from '@/hooks/useActiveMatch';
@@ -110,6 +111,8 @@ interface Team {
   name: string;
   category: string | null;
   sport_type?: string | null;
+  /** Format the coach set for the team, e.g. { parts: [15, 15, 30] } */
+  match_format?: { parts?: number[] } | null;
 }
 
 type MatchPhase = 'setup' | 'playing' | 'interval' | 'finished';
@@ -150,9 +153,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const { setActiveMatchId, clearActiveMatch } = useActiveMatch();
   const liveState = useLiveMatchState(matchId);
 
+  // Parts can have different lengths (e.g. 15 + 15 + 30): alerts use the current part
+  const currentPartRegulation =
+    ((match as any)?.part_regulation_minutes as number[] | null | undefined)?.[Math.max(0, currentPart - 1)] ||
+    partDurationMinutes;
+
   // Timer hook - must be before presenceTracker
   const timer = useMatchTimer({
-    partDurationMinutes,
+    partDurationMinutes: currentPartRegulation,
     onTimeAlert: (type) => {
       console.log('[LiveMatch] Time alert:', type);
     },
@@ -460,7 +468,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     try {
       const [matchRes, teamRes, lineupsRes, eventsRes] = await Promise.all([
         supabase.from('matches').select('*').eq('id', matchId).single(),
-        supabase.from('teams').select('id, name, category, sport_type').eq('id', teamId).single(),
+        // '*' so an older database without match_format still works
+        supabase.from('teams').select('*').eq('id', teamId).single(),
         supabase.from('match_lineups')
           .select(`
             id, player_id, is_starter, minutes_played, position_played,
@@ -500,7 +509,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       }
 
       if (teamRes.data) {
-        setTeam(teamRes.data);
+        setTeam(teamRes.data as unknown as Team);
       }
 
       if (lineupsRes.data) {
@@ -541,18 +550,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   // =================== MATCH CONTROL HANDLERS ===================
 
-  const getCurrentMinute = useCallback(() => {
+  /**
+   * Match clock in seconds: real time of the finished parts + exact elapsed of the
+   * current one. Every event is stamped with it (minute = clock / 60, second = clock % 60)
+   * so playing time can be summed to the second, however many times a player re-enters.
+   */
+  const getClockSeconds = useCallback(() => {
     if (currentPart === 0) return 0;
-    let totalMinutes = 0;
-    for (let i = 0; i < currentPart - 1; i++) {
-      // Use actual elapsed time for completed parts, not configured duration
-      const elapsedSec = partElapsedSeconds[i] || 0;
-      totalMinutes += Math.floor(elapsedSec / 60);
-    }
     // Exact wall-clock time (the rendered tick can lag after the phone sleeps)
-    totalMinutes += Math.floor(timer.getExactElapsedSeconds() / 60);
-    return totalMinutes;
+    return matchClockSeconds(partElapsedSeconds, currentPart, timer.getExactElapsedSeconds());
   }, [currentPart, partElapsedSeconds, timer]);
+
+  const getCurrentMinute = useCallback(() => Math.floor(getClockSeconds() / 60), [getClockSeconds]);
 
   /**
    * Persist a change to the match row. The local copy is updated first so later
@@ -613,8 +622,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     setConfigModalOpen(true);
   };
 
-  const handleStartMatchWithConfig = async (config: { partsCount: number; partDurationMinutes: number }) => {
+  const handleStartMatchWithConfig = async (config: MatchFormatConfig) => {
     try {
+      // Remember the format for this team (e.g. 15 + 15 + 30) so the next match starts with it
+      if (config.saveAsTeamFormat && team) {
+        const format = { parts: config.partMinutes };
+        setTeam(prev => (prev ? { ...prev, match_format: format } : prev));
+        supabase.from('teams').update({ match_format: format } as any).eq('id', team.id)
+          .then(({ error }) => { if (error) console.warn('[LiveMatch] Could not save team format:', error.message); });
+      }
       const now = new Date().toISOString();
       const nowMs = Date.now();
       
@@ -637,7 +653,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       
       // Update match in database
       const initialPartStarters = { '1': starterPlayerIds };
-      const initialRegulationMinutes = Array(config.partsCount).fill(config.partDurationMinutes);
+      const initialRegulationMinutes = config.partMinutes; // parts may differ, e.g. [15, 15, 30]
       await updateMatchRecord({ 
           status: 'in_progress',
           match_phase: 'playing',
@@ -715,8 +731,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           ? buildSnapshotFromProfile(profile)
           : buildSnapshotFromFallback(team?.sport_type || 'football_7', config.partDurationMinutes, config.partsCount);
         // Apply config overrides
-        snapshot.period_1_minutes = config.partDurationMinutes;
-        snapshot.period_2_minutes = config.partDurationMinutes;
+        snapshot.period_1_minutes = config.partMinutes[0];
+        snapshot.period_2_minutes = config.partMinutes[1] ?? config.partMinutes[0];
         snapshot.period_count = config.partsCount;
         await saveMatchRuleSnapshot(matchId, snapshot, profile?.id);
         setRuleSnapshot(snapshot);
@@ -904,47 +920,30 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     }
   };
 
-  const updateMinutesPlayed = async (matchEndMinute: number) => {
-    // Use the interval-based engine for accurate playing time calculation
-      const { computeMatchPlayerStatsWithHalves } = await import('@/lib/match-playing-time');
-      const partStarters = buildPartStartersByIndex();
-      const firstPartStarters = new Set(partStarters['1'] ?? []);
-      const count = partsCount || ((match as any)?.parts_count as number | undefined) || 2;
-      const regulationPartMinutes = buildRegulationPartMinutes(count);
-      const realSeconds = [...(((match as any)?.part_real_seconds as number[] | null | undefined) ?? partElapsedSeconds)];
-      const exactElapsed = timer.getExactElapsedSeconds();
-      if (currentPart > 0 && exactElapsed > 0) realSeconds[currentPart - 1] = exactElapsed;
-      const realPartMinutes = realSeconds.length > 0
-        ? realSeconds.slice(0, count).map(s => Math.floor((s || 0) / 60))
-        : Array(count).fill(partDurationMinutes);
-    
-    const starterInfos = lineups.map(l => ({
-      player_id: l.player_id,
-        is_starter: firstPartStarters.has(l.player_id),
-    }));
-    
-    const secondHalfStarters = ((match as any)?.second_half_starter_ids as string[] | null) ?? null;
-    const playerStats = computeMatchPlayerStatsWithHalves(
-      starterInfos,
-      events as any,
-      matchEndMinute,
-      undefined,
-      team?.sport_type,
-      { secondHalfStarters, partStarters, realPartMinutes, regulationPartMinutes, numberOfParts: count },
-    );
-    
-    for (const stat of playerStats) {
-      const lineup = lineups.find(l => l.player_id === stat.playerId);
-      if (lineup) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const updateMinutesPlayed = async (_matchEndMinute: number) => {
+    // Same seconds-precise calculation as the live view, rounded once per player.
+    const realSeconds = [...(((match as any)?.part_real_seconds as number[] | null | undefined) ?? partElapsedSeconds)];
+    const exactElapsed = timer.getExactElapsedSeconds();
+    if (currentPart > 0) realSeconds[currentPart - 1] = exactElapsed;
+    const seconds = computePlayingSeconds({
+      partSeconds: realSeconds.slice(0, Math.max(1, currentPart)),
+      partStarters: buildPartStartersByIndex(),
+      events,
+    });
+
+    for (const lineup of lineups) {
+      const minutes = secondsToMinutes(seconds.get(lineup.player_id)?.totalSeconds ?? 0);
+      {
         try {
           const { error } = await supabase
             .from('match_lineups')
-            .update({ minutes_played: stat.totalMinutes })
+            .update({ minutes_played: minutes })
             .eq('id', lineup.id);
           if (error) throw error;
         } catch (error) {
           if (isNetworkError(error)) {
-            await addPendingOperation('match_lineups', 'update', { id: lineup.id, minutes_played: stat.totalMinutes });
+            await addPendingOperation('match_lineups', 'update', { id: lineup.id, minutes_played: minutes });
           } else {
             console.error('[LiveMatch] Error saving minutes:', error);
           }
@@ -957,8 +956,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const handleEvent = async (eventType: string, playerId: string | null, isOpponent: boolean = false, assistPlayerId: string | null = null) => {
     if (!user) return;
     
-    const minute = getCurrentMinute();
-    const second = timer.getExactElapsedSeconds() % 60;
+    const clock = getClockSeconds();
+    const minute = Math.floor(clock / 60);
+    const second = clock % 60;
     // Client-generated id so the same event can be queued offline and synced later
     const eventId = crypto.randomUUID();
     const row = {
@@ -1035,8 +1035,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const handleSubstitutionBatch = async (substitutions: PendingSubstitution[], _minute: number) => {
     if (!user || substitutions.length === 0) return;
 
-    const minute = getCurrentMinute();
-    const second = timer.getExactElapsedSeconds() % 60;
+    const clock = getClockSeconds();
+    const minute = Math.floor(clock / 60);
+    const second = clock % 60;
 
     try {
       // Local pre-validation for immediate feedback (no DB write if it fails).
@@ -1182,19 +1183,34 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   // =================== DISPLAY CALCULATIONS ===================
 
-  const displayMinute = calcDisplayMinute(partDurationMinutes, partElapsedSeconds, currentPart, timer.elapsedSeconds);
+  const regulationByPart = buildRegulationPartMinutes(partsCount);
+  const displayMinute =
+    regulationByPart.slice(0, Math.max(0, currentPart - 1)).reduce((s, m) => s + (m || 0), 0) +
+    Math.floor(timer.elapsedSeconds / 60);
   const goalsFor = events.filter(e => e.event_type === 'goal' && !e.is_opponent).length;
   const goalsAgainst = events.filter(e => 
     (e.event_type === 'goal' && e.is_opponent) || 
     (e.event_type === 'own_goal' && !e.is_opponent)
   ).length;
-  const starters = lineups.filter(l => l.is_starter);
-  const substitutes = lineups.filter(l => !l.is_starter);
-  const isOvertime = timer.elapsedSeconds > partDurationMinutes * 60;
+  const isOvertime = timer.elapsedSeconds > currentPartRegulation * 60;
   const sportRules = getSportFormatRules(team?.sport_type);
 
-  // Use presence intervals for accurate real-time playing minutes
-  const playerPlayTimes = presenceTracker.playerPlayingMinutes;
+  // Playing time to the second, from the same calculation used for the final minutes
+  const liveSeconds = currentPart > 0
+    ? computePlayingSeconds({
+        partSeconds: [...partElapsedSeconds.slice(0, currentPart - 1), timer.elapsedSeconds],
+        partStarters: buildPartStartersByIndex(),
+        events,
+      })
+    : new Map();
+  const playerSeconds = (id: string) => liveSeconds.get(id)?.totalSeconds ?? 0;
+  const playerPlayTimes = new Map(lineups.map(l => [l.player_id, secondsToMinutes(playerSeconds(l.player_id))]));
+
+  const starters = lineups.filter(l => l.is_starter);
+  // Bench sorted by who has played least: helps give every child fair minutes
+  const substitutes = lineups
+    .filter(l => !l.is_starter)
+    .sort((a, b) => playerSeconds(a.player_id) - playerSeconds(b.player_id));
 
   // Compute consistency issues for conflict display
   const matchEndEstimate = partElapsedSeconds.reduce((s, sec) => s + Math.floor(sec / 60), 0) + (phase === 'playing' ? timer.getMinutes() : 0);
@@ -1483,7 +1499,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               </CardHeader>
               <CardContent className="px-3 pb-3 space-y-1.5">
                 {starters.map(lineup => {
-                  const playTime = playerPlayTimes.get(lineup.player_id) || 0;
+                  const playTime = formatClock(playerSeconds(lineup.player_id));
                   return (
                     <div 
                       key={lineup.id}
@@ -1503,7 +1519,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           <span className="font-medium text-sm truncate block">{lineup.player.name}</span>
                           <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {playTime}' {lineup.player.position && `• ${lineup.player.position}`}
+                            <span className="font-mono tabular-nums">{playTime}</span> {lineup.player.position && `• ${lineup.player.position}`}
                           </span>
                         </div>
                       </div>
@@ -1558,8 +1574,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 <CardTitle className="text-base">Suplentes ({substitutes.length})</CardTitle>
               </CardHeader>
               <CardContent className="px-3 pb-3 space-y-1.5">
-                {substitutes.map(lineup => {
-                  const playTime = playerPlayTimes.get(lineup.player_id) || 0;
+                {substitutes.map((lineup, idx) => {
+                  const secs = playerSeconds(lineup.player_id);
+                  const playTime = formatClock(secs);
                   return (
                     <div key={lineup.id} className="flex items-center justify-between p-2.5 bg-secondary/20 rounded-lg">
                       <div className="flex items-center gap-2 min-w-0">
@@ -1568,12 +1585,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                         </Badge>
                         <div className="min-w-0">
                           <span className="text-sm truncate block">{lineup.player.name}</span>
-                          {playTime > 0 && (
-                            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {playTime}' jogados
-                            </span>
-                          )}
+                          <span className={`text-[11px] flex items-center gap-1 ${idx === 0 ? 'text-accent font-semibold' : 'text-muted-foreground'}`}>
+                            <Clock className="w-3 h-3" />
+                            <span className="font-mono tabular-nums">{playTime}</span> jogados
+                            {idx === 0 && ' · jogou menos'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1711,6 +1727,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         defaultPartDuration={categoryDuration}
         savedPartDuration={match?.part_duration_minutes}
         savedPartsCount={match?.parts_count}
+        teamFormat={Array.isArray(team?.match_format?.parts) && team!.match_format!.parts!.length > 0 ? team!.match_format!.parts! : null}
         onConfirm={handleStartMatchWithConfig}
       />
     </div>

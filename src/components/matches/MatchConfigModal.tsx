@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Play, Lock, Settings } from 'lucide-react';
+import { Play, Settings, Minus, Plus } from 'lucide-react';
+
+export interface MatchFormatConfig {
+  partsCount: number;
+  /** Kept for older code paths: minutes of the first part */
+  partDurationMinutes: number;
+  /** Minutes of each part, e.g. [15, 15, 30] */
+  partMinutes: number[];
+  /** Remember this format as the team's default */
+  saveAsTeamFormat: boolean;
+}
 
 interface MatchConfigModalProps {
   open: boolean;
@@ -21,18 +30,25 @@ interface MatchConfigModalProps {
   savedPartDuration?: number | null;
   /** Pre-configured parts count from match record */
   savedPartsCount?: number | null;
-  onConfirm: (config: { partsCount: number; partDurationMinutes: number }) => void;
+  /** Format the coach set for this team at the start of the season */
+  teamFormat?: number[] | null;
+  onConfirm: (config: MatchFormatConfig) => void;
+  /** 'team' = editing the team's default format (no match is started) */
+  mode?: 'match' | 'team';
 }
 
-// Tournament preset profiles
-const TOURNAMENT_PROFILES = [
-  { label: '1 parte × 15 min', parts: 1, duration: 15 },
-  { label: '1 parte × 20 min', parts: 1, duration: 20 },
-  { label: '1 parte × 25 min', parts: 1, duration: 25 },
-  { label: '2 partes × 10 min', parts: 2, duration: 10 },
-  { label: '2 partes × 12 min', parts: 2, duration: 12 },
-  { label: '2 partes × 15 min', parts: 2, duration: 15 },
+const PRESETS: { label: string; parts: number[] }[] = [
+  { label: '3 partes · 15+15+30', parts: [15, 15, 30] },
+  { label: '2 × 25', parts: [25, 25] },
+  { label: '2 × 30', parts: [30, 30] },
+  { label: '2 × 35', parts: [35, 35] },
+  { label: '3 × 20', parts: [20, 20, 20] },
+  { label: '4 × 12', parts: [12, 12, 12, 12] },
+  { label: '1 × 20 (torneio)', parts: [20] },
 ];
+
+const sameFormat = (a?: number[] | null, b?: number[] | null) =>
+  !!a && !!b && a.length === b.length && a.every((m, i) => m === b[i]);
 
 export function MatchConfigModal({
   open,
@@ -41,38 +57,44 @@ export function MatchConfigModal({
   defaultPartDuration,
   savedPartDuration,
   savedPartsCount,
+  teamFormat,
   onConfirm,
+  mode = 'match',
 }: MatchConfigModalProps) {
-  const effectiveDuration = savedPartDuration || defaultPartDuration || 45;
-  const effectiveParts = savedPartsCount || (matchType === 'tournament' ? 1 : 2);
-  const [partsCount, setPartsCount] = useState(effectiveParts);
-  const [partDurationMinutes, setPartDurationMinutes] = useState(effectiveDuration);
-  const [selectedProfile, setSelectedProfile] = useState('0'); // Index as string
+  const teamMode = mode === 'team';
+  const initial = (): number[] => {
+    if (teamFormat && teamFormat.length > 0) return teamFormat;
+    const d = savedPartDuration || defaultPartDuration || 45;
+    const n = savedPartsCount || (matchType === 'tournament' ? 1 : 2);
+    return Array(n).fill(d);
+  };
+  const [parts, setParts] = useState<number[]>(initial);
+  const [saveAsTeamFormat, setSaveAsTeamFormat] = useState(!teamFormat);
+
+  useEffect(() => {
+    if (open) {
+      setParts(initial());
+      setSaveAsTeamFormat(!teamFormat);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const setCount = (n: number) =>
+    setParts((prev) => Array.from({ length: n }, (_, i) => prev[i] ?? prev[prev.length - 1] ?? 25));
+  const setPart = (i: number, m: number) =>
+    setParts((prev) => prev.map((x, k) => (k === i ? Math.min(90, Math.max(1, m || 1)) : x)));
+
+  const total = parts.reduce((s, m) => s + m, 0);
+  const changedFromTeam = teamFormat ? !sameFormat(teamFormat, parts) : true;
 
   const handleConfirm = () => {
-    if (matchType === 'tournament') {
-      const profile = TOURNAMENT_PROFILES[parseInt(selectedProfile)];
-      onConfirm({ partsCount: profile.parts, partDurationMinutes: profile.duration });
-    } else {
-      onConfirm({ partsCount, partDurationMinutes });
-    }
+    onConfirm({
+      partsCount: parts.length,
+      partDurationMinutes: parts[0],
+      partMinutes: parts,
+      saveAsTeamFormat: teamMode || (saveAsTeamFormat && changedFromTeam),
+    });
     onOpenChange(false);
-  };
-
-  const getTitle = () => {
-    if (matchType === 'friendly') return 'Configurar Partida Amigável';
-    if (matchType === 'tournament') return 'Configurar Partida de Torneio';
-    return 'Iniciar Partida';
-  };
-
-  const getDescription = () => {
-    if (matchType === 'friendly') {
-      return 'Escolha o número de partes e a duração de cada parte. Pode ajustar livremente.';
-    }
-    if (matchType === 'tournament') {
-      return 'Escolha um perfil de torneio. Após iniciar, a configuração ficará bloqueada.';
-    }
-    return 'Pronto para iniciar a partida com a configuração padrão do campeonato.';
   };
 
   return (
@@ -81,134 +103,87 @@ export function MatchConfigModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            {getTitle()}
+            Formato do jogo
           </DialogTitle>
           <DialogDescription>
-            {getDescription()}
+            {teamMode
+              ? 'Defina os tempos de jogo do escalão (cada Associação tem os seus). Todos os jogos desta equipa começam com este formato.'
+              : teamFormat
+                ? 'Formato definido para esta equipa. Pode ajustar só para este jogo.'
+                : 'Cada Associação define os tempos do escalão. Escolha o formato — fica guardado para a equipa.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Friendly Match - Full config */}
-          {matchType === 'friendly' && (
-            <>
-              <div className="space-y-3">
-                <Label>Número de Partes</Label>
-                <div className="grid grid-cols-6 gap-2">
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <Button
-                      key={n}
-                      type="button"
-                      variant={partsCount === n ? 'default' : 'outline'}
-                      className="h-12 text-lg"
-                      onClick={() => setPartsCount(n)}
-                    >
-                      {n}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label>Minutos por Parte</Label>
-                <Select
-                  value={String(partDurationMinutes)}
-                  onValueChange={(v) => setPartDurationMinutes(parseInt(v))}
-                >
-                  <SelectTrigger className="h-12 text-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[5, 8, 10, 12, 15, 18, 20, 22, 25, 28, 30, 35, 40, 45, 50, 55, 60].map((m) => (
-                      <SelectItem key={m} value={String(m)}>
-                        {m} minutos
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="p-4 bg-muted rounded-lg text-center">
-                <div className="text-2xl font-bold">
-                  {partsCount} × {partDurationMinutes}'
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Total: {partsCount * partDurationMinutes} minutos
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Tournament Match - Preset profiles */}
-          {matchType === 'tournament' && (
-            <>
-              <RadioGroup
-                value={selectedProfile}
-                onValueChange={setSelectedProfile}
-                className="space-y-2"
+        <div className="space-y-5 py-2">
+          {/* Presets */}
+          <div className="flex flex-wrap gap-2">
+            {PRESETS.map((p) => (
+              <Button
+                key={p.label}
+                type="button"
+                size="sm"
+                variant={sameFormat(p.parts, parts) ? 'default' : 'outline'}
+                onClick={() => setParts(p.parts)}
               >
-                {TOURNAMENT_PROFILES.map((profile, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center space-x-3 border rounded-lg p-4 cursor-pointer transition-colors ${
-                      selectedProfile === String(index) 
-                        ? 'border-primary bg-primary/5' 
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => setSelectedProfile(String(index))}
-                  >
-                    <RadioGroupItem value={String(index)} id={`profile-${index}`} />
-                    <Label htmlFor={`profile-${index}`} className="cursor-pointer flex-1">
-                      <span className="font-medium text-base">{profile.label}</span>
-                      <span className="text-sm text-muted-foreground ml-2">
-                        ({profile.parts * profile.duration} min total)
-                      </span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+                {p.label}
+              </Button>
+            ))}
+          </div>
 
-              <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-amber-800 dark:text-amber-200">
-                <Lock className="w-4 h-4 flex-shrink-0" />
-                <span>Após iniciar, a configuração ficará bloqueada durante todo o jogo.</span>
-              </div>
-            </>
-          )}
+          {/* Number of parts */}
+          <div className="space-y-2">
+            <Label>Número de partes</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4].map((n) => (
+                <Button key={n} type="button" variant={parts.length === n ? 'default' : 'outline'} className="h-11 text-base" onClick={() => setCount(n)}>
+                  {n}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-          {/* Championship - Editable with defaults from category */}
-          {matchType === 'championship' && (
-            <>
-              <div className="space-y-3">
-                <Label>Minutos por Parte</Label>
-                <Select
-                  value={String(partDurationMinutes)}
-                  onValueChange={(v) => setPartDurationMinutes(parseInt(v))}
-                >
-                  <SelectTrigger className="h-12 text-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[15, 20, 25, 28, 30, 35, 40, 45, 50, 55, 60].map((m) => (
-                      <SelectItem key={m} value={String(m)}>
-                        {m} minutos {m === defaultPartDuration ? '(padrão do escalão)' : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="p-4 bg-muted rounded-lg text-center">
-                <div className="text-2xl font-bold">
-                  2 × {partDurationMinutes}'
+          {/* Minutes of each part */}
+          <div className="space-y-2">
+            <Label>Minutos de cada parte</Label>
+            <div className="space-y-2">
+              {parts.map((m, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="w-16 text-sm text-muted-foreground">{i + 1}.ª parte</span>
+                  <Button type="button" variant="outline" size="icon" className="h-10 w-10" onClick={() => setPart(i, m - 1)} aria-label="Menos um minuto">
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={90}
+                    value={m}
+                    onChange={(e) => setPart(i, parseInt(e.target.value, 10))}
+                    className="h-10 w-16 rounded-md border bg-background text-center font-mono text-lg"
+                    aria-label={`Minutos da ${i + 1}.ª parte`}
+                  />
+                  <Button type="button" variant="outline" size="icon" className="h-10 w-10" onClick={() => setPart(i, m + 1)} aria-label="Mais um minuto">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">min</span>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Total: {2 * partDurationMinutes} minutos
-                  {partDurationMinutes !== defaultPartDuration && (
-                    <span className="ml-1 text-amber-600">(alterado do padrão {defaultPartDuration}')</span>
-                  )}
-                </div>
-              </div>
-            </>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-md border bg-muted/50 p-3 text-center">
+            <div className="font-mono text-xl font-semibold">{parts.map((m) => `${m}'`).join(' + ')}</div>
+            <div className="text-sm text-muted-foreground">Total: {total} minutos</div>
+          </div>
+
+          {!teamMode && changedFromTeam && (
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox checked={saveAsTeamFormat} onCheckedChange={(v) => setSaveAsTeamFormat(v === true)} className="mt-0.5" />
+              <span>
+                Usar sempre este formato nesta equipa
+                <span className="block text-xs text-muted-foreground">Pode mudar em qualquer jogo.</span>
+              </span>
+            </label>
           )}
         </div>
 
@@ -217,8 +192,7 @@ export function MatchConfigModal({
             Cancelar
           </Button>
           <Button className="flex-1" onClick={handleConfirm}>
-            <Play className="w-4 h-4 mr-2" />
-            Iniciar Partida
+            {teamMode ? 'Guardar formato' : <><Play className="w-4 h-4 mr-2" />Iniciar jogo</>}
           </Button>
         </div>
       </DialogContent>

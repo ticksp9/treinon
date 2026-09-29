@@ -36,6 +36,7 @@ import {
   type MatchEventForCalc,
   type StarterInfo,
 } from '@/lib/match-playing-time';
+import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { MatchStatusBadge } from './MatchStatusBadge';
 
@@ -165,7 +166,15 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
         is_starter: firstPart.has(l.player_id),
       }));
       const regulationPartMinutes = partRegulationMinutes.length === partsCount ? partRegulationMinutes : Array(partsCount).fill(partDuration);
-      const stats = computeMatchPlayerStats(starterInfos, events as MatchEventForCalc[], totalMinutes, pm, sportType, { secondHalfStarters: partStartersByIndex['2'] ?? secondHalfStarterIds, partStarters: partStartersByIndex, regulationPartMinutes, numberOfParts: partsCount });
+      const stats = applyPreciseMinutes(
+        computeMatchPlayerStats(starterInfos, events as MatchEventForCalc[], totalMinutes, pm, sportType, { secondHalfStarters: partStartersByIndex['2'] ?? secondHalfStarterIds, partStarters: partStartersByIndex, regulationPartMinutes, numberOfParts: partsCount }),
+        {
+          partSeconds: partElapsed,
+          partStarters: { ...partStartersByIndex, ...(!partStartersByIndex['2'] && secondHalfStarterIds?.length ? { '2': secondHalfStarterIds } : {}) },
+          firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
+          events: events as MatchEventForCalc[],
+        },
+      );
       for (const stat of stats) {
         const lineup = lineups.find((l: any) => l.player_id === stat.playerId);
         if (lineup) await supabase.from('match_lineups').update({ minutes_played: stat.totalMinutes }).eq('id', lineup.id);

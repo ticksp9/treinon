@@ -8,14 +8,15 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Users, User, UserPlus, X } from 'lucide-react';
+import { ArrowLeft, Plus, Users, User, UserPlus, X, Timer } from 'lucide-react';
+import { MatchConfigModal } from '@/components/matches/MatchConfigModal';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { SPORT_TYPES, SportType, AGE_CATEGORIES, GENDERS, canPlayerPlayInCategory } from '@/lib/constants';
+import { SPORT_TYPES, SportType, AGE_CATEGORIES, GENDERS, canPlayerPlayInCategory, getHalfDurationForCategory } from '@/lib/constants';
 import { PlayerForm } from '@/components/players/PlayerForm';
 import { differenceInYears } from 'date-fns';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
@@ -48,6 +49,7 @@ export default function TeamDetail() {
   const [search, setSearch] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [addingExisting, setAddingExisting] = useState(false);
+  const [formatOpen, setFormatOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const { selectedSeasonId, selectedSeason } = useSeasonContext();
 
@@ -243,6 +245,8 @@ export default function TeamDetail() {
 
   const categoryInfo = AGE_CATEGORIES.find(c => c.value === team.category);
   const genderInfo = GENDERS.find(g => g.value === team.gender);
+  const rawFormat = (team as { match_format?: { parts?: unknown } | null }).match_format;
+  const teamFormatParts = Array.isArray(rawFormat?.parts) && rawFormat!.parts.length > 0 ? (rawFormat!.parts as number[]) : null;
 
   return (
     <AppLayout>
@@ -279,8 +283,39 @@ export default function TeamDetail() {
                 <Badge variant="outline">{team.formation}</Badge>
               )}
             </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border bg-muted/40 p-3">
+              <div>
+                <p className="text-sm font-medium">Formato de jogo</p>
+                <p className="font-mono text-sm text-muted-foreground">
+                  {teamFormatParts
+                    ? `${teamFormatParts.map((m) => `${m}'`).join(' + ')} = ${teamFormatParts.reduce((s, m) => s + m, 0)} min`
+                    : 'Por definir — escolha os tempos do seu campeonato'}
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setFormatOpen(true)}>
+                <Timer className="w-4 h-4 mr-2" />
+                {teamFormatParts ? 'Alterar' : 'Definir formato'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
+        <MatchConfigModal
+          open={formatOpen}
+          onOpenChange={setFormatOpen}
+          mode="team"
+          matchType="championship"
+          defaultPartDuration={getHalfDurationForCategory(team.category)}
+          teamFormat={teamFormatParts}
+          onConfirm={async ({ partMinutes }) => {
+            const { error } = await supabase.from('teams').update({ match_format: { parts: partMinutes } } as never).eq('id', team.id);
+            if (error) {
+              toast.error('Não foi possível guardar o formato: ' + error.message);
+              return;
+            }
+            toast.success(`Formato guardado: ${partMinutes.map((m) => `${m}'`).join(' + ')}`);
+            queryClient.invalidateQueries({ queryKey: ['team', id] });
+          }}
+        />
 
         {/* Players Section */}
         <div className="space-y-4">

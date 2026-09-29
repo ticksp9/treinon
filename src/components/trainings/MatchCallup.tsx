@@ -27,12 +27,14 @@ import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { computeAvailability, getClinicalStatusOption, type InjuryRecord } from '@/lib/player-availability';
 import { ShieldAlert, ShieldCheck, Share2 } from 'lucide-react';
 import { shareText } from '@/lib/share';
+import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 
 interface Team {
   id: string;
   name: string;
   category: string | null;
   sport_type: string;
+  gender?: string | null;
 }
 
 interface Player {
@@ -41,6 +43,10 @@ interface Player {
   number: number | null;
   position: string | null;
   photo_url: string | null;
+  birth_date?: string | null;
+  team_id?: string | null;
+  /** Set when the player belongs to another of the coach's teams (plays up an age group) */
+  fromTeam?: string | null;
 }
 
 interface Match {
@@ -84,6 +90,8 @@ export function MatchCallup() {
   const [selectedMatch, setSelectedMatch] = useState<string>('');
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
   const [availabilityMap, setAvailabilityMap] = useState<Map<string, ReturnType<typeof computeAvailability>>>(new Map());
+  /** Players of the team who are too old for its age group (e.g. a Sub-13 in the Sub-12) */
+  const [ageBlocked, setAgeBlocked] = useState<Map<string, string>>(new Map());
   const [arrivalTime, setArrivalTime] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -157,7 +165,7 @@ export function MatchCallup() {
     try {
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name, category, sport_type')
+        .select('id, name, category, sport_type, gender')
         .eq('owner_id', user?.id)
         .order('name');
 
@@ -175,18 +183,48 @@ export function MatchCallup() {
 
   const fetchPlayers = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: own, error } = await supabase
         .from('players')
-        .select('id, name, number, position, photo_url')
+        .select('id, name, number, position, photo_url, birth_date, team_id')
         .eq('team_id', selectedTeam)
         .eq('is_active', true)
         .order('position')
         .order('number');
 
       if (error) throw error;
-      setPlayers(data || []);
 
-      const ids = (data || []).map(p => p.id);
+      // Age-group rules: older players can't play down (a Sub-13 in the Sub-12),
+      // younger players can play up (Sub-11/Sub-12 in the Sub-13).
+      const team = teams.find(t => t.id === selectedTeam);
+      const gender = (team?.gender === 'female' ? 'female' : 'male') as Gender;
+      const check = (birth: string | null | undefined) =>
+        team?.category && birth ? canPlayerPlayInCategory(birth, team.category, gender) : { eligible: true };
+
+      const blocked = new Map<string, string>();
+      (own || []).forEach(p => {
+        const r = check(p.birth_date);
+        if (!r.eligible) blocked.set(p.id, `Não pode jogar em ${team?.category}${r.reason ? ` (${r.reason})` : ''}`);
+      });
+
+      // Players from the coach's other teams who are young enough to play here
+      const otherTeams = teams.filter(t => t.id !== selectedTeam);
+      let guests: Player[] = [];
+      if (team?.category && otherTeams.length > 0) {
+        const { data: others } = await supabase
+          .from('players')
+          .select('id, name, number, position, photo_url, birth_date, team_id')
+          .in('team_id', otherTeams.map(t => t.id))
+          .eq('is_active', true);
+        guests = (others || [])
+          .filter(p => p.birth_date && check(p.birth_date).eligible)
+          .map(p => ({ ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || 'outra equipa' }));
+      }
+
+      const data = [...(own || []), ...guests];
+      setAgeBlocked(blocked);
+      setPlayers(data);
+
+      const ids = data.map(p => p.id);
       if (ids.length > 0) {
         const { data: injs } = await supabase
           .from('player_injuries')
@@ -290,6 +328,11 @@ export function MatchCallup() {
       if (next.has(playerId)) {
         next.delete(playerId);
       } else {
+        const tooOld = ageBlocked.get(playerId);
+        if (tooOld) {
+          toast.error(tooOld);
+          return prev;
+        }
         const av = availabilityMap.get(playerId);
         if (av && !av.callable) {
           toast.error(`Bloqueado: ${av.reason || 'jogador indisponível clinicamente'}`);
@@ -302,7 +345,10 @@ export function MatchCallup() {
   };
 
   const selectAll = () => {
-    setSelectedPlayers(new Set(players.filter(p => availabilityMap.get(p.id)?.callable !== false).map(p => p.id)));
+    // Own team only (guests from other age groups are chosen one by one)
+    setSelectedPlayers(new Set(players
+      .filter(p => !p.fromTeam && !ageBlocked.has(p.id) && availabilityMap.get(p.id)?.callable !== false)
+      .map(p => p.id)));
   };
 
   const deselectAll = () => {
@@ -1371,18 +1417,20 @@ export function MatchCallup() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-              {players
-                .sort((a, b) => (a.number || 99) - (b.number || 99))
+              {[...players]
+                // own team first, then players from other age groups
+                .sort((a, b) => Number(!!a.fromTeam) - Number(!!b.fromTeam) || (a.number || 99) - (b.number || 99))
                 .map(player => {
                   const av = availabilityMap.get(player.id);
-                  const blocked = av && !av.callable;
+                  const ageReason = ageBlocked.get(player.id);
+                  const blocked = (av && !av.callable) || !!ageReason;
                   const restricted = av && av.callable && av.status !== 'apto';
                   const statusOpt = av ? getClinicalStatusOption(av.status) : null;
                   return (
                     <div
                       key={player.id}
                       onClick={() => !blocked && togglePlayer(player.id)}
-                      title={blocked ? `Bloqueado: ${av?.reason || 'indisponível'}` : av?.restrictions || ''}
+                      title={blocked ? `Bloqueado: ${ageReason || av?.reason || 'indisponível'}` : av?.restrictions || ''}
                       className={`flex flex-col gap-1 p-2 rounded-lg border transition-all text-sm ${
                         blocked
                           ? 'bg-red-500/5 border-red-500/40 opacity-60 cursor-not-allowed'
@@ -1409,7 +1457,17 @@ export function MatchCallup() {
                         <span className="truncate font-medium flex-1">{player.name}</span>
                         {restricted && <ShieldCheck className="w-3 h-3 text-amber-500 shrink-0" />}
                       </div>
-                      {(blocked || restricted) && statusOpt && (
+                      {player.fromTeam && (
+                        <Badge variant="outline" className="w-fit text-[10px] py-0 px-1 border-primary/40 text-primary">
+                          Sobe do {player.fromTeam}
+                        </Badge>
+                      )}
+                      {ageReason && (
+                        <Badge variant="outline" className="w-fit text-[10px] py-0 px-1 border-red-500/40 text-red-600">
+                          Idade acima do escalão
+                        </Badge>
+                      )}
+                      {(blocked || restricted) && !ageReason && statusOpt && (
                         <Badge variant="outline" className={`text-[10px] py-0 px-1 ${statusOpt.tone}`}>
                           {statusOpt.label}
                         </Badge>

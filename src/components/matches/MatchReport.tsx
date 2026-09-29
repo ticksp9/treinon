@@ -20,6 +20,7 @@ import {
   type MatchEventForCalc,
   type StarterInfo,
 } from '@/lib/match-playing-time';
+import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 
 interface Player {
   id: string;
@@ -115,17 +116,26 @@ export function MatchReport({ match, lineups, events, teamName, partElapsedSecon
   const sportRules = getSportFormatRules(sportType);
 
   // Compute accurate playing minutes using interval-based engine (per half)
-  const playerStats = computeMatchPlayerStatsWithHalves(
-    starterInfos,
-    events as MatchEventForCalc[],
-    totalMinutes,
-    partMinutes,
-    sportType,
+  const playerStats = applyPreciseMinutes(
+    computeMatchPlayerStatsWithHalves(
+      starterInfos,
+      events as MatchEventForCalc[],
+      totalMinutes,
+      partMinutes,
+      sportType,
+      {
+        secondHalfStarters: partStartersByIndex?.['2'] ?? secondHalfStarterIds ?? null,
+        partStarters: partStartersByIndex ?? null,
+        regulationPartMinutes,
+        numberOfParts: partMinutes.length,
+      },
+    ),
     {
-      secondHalfStarters: partStartersByIndex?.['2'] ?? secondHalfStarterIds ?? null,
-      partStarters: partStartersByIndex ?? null,
-      regulationPartMinutes,
-      numberOfParts: partMinutes.length,
+      // real seconds of each part: same calculation as the live screen
+      partSeconds: elapsed,
+      partStarters: { ...(partStartersByIndex ?? {}), ...(!partStartersByIndex?.['2'] && secondHalfStarterIds?.length ? { '2': secondHalfStarterIds } : {}) },
+      firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
+      events: events as MatchEventForCalc[],
     },
   );
   const playerStatsMap = new Map(playerStats.map(s => [s.playerId, s]));

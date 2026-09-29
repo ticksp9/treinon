@@ -17415,6 +17415,7 @@ export type Database = {
           formation: string | null
           gender: string
           id: string
+          match_format: Json | null
           name: string
           owner_id: string
           season: string
@@ -17429,6 +17430,7 @@ export type Database = {
           formation?: string | null
           gender?: string
           id?: string
+          match_format?: Json | null
           name: string
           owner_id: string
           season?: string
@@ -17443,6 +17445,7 @@ export type Database = {
           formation?: string | null
           gender?: string
           id?: string
+          match_format?: Json | null
           name?: string
           owner_id?: string
           season?: string
