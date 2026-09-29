@@ -25,8 +25,8 @@ export default defineConfig(({ mode }) => ({
         description: 'Jogo ao vivo, treinos, plantéis e gestão do clube — para treinadores de formação e seniores.',
         lang: 'pt-PT',
         categories: ['sports', 'productivity'],
-        theme_color: '#1a7f37',
-        background_color: '#f5f7f5',
+        theme_color: '#1b2230',
+        background_color: '#f3f4f7',
         display: 'standalone',
         // 'any' so tablets can use the tactical board in landscape
         orientation: 'any',

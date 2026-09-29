@@ -33,9 +33,7 @@ export default function Index() {
       <header className="sticky top-0 z-20 border-b border-border/50 bg-background/80 backdrop-blur-md">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src="/icon.svg" alt="" className="h-9 w-9 rounded-md" />
             <span className="font-display text-xl font-bold tracking-tight">TreinON</span>
           </div>
           <div className="flex items-center gap-2">
@@ -50,10 +48,10 @@ export default function Index() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_bottom,hsl(var(--muted)),transparent)]" />
           <div className="container mx-auto grid items-center gap-10 px-4 py-14 md:py-20 lg:grid-cols-2">
             <div>
-              <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+              <span className="mb-5 inline-flex items-center gap-2 rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
                 <Heart className="h-4 w-4" /> Gratuita para todas as equipas
               </span>
               <h1 className="mb-5 font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
@@ -83,16 +81,16 @@ export default function Index() {
 
             {/* Visual: drill card + live score */}
             <div className="relative mx-auto w-full max-w-md">
-              <div className="rotate-1 rounded-2xl border bg-card p-3 shadow-2xl">
+              <div className="rounded-lg border bg-card p-3 shadow-lg">
                 <DrillDiagram elements={sample.diagram} title={sample.name} className="w-full rounded-lg" />
                 <div className="px-1 pb-1 pt-3">
                   <p className="font-display font-semibold">{sample.name}</p>
                   <p className="text-sm text-muted-foreground">{sample.objective}</p>
                 </div>
               </div>
-              <div className="absolute -bottom-6 -left-4 -rotate-2 rounded-2xl border bg-card px-4 py-3 shadow-xl sm:-left-10">
+              <div className="absolute -bottom-6 -left-4 rounded-lg border-l-4 border-l-accent border bg-card px-4 py-3 shadow-lg sm:-left-10">
                 <p className="text-xs text-muted-foreground">2.ª parte · 63'</p>
-                <p className="font-display text-2xl font-bold">2 <span className="text-muted-foreground">–</span> 1</p>
+                <p className="font-mono text-2xl font-semibold">2 <span className="text-muted-foreground">–</span> 1</p>
                 <p className="text-xs text-primary">Minutos atualizados ao vivo</p>
               </div>
             </div>
@@ -107,8 +105,8 @@ export default function Index() {
           </div>
           <div className="mx-auto grid max-w-6xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border bg-card p-6 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+              <div key={f.title} className="rounded-lg border bg-card p-6 transition hover:border-primary/50 hover:shadow-md">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
                   <f.icon className="h-5 w-5 text-primary" />
                 </div>
                 <h3 className="mb-2 font-display text-lg font-semibold">{f.title}</h3>
@@ -139,7 +137,7 @@ export default function Index() {
                 { icon: Zap, label: 'Nuvem TreinON' },
                 { icon: Server, label: 'Servidor do clube' },
               ].map((x) => (
-                <div key={x.label} className="rounded-2xl border bg-card p-5">
+                <div key={x.label} className="rounded-lg border bg-card p-5">
                   <x.icon className="mx-auto mb-2 h-7 w-7 text-primary" />
                   {x.label}
                 </div>

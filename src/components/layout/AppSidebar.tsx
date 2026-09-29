@@ -189,9 +189,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center shadow-lg shadow-sidebar-primary/30">
-            <Zap className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
+          <img src="/icon.svg" alt="" className="w-9 h-9 rounded-md ring-1 ring-sidebar-border" />
           <div>
             <h1 className="font-display font-bold text-sidebar-foreground tracking-tight">TreinON</h1>
             <p className="text-xs text-sidebar-foreground/60">O treinador ligado ao jogo</p>

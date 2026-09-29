@@ -2,119 +2,120 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * TreinON — industrial / ERP look.
+ * Neutral slate surfaces, steel-blue primary, safety-orange accent used sparingly.
+ * Green is reserved for semantic states (success, paid, confirmed) and the pitch.
+ */
 @layer base {
   :root {
-    /* Football/Sports themed colors - Green field inspired */
-    --background: 150 15% 97%;
-    --foreground: 150 25% 10%;
+    --background: 220 16% 96%;
+    --foreground: 222 39% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 150 25% 10%;
+    --card-foreground: 222 39% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 150 25% 10%;
+    --popover-foreground: 222 39% 12%;
 
-    /* Primary - Deep green (field) */
-    --primary: 145 63% 32%;
+    /* Primary — steel blue */
+    --primary: 213 58% 36%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Warm slate */
-    --secondary: 150 10% 92%;
-    --secondary-foreground: 150 25% 15%;
+    --secondary: 220 14% 91%;
+    --secondary-foreground: 222 39% 16%;
 
-    --muted: 150 10% 94%;
-    --muted-foreground: 150 10% 45%;
+    --muted: 220 14% 93%;
+    --muted-foreground: 220 9% 38%;
 
-    /* Accent - Vibrant amber/gold (like a trophy) */
-    --accent: 38 92% 50%;
-    --accent-foreground: 38 92% 15%;
+    /* Accent — safety orange (highlights, live, warnings of attention) */
+    --accent: 27 92% 48%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 47%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Success - for goals, wins */
-    --success: 145 63% 42%;
+    --success: 142 55% 33%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning - for yellow cards */
-    --warning: 48 96% 53%;
-    --warning-foreground: 48 96% 15%;
+    --warning: 40 92% 48%;
+    --warning-foreground: 40 92% 12%;
 
-    /* Danger - for red cards */
-    --danger: 0 84% 60%;
+    --danger: 0 70% 47%;
     --danger-foreground: 0 0% 100%;
 
-    --border: 150 15% 88%;
-    --input: 150 15% 88%;
-    --ring: 145 63% 32%;
+    --border: 220 13% 84%;
+    --input: 220 13% 80%;
+    --ring: 213 58% 36%;
 
-    --radius: 0.75rem;
+    --radius: 0.375rem;
 
-    --sidebar-background: 150 25% 12%;
-    --sidebar-foreground: 150 10% 90%;
-    --sidebar-primary: 145 63% 45%;
+    /* Sidebar — graphite */
+    --sidebar-background: 222 24% 13%;
+    --sidebar-foreground: 220 14% 82%;
+    --sidebar-primary: 213 70% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 20% 20%;
-    --sidebar-accent-foreground: 150 10% 95%;
-    --sidebar-border: 150 20% 20%;
-    --sidebar-ring: 145 63% 45%;
+    --sidebar-accent: 222 20% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 18% 21%;
+    --sidebar-ring: 213 70% 52%;
 
-    /* Football field colors */
-    --field: 145 65% 35%;
+    /* Pitch colours (drill diagrams, tactical board) — stay green */
+    --field: 142 42% 34%;
     --field-lines: 0 0% 100%;
-    --field-dark: 145 65% 25%;
+    --field-dark: 142 44% 27%;
   }
 
   .dark {
-    --background: 150 25% 8%;
-    --foreground: 150 10% 95%;
+    --background: 222 24% 8%;
+    --foreground: 220 14% 92%;
 
-    --card: 150 20% 12%;
-    --card-foreground: 150 10% 95%;
+    --card: 222 22% 11%;
+    --card-foreground: 220 14% 92%;
 
-    --popover: 150 20% 12%;
-    --popover-foreground: 150 10% 95%;
+    --popover: 222 22% 11%;
+    --popover-foreground: 220 14% 92%;
 
-    --primary: 145 63% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 213 75% 58%;
+    --primary-foreground: 222 39% 8%;
 
-    --secondary: 150 15% 18%;
-    --secondary-foreground: 150 10% 95%;
+    --secondary: 222 18% 17%;
+    --secondary-foreground: 220 14% 92%;
 
-    --muted: 150 15% 18%;
-    --muted-foreground: 150 10% 55%;
+    --muted: 222 18% 16%;
+    --muted-foreground: 220 10% 62%;
 
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 27 92% 54%;
+    --accent-foreground: 222 39% 8%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 65% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 145 63% 45%;
+    --success: 142 50% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 48 96% 53%;
-    --warning-foreground: 48 96% 15%;
+    --warning: 40 92% 52%;
+    --warning-foreground: 40 92% 12%;
 
-    --danger: 0 84% 60%;
+    --danger: 0 65% 52%;
     --danger-foreground: 0 0% 100%;
 
-    --border: 150 15% 20%;
-    --input: 150 15% 20%;
-    --ring: 145 63% 45%;
+    --border: 222 16% 20%;
+    --input: 222 16% 24%;
+    --ring: 213 75% 58%;
 
-    --sidebar-background: 150 25% 6%;
-    --sidebar-foreground: 150 10% 90%;
-    --sidebar-primary: 145 63% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 20% 15%;
-    --sidebar-accent-foreground: 150 10% 95%;
-    --sidebar-border: 150 20% 15%;
-    --sidebar-ring: 145 63% 45%;
+    --sidebar-background: 222 26% 6%;
+    --sidebar-foreground: 220 14% 82%;
+    --sidebar-primary: 213 75% 58%;
+    --sidebar-primary-foreground: 222 39% 8%;
+    --sidebar-accent: 222 20% 14%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 18% 14%;
+    --sidebar-ring: 213 75% 58%;
 
-    --field: 145 65% 30%;
-    --field-lines: 0 0% 90%;
-    --field-dark: 145 65% 20%;
+    --field: 142 38% 28%;
+    --field-lines: 0 0% 88%;
+    --field-dark: 142 40% 22%;
   }
 }
 
@@ -125,11 +126,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Outfit', system-ui, sans-serif;
+    font-feature-settings: "tnum" 1; /* aligned numbers in tables and scores */
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    @apply font-display tracking-tight;
   }
 }
 
@@ -144,11 +145,12 @@
   }
 
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+    @apply bg-card border border-border;
   }
 
+  /* Kept for existing markup: now a solid, sober emphasis instead of a gradient */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+    @apply text-primary;
   }
 }
 

@@ -66,7 +66,7 @@ export function DrillDiagram({ elements, className, title }: { elements: Diagram
           <path d="M0,0 L10,5 L0,10 z" fill="hsl(var(--accent))" />
         </marker>
         <pattern id={`${id}-grass`} width="12.5" height={H} patternUnits="userSpaceOnUse">
-          <rect width="6.25" height={H} fill="hsl(var(--field))" />
+          <rect width="12.5" height={H} fill="hsl(var(--field))" />
           <rect x="6.25" width="6.25" height={H} fill="hsl(var(--field-dark))" opacity={0.55} />
         </pattern>
       </defs>

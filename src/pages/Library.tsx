@@ -67,7 +67,7 @@ function printPlan(title: string, subtitle: string, items: Picked[]) {
     <style>
       :root{--field:145 65% 35%;--field-dark:145 65% 25%;--accent:38 92% 50%}
       body{font-family:system-ui,sans-serif;margin:24px;color:#111}
-      header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #1a7f37;margin-bottom:12px}
+      header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #24558f;margin-bottom:12px}
       h1{font-size:20px;margin:0}.sub{color:#555;font-size:13px}
       .block{display:flex;gap:16px;page-break-inside:avoid;border-bottom:1px solid #ddd;padding:10px 0}
       .diagram{width:230px;flex:none}.diagram svg{width:100%;height:auto}
@@ -195,9 +195,9 @@ export default function Library() {
     <Layout title="Biblioteca">
       <div className="mx-auto max-w-7xl space-y-6 pb-28">
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/15 via-primary/5 to-accent/10 p-5 sm:p-7">
+        <div className="relative overflow-hidden rounded-lg border border-l-4 border-l-primary bg-card p-5 sm:p-6">
           <div className="flex items-start gap-4">
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
               <BookOpen className="h-6 w-6" />
             </div>
             <div className="space-y-1">
@@ -345,7 +345,7 @@ export default function Library() {
       {/* Selection tray */}
       {picked.length > 0 && (
         <div className="fixed inset-x-0 bottom-16 z-30 px-4 md:bottom-4 md:left-[var(--sidebar-width,0px)]">
-          <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl border bg-card/95 p-3 shadow-xl backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-lg border bg-card p-3 shadow-xl">
             <div className="flex-1 text-sm">
               <p className="font-semibold">{picked.length} exercício{picked.length > 1 ? 's' : ''} · {pickedMinutes} min</p>
               <p className="truncate text-xs text-muted-foreground">{picked.map((p) => p.drill.name).join(' → ')}</p>
