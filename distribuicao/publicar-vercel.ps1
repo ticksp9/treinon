@@ -9,7 +9,9 @@ param(
   [string]$VercelProject = "treinon",
   # Vercel team slug (vercel.com/<slug>); empty = the token's default team
   [string]$Scope = "",
-  [string]$SupportEmail = "treinon.apoio@gmail.com"
+  [string]$SupportEmail = "treinon.apoio@gmail.com",
+  # Only publish a new version of the app (Vercel token only; Supabase untouched)
+  [switch]$SoApp
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +36,7 @@ if ($Scope) { $ScopeArgs = @("--scope", $Scope) }
 
 # ── 1. Tokens ────────────────────────────────────────────────────────────────
 Write-Host "`n[1/5] Chaves de acesso" -ForegroundColor Cyan
-while (-not ($env:SUPABASE_ACCESS_TOKEN -match '^sbp_[0-9a-f]{40}$')) {
+while (-not $SoApp -and -not ($env:SUPABASE_ACCESS_TOKEN -match '^sbp_[0-9a-f]{40}$')) {
   $t = Read-Secret "Access Token da Supabase (sbp_..., https://supabase.com/dashboard/account/tokens):"
   if ($t -match '^sbp_[0-9a-f]{40}$') { $env:SUPABASE_ACCESS_TOKEN = $t } else { Write-Host "Não parece um Access Token (sbp_...)." -ForegroundColor Yellow }
 }
@@ -44,6 +46,10 @@ while ($VercelToken.Length -lt 20) {
   if ($VercelToken.Length -lt 20) { Write-Host "Token demasiado curto; copie-o outra vez." -ForegroundColor Yellow }
 }
 
+if ($SoApp) {
+  # Vercel already has the variables; make sure this folder is linked to the project
+  if (-not (Test-Path .vercel\project.json)) { Run vercel@latest link --yes --project $VercelProject --token $VercelToken @ScopeArgs }
+} else {
 # ── 2. Chave pública da Supabase ─────────────────────────────────────────────
 Write-Host "`n[2/5] A obter a chave pública do projeto $ProjectRef..." -ForegroundColor Cyan
 $SupabaseUrl = "https://$ProjectRef.supabase.co"
@@ -57,7 +63,7 @@ Write-Host "OK: chave pública encontrada ($($AnonKey.Substring(0, 14))...)" -Fo
 
 # Local .env also points to the new project (for development on this PC)
 $envText = "VITE_SUPABASE_URL=$SupabaseUrl`nVITE_SUPABASE_PUBLISHABLE_KEY=$AnonKey`nVITE_SUPABASE_PROJECT_ID=$ProjectRef`nVITE_SUPPORT_EMAIL=$SupportEmail`n"
-if (Test-Path .env) { Copy-Item .env ".env.lovable-antigo" -Force }
+if ((Test-Path .env) -and -not (Test-Path ".env.lovable-antigo")) { Copy-Item .env ".env.lovable-antigo" }
 [IO.File]::WriteAllText((Join-Path (Get-Location) ".env"), $envText, (New-Object System.Text.UTF8Encoding($false)))
 
 # ── 3. Vercel: projeto e variáveis ───────────────────────────────────────────
@@ -80,6 +86,7 @@ foreach ($k in $vars.Keys) {
   $vars[$k] | & npx -y vercel@latest env add $k production --token $VercelToken @ScopeArgs
   if ($LASTEXITCODE -ne 0) { throw "Falhou a variável $k" }
 }
+}
 
 # ── 4. Publicar ──────────────────────────────────────────────────────────────
 Write-Host "`n[4/5] A publicar (demora 1–2 minutos)..." -ForegroundColor Cyan
@@ -92,6 +99,11 @@ if ($code -ne 0) { throw "O Vercel não conseguiu publicar (ver mensagens acima)
 $alias = [regex]::Match($out, 'Aliased:\s*(https://[^\s\]]+)').Groups[1].Value
 if (-not $alias) { $alias = "https://$VercelProject.vercel.app" }
 $AppUrl = $alias.TrimEnd('/')
+
+if ($SoApp) {
+  Write-Host "`nNova versão publicada!  ->  $AppUrl`nOs telemóveis recebem-na ao reabrir a app." -ForegroundColor Green
+  exit 0
+}
 
 # ── 5. Supabase: endereço da app, CORS e contas ─────────────────────────────
 Write-Host "`n[5/5] A ligar a Supabase ao endereço $AppUrl..." -ForegroundColor Cyan
