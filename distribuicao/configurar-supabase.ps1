@@ -13,11 +13,29 @@ param(
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
-# Runs the Supabase CLI and stops the script if the step failed
-function Sb { npx -y supabase@latest @args; if ($LASTEXITCODE -ne 0) { throw "Falhou: supabase $args" } }
+# Runs the Supabase CLI and stops the script if the step failed.
+# (An explicit parameter is required: @args is not forwarded to npx.ps1.)
+function Sb {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest)
+  & npx -y supabase@latest @Rest
+  if ($LASTEXITCODE -ne 0) { throw "Falhou: supabase $Rest" }
+}
 
-Write-Host "`n[1/5] Login na Supabase (abre o browser)..." -ForegroundColor Cyan
-Sb login
+Write-Host "`n[1/5] Acesso à conta Supabase da TreinON" -ForegroundColor Cyan
+# The access token lives only in this terminal session, so another Supabase
+# account already logged in on this PC (another app) is not touched.
+if (-not $env:SUPABASE_ACCESS_TOKEN) {
+  Write-Host "Crie uma chave em https://supabase.com/dashboard/account/tokens (entrando com a conta da TreinON)"
+  Write-Host "e cole-a aqui (não aparece no ecrã), depois Enter:"
+  $sec = Read-Host -AsSecureString
+  $env:SUPABASE_ACCESS_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+}
+$projects = (& npx -y supabase@latest projects list 2>&1) | Out-String
+if ($projects -notmatch $ProjectRef) {
+  throw "Esta chave não dá acesso ao projeto $ProjectRef. Confirme que criou a chave com a conta da TreinON."
+}
+Write-Host "OK: projeto $ProjectRef encontrado nesta conta." -ForegroundColor Green
 
 Write-Host "`n[2/5] Ligar ao projeto $ProjectRef ..." -ForegroundColor Cyan
 $cfgPath = Join-Path (Get-Location) "supabase\config.toml"
