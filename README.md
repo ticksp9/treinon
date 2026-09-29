@@ -7,6 +7,17 @@ minutos jogados, treinos e presenças, convocatórias, plantéis por época, tra
 Tecnologia: React + Vite + TypeScript, Supabase (base de dados, login, funções),
 instalável como app (PWA) em Windows, Android, iPhone/iPad.
 
+**Em produção:** https://treinon.vercel.app · código em `github.com/ticksp9/treinon`
+
+## Publicar uma nova versão
+
+- **App:** cada `git push` para `main` é publicado automaticamente pelo Vercel (1–2 min).
+  Os telemóveis recebem a nova versão ao reabrir a app.
+- **Base de dados** (novas migrações ou funções):
+  `powershell -ExecutionPolicy Bypass -File distribuicao\configurar-supabase.ps1 -ProjectRef onlwidkjkcvojdwisjdj`
+- Alternativa sem GitHub: `distribuicao\publicar-vercel.ps1 -ProjectRef onlwidkjkcvojdwisjdj -Scope treinon -SoApp`
+  (os tokens ficam guardados cifrados neste PC depois da primeira vez).
+
 ---
 
 ## 0. Onde ficam os dados — duas opções, a mesma app
