@@ -124,9 +124,10 @@ async function sendEmail(
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "TaticalSoccer <noreply@taticalsoccer.lovable.app>",
+        // Must be an address on a domain verified in Resend (e.g. "TreinON <convites@treinon.pt>")
+        from: Deno.env.get("EMAIL_FROM") ?? "TreinON <onboarding@resend.dev>",
         to: [recipientEmail],
-        subject: subject || "Convite - TaticalSoccer",
+        subject: subject || "Convite - TreinON",
         text: body,
       }),
     });
@@ -170,17 +171,28 @@ async function sendSms(
   const twilioApiKey = Deno.env.get("TWILIO_API_KEY");
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
   const twilioFromNumber = Deno.env.get("TWILIO_FROM_NUMBER");
-  
-  if (twilioApiKey && lovableApiKey && twilioFromNumber) {
+  // Direct Twilio account (own Supabase project, outside Lovable)
+  const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+  const twilioToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+  const direct = !!(twilioSid && twilioToken && twilioFromNumber);
+
+  if (direct || (twilioApiKey && lovableApiKey && twilioFromNumber)) {
     try {
-      const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-      const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
+      const url = direct
+        ? `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`
+        : "https://connector-gateway.lovable.dev/twilio/Messages.json";
+      const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${lovableApiKey}`,
-          "X-Connection-Api-Key": twilioApiKey,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        headers: direct
+          ? {
+              "Authorization": `Basic ${btoa(`${twilioSid}:${twilioToken}`)}`,
+              "Content-Type": "application/x-www-form-urlencoded",
+            }
+          : {
+              "Authorization": `Bearer ${lovableApiKey}`,
+              "X-Connection-Api-Key": twilioApiKey!,
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
         body: new URLSearchParams({
           To: recipientPhone,
           From: twilioFromNumber,
@@ -619,7 +631,7 @@ Deno.serve(async (req) => {
 
     // Build full template context
     const inviteToken = context?.invite_token || "";
-    const baseUrl = context?.base_url || "https://taticalsoccer.lovable.app";
+    const baseUrl = context?.base_url || (Deno.env.get("APP_URL") ?? "https://treinon.vercel.app");
     const inviteLink = inviteToken
       ? `${baseUrl}/accept-invite?token=${inviteToken}`
       : (context?.invite_link || "");

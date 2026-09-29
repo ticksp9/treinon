@@ -1,217 +1,117 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
+import { corsHeaders, json, hashPin, verifyPinHash, isValidPin } from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-// Server-side hash to match the client-side hash function
-async function hashPin(pin: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin + "tacticaflow-salt");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_MINUTES = 15;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
-    // Validate JWT from the request
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Not authenticated" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (!authHeader) return json(req, { success: false, error: "Not authenticated" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify the user's JWT
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user }, error: authError } = await userClient.auth.getUser();
-
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Not authenticated" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (authError || !user) return json(req, { success: false, error: "Not authenticated" }, 401);
 
     const { action, pin, new_pin } = await req.json();
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const admin = createClient(supabaseUrl, serviceRoleKey);
 
-    if (action === "verify") {
-      if (!pin || typeof pin !== "string") {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { data, error } = await adminClient
+    const loadPin = async () => {
+      const { data } = await admin
         .from("security_pins")
-        .select("pin_hash")
+        .select("pin_hash, failed_attempts, locked_until")
         .eq("owner_id", user.id)
         .maybeSingle();
+      return data as { pin_hash: string; failed_attempts: number; locked_until: string | null } | null;
+    };
 
-      if (error || !data) {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN not found" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    /** Checks the current PIN with lockout; upgrades legacy hashes on success. */
+    const checkCurrentPin = async (candidate: unknown): Promise<{ ok: true } | { ok: false; error: string }> => {
+      const row = await loadPin();
+      if (!row) return { ok: false, error: "PIN not found" };
+      if (row.locked_until && new Date(row.locked_until) > new Date()) {
+        const mins = Math.ceil((new Date(row.locked_until).getTime() - Date.now()) / 60000);
+        return { ok: false, error: `PIN bloqueado por excesso de tentativas. Tente dentro de ${mins} min.` };
       }
+      const { ok, needsRehash } = isValidPin(candidate)
+        ? await verifyPinHash(candidate, row.pin_hash)
+        : { ok: false, needsRehash: false };
+      if (!ok) {
+        const failed = (row.failed_attempts ?? 0) + 1;
+        const lock = failed >= MAX_FAILED_ATTEMPTS;
+        await admin
+          .from("security_pins")
+          .update({
+            failed_attempts: lock ? 0 : failed,
+            locked_until: lock ? new Date(Date.now() + LOCK_MINUTES * 60000).toISOString() : null,
+          })
+          .eq("owner_id", user.id);
+        return {
+          ok: false,
+          error: lock
+            ? `PIN bloqueado durante ${LOCK_MINUTES} minutos.`
+            : `PIN incorreto (${MAX_FAILED_ATTEMPTS - failed} tentativa(s) restante(s))`,
+        };
+      }
+      await admin
+        .from("security_pins")
+        .update({
+          failed_attempts: 0,
+          locked_until: null,
+          ...(needsRehash ? { pin_hash: await hashPin(candidate as string) } : {}),
+        })
+        .eq("owner_id", user.id);
+      return { ok: true };
+    };
 
-      const inputHash = await hashPin(pin);
-      const success = inputHash === data.pin_hash;
-
-      return new Response(
-        JSON.stringify({ success, error: success ? undefined : "Incorrect PIN" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (action === "verify") {
+      const res = await checkCurrentPin(pin);
+      return json(req, res.ok ? { success: true } : { success: false, error: res.error });
     }
 
     if (action === "create") {
-      if (!pin || typeof pin !== "string" || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN must be 4-6 digits" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const pinHash = await hashPin(pin);
-      const { error } = await adminClient
+      if (!isValidPin(pin)) return json(req, { success: false, error: "O PIN deve ter 4 a 6 dígitos" }, 400);
+      // Creating must never overwrite an existing PIN (use "change" instead).
+      if (await loadPin()) return json(req, { success: false, error: "Já existe um PIN. Use a opção de alterar." });
+      const { error } = await admin
         .from("security_pins")
-        .upsert({ owner_id: user.id, pin_hash: pinHash }, { onConflict: "owner_id" });
-
-      if (error) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Failed to save PIN" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        .insert({ owner_id: user.id, pin_hash: await hashPin(pin) });
+      if (error) return json(req, { success: false, error: "Failed to save PIN" }, 500);
+      return json(req, { success: true });
     }
 
     if (action === "change") {
-      if (!pin || !new_pin) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Current and new PIN required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Verify current PIN first
-      const { data, error } = await adminClient
+      if (!isValidPin(new_pin)) return json(req, { success: false, error: "O novo PIN deve ter 4 a 6 dígitos" }, 400);
+      const res = await checkCurrentPin(pin);
+      if (!res.ok) return json(req, { success: false, error: res.error });
+      const { error } = await admin
         .from("security_pins")
-        .select("pin_hash")
-        .eq("owner_id", user.id)
-        .maybeSingle();
-
-      if (error || !data) {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN not found" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const currentHash = await hashPin(pin);
-      if (currentHash !== data.pin_hash) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Current PIN is incorrect" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Save new PIN
-      const newHash = await hashPin(new_pin);
-      const { error: updateError } = await adminClient
-        .from("security_pins")
-        .update({ pin_hash: newHash })
+        .update({ pin_hash: await hashPin(new_pin), failed_attempts: 0, locked_until: null })
         .eq("owner_id", user.id);
-
-      if (updateError) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Failed to update PIN" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (error) return json(req, { success: false, error: "Failed to update PIN" }, 500);
+      return json(req, { success: true });
     }
 
     if (action === "delete") {
-      if (!pin) {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN required for deletion" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Verify current PIN first
-      const { data, error } = await adminClient
-        .from("security_pins")
-        .select("pin_hash")
-        .eq("owner_id", user.id)
-        .maybeSingle();
-
-      if (error || !data) {
-        return new Response(
-          JSON.stringify({ success: false, error: "PIN not found" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const currentHash = await hashPin(pin);
-      if (currentHash !== data.pin_hash) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Incorrect PIN" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { error: deleteError } = await adminClient
-        .from("security_pins")
-        .delete()
-        .eq("owner_id", user.id);
-
-      if (deleteError) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Failed to delete PIN" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const res = await checkCurrentPin(pin);
+      if (!res.ok) return json(req, { success: false, error: res.error });
+      const { error } = await admin.from("security_pins").delete().eq("owner_id", user.id);
+      if (error) return json(req, { success: false, error: "Failed to delete PIN" }, 500);
+      return json(req, { success: true });
     }
 
-    return new Response(
-      JSON.stringify({ success: false, error: "Invalid action" }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json(req, { success: false, error: "Invalid action" }, 400);
+  } catch {
+    return json(req, { success: false, error: "Internal server error" }, 500);
   }
 });

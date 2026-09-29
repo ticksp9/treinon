@@ -229,8 +229,8 @@ async function createCheckoutSession(
       quantity: 1,
     }],
     mode: "payment",
-    success_url: success_url || `${body.success_url || "https://taticalsoccer.lovable.app"}/erp/billing?payment=success`,
-    cancel_url: cancel_url || `${body.cancel_url || "https://taticalsoccer.lovable.app"}/erp/billing?payment=cancelled`,
+    success_url: success_url || `${body.success_url || (Deno.env.get("APP_URL") ?? "https://treinon.vercel.app")}/erp/billing?payment=success`,
+    cancel_url: cancel_url || `${body.cancel_url || (Deno.env.get("APP_URL") ?? "https://treinon.vercel.app")}/erp/billing?payment=cancelled`,
     metadata: {
       club_id: clubId,
       charge_id: chargeRef || "",

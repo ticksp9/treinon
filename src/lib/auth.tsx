@@ -64,19 +64,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithUsername = async (username: string, password: string) => {
-    // Use secure edge function to look up email by username
+    // The server signs in with the username and returns only the session;
+    // the user's email address never reaches the browser.
     try {
       const { data, error: fnError } = await supabase.functions.invoke('auth-lookup', {
-        body: { action: 'lookup_username', username: username.toLowerCase() },
+        body: { action: 'sign_in', username: username.toLowerCase(), password },
       });
 
-      if (fnError || !data?.email) {
+      if (fnError || !data?.access_token) {
+        // Non-2xx responses carry the JSON body in fnError.context
+        let code: string | undefined = data?.code;
+        try {
+          const ctx = (fnError as { context?: Response } | null)?.context;
+          if (ctx && typeof ctx.json === 'function') code = (await ctx.json())?.code ?? code;
+        } catch { /* ignore */ }
+        if (code === 'email_not_confirmed') return { error: new Error('Email not confirmed') };
+        if (code === 'rate_limited') return { error: new Error('Demasiadas tentativas. Aguarde alguns minutos.') };
         return { error: new Error('Invalid login credentials') };
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password,
+      const { error } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
       });
       return { error };
     } catch {

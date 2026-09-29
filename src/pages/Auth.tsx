@@ -79,13 +79,21 @@ export default function Auth() {
     if (!unconfirmedEmail) return;
     setResendingEmail(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: unconfirmedEmail,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      const { error } = unconfirmedEmail.includes('@')
+        ? await supabase.auth.resend({
+            type: 'signup',
+            email: unconfirmedEmail,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+            },
+          })
+        : await supabase.functions.invoke('auth-lookup', {
+            body: {
+              action: 'resend_confirmation',
+              username: unconfirmedEmail.toLowerCase(),
+              redirect_to: `${window.location.origin}/`,
+            },
+          });
       if (error) {
         toast.error('Erro ao reenviar email: ' + error.message);
       } else {
@@ -168,31 +176,22 @@ export default function Auth() {
     
     const isEmail = identifier.includes('@');
     let error;
-    let emailUsed = isEmail ? identifier : '';
-    
+
     if (isEmail) {
       const result = await signIn(identifier, password);
       error = result.error;
     } else {
-      // Use secure edge function to look up email for resend functionality
-      try {
-        const { data: lookupData } = await supabase.functions.invoke('auth-lookup', {
-          body: { action: 'lookup_username', username: identifier.toLowerCase() },
-        });
-        emailUsed = lookupData?.email || '';
-      } catch {
-        emailUsed = '';
-      }
       const result = await signInWithUsername(identifier, password);
       error = result.error;
     }
-    
+
     setLoading(false);
 
     if (error) {
       if (error.message.includes('Email not confirmed')) {
         setShowEmailNotConfirmed(true);
-        setUnconfirmedEmail(emailUsed);
+        // Email or username; for usernames the server resends without revealing the address
+        setUnconfirmedEmail(identifier.trim());
       } else if (error.message.includes('Invalid login credentials')) {
         toast.error('Credenciais inválidas. Verifique o email/username e password.');
       } else {

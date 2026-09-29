@@ -16,14 +16,11 @@ export function useSecurityPin() {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('security_pins')
-        .select('id')
-        .eq('owner_id', user.id)
-        .maybeSingle();
+      // The table is not readable from the client (the hash must never leave the server)
+      const { data, error } = await (supabase.rpc as any)('has_security_pin');
 
       if (error) throw error;
-      setHasPin(!!data);
+      setHasPin(data === true);
     } catch (error) {
       console.error('Error checking PIN:', error);
       setHasPin(false);

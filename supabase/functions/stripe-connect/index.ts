@@ -267,8 +267,8 @@ async function createOnboardingLink(
 
   const accountLink = await stripe.accountLinks.create({
     account: account.external_account_id,
-    refresh_url: body.refresh_url || `${body.return_url || "https://taticalsoccer.lovable.app"}/erp/payments?tab=config&refresh=true`,
-    return_url: body.return_url || `${body.return_url || "https://taticalsoccer.lovable.app"}/erp/payments?tab=config&onboarding=complete`,
+    refresh_url: body.refresh_url || `${body.return_url || (Deno.env.get("APP_URL") ?? "https://treinon.vercel.app")}/erp/payments?tab=config&refresh=true`,
+    return_url: body.return_url || `${body.return_url || (Deno.env.get("APP_URL") ?? "https://treinon.vercel.app")}/erp/payments?tab=config&onboarding=complete`,
     type: "account_onboarding",
   });
 

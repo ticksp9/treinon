@@ -1,7 +1,13 @@
-project_id = "cxeoebdqbbckpcncpeqm"
+# Substitua pelo "Reference ID" do novo projeto Supabase (Project Settings → General)
+project_id = "SUBSTITUIR_PELO_ID_DO_PROJETO"
+
+# Public by design (called before login); rate limited inside the function.
+[functions.auth-lookup]
+verify_jwt = false
 
 [functions.fetch-fpf-standings]
 verify_jwt = false
 
+# Called by Stripe; authenticated with the webhook signature.
 [functions.stripe-webhook]
 verify_jwt = false
