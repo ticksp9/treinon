@@ -9,8 +9,9 @@ import { toast } from 'sonner';
 import { 
   Play, Pause, Square, ArrowLeft, 
   UserMinus, RotateCcw,
-  Clock, Pencil, AlertTriangle
+  Clock, Pencil, AlertTriangle, Share2
 } from 'lucide-react';
+import { shareText } from '@/lib/share';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -1235,9 +1236,32 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Badge variant="outline" className="text-lg px-4 py-2">
-            Terminado
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const scorers = events
+                  .filter(e => e.event_type === 'goal' && !e.is_opponent)
+                  .map(e => `⚽ ${e.player?.name ?? 'Golo'} ${e.minute}'`);
+                const home = match.is_home;
+                const us = team?.name ?? 'Nós';
+                const text = [
+                  `🏁 *Resultado final*`,
+                  home ? `${us} ${goalsFor} – ${goalsAgainst} ${match.opponent_name}` : `${match.opponent_name} ${goalsAgainst} – ${goalsFor} ${us}`,
+                  ...(scorers.length ? ['', ...scorers] : []),
+                  '',
+                  'Registado com TreinON',
+                ].join('\n');
+                shareText(text, 'Resultado');
+              }}
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Partilhar resultado
+            </Button>
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              Terminado
+            </Badge>
+          </div>
         </div>
         
         <MatchReport 

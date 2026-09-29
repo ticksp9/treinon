@@ -5,6 +5,11 @@ import { getCurrentSeasonName } from './constants';
  * Business values that were previously hardcoded in UI components.
  */
 
+export const APP_NAME = 'TreinON';
+export const APP_TAGLINE = 'O treinador ligado ao jogo';
+/** Support mailbox shown in the app. Empty = hidden until the address exists. */
+export const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL ?? '';
+
 // Default values
 export const DEFAULTS = {
   season: getCurrentSeasonName(),

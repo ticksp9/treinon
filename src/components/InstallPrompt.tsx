@@ -62,7 +62,7 @@ export function InstallPrompt() {
   if (hidden || (!deferred && !showIOS)) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:right-auto sm:max-w-sm z-50 rounded-lg border bg-background p-3 shadow-lg">
+    <div className="fixed bottom-20 left-4 right-4 md:bottom-4 sm:right-auto sm:max-w-sm z-50 rounded-lg border bg-background p-3 shadow-lg">
       <div className="flex items-start gap-3">
         <img src="/pwa-192x192.png" alt="" className="h-10 w-10 rounded-md" />
         <div className="flex-1 text-sm">

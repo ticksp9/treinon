@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -42,41 +43,76 @@ import {
   ShoppingCart,
   Briefcase,
   Package,
+  Shirt,
+  Library,
+  CalendarRange,
+  Stethoscope,
+  MapPin,
+  Mail,
+  ChevronDown,
 } from 'lucide-react';
+import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
-// Staff/coach menu
+// Staff/coach menu — what a coach uses every week comes first
 const staffMenuItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { title: 'Meu Perfil', icon: User, path: '/coach-profile' },
-  { title: 'Equipas', icon: Users, path: '/teams' },
-  { title: 'Jogadores', icon: Users, path: '/players' },
+  { title: 'Início', icon: LayoutDashboard, path: '/dashboard' },
   { title: 'Jogos', icon: Trophy, path: '/matches' },
   { title: 'Treinos', icon: Calendar, path: '/training' },
-  { title: 'Comunicação', icon: MessageSquare, path: '/communication' },
+  { title: 'Jogadores', icon: Users, path: '/players' },
+  { title: 'Equipas', icon: Shirt, path: '/teams' },
+  { title: 'Biblioteca', icon: Library, path: '/biblioteca' },
   { title: 'Quadro Tático', icon: PenTool, path: '/tactical-board' },
+  { title: 'Comunicação', icon: MessageSquare, path: '/communication' },
+  { title: 'Meu Perfil', icon: User, path: '/coach-profile' },
 ];
 
-const clubMenuItems = [
-  { title: 'Clube', icon: Building2, path: '/club' },
-  { title: 'Coordenação Jovens', icon: Users, path: '/club/coordination' },
-  { title: 'Treinadores', icon: UserCog, path: '/coaches' },
-  { title: 'Fisioterapia', icon: Heart, path: '/club/physio' },
-  { title: 'Mensalidades', icon: Wallet, path: '/erp/billing' },
-  { title: 'Pagamentos', icon: CreditCard, path: '/erp/payments' },
-  { title: 'Orçamento', icon: BarChart3, path: '/erp/budget' },
-  { title: 'Compras & Despesas', icon: ShoppingCart, path: '/erp/procurement' },
-  { title: 'Contratos & Staff', icon: Briefcase, path: '/erp/workforce' },
-  { title: 'Ativos & Inventário', icon: Package, path: '/erp/inventory' },
-  { title: 'Instalações & Campos', icon: Building2, path: '/erp/facilities' },
-  { title: 'Saúde & Medicina', icon: Heart, path: '/erp/medical' },
-  { title: 'Formação & Academia', icon: BookOpen, path: '/erp/academy' },
-  { title: 'Scouting & Recrutamento', icon: Shield, path: '/erp/scouting' },
-  { title: 'Regras de Jogo', icon: ClipboardCheck, path: '/erp/match-rules' },
-  { title: 'Templates Convite', icon: BookOpen, path: '/admin/invite-templates' },
-  { title: 'ERP', icon: Wallet, path: '/erp' },
-  { title: 'Transição Época', icon: ArrowUpRight, path: '/season-transition' },
-  { title: 'Épocas', icon: ArrowUpRight, path: '/seasons' },
+// Club admin menu, grouped so 19 entries don't overwhelm
+const clubMenuGroups = [
+  {
+    id: 'desporto',
+    title: 'Desporto',
+    icon: Trophy,
+    items: [
+      { title: 'Épocas', icon: CalendarRange, path: '/seasons' },
+      { title: 'Transição de época', icon: ArrowUpRight, path: '/season-transition' },
+      { title: 'Coordenação jovens', icon: Users, path: '/club/coordination' },
+      { title: 'Treinadores', icon: UserCog, path: '/coaches' },
+      { title: 'Formação & academia', icon: BookOpen, path: '/erp/academy' },
+      { title: 'Scouting', icon: Shield, path: '/erp/scouting' },
+      { title: 'Regras de jogo', icon: ClipboardCheck, path: '/erp/match-rules' },
+      { title: 'Fisioterapia', icon: Heart, path: '/club/physio' },
+      { title: 'Saúde & medicina', icon: Stethoscope, path: '/erp/medical' },
+    ],
+  },
+  {
+    id: 'financas',
+    title: 'Finanças',
+    icon: Wallet,
+    items: [
+      { title: 'Resumo', icon: BarChart3, path: '/erp' },
+      { title: 'Mensalidades', icon: Wallet, path: '/erp/billing' },
+      { title: 'Pagamentos', icon: CreditCard, path: '/erp/payments' },
+      { title: 'Orçamento', icon: BarChart3, path: '/erp/budget' },
+      { title: 'Compras & despesas', icon: ShoppingCart, path: '/erp/procurement' },
+    ],
+  },
+  {
+    id: 'operacoes',
+    title: 'Clube & operações',
+    icon: Building2,
+    items: [
+      { title: 'Perfil do clube', icon: Building2, path: '/club' },
+      { title: 'Contratos & staff', icon: Briefcase, path: '/erp/workforce' },
+      { title: 'Material & inventário', icon: Package, path: '/erp/inventory' },
+      { title: 'Instalações & campos', icon: MapPin, path: '/erp/facilities' },
+      { title: 'Modelos de convite', icon: Mail, path: '/admin/invite-templates' },
+    ],
+  },
 ];
+
+const OPEN_GROUPS_KEY = 'treinon_sidebar_groups';
 
 // Guardian menu
 const guardianMenuItems = [
@@ -97,6 +133,27 @@ export function AppSidebar() {
   const { isClubAdmin, isCoach, isGuardian, isPlayer, isIndividualCoach, accountType, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const go = (path: string) => {
+    navigate(path);
+    if (isMobile) setOpenMobile(false);
+  };
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(OPEN_GROUPS_KEY) || '{}');
+    } catch {
+      return {};
+    }
+  });
+  const isGroupOpen = (g: (typeof clubMenuGroups)[number]) =>
+    openGroups[g.id] ?? g.items.some((i) => location.pathname === i.path);
+  const toggleGroup = (id: string, open: boolean) => {
+    const next = { ...openGroups, [id]: open };
+    setOpenGroups(next);
+    try { localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -132,12 +189,12 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center shadow-lg shadow-sidebar-primary/30">
             <Zap className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-sidebar-foreground">TreinON</h1>
-            <p className="text-xs text-sidebar-foreground/60">Gestão Desportiva</p>
+            <h1 className="font-display font-bold text-sidebar-foreground tracking-tight">TreinON</h1>
+            <p className="text-xs text-sidebar-foreground/60">O treinador ligado ao jogo</p>
           </div>
         </div>
       </SidebarHeader>
@@ -152,7 +209,7 @@ export function AppSidebar() {
               {primaryItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton
-                    onClick={() => navigate(item.path)}
+                    onClick={() => go(item.path)}
                     isActive={location.pathname === item.path}
                     className="cursor-pointer"
                   >
@@ -170,17 +227,35 @@ export function AppSidebar() {
             <SidebarGroupLabel className="text-sidebar-foreground/50">Clube</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {clubMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      onClick={() => navigate(item.path)}
-                      isActive={location.pathname === item.path}
-                      className="cursor-pointer"
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                {clubMenuGroups.map((group) => (
+                  <Collapsible key={group.id} open={isGroupOpen(group)} onOpenChange={(o) => toggleGroup(group.id, o)}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton className="cursor-pointer">
+                          <group.icon className="w-4 h-4" />
+                          <span className="flex-1">{group.title}</span>
+                          <ChevronDown className={cn('w-4 h-4 transition-transform', isGroupOpen(group) && 'rotate-180')} />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                    </SidebarMenuItem>
+                    <CollapsibleContent>
+                      <div className="ml-4 border-l border-sidebar-border pl-2">
+                        {group.items.map((item) => (
+                          <SidebarMenuItem key={item.path}>
+                            <SidebarMenuButton
+                              size="sm"
+                              onClick={() => go(item.path)}
+                              isActive={location.pathname === item.path}
+                              className="cursor-pointer"
+                            >
+                              <item.icon className="w-4 h-4" />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -215,7 +290,7 @@ export function AppSidebar() {
               variant="ghost"
               size="sm"
               className="flex-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              onClick={() => navigate('/settings')}
+              onClick={() => go('/settings')}
             >
               <Settings className="w-4 h-4 mr-2" />
               Definições

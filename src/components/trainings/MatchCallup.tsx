@@ -25,7 +25,8 @@ import { MatchRulesPanel } from '@/components/matches/MatchRulesPanel';
 import { getOrCreateMatchReport, type ReportEntryMode } from '@/lib/match-report-service';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { computeAvailability, getClinicalStatusOption, type InjuryRecord } from '@/lib/player-availability';
-import { ShieldAlert, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Share2 } from 'lucide-react';
+import { shareText } from '@/lib/share';
 
 interface Team {
   id: string;
@@ -586,6 +587,31 @@ export function MatchCallup() {
     } finally {
       setCreating(false);
     }
+  };
+
+  // Coaches send call-ups to the team's WhatsApp group
+  const shareCallup = () => {
+    const match = matches.find(m => m.id === selectedMatch);
+    if (!match) return;
+    const team = teams.find(t => t.id === selectedTeam);
+    const date = new Date(match.match_date);
+    const called = players
+      .filter(p => selectedPlayers.has(p.id))
+      .sort((a, b) => (a.number ?? 999) - (b.number ?? 999))
+      .map(p => `${p.number ? `${p.number}. ` : '• '}${p.name}`);
+    const text = [
+      `⚽ *CONVOCATÓRIA* — ${team?.name ?? ''}`,
+      `🆚 ${match.opponent_name} (${match.is_home ? 'casa' : 'fora'})`,
+      `📅 ${format(date, "EEEE, dd/MM", { locale: pt })} às ${format(date, 'HH:mm')}`,
+      arrivalTime ? `⏰ Chegada: ${arrivalTime}` : '',
+      match.location ? `📍 ${match.location}` : '',
+      '',
+      `*Convocados (${called.length}):*`,
+      ...called,
+      '',
+      'Confirmem a presença na app TreinON. 💪',
+    ].filter((l, i, arr) => l !== '' || arr[i - 1] !== '').join('\n');
+    shareText(text, 'Convocatória');
   };
 
   const printCallup = () => {
@@ -1332,6 +1358,10 @@ export function MatchCallup() {
                 <Button variant="outline" size="sm" onClick={printCallup} disabled={selectedPlayers.size === 0}>
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
+                </Button>
+                <Button variant="outline" size="sm" onClick={shareCallup} disabled={selectedPlayers.size === 0}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  WhatsApp
                 </Button>
                 <Button onClick={saveCallup}>
                   Guardar

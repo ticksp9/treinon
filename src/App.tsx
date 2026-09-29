@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,7 @@ const PlayerDetail = lazy(() => import("./pages/PlayerDetail"));
 const Trainings = lazy(() => import("./pages/Trainings"));
 const Matches = lazy(() => import("./pages/Matches"));
 const TacticalBoard = lazy(() => import("./pages/TacticalBoard"));
+const Library = lazy(() => import("./pages/Library"));
 const SeasonTransition = lazy(() => import("./pages/SeasonTransition"));
 const SeasonsIndex = lazy(() => import("./pages/SeasonsIndex"));
 const SeasonClosePage = lazy(() => import("./pages/SeasonClosePage"));
@@ -124,6 +126,7 @@ function AppContent() {
           <Route path="/matches" element={<RoleProtectedRoute><Matches /></RoleProtectedRoute>} />
           <Route path="/training" element={<RoleProtectedRoute><Trainings /></RoleProtectedRoute>} />
           <Route path="/tactical-board" element={<RoleProtectedRoute><TacticalBoard /></RoleProtectedRoute>} />
+          <Route path="/biblioteca" element={<Library />} />
           <Route path="/season-transition" element={<RoleProtectedRoute><SeasonTransition /></RoleProtectedRoute>} />
           <Route path="/seasons" element={<RoleProtectedRoute><SeasonsPage /></RoleProtectedRoute>} />
           <Route path="/seasons/wizard" element={<RoleProtectedRoute><SeasonCreateWizard /></RoleProtectedRoute>} />
@@ -181,13 +184,15 @@ function AppContent() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <AppContent />
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <AppContent />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

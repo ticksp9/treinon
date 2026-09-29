@@ -34,7 +34,7 @@ export function OfflineIndicator() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+    <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2 md:bottom-4">
       {pendingCount && isOnline && (
         <Button
           variant="outline"

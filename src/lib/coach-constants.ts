@@ -25,9 +25,9 @@ export const COACHING_ROLES = [
 ];
 
 export const AGE_GROUPS = [
-  { value: 'sub-7', label: 'Sub-7 (Bambis)' },
+  { value: 'sub-7', label: 'Sub-7 (Petizes)' },
   { value: 'sub-9', label: 'Sub-9 (Traquinas)' },
-  { value: 'sub-10', label: 'Sub-10 (Petizes)' },
+  { value: 'sub-10', label: 'Sub-10 (Benjamins B)' },
   { value: 'sub-11', label: 'Sub-11 (Benjamins)' },
   { value: 'sub-13', label: 'Sub-13 (Infantis)' },
   { value: 'sub-15', label: 'Sub-15 (Iniciados)' },
