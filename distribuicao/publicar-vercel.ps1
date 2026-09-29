@@ -11,7 +11,9 @@ param(
   [string]$Scope = "",
   [string]$SupportEmail = "treinon.apoio@gmail.com",
   # Only publish a new version of the app (Vercel token only; Supabase untouched)
-  [switch]$SoApp
+  [switch]$SoApp,
+  # Delete the tokens stored on this PC and exit
+  [switch]$EsquecerTokens
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,17 +36,22 @@ function Run {
 $ScopeArgs = @()
 if ($Scope) { $ScopeArgs = @("--scope", $Scope) }
 
-# ── 1. Tokens ────────────────────────────────────────────────────────────────
+# ── 1. Tokens (guardados cifrados neste PC depois da primeira vez) ───────────
+. (Join-Path $PSScriptRoot "_segredos.ps1")
+if ($EsquecerTokens) {
+  Remove-TreinonSecret 'supabase'; Remove-TreinonSecret 'vercel'
+  Write-Host "Tokens apagados deste PC." -ForegroundColor Green
+  exit 0
+}
 Write-Host "`n[1/5] Chaves de acesso" -ForegroundColor Cyan
-while (-not $SoApp -and -not ($env:SUPABASE_ACCESS_TOKEN -match '^sbp_[0-9a-f]{40}$')) {
-  $t = Read-Secret "Access Token da Supabase (sbp_..., https://supabase.com/dashboard/account/tokens):"
-  if ($t -match '^sbp_[0-9a-f]{40}$') { $env:SUPABASE_ACCESS_TOKEN = $t } else { Write-Host "Não parece um Access Token (sbp_...)." -ForegroundColor Yellow }
+if (-not $SoApp) {
+  $env:SUPABASE_ACCESS_TOKEN = Get-TreinonToken 'supabase' `
+    "Access Token da Supabase (sbp_..., https://supabase.com/dashboard/account/tokens):" `
+    { param($x) $x -match '^sbp_[0-9a-f]{40}$' }
 }
-$VercelToken = ""
-while ($VercelToken.Length -lt 20) {
-  $VercelToken = Read-Secret "Token do Vercel (https://vercel.com/account/settings/tokens -> Create, entrando com a conta da TreinON):"
-  if ($VercelToken.Length -lt 20) { Write-Host "Token demasiado curto; copie-o outra vez." -ForegroundColor Yellow }
-}
+$VercelToken = Get-TreinonToken 'vercel' `
+  "Token do Vercel (https://vercel.com/account/settings/tokens -> Create, com a conta da TreinON):" `
+  { param($x) $x.Length -ge 20 }
 
 if ($SoApp) {
   # Vercel already has the variables; make sure this folder is linked to the project
@@ -54,7 +61,15 @@ if ($SoApp) {
 Write-Host "`n[2/5] A obter a chave pública do projeto $ProjectRef..." -ForegroundColor Cyan
 $SupabaseUrl = "https://$ProjectRef.supabase.co"
 $apiHeaders = @{ Authorization = "Bearer $($env:SUPABASE_ACCESS_TOKEN)" }
-$keys = Invoke-RestMethod -Uri "https://api.supabase.com/v1/projects/$ProjectRef/api-keys?reveal=true" -Headers $apiHeaders
+try {
+  $keys = Invoke-RestMethod -Uri "https://api.supabase.com/v1/projects/$ProjectRef/api-keys?reveal=true" -Headers $apiHeaders
+} catch {
+  if ("$_" -match '401|Unauthorized') {
+    Remove-TreinonSecret 'supabase'
+    throw "O token da Supabase guardado já não é válido (apagado). Volte a correr o script e cole um novo."
+  }
+  throw
+}
 $pub = $keys | Where-Object { $_.type -eq 'publishable' } | Select-Object -First 1
 if (-not $pub) { $pub = $keys | Where-Object { $_.name -eq 'anon' } | Select-Object -First 1 }
 if (-not $pub) { throw "Não encontrei a chave pública (publishable/anon) do projeto." }
@@ -95,7 +110,13 @@ $out = (& npx -y vercel@latest deploy --prod --yes --token $VercelToken @ScopeAr
 $code = $LASTEXITCODE
 $ErrorActionPreference = "Stop"
 Write-Host $out
-if ($code -ne 0) { throw "O Vercel não conseguiu publicar (ver mensagens acima)." }
+if ($code -ne 0) {
+  if ($out -match 'token is not valid|invalid token|not authorized|Unauthorized|The specified token') {
+    Remove-TreinonSecret 'vercel'
+    throw "O token do Vercel expirou ou foi revogado (apagado deste PC). Crie um novo e volte a correr o script."
+  }
+  throw "O Vercel não conseguiu publicar (ver mensagens acima)."
+}
 $alias = [regex]::Match($out, 'Aliased:\s*(https://[^\s\]]+)').Groups[1].Value
 if (-not $alias) { $alias = "https://$VercelProject.vercel.app" }
 $AppUrl = $alias.TrimEnd('/')
