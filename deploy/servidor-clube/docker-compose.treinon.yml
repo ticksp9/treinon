@@ -1,0 +1,49 @@
+# Added on top of the official Supabase self-hosted docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.treinon.yml up -d
+# One HTTPS address serves both the app (/) and the Supabase API (/rest, /auth, ...).
+services:
+  treinon-web:
+    container_name: treinon-web
+    build:
+      context: ${TREINON_SRC}
+      dockerfile: deploy/servidor-clube/Dockerfile
+    restart: unless-stopped
+    environment:
+      SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL}
+      ANON_KEY: ${ANON_KEY}
+
+  caddy:
+    container_name: treinon-caddy
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      TREINON_DOMAIN: ${TREINON_DOMAIN}
+      TREINON_TLS_DIRECTIVE: ${TREINON_TLS_DIRECTIVE:-}
+    volumes:
+      - ./Caddyfile.treinon:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - treinon-web
+      - kong
+
+  # TreinON edge functions need a few extra settings
+  functions:
+    environment:
+      APP_URL: https://${TREINON_DOMAIN}
+      ALLOWED_ORIGINS: https://${TREINON_DOMAIN}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
+
+volumes:
+  caddy-data:
+  caddy-config:

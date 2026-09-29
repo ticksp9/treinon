@@ -55,11 +55,19 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
+        // config.js points the app at its backend (club server); never serve a stale copy
+        globIgnores: ['config.js'],
         runtimeCaching: [
           {
-            // Only REST data reads. Never cache auth or edge-function responses.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname === '/config.js',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'treinon-config', networkTimeoutSeconds: 3 },
+          },
+          {
+            // Only REST data reads (hosted Supabase or a club's own server).
+            // Never cache auth or edge-function responses.
             urlPattern: ({ url, request }) =>
-              request.method === 'GET' && url.hostname.endsWith('.supabase.co') && url.pathname.startsWith('/rest/v1/'),
+              request.method === 'GET' && url.pathname.startsWith('/rest/v1/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-cache',

@@ -3,8 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Backend can be chosen at runtime by /config.js (club's own server) or at build
+// time by VITE_* variables (hosted Supabase / Vercel). Runtime wins when present.
+const runtimeConfig =
+  (typeof window !== 'undefined' &&
+    (window as unknown as { __TREINON_CONFIG__?: { supabaseUrl?: string; supabaseAnonKey?: string } })
+      .__TREINON_CONFIG__) ||
+  {};
+const SUPABASE_URL = runtimeConfig.supabaseUrl || import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = runtimeConfig.supabaseAnonKey || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

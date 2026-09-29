@@ -1,0 +1,4 @@
+# Shell scripts run on Linux servers: always LF
+*.sh text eol=lf
+deploy/servidor-clube/Caddyfile.treinon text eol=lf
+deploy/servidor-clube/nginx.conf text eol=lf

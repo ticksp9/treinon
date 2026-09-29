@@ -9,6 +9,25 @@ instalável como app (PWA) em Windows, Android, iPhone/iPad.
 
 ---
 
+## 0. Onde ficam os dados — duas opções, a mesma app
+
+| | **Nuvem** (Supabase + Vercel) | **Servidor do clube** (self-hosted) |
+|---|---|---|
+| Dados | Supabase (UE) | No servidor do próprio clube |
+| Custo | mensalidade Supabase/Vercel | a máquina + luz; sem mensalidade |
+| Manutenção | nenhuma | atualizações e cópias (automatizadas) |
+| Guia | [`distribuicao/GUIA-SUPABASE-VERCEL.md`](distribuicao/GUIA-SUPABASE-VERCEL.md) | [`deploy/servidor-clube/LEIA-ME.md`](deploy/servidor-clube/LEIA-ME.md) |
+
+O endereço da base de dados é escolhido em tempo de execução pelo ficheiro `config.js`
+(servidor do clube) ou, se estiver vazio, pelas variáveis `VITE_*` do build (nuvem).
+
+Antes de criar qualquer base de dados, pode confirmar que todas as migrações correm do
+zero num PostgreSQL local descartável:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\db-check\replay-migrations.ps1
+```
+
 ## 1. Publicar no Vercel (uma vez)
 
 1. Pôr esta pasta num repositório GitHub (privado).

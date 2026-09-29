@@ -1,0 +1,20 @@
+# HTTPS is mandatory: installable app (PWA), offline mode and secure login.
+# TREINON_TLS_DIRECTIVE empty -> automatic public certificate (Let's Encrypt): needs a
+#                      public domain pointing to the club and ports 80/443 open.
+# TREINON_TLS_DIRECTIVE="tls internal" -> certificate from Caddy's own CA (club network
+#                      only); each device must trust that CA (see LEIA-ME).
+# (environment placeholders are substituted before parsing, so an empty value
+#  simply removes the line)
+{$TREINON_DOMAIN} {
+	{$TREINON_TLS_DIRECTIVE}
+	encode gzip
+
+	@supabase path /rest/v1/* /auth/v1/* /storage/v1/* /realtime/v1/* /functions/v1/* /graphql/v1/*
+	handle @supabase {
+		reverse_proxy kong:8000
+	}
+
+	handle {
+		reverse_proxy treinon-web:80
+	}
+}
