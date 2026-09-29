@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt'],
+      includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
         id: '/',
         name: 'TreinON — O treinador ligado ao jogo',
@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/pwa-maskable-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
