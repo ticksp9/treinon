@@ -24,14 +24,29 @@ function Sb {
 Write-Host "`n[1/5] Acesso à conta Supabase da TreinON" -ForegroundColor Cyan
 # The access token lives only in this terminal session, so another Supabase
 # account already logged in on this PC (another app) is not touched.
-if (-not $env:SUPABASE_ACCESS_TOKEN) {
-  Write-Host "Crie uma chave em https://supabase.com/dashboard/account/tokens (entrando com a conta da TreinON)"
-  Write-Host "e cole-a aqui (não aparece no ecrã), depois Enter:"
+Write-Host "Precisa de um Access Token PESSOAL (começa por sbp_, 44 caracteres):"
+Write-Host "  https://supabase.com/dashboard/account/tokens  ->  Generate new token"
+Write-Host "  (NÃO serve a anon key, service_role nem sb_secret das definições do projeto)"
+for ($try = 1; -not ($env:SUPABASE_ACCESS_TOKEN -match '^sbp_[0-9a-f]{40}$'); $try++) {
+  if ($try -gt 3) { throw "Chave inválida 3 vezes. Gere um Access Token novo e volte a correr o script." }
+  Write-Host "`nCole o token aqui (não aparece no ecrã) e carregue Enter:"
   $sec = Read-Host -AsSecureString
-  $env:SUPABASE_ACCESS_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-    [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
+  $bstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec)
+  $tok = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim()
+  [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+  if ($tok -match '^sbp_[0-9a-f]{40}$') {
+    $env:SUPABASE_ACCESS_TOKEN = $tok
+  } else {
+    $kind = if ($tok.StartsWith('eyJ')) { 'uma chave de API do projeto (anon/service_role)' }
+            elseif ($tok.StartsWith('sb_')) { 'uma chave de API do projeto (sb_publishable/sb_secret)' }
+            elseif ($tok.Length -eq 0) { 'vazio' }
+            else { "texto com $($tok.Length) caracteres" }
+    Write-Host "Isso não é um Access Token pessoal (parece $kind). Tente de novo." -ForegroundColor Yellow
+  }
 }
+$ErrorActionPreference = "Continue"   # the CLI writes progress to stderr
 $projects = (& npx -y supabase@latest projects list 2>&1) | Out-String
+$ErrorActionPreference = "Stop"
 if ($projects -notmatch $ProjectRef) {
   throw "Esta chave não dá acesso ao projeto $ProjectRef. Confirme que criou a chave com a conta da TreinON."
 }
