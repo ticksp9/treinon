@@ -1,4 +1,4 @@
-# TreinON — configurar um projeto Supabase novo
+﻿# TreinON — configurar um projeto Supabase novo
 # Uso (PowerShell, na pasta do projeto):
 #   powershell -ExecutionPolicy Bypass -File distribuicao\configurar-supabase.ps1 -ProjectRef abcdefghijklmnop
 #
@@ -13,16 +13,20 @@ param(
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
+# Runs the Supabase CLI and stops the script if the step failed
+function Sb { npx -y supabase@latest @args; if ($LASTEXITCODE -ne 0) { throw "Falhou: supabase $args" } }
+
 Write-Host "`n[1/5] Login na Supabase (abre o browser)..." -ForegroundColor Cyan
-npx -y supabase@latest login
+Sb login
 
 Write-Host "`n[2/5] Ligar ao projeto $ProjectRef ..." -ForegroundColor Cyan
-(Get-Content supabase\config.toml -Raw) -replace 'project_id = ".*"', "project_id = `"$ProjectRef`"" |
-  Set-Content supabase\config.toml -Encoding utf8
-npx -y supabase@latest link --project-ref $ProjectRef
+$cfgPath = Join-Path (Get-Location) "supabase\config.toml"
+$cfg = [IO.File]::ReadAllText($cfgPath) -replace 'project_id = ".*"', "project_id = `"$ProjectRef`""
+[IO.File]::WriteAllText($cfgPath, $cfg, (New-Object System.Text.UTF8Encoding($false)))  # no BOM (TOML)
+Sb link --project-ref $ProjectRef
 
 Write-Host "`n[3/5] Criar a base de dados (migrações)..." -ForegroundColor Cyan
-npx -y supabase@latest db push
+Sb db push
 
 Write-Host "`n[4/5] Publicar funções do servidor..." -ForegroundColor Cyan
 $functions = @("auth-lookup", "verify-pin", "manage-invites", "send-invite", "billing-engine",
@@ -30,11 +34,12 @@ $functions = @("auth-lookup", "verify-pin", "manage-invites", "send-invite", "bi
                "fetch-fpf-standings")
 foreach ($f in $functions) {
   Write-Host "  - $f"
-  npx -y supabase@latest functions deploy $f --project-ref $ProjectRef
+  # --use-api: bundled on Supabase's side, no Docker needed
+  Sb functions deploy $f --project-ref $ProjectRef --use-api
 }
 
 Write-Host "`n[5/5] Segredos das funções" -ForegroundColor Cyan
-npx -y supabase@latest secrets set --project-ref $ProjectRef "APP_URL=$AppUrl" "ALLOWED_ORIGINS=$AppUrl,http://localhost:8080"
+Sb secrets set --project-ref $ProjectRef "APP_URL=$AppUrl" "ALLOWED_ORIGINS=$AppUrl,http://localhost:8080"
 Write-Host @"
 
 Pronto. Opcional (só se usar estas funcionalidades):
