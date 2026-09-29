@@ -7,6 +7,8 @@
 param(
   [Parameter(Mandatory = $true)][string]$ProjectRef,
   [string]$VercelProject = "treinon",
+  # Vercel team slug (vercel.com/<slug>); empty = the token's default team
+  [string]$Scope = "",
   [string]$SupportEmail = "treinon.apoio@gmail.com"
 )
 
@@ -26,6 +28,9 @@ function Run {
   & npx -y @Rest
   if ($LASTEXITCODE -ne 0) { throw "Falhou: $Rest" }
 }
+
+$ScopeArgs = @()
+if ($Scope) { $ScopeArgs = @("--scope", $Scope) }
 
 # ── 1. Tokens ────────────────────────────────────────────────────────────────
 Write-Host "`n[1/5] Chaves de acesso" -ForegroundColor Cyan
@@ -59,9 +64,9 @@ if (Test-Path .env) { Copy-Item .env ".env.lovable-antigo" -Force }
 Write-Host "`n[3/5] A preparar o projeto no Vercel..." -ForegroundColor Cyan
 # Create the project first (an error just means it already exists), then link to it
 $ErrorActionPreference = "Continue"
-& npx -y vercel@latest project add $VercelProject --token $VercelToken 2>&1 | Out-Host
+& npx -y vercel@latest project add $VercelProject --token $VercelToken @ScopeArgs 2>&1 | Out-Host
 $ErrorActionPreference = "Stop"
-Run vercel@latest link --yes --project $VercelProject --token $VercelToken
+Run vercel@latest link --yes --project $VercelProject --token $VercelToken @ScopeArgs
 $vars = [ordered]@{
   VITE_SUPABASE_URL = $SupabaseUrl
   VITE_SUPABASE_PUBLISHABLE_KEY = $AnonKey
@@ -70,16 +75,16 @@ $vars = [ordered]@{
 }
 foreach ($k in $vars.Keys) {
   $ErrorActionPreference = "Continue"
-  & npx -y vercel@latest env rm $k production --yes --token $VercelToken 2>&1 | Out-Null
+  & npx -y vercel@latest env rm $k production --yes --token $VercelToken @ScopeArgs 2>&1 | Out-Null
   $ErrorActionPreference = "Stop"
-  $vars[$k] | & npx -y vercel@latest env add $k production --token $VercelToken
+  $vars[$k] | & npx -y vercel@latest env add $k production --token $VercelToken @ScopeArgs
   if ($LASTEXITCODE -ne 0) { throw "Falhou a variável $k" }
 }
 
 # ── 4. Publicar ──────────────────────────────────────────────────────────────
 Write-Host "`n[4/5] A publicar (demora 1–2 minutos)..." -ForegroundColor Cyan
 $ErrorActionPreference = "Continue"   # vercel prints progress on stderr
-$out = (& npx -y vercel@latest deploy --prod --yes --token $VercelToken 2>&1) | Out-String
+$out = (& npx -y vercel@latest deploy --prod --yes --token $VercelToken @ScopeArgs 2>&1) | Out-String
 $code = $LASTEXITCODE
 $ErrorActionPreference = "Stop"
 Write-Host $out
