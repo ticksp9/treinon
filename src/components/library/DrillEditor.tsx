@@ -49,9 +49,12 @@ interface Props {
   initial: AnyDrill;
   onClose: () => void;
   onSaved?: () => void;
+  /** 'training': the drill goes back into a training plan (optionally also saved to my exercises) */
+  onSubmit?: (drill: AnyDrill) => void;
 }
 
-export function DrillEditor({ open, initial, onClose, onSaved }: Props) {
+export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props) {
+  const [alsoSave, setAlsoSave] = useState(false);
   const [drill, setDrill] = useState<AnyDrill>(() => withAnimation(initial));
   const [tool, setTool] = useState<Tool>('move');
   const [step, setStep] = useState(0);
@@ -174,6 +177,12 @@ export function DrillEditor({ open, initial, onClose, onSaved }: Props) {
     if (!drill.name.trim()) { toast.error('Dê um nome ao exercício.'); return; }
     if (drill.diagram.length === 0) { toast.error('Desenhe o exercício no campo.'); return; }
     try {
+      if (onSubmit) {
+        if (alsoSave) await save.mutateAsync({ drill: { ...drill, rowId: undefined }, clubId: clubId ?? null });
+        onSubmit(drill);
+        onClose();
+        return;
+      }
       await save.mutateAsync({ drill, clubId: clubId ?? null });
       toast.success('Exercício guardado.');
       onSaved?.();
@@ -372,10 +381,16 @@ export function DrillEditor({ open, initial, onClose, onSaved }: Props) {
           </div>
         </Tabs>
 
-        <div className="flex justify-end gap-2 border-t pt-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t pt-3">
+          {onSubmit && (
+            <label className="mr-auto flex items-center gap-2 text-sm">
+              <Switch checked={alsoSave} onCheckedChange={setAlsoSave} />
+              Guardar também em "Os meus exercícios"
+            </label>
+          )}
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={doSave} disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar exercício
+            {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{onSubmit ? 'Usar no treino' : 'Guardar exercício'}
           </Button>
         </div>
       </DialogContent>

@@ -11,11 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, FileText, Trash2, Copy, Clock, Upload, GripVertical, Save, Edit, Filter, Dumbbell, ShieldCheck, Zap, Target, Pencil } from 'lucide-react';
+import { Plus, FileText, Trash2, Copy, Clock, Upload, GripVertical, Save, Edit, Filter, Dumbbell, ShieldCheck, Zap, Target, Pencil, Eye, PenTool, Printer } from 'lucide-react';
 import { AGE_GROUPS, FOCUS_AREAS } from '@/lib/coach-constants';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { TrainingFieldEditor } from '@/components/trainings/TrainingFieldEditor';
+import { DrillEditor } from '@/components/library/DrillEditor';
+import { DrillDiagram } from '@/components/library/DrillDiagram';
+import { TrainingPlanView, type PlanTraining } from '@/components/trainings/TrainingPlanView';
+import { emptyDrill, type AnyDrill } from '@/lib/drill-library/custom';
+import { SESSION_PLANS, sessionDrills, drillsToExercises, drillToText, AGE_BANDS } from '@/lib/drill-library';
+import { elementsAt } from '@/lib/drill-library/animation';
 import { DrillPicker } from '@/components/library/DrillPicker';
 import { AnimatedDrill } from '@/components/library/AnimatedDrill';
 import type { DiagramEl } from '@/lib/drill-library/types';
@@ -318,11 +323,11 @@ export function TrainingBuilder() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   // Filters for templates
   const [filterAgeGroup, setFilterAgeGroup] = useState<string>('all');
   const [filterFocusArea, setFilterFocusArea] = useState<string>('all');
-  
+
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [form, setForm] = useState({
     name: '',
@@ -343,7 +348,7 @@ export function TrainingBuilder() {
 
   const fetchTrainings = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('coach_trainings')
@@ -352,7 +357,7 @@ export function TrainingBuilder() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       setTrainings((data || []).map(t => ({
         ...t,
         exercises: (t.exercises as unknown as Exercise[]) || [],
@@ -374,7 +379,7 @@ export function TrainingBuilder() {
         .order('name');
 
       if (error) throw error;
-      
+
       const userTemplates = (data || []).map(t => ({
         ...t,
         exercises: (t.exercises as unknown as Exercise[]) || [],
@@ -398,6 +403,29 @@ export function TrainingBuilder() {
   };
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [drawing, setDrawing] = useState<{ exerciseId: string | null; initial: AnyDrill } | null>(null);
+  const [viewing, setViewing] = useState<PlanTraining | null>(null);
+
+  const drawExercise = (ex: Exercise | null) => {
+    const base = emptyDrill();
+    setDrawing({
+      exerciseId: ex?.id ?? null,
+      initial: ex
+        ? { ...base, name: ex.name, minutes: ex.duration || base.minutes, diagram: ex.diagram ?? [], anim: ex.anim ?? null, setup: ex.description || '' }
+        : base,
+    });
+  };
+  const applyDrawing = (d: AnyDrill) => {
+    if (!drawing) return;
+    const text = d.objective || d.howTo.length ? drillToText(d) : d.setup;
+    if (drawing.exerciseId) {
+      setExercises((prev) => prev.map((ex) => (ex.id === drawing.exerciseId
+        ? { ...ex, name: d.name, duration: d.minutes, diagram: d.diagram, anim: d.anim ?? null, description: ex.description || text }
+        : ex)));
+    } else {
+      setExercises((prev) => [...prev, { id: Date.now().toString(), name: d.name, duration: d.minutes, description: text, diagram: d.diagram, anim: d.anim ?? null }]);
+    }
+  };
 
   const addExercise = () => {
     setExercises(prev => [
@@ -506,7 +534,7 @@ export function TrainingBuilder() {
         if (error) throw error;
         toast.success('Treino criado!');
       }
-      
+
       setDialogOpen(false);
       resetForm();
       fetchTrainings();
@@ -578,6 +606,9 @@ export function TrainingBuilder() {
     return FOCUS_AREA_ICONS[area] || FOCUS_AREA_ICONS.default;
   };
 
+  const AGE_TO_BAND: Record<string, string> = { 'sub-7': 'sub7', 'sub-9': 'sub9', 'sub-11': 'sub11', 'sub-13': 'sub13', 'sub-15': 'sub15', 'sub-17': 'sub17', 'sub-19': 'sub19', senior: 'senior' };
+  const libraryPlans = SESSION_PLANS.filter((p) => filterAgeGroup === 'all' || p.ages.includes(AGE_TO_BAND[filterAgeGroup] as never));
+
   // Filter templates based on selected filters
   const filteredTemplates = templates.filter(template => {
     const matchesAge = filterAgeGroup === 'all' || template.age_group === filterAgeGroup;
@@ -612,7 +643,7 @@ export function TrainingBuilder() {
             <TabsTrigger value="trainings">Meus Treinos</TabsTrigger>
             <TabsTrigger value="templates">Biblioteca de Treinos</TabsTrigger>
           </TabsList>
-          
+
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
@@ -627,15 +658,11 @@ export function TrainingBuilder() {
               <DialogHeader>
                 <DialogTitle>{editingId ? 'Editar Treino' : 'Criar Novo Treino'}</DialogTitle>
               </DialogHeader>
-              
+
               <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="info">Informações</TabsTrigger>
-                  <TabsTrigger value="exercises">Exercícios</TabsTrigger>
-                  <TabsTrigger value="visual" className="flex items-center gap-1">
-                    <Pencil className="w-3 h-3" />
-                    Editor Visual
-                  </TabsTrigger>
+                  <TabsTrigger value="exercises">Exercícios ({exercises.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info" className="space-y-6">
@@ -649,7 +676,7 @@ export function TrainingBuilder() {
                         placeholder="Ex: Treino Tático - Transições"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Escalão</Label>
                       <Select
@@ -668,7 +695,7 @@ export function TrainingBuilder() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Data do Treino</Label>
                       <Input
@@ -677,7 +704,7 @@ export function TrainingBuilder() {
                         onChange={(e) => setForm(prev => ({ ...prev, training_date: e.target.value }))}
                       />
                     </div>
-                    
+
                     <div className="col-span-2 space-y-2">
                       <Label>Objetivos</Label>
                       <Textarea
@@ -723,6 +750,10 @@ export function TrainingBuilder() {
                         <Clock className="w-3 h-3 mr-1" />
                         {calculateTotalDuration()} min
                       </Badge>
+                      <Button type="button" size="sm" onClick={() => drawExercise(null)}>
+                        <PenTool className="w-4 h-4 mr-1" />
+                        Desenhar exercício
+                      </Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
                         <Dumbbell className="w-4 h-4 mr-1" />
                         Dos exercícios
@@ -734,12 +765,12 @@ export function TrainingBuilder() {
                       <DrillPicker open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={(ex) => setExercises((prev) => [...prev, ex])} />
                     </div>
                   </div>
-                  
+
                   {exercises.length === 0 ? (
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
                         <p className="text-muted-foreground">
-                          Adicione exercícios ao seu treino
+                          Desenhe um exercício (com animação) ou escolha dos seus exercícios e da biblioteca.
                         </p>
                       </CardContent>
                     </Card>
@@ -753,7 +784,7 @@ export function TrainingBuilder() {
                                 <GripVertical className="w-4 h-4 text-muted-foreground" />
                                 <span className="text-xs text-muted-foreground">{index + 1}</span>
                               </div>
-                              
+
                               <div className="flex-1 space-y-3">
                                 <div className="grid grid-cols-4 gap-2">
                                   <div className="col-span-2">
@@ -786,7 +817,7 @@ export function TrainingBuilder() {
                                     </Button>
                                   </div>
                                 </div>
-                                
+
                                 {exercise.diagram && exercise.diagram.length > 0 && (
                                   <AnimatedDrill elements={exercise.diagram} anim={exercise.anim} title={exercise.name} compact className="max-w-md" />
                                 )}
@@ -796,8 +827,12 @@ export function TrainingBuilder() {
                                   placeholder="Descrição do exercício..."
                                   rows={2}
                                 />
-                                
-                                <div className="flex items-center gap-2">
+
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Button type="button" variant="outline" size="sm" onClick={() => drawExercise(exercise)}>
+                                    <PenTool className="w-4 h-4 mr-1" />
+                                    {exercise.diagram && exercise.diagram.length > 0 ? 'Editar desenho' : 'Desenhar'}
+                                  </Button>
                                   {exercise.image_url ? (
                                     <div className="relative">
                                       <img
@@ -840,16 +875,17 @@ export function TrainingBuilder() {
                 </div>
                 </TabsContent>
 
-                <TabsContent value="visual" className="space-y-4">
-                  <TrainingFieldEditor 
-                    sportType="football"
-                    onSave={(dataUrl) => setForm(prev => ({ ...prev, diagram_url: dataUrl }))}
-                    initialData={form.diagram_url}
-                  />
-                </TabsContent>
+                
               </Tabs>
 
+              {drawing && (
+                <DrillEditor key={drawing.exerciseId ?? 'new'} open initial={drawing.initial} onClose={() => setDrawing(null)} onSubmit={applyDrawing} />
+              )}
               <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setViewing({ name: form.name || 'Treino', training_date: form.training_date || null, objectives: form.objectives || null, exercises })}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Ver plano
+                </Button>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancelar
                 </Button>
@@ -920,12 +956,27 @@ export function TrainingBuilder() {
                         {training.exercises.length} exercícios
                       </Badge>
                     </div>
-                    
+
                     {training.objectives && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {training.objectives}
                       </p>
                     )}
+                    {training.exercises.some((e) => e.diagram && e.diagram.length > 0) && (
+                      <div className="mt-3 grid grid-cols-4 gap-1">
+                        {training.exercises.filter((e) => e.diagram && e.diagram.length > 0).slice(0, 4).map((e) => (
+                          <DrillDiagram key={e.id} elements={e.anim ? elementsAt(e.diagram!, e.anim, 0, true) : e.diagram!} className="w-full rounded bg-[hsl(var(--field-dark))]" />
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => setViewing(training)}>
+                        <Eye className="w-4 h-4 mr-1" />Ver plano
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => editTraining(training)}>
+                        <Edit className="w-4 h-4 mr-1" />Editar
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -934,6 +985,48 @@ export function TrainingBuilder() {
         </TabsContent>
 
         <TabsContent value="templates">
+          <div className="mb-8 space-y-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-semibold">Treinos completos da biblioteca</h3>
+              <Badge variant="secondary">{libraryPlans.length}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {libraryPlans.map((p) => {
+                const items = sessionDrills(p);
+                return (
+                  <Card key={p.id} className="flex flex-col overflow-hidden">
+                    <div className="grid grid-cols-3 gap-0.5 bg-[hsl(var(--field-dark))]">
+                      {items.slice(0, 3).map((it, i) => <DrillDiagram key={i} elements={it.drill.diagram} className="w-full" />)}
+                    </div>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{p.name}</CardTitle>
+                      <CardDescription className="line-clamp-2">{p.summary}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="mt-auto space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline">{AGE_BANDS.filter((a) => p.ages.includes(a.value)).map((a) => a.short).join(', ')}</Badge>
+                        <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />{p.minutes} min</Badge>
+                        <Badge variant="outline">{items.length} exercícios</Badge>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1" onClick={() => applyTemplate({
+                          id: p.id, name: p.name, description: p.summary, age_group: null, focus_area: null,
+                          duration_minutes: p.minutes, is_system_template: true,
+                          exercises: drillsToExercises(items) as unknown as Exercise[],
+                        })}>
+                          <Copy className="w-4 h-4 mr-2" />Usar este treino
+                        </Button>
+                        <Button size="sm" variant="outline" aria-label="Ver plano" onClick={() => setViewing({ name: p.name, objectives: p.summary, exercises: drillsToExercises(items) as unknown as Exercise[] })}>
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+          <h3 className="mb-3 text-lg font-semibold">Outros modelos</h3>
           {/* Filters */}
           <Card className="mb-6">
             <CardContent className="pt-4">
@@ -942,7 +1035,7 @@ export function TrainingBuilder() {
                   <Filter className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Filtrar:</span>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Label className="text-sm">Escalão:</Label>
                   <Select value={filterAgeGroup} onValueChange={setFilterAgeGroup}>
@@ -1014,7 +1107,7 @@ export function TrainingBuilder() {
                     <h3 className="text-lg font-semibold">{getFocusAreaLabel(focusArea)}</h3>
                     <Badge variant="secondary">{areaTemplates.length} treinos</Badge>
                   </div>
-                  
+
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {areaTemplates.map((template) => (
                       <Card key={template.id} className="group hover:shadow-md transition-shadow">
@@ -1043,13 +1136,13 @@ export function TrainingBuilder() {
                               {template.exercises.length} exercícios
                             </Badge>
                           </div>
-                          
+
                           {template.description && (
                             <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                               {template.description}
                             </p>
                           )}
-                          
+
                           <Button
                             variant="outline"
                             size="sm"
@@ -1069,6 +1162,7 @@ export function TrainingBuilder() {
           )}
         </TabsContent>
       </Tabs>
+      <TrainingPlanView training={viewing} open={!!viewing} onClose={() => setViewing(null)} />
     </div>
   );
 }
