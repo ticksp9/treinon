@@ -29,6 +29,47 @@
 
   <body>
     <div id="root"></div>
+    <!-- If the app cannot start (very old browser, broken cache…), explain instead of a blank page.
+         Plain ES5 on purpose: it must run where the app itself cannot. -->
+    <script>
+      (function () {
+        var errors = [];
+        window.addEventListener('error', function (e) { errors.push(String(e.message || e)); });
+        function iosVersion() {
+          var m = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+          return m ? m[1] + '.' + m[2] : null;
+        }
+        window.__treinonRetry = function () {
+          var done = function () { location.reload(); };
+          try {
+            var jobs = [];
+            if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+              jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); }));
+            }
+            if (window.caches && caches.keys) {
+              jobs.push(caches.keys().then(function (ks) { ks.forEach(function (k) { caches['delete'](k); }); }));
+            }
+            Promise.all(jobs).then(done, done);
+          } catch (e) { done(); }
+        };
+        setTimeout(function () {
+          var root = document.getElementById('root');
+          if (window.__treinonBooted || (root && root.children.length > 0)) return;
+          var ios = iosVersion();
+          var old = ios && parseInt(ios, 10) < 12;
+          root.innerHTML =
+            '<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:30rem;margin:12vh auto;padding:0 16px;color:#1b2230">' +
+            '<h1 style="font-size:1.4rem">O TreinON não conseguiu abrir</h1>' +
+            (ios ? '<p>Este aparelho tem <b>iOS ' + ios + '</b>.</p>' : '') +
+            (old
+              ? '<p>Esta versão é demasiado antiga. A app precisa de iOS 12 ou mais recente.</p>'
+              : '<p>1. Toque em <b>Tentar de novo</b> (limpa a cópia antiga guardada no aparelho).</p>' +
+                '<p>2. Se continuar, atualize o aparelho em <b>Definições → Geral → Atualização de software</b>.</p>') +
+            '<p><button onclick="__treinonRetry()" style="font-size:1rem;padding:.6rem 1.2rem;border-radius:8px;border:0;background:#24558f;color:#fff">Tentar de novo</button></p>' +
+            (errors.length ? '<p style="font-size:.75rem;color:#666">Detalhe técnico: ' + errors.slice(0, 2).join(' | ').replace(/</g, '&lt;') + '</p>' : '');
+        }, 9000);
+      })();
+    </script>
     <!-- Backend chosen at runtime (club server) — must load before the app -->
     <script src="/config.js"></script>
     <script type="module" src="/src/main.tsx"></script>

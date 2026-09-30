@@ -1,3 +1,4 @@
+import "./lib/polyfills";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
@@ -15,3 +16,6 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>
 );
+
+// tells the startup safety net in index.html that the app is running
+(window as unknown as { __treinonBooted?: boolean }).__treinonBooted = true;

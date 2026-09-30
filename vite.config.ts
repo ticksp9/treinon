@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import legacy from "@vitejs/plugin-legacy";
 import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 // https://vitejs.dev/config/
@@ -14,6 +15,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(), 
     mcpPlugin(),
+    // Older iPads/iPhones (iOS 12–15) got a blank page: compile the syntax down and
+    // add the missing browser functions for them.
+    legacy({
+      targets: ['defaults', 'safari >= 12', 'ios >= 12', 'not dead'],
+      modernTargets: ['safari >= 12', 'ios >= 12', 'chrome >= 70', 'edge >= 79', 'firefox >= 70'],
+      modernPolyfills: true,
+    }),
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
