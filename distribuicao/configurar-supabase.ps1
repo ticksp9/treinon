@@ -36,19 +36,16 @@ if ($projects -notmatch $ProjectRef) {
   throw "O token não dá acesso ao projeto $ProjectRef (expirado ou de outra conta; foi apagado). Volte a correr e cole um novo."
 }
 Write-Host "OK: projeto $ProjectRef encontrado nesta conta." -ForegroundColor Green
-# Database password (asked by 'link' / 'db push'); stored encrypted as well
-$env:SUPABASE_DB_PASSWORD = Get-TreinonToken 'supabase-db' `
-  "Palavra-passe da BASE DE DADOS (a que escolheu ao criar o projeto na Supabase):" `
-  { param($x) $x.Length -ge 6 }
 
-Write-Host "`n[2/5] Ligar ao projeto $ProjectRef ..." -ForegroundColor Cyan
+Write-Host "`n[2/5] Projeto $ProjectRef" -ForegroundColor Cyan
 $cfgPath = Join-Path (Get-Location) "supabase\config.toml"
 $cfg = [IO.File]::ReadAllText($cfgPath) -replace 'project_id = ".*"', "project_id = `"$ProjectRef`""
 [IO.File]::WriteAllText($cfgPath, $cfg, (New-Object System.Text.UTF8Encoding($false)))  # no BOM (TOML)
-Sb link --project-ref $ProjectRef
 
-Write-Host "`n[3/5] Criar a base de dados (migrações)..." -ForegroundColor Cyan
-Sb db push --yes
+Write-Host "`n[3/5] Base de dados (migrações em falta)..." -ForegroundColor Cyan
+# Through the Management API: only the access token is needed, no database password
+. (Join-Path $PSScriptRoot "_migracoes.ps1")
+Sync-TreinonMigrations $ProjectRef $env:SUPABASE_ACCESS_TOKEN (Join-Path (Get-Location) "supabase\migrations")
 
 Write-Host "`n[4/5] Publicar funções do servidor..." -ForegroundColor Cyan
 $functions = @("auth-lookup", "verify-pin", "manage-invites", "send-invite", "billing-engine",
