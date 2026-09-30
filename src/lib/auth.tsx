@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { clearCachedData } from '@/lib/offlineStorage';
@@ -19,6 +20,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const lastUserId = useRef<string | null | undefined>(undefined);
+
+  // A different person signed in on this device: drop everything cached in memory for the previous one
+  useEffect(() => {
+    const id = user?.id ?? null;
+    if (lastUserId.current !== undefined && lastUserId.current !== id) queryClient.clear();
+    lastUserId.current = id;
+  }, [user?.id, queryClient]);
+
+  // Older versions cached database responses in the service worker; remove that cache
+  useEffect(() => {
+    try { if ('caches' in window) void caches.delete('supabase-cache'); } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

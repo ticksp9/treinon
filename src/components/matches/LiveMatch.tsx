@@ -17,6 +17,8 @@ import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type
 import { LivePitch, type PitchPlayerInfo } from './LivePitch';
 import { MatchRatingsPanel } from './MatchRatingsPanel';
 import { useSquadProfiles } from '@/hooks/useSquadProfiles';
+import { useSportScope } from '@/hooks/useSportScope';
+import { isSportAllowed } from '@/lib/sport-scope';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -1238,6 +1240,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     : null;
   const pitchTacticsKey = pitchTactics ? JSON.stringify(pitchTactics) : '';
   // Ability (last evaluation) + form (last match ratings), FM style — shown before kick-off
+  const { scope: sportScope } = useSportScope();
   const { data: squadProfiles } = useSquadProfiles(lineups.map(l => l.player_id));
   const pitchPlayers = new Map<string, PitchPlayerInfo>(lineups.map(l => {
     const mine = events.filter(e => e.player_id === l.player_id && !e.is_opponent);
@@ -1521,7 +1524,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 </p>
               </div>
               <div className="flex flex-wrap gap-1">
-                {Object.entries(SPORT_LABELS).map(([value, label]) => (
+                {Object.entries(SPORT_LABELS).filter(([value]) => isSportAllowed(sportScope, value) || value === matchSport).map(([value, label]) => (
                   <Button
                     key={value}
                     size="sm"

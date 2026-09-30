@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
+import { scopeFromModalities } from '@/lib/sport-scope';
 
 const loginSchema = z.object({
   identifier: z.string().min(3, 'Email ou username inválido'),
@@ -38,7 +39,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [accountType, setAccountType] = useState<'individual_coach' | 'club'>('individual_coach');
-  const [preferredSport, setPreferredSport] = useState<'football' | 'futsal'>('football');
+  const [preferredSport, setPreferredSport] = useState<'football' | 'futsal' | 'both'>('football');
   const [clubModalities, setClubModalities] = useState<string[]>(['football']);
   const [coachInviteCode, setCoachInviteCode] = useState(inviteCode || '');
   const [loading, setLoading] = useState(false);
@@ -294,7 +295,7 @@ export default function Auth() {
         .from('profiles')
         .update({ 
           account_type: accountType,
-          preferred_sport: preferredSport,
+          preferred_sport: accountType === 'club' ? scopeFromModalities(clubModalities) : preferredSport,
           display_name: displayName,
         })
         .eq('id', newUser.id);
@@ -635,8 +636,8 @@ export default function Auth() {
                       <Label>Modalidade Principal</Label>
                       <RadioGroup 
                         value={preferredSport} 
-                        onValueChange={(v) => setPreferredSport(v as 'football' | 'futsal')}
-                        className="grid grid-cols-2 gap-3"
+                        onValueChange={(v) => setPreferredSport(v as 'football' | 'futsal' | 'both')}
+                        className="grid grid-cols-3 gap-2"
                       >
                         <Label
                           htmlFor="football"
@@ -664,9 +665,22 @@ export default function Auth() {
                           <span className="text-sm font-medium">Futsal</span>
                           <span className="text-xs text-muted-foreground">5 jogadores</span>
                         </Label>
+                        <Label
+                          htmlFor="both"
+                          className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            preferredSport === 'both'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                          }`}
+                        >
+                          <RadioGroupItem value="both" id="both" className="sr-only" />
+                          <span className="text-2xl">⚽🏐</span>
+                          <span className="text-sm font-medium">Os dois</span>
+                          <span className="text-xs text-muted-foreground">Futebol e futsal</span>
+                        </Label>
                       </RadioGroup>
                       <p className="text-xs text-muted-foreground">
-                        Pode gerir ambas as modalidades, esta será a predefinição
+                        Só verá a modalidade que escolher. Pode mudar depois nas Definições.
                       </p>
                     </div>
                   ) : (

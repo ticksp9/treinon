@@ -123,7 +123,8 @@ export function useUserRole(): UserRoleData {
 
         setData({
           accountType,
-          isClubAdmin: isClubAdmin || isClubStaff,
+          // Only the owner or staff with role 'admin' administer the club (other staff are not admins)
+          isClubAdmin,
           isCoach,
           isGuardian: false,
           isPlayer: false,

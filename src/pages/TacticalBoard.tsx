@@ -27,7 +27,7 @@ import { toast } from "sonner";
 
 type SportType = "football_11" | "football_7" | "football_5" | "futsal";
 type DrawMode = "select" | "draw" | "arrow" | "freehand";
-type PreferredSport = "football" | "futsal";
+type PreferredSport = "football" | "futsal" | "both";
 
 interface ExtendedFabricObject extends FabricObject {
   customData?: { type: string; team?: string; number?: number };
@@ -104,7 +104,7 @@ export default function TacticalBoard() {
     if (!preferredSport) return [];
     
     return Object.entries(SPORT_CONFIG)
-      .filter(([_, config]) => config.sport === preferredSport)
+      .filter(([_, config]) => preferredSport === "both" || config.sport === preferredSport)
       .map(([key, config]) => ({ key: key as SportType, ...config }));
   };
 

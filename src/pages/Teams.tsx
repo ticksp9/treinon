@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,8 @@ import { fetchTeamsWithCounts, queryKeys } from '@/lib/query-helpers';
 import { EmptyState, PageLoadingSkeleton } from '@/components/ui/page-states';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
+import { useSportScope } from '@/hooks/useSportScope';
+import { filterSportTypes, defaultSportType, isSportAllowed } from '@/lib/sport-scope';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSeasonContext, useSeasonsList } from '@/hooks/useSeasonContext';
 import {
@@ -43,6 +45,8 @@ const teamSchema = z.object({
 
 export default function Teams() {
   const { user } = useAuth();
+  const { scope: sportScope } = useSportScope();
+  const defaultTeamSport = isSportAllowed(sportScope, DEFAULTS.sportType) ? DEFAULTS.sportType : defaultSportType(sportScope);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,10 +97,18 @@ export default function Teams() {
     .filter((s) => s.id !== selectedSeasonId && (!selectedSeason || s.start_date < selectedSeason.start_date))
     .sort((a, b) => b.start_date.localeCompare(a.start_date))[0];
 
+  // A futsal-only coach starts new teams in futsal (and a football coach in football)
+  useEffect(() => {
+    if (!editingTeam && !isSportAllowed(sportScope, formData.sport_type)) {
+      setFormData((d) => ({ ...d, sport_type: defaultTeamSport, formation: '' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sportScope]);
+
   const resetForm = () => {
     setFormData({
       name: '',
-      sport_type: DEFAULTS.sportType,
+      sport_type: defaultTeamSport,
       gender: DEFAULTS.gender,
       category: '',
       season: seasonName || DEFAULTS.season,
@@ -271,7 +283,7 @@ export default function Teams() {
                           <SelectValue placeholder="Selecione a modalidade" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(Object.keys(SPORT_TYPES) as SportType[]).map((type) => (
+                          {filterSportTypes(sportScope, Object.keys(SPORT_TYPES) as SportType[]).map((type) => (
                             <SelectItem key={type} value={type}>
                               {SPORT_TYPES[type].label} ({SPORT_TYPES[type].players} jogadores)
                             </SelectItem>

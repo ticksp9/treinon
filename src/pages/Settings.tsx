@@ -12,10 +12,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, User, Lock, Save, Settings as SettingsIcon } from 'lucide-react';
 import { PageLoading } from '@/components/ui/page-states';
+import { useSportScope } from '@/hooks/useSportScope';
+import { SPORT_SCOPE_LABELS, type SportScope } from '@/lib/sport-scope';
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { scope: sportScope, setScope: setSportScope } = useSportScope();
+  const changeSportScope = async (v: SportScope) => {
+    try { await setSportScope(v); toast.success(`Modalidade: ${SPORT_SCOPE_LABELS[v]}`); }
+    catch { toast.error('Não foi possível mudar a modalidade'); }
+  };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -141,6 +148,24 @@ export default function Settings() {
                   <Save className="w-4 h-4 mr-2" />
                   Guardar Alterações
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4 border-border/50">
+              <CardHeader>
+                <CardTitle className="font-display text-base">Modalidade</CardTitle>
+                <CardDescription>
+                  Futebol e futsal são separados: só vê a modalidade com que trabalha (equipas, táticas, exercícios e jogos).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['football', 'futsal', 'both'] as SportScope[]).map((v) => (
+                    <Button key={v} variant={sportScope === v ? 'default' : 'outline'} onClick={() => changeSportScope(v)}>
+                      {SPORT_SCOPE_LABELS[v]}
+                    </Button>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

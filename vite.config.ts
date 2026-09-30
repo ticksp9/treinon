@@ -63,21 +63,9 @@ export default defineConfig(({ mode }) => ({
             handler: 'NetworkFirst',
             options: { cacheName: 'treinon-config', networkTimeoutSeconds: 3 },
           },
-          {
-            // Only REST data reads (hosted Supabase or a club's own server).
-            // Never cache auth or edge-function responses.
-            urlPattern: ({ url, request }) =>
-              request.method === 'GET' && url.pathname.startsWith('/rest/v1/'),
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 12 // 12 hours
-              },
-              networkTimeoutSeconds: 10
-            }
-          }
+          // No caching of database (REST) responses in the service worker: the cache is keyed by
+          // URL only, so on a shared phone one coach could see another's data. Offline data lives
+          // in IndexedDB, separated per user.
         ]
       }
     })
