@@ -4,10 +4,19 @@
  */
 import { listAvailableFormations, getFormation, type Formation, type FormationSlot } from './tactical-formations';
 
+/** Captain and set-piece takers (FM "Bolas paradas"). Player ids from the squad. */
+export interface SetPieceRoles {
+  captain?: string | null;
+  penalties?: string | null;
+  corners?: string | null;
+  free_kicks?: string | null;
+}
+
 export interface LiveTactics {
   formation: string;
   /** slotId -> playerId */
   slots: Record<string, string | null>;
+  roles?: SetPieceRoles;
 }
 
 export interface PitchPlayer {
@@ -38,7 +47,7 @@ function roleSide(role: string): Side {
   return 'center';
 }
 
-function fitScore(slot: FormationSlot, p: PitchPlayer): number {
+export function fitScore(slot: FormationSlot, p: PitchPlayer): number {
   const pos = (p.position || '').toUpperCase();
   const zone = POSITION_ZONE[pos];
   let score = 0;
@@ -96,7 +105,9 @@ export function reconcileTactics(
     const pid = current?.slots?.[s.slot_id] ?? null;
     slots[s.slot_id] = pid && onIds.has(pid) ? pid : null;
   }
-  return { formation: code, slots: fill(formation, slots, onField) };
+  const out: LiveTactics = { formation: code, slots: fill(formation, slots, onField) };
+  if (current?.roles) out.roles = current.roles;
+  return out;
 }
 
 /** Substitution: the player coming in takes the slot of the player going out. */

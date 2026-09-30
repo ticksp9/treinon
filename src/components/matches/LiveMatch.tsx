@@ -19,6 +19,8 @@ import { MatchRatingsPanel } from './MatchRatingsPanel';
 import { useSquadProfiles } from '@/hooks/useSquadProfiles';
 import { useSportScope } from '@/hooks/useSportScope';
 import { isSportAllowed } from '@/lib/sport-scope';
+import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '@/lib/team-selection';
+import { PreMatchPanel } from './PreMatchPanel';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -1257,9 +1259,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       ability: prof?.ability ?? null,
       formAvg: prof?.form.average ?? null,
       formTrend: prof?.form.trend,
+      tags: pitchTactics?.roles?.captain === l.player_id ? ['C'] : [],
     }];
   }));
-  const saveTactics = (t: LiveTactics | null) => { if (t) updateMatchRecord({ live_tactics: t }); };
+  const saveTactics = (t: LiveTactics | null) => (t ? updateMatchRecord({ live_tactics: t }) : Promise.resolve());
   const handlePitchSubstitute = async (outId: string, inId: string) => {
     if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
     const minute = getCurrentMinute();
@@ -1275,7 +1278,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   };
   const handleSetupSubstitute = async (outId: string, inId: string) => {
     try {
-      if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
+      if (pitchTactics) await saveTactics(applySubstitution(pitchTactics, outId, inId));
       await setStarter(outId, false);
       await setStarter(inId, true);
     } catch { toast.error('Não foi possível alterar o onze.'); }
@@ -1287,11 +1290,41 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       return;
     }
     try {
-      if (pitchTactics) saveTactics({ ...pitchTactics, slots: { ...pitchTactics.slots, [slotId]: playerId } });
+      if (pitchTactics) await saveTactics({ ...pitchTactics, slots: { ...pitchTactics.slots, [slotId]: playerId } });
       await setStarter(playerId, true);
     } catch { toast.error('Não foi possível alterar o onze.'); }
     fetchMatchData();
   };
+
+  // FM-style automatic selection + assistant report (before kick-off)
+  const candidates: Candidate[] = lineups.map(l => {
+    const prof = squadProfiles?.get(l.player_id);
+    return {
+      player_id: l.player_id,
+      name: l.player?.name,
+      position: l.player?.position,
+      ability: prof?.ability ?? null,
+      form: prof?.form.average ?? null,
+      formTrend: prof?.form.trend,
+      seasonMinutes: prof?.seasonMinutes ?? 0,
+    };
+  });
+  const assistantNotes = phase === 'setup' ? assistantReport(candidates, starters.map(l => l.player_id), sportRules.playersOnField) : [];
+  const applyAutoPick = async (mode: PickMode) => {
+    if (!pitchTactics || !matchSport) return;
+    const r = pickStartingXI(matchSport, pitchTactics.formation, candidates, mode, pitchTactics.roles);
+    if (!r) return;
+    const want = new Set(r.starterIds);
+    try {
+      await saveTactics(r.tactics);
+      for (const l of lineups) {
+        if (l.is_starter !== want.has(l.player_id)) await setStarter(l.player_id, want.has(l.player_id));
+      }
+      toast.success(mode === 'best' ? 'Melhor onze escolhido.' : 'Onze com quem tem menos minutos.');
+    } catch { toast.error('Não foi possível alterar o onze.'); }
+    fetchMatchData();
+  };
+  const saveRoles = (roles: NonNullable<LiveTactics['roles']>) => { if (pitchTactics) saveTactics({ ...pitchTactics, roles }); };
 
   // Keep the stored tactics in step with who is on the field (after subs, edits…)
   useEffect(() => {
@@ -1559,6 +1592,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 onSubstitute={handleSetupSubstitute}
                 onFillSlot={handleSetupFill}
                 onEvent={() => {}}
+              />
+              <PreMatchPanel
+                squad={candidates}
+                roles={pitchTactics.roles ?? {}}
+                notes={assistantNotes}
+                onAutoPick={applyAutoPick}
+                onRolesChange={saveRoles}
               />
             </CardContent>
           </Card>

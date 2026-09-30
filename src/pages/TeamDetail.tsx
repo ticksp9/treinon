@@ -21,6 +21,7 @@ import { PlayerForm } from '@/components/players/PlayerForm';
 import { differenceInYears } from 'date-fns';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
 import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
+import { SquadDepth } from '@/components/teams/SquadDepth';
 import {
   getTeamRoster,
   addPlayerToTeam,
@@ -393,6 +394,8 @@ export default function TeamDetail() {
               </Button>
             </DialogContent>
           </Dialog>
+
+          {players.length > 0 && <SquadDepth players={players} />}
 
           {players.length === 0 ? (
             <Card className="border-dashed border-2 border-primary/30 bg-primary/5">

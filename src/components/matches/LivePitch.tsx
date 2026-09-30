@@ -34,6 +34,8 @@ export interface PitchPlayerInfo {
   /** average of the last match ratings */
   formAvg?: number | null;
   formTrend?: 'up' | 'down' | 'flat';
+  /** small badges, e.g. 'C' for captain */
+  tags?: string[];
 }
 
 interface Props {
@@ -138,6 +140,9 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                   )}
                 >
                   {p?.number ?? slot.label}
+                  {p?.tags?.includes('C') && (
+                    <span className="absolute -bottom-1 -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-accent-foreground" title="Capitão">C</span>
+                  )}
                   {p && (p.goals > 0 || p.yellow > 0 || p.red > 0) && (
                     <span className="absolute -right-2 -top-2 flex gap-0.5">
                       {p.goals > 0 && <span className="rounded-full bg-white px-1 text-[10px] leading-4 text-black">⚽{p.goals > 1 ? p.goals : ''}</span>}
