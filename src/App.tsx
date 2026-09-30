@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ProtectedRoute } from "@/components/route-guards/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/route-guards/RoleProtectedRoute";
@@ -103,9 +104,12 @@ function AppContent() {
       <Toaster />
       <Sonner />
       <OfflineIndicator />
-      <InstallPrompt />
       <BrowserRouter>
+        {/* inside the router: its iPhone/iPad hint links to /instalar */}
+        <InstallPrompt />
         <SeasonProvider>
+        {/* one broken screen must never blank the whole app */}
+        <ErrorBoundary label="página" fallbackTitle="Esta página teve um problema" showBack>
         <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public routes */}
@@ -179,6 +183,7 @@ function AppContent() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </ErrorBoundary>
         </SeasonProvider>
       </BrowserRouter>
     </>
