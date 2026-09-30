@@ -166,7 +166,7 @@ export function MatchCallup() {
       const { data, error } = await supabase
         .from('teams')
         .select('id, name, category, sport_type, gender')
-        .eq('owner_id', user?.id)
+        
         .order('name');
 
       if (error) throw error;

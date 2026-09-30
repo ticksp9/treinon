@@ -1,6 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff';
+
+/**
+ * Edge functions answer errors with a non-2xx status: supabase-js then only says
+ * "Edge Function returned a non-2xx status code". Read the real message instead.
+ */
+async function fnError(error: unknown): Promise<Error> {
+  const ctx = (error as { context?: Response })?.context;
+  if (ctx && typeof ctx.json === 'function') {
+    try {
+      const body = await ctx.clone().json();
+      if (body?.error) return new Error(body.error);
+    } catch { /* ignore */ }
+  }
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 export interface AccessInvite {
   id: string;
   scope_type: string;
@@ -8,7 +25,7 @@ export interface AccessInvite {
   owner_coach_id: string | null;
   team_id: string;
   player_id: string | null;
-  invite_type: 'guardian' | 'player';
+  invite_type: InviteType;
   recipient_name: string;
   email: string | null;
   phone: string | null;
@@ -62,7 +79,7 @@ export function useCreateInvite() {
     mutationFn: async (params: {
       team_id: string;
       player_id?: string;
-      invite_type: 'guardian' | 'player';
+      invite_type: InviteType;
       recipient_name: string;
       email?: string;
       phone?: string;
@@ -82,7 +99,7 @@ export function useCreateInvite() {
         },
       });
 
-      if (error) throw error;
+      if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
       return data as { invite_id: string; token: string; code: string; expires_at: string };
     },
@@ -102,7 +119,7 @@ export function useRevokeInvite() {
       const { data, error } = await supabase.functions.invoke('manage-invites', {
         body: { action: 'revoke_invite', invite_id: inviteId },
       });
-      if (error) throw error;
+      if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
@@ -120,7 +137,7 @@ export function useResendInvite() {
       const { data, error } = await supabase.functions.invoke('manage-invites', {
         body: { action: 'resend_invite', invite_id: inviteId },
       });
-      if (error) throw error;
+      if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
       return data as { token: string; code: string };
     },
@@ -167,7 +184,7 @@ export function useAcceptInvite() {
       const { data, error } = await supabase.functions.invoke('manage-invites', {
         body: { action: 'accept_invite', invite_id: params.invite_id },
       });
-      if (error) throw error;
+      if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
       return data as { success: boolean; account_type: string; redirect: string };
     },

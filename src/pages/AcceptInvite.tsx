@@ -39,7 +39,7 @@ export default function AcceptInvite() {
 
   const [step, setStep] = useState<Step>('validating');
   const [manualCode, setManualCode] = useState('');
-  const [codeToValidate, setCodeToValidate] = useState<string | null>(null);
+  const [codeToValidate, setCodeToValidate] = useState<string | null>(() => searchParams.get('code')?.toUpperCase() || null);
 
   // Auth form
   const [authTab, setAuthTab] = useState<'login' | 'signup'>('signup');

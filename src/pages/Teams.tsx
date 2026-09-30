@@ -21,6 +21,7 @@ import { EmptyState, PageLoadingSkeleton } from '@/components/ui/page-states';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useSportScope } from '@/hooks/useSportScope';
+import { useUserRole } from '@/hooks/useUserRole';
 import { filterSportTypes, defaultSportType, isSportAllowed } from '@/lib/sport-scope';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSeasonContext, useSeasonsList } from '@/hooks/useSeasonContext';
@@ -46,6 +47,7 @@ const teamSchema = z.object({
 export default function Teams() {
   const { user } = useAuth();
   const { scope: sportScope } = useSportScope();
+  const { clubId } = useUserRole();
   const defaultTeamSport = isSportAllowed(sportScope, DEFAULTS.sportType) ? DEFAULTS.sportType : defaultSportType(sportScope);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -157,7 +159,8 @@ export default function Teams() {
         const { error } = await supabase.from('teams').update(teamData).eq('id', editingTeam.id);
         if (error) throw error;
       } else {
-        const { data: inserted, error } = await supabase.from('teams').insert(teamData).select('id').single();
+        // in a club, new teams belong to the club (so the club can invite its coaches)
+        const { data: inserted, error } = await supabase.from('teams').insert({ ...teamData, club_id: clubId ?? null }).select('id').single();
         if (error) throw error;
         teamId = inserted.id;
       }

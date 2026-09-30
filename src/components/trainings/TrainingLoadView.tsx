@@ -95,7 +95,7 @@ export function TrainingLoadView() {
     const { data } = await supabase
       .from('teams')
       .select('id, name, category')
-      .eq('owner_id', user!.id)
+      
       .order('name');
     setTeams(data || []);
     if (data?.length) setSelectedTeam(data[0].id);
@@ -120,14 +120,14 @@ export function TrainingLoadView() {
         ? supabase.from('training_sessions').select('id, date, title, duration_minutes, intensity').eq('season_id', seasonId)
         : supabase.from('training_sessions').select('id, date, title, duration_minutes, intensity'))
         .eq('team_id', selectedTeam)
-        .eq('owner_id', user!.id)
+        
         .gte('date', sinceDate)
         .order('date', { ascending: false }),
       supabase
         .from('training_load')
         .select('*')
         .eq('team_id', selectedTeam)
-        .eq('owner_id', user!.id)
+        
         .gte('created_at', sinceDate),
     ]);
 

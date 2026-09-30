@@ -22,6 +22,8 @@ import { differenceInYears } from 'date-fns';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
 import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
 import { SquadDepth } from '@/components/teams/SquadDepth';
+import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
+import { useUserRole } from '@/hooks/useUserRole';
 import {
   getTeamRoster,
   addPlayerToTeam,
@@ -59,6 +61,18 @@ export default function TeamDetail() {
     queryKey: ['season-team-memberships', selectedSeasonId],
     queryFn: () => fetchSeasonTeamIds(selectedSeasonId!),
     enabled: !!selectedSeasonId,
+  });
+
+  const { isClubAdmin, staffRole } = useUserRole();
+  const [staffInviteOpen, setStaffInviteOpen] = useState(false);
+  // my role in this team: head coaches invite their assistants
+  const { data: myTeamRole } = useQuery({
+    queryKey: ['my-team-role', id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from('team_coaches').select('role').eq('team_id', id as string).eq('coach_id', user!.id).maybeSingle();
+      return (data?.role as string | undefined) ?? null;
+    },
   });
 
   // Fetch team data
@@ -249,6 +263,13 @@ export default function TeamDetail() {
   const rawFormat = (team as { match_format?: { parts?: unknown } | null }).match_format;
   const teamFormatParts = Array.isArray(rawFormat?.parts) && rawFormat!.parts.length > 0 ? (rawFormat!.parts as number[]) : null;
 
+  // who can this user invite to the team's technical staff?
+  const staffInviteTypes: StaffInviteType[] = (isClubAdmin || staffRole === 'coordenador') && team.club_id
+    ? ['coach', 'assistant_coach']
+    : myTeamRole === 'head_coach' || (!team.club_id && team.owner_id === user?.id)
+      ? ['assistant_coach']
+      : [];
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -300,6 +321,30 @@ export default function TeamDetail() {
             </div>
           </CardContent>
         </Card>
+        {staffInviteTypes.length > 0 && (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-medium">Equipa técnica</p>
+                <p className="text-xs text-muted-foreground">
+                  {staffInviteTypes.includes('coach') ? 'Convide o treinador principal e os adjuntos desta equipa.' : 'Convide o seu treinador adjunto.'}
+                </p>
+              </div>
+              <Button size="sm" onClick={() => setStaffInviteOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                {staffInviteTypes.includes('coach') ? 'Convidar treinador' : 'Convidar adjunto'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        {staffInviteTypes.length > 0 && <PendingStaffInvites teamIds={[team.id]} />}
+        <StaffInviteDialog
+          open={staffInviteOpen}
+          onClose={() => setStaffInviteOpen(false)}
+          teams={[{ id: team.id, name: team.name }]}
+          defaultTeamId={team.id}
+          allowedTypes={staffInviteTypes.length > 0 ? staffInviteTypes : ['assistant_coach']}
+        />
         <MatchConfigModal
           open={formatOpen}
           onOpenChange={setFormatOpen}

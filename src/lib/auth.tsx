@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string, username: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, username: string, accountType?: 'club' | 'individual_coach') => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithUsername: (username: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, username: string) => {
+  const signUp = async (email: string, password: string, fullName: string, username: string, accountType?: 'club' | 'individual_coach') => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -64,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           full_name: fullName,
           username: username,
+          // set by the signup trigger (clients cannot change it afterwards)
+          ...(accountType ? { account_type: accountType } : {}),
         },
       },
     });

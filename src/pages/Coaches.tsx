@@ -13,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Plus, Mail, Key, Copy, UserPlus, Users, Trash2, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, UserPlus, Users, Trash2, CheckCircle2 } from 'lucide-react';
+import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Coach {
@@ -29,16 +30,8 @@ interface Coach {
   teams?: {
     id: string;
     name: string;
+    role: 'head_coach' | 'assistant_coach';
   }[];
-}
-
-interface Invitation {
-  id: string;
-  email: string | null;
-  invite_code: string | null;
-  status: string;
-  created_at: string;
-  expires_at: string;
 }
 
 interface Team {
@@ -49,13 +42,10 @@ interface Team {
 export default function Coaches() {
   const { user } = useAuth();
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'head_coach' | 'assistant_coach'>('head_coach');
   const queryClient = useQueryClient();
-  
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteMethod, setInviteMethod] = useState<'email' | 'code'>('email');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  
+
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
@@ -65,14 +55,14 @@ export default function Coaches() {
     queryKey: ['club-coaches', clubId],
     queryFn: async () => {
       if (!clubId) return [];
-      
+
       const { data: clubCoaches, error } = await supabase
         .from('club_coaches')
         .select('*')
         .eq('club_id', clubId);
 
       if (error) throw error;
-      
+
       // Fetch profile info for each coach
       const coachesWithProfiles = await Promise.all(
         (clubCoaches || []).map(async (coach) => {
@@ -81,22 +71,26 @@ export default function Coaches() {
             .select('full_name, email, username')
             .eq('id', coach.coach_id)
             .maybeSingle();
-          
+
           const { data: teamCoaches } = await supabase
             .from('team_coaches')
-            .select('team_id')
+            .select('team_id, role')
             .eq('coach_id', coach.coach_id);
-          
-          let teams: Team[] = [];
+
+          let teams: Coach['teams'] = [];
           if (teamCoaches && teamCoaches.length > 0) {
             const teamIds = teamCoaches.map(tc => tc.team_id);
             const { data: teamsData } = await supabase
               .from('teams')
               .select('id, name')
-              .in('id', teamIds);
-            teams = teamsData || [];
+              .in('id', teamIds)
+              .eq('club_id', clubId);
+            teams = (teamsData || []).map((t) => ({
+              ...t,
+              role: ((teamCoaches as { team_id: string; role: string | null }[]).find((tc) => tc.team_id === t.id)?.role ?? 'head_coach') as 'head_coach' | 'assistant_coach',
+            }));
           }
-          
+
           return {
             ...coach,
             profile,
@@ -104,27 +98,8 @@ export default function Coaches() {
           };
         })
       );
-      
+
       return coachesWithProfiles as Coach[];
-    },
-    enabled: !!clubId && isClubAdmin,
-  });
-
-  // Fetch pending invitations
-  const { data: invitations, isLoading: invitationsLoading } = useQuery({
-    queryKey: ['coach-invitations', clubId],
-    queryFn: async () => {
-      if (!clubId) return [];
-      
-      const { data, error } = await supabase
-        .from('club_coach_invitations')
-        .select('*')
-        .eq('club_id', clubId)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Invitation[];
     },
     enabled: !!clubId && isClubAdmin,
   });
@@ -134,7 +109,7 @@ export default function Coaches() {
     queryKey: ['teams', clubId],
     queryFn: async () => {
       if (!clubId) return [];
-      
+
       const { data, error } = await supabase
         .from('teams')
         .select('id, name')
@@ -147,82 +122,22 @@ export default function Coaches() {
     enabled: !!clubId && isClubAdmin,
   });
 
-  // Create invitation mutation
-  const createInvitation = useMutation({
-    mutationFn: async (method: 'email' | 'code') => {
-      if (!clubId || !user) throw new Error('Club not found');
-      
-      const generateSecureCode = (length = 12) => {
-        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // omit ambiguous chars
-        const bytes = new Uint8Array(length);
-        crypto.getRandomValues(bytes);
-        let out = '';
-        for (let i = 0; i < length; i++) out += alphabet[bytes[i] % alphabet.length];
-        return out;
-      };
-      const inviteCode = method === 'code' ? generateSecureCode(12) : null;
-      
-      const { data, error } = await supabase
-        .from('club_coach_invitations')
-        .insert({
-          club_id: clubId,
-          email: method === 'email' ? inviteEmail : null,
-          invite_code: inviteCode,
-          created_by: user.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['coach-invitations'] });
-      if (data.invite_code) {
-        setGeneratedCode(data.invite_code);
-        toast.success('Código de convite gerado!');
-      } else {
-        toast.success('Convite enviado com sucesso!');
-        setInviteDialogOpen(false);
-        setInviteEmail('');
-      }
-    },
-    onError: (error: any) => {
-      toast.error('Erro ao criar convite: ' + error.message);
-    },
-  });
-
-  // Delete invitation mutation
-  const deleteInvitation = useMutation({
-    mutationFn: async (invitationId: string) => {
-      const { error } = await supabase
-        .from('club_coach_invitations')
-        .delete()
-        .eq('id', invitationId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coach-invitations'] });
-      toast.success('Convite cancelado');
-    },
-  });
-
   // Assign coach to team mutation
   const assignCoachToTeam = useMutation({
     mutationFn: async ({ coachId, teamId }: { coachId: string; teamId: string }) => {
       const { error } = await supabase
         .from('team_coaches')
-        .insert({
+        .upsert({
           team_id: teamId,
           coach_id: coachId,
-        });
+          role: selectedRole,
+        }, { onConflict: 'team_id,coach_id' });
 
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-coaches'] });
-      toast.success('Treinador associado à equipa!');
+      toast.success(selectedRole === 'assistant_coach' ? 'Adjunto associado à equipa!' : 'Treinador associado à equipa!');
       setAssignDialogOpen(false);
       setSelectedCoach(null);
       setSelectedTeamId('');
@@ -240,7 +155,7 @@ export default function Coaches() {
   const removeCoach = useMutation({
     mutationFn: async (coachId: string) => {
       if (!clubId) throw new Error('Club not found');
-      
+
       const { error } = await supabase
         .from('club_coaches')
         .delete()
@@ -255,18 +170,7 @@ export default function Coaches() {
     },
   });
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Código copiado!');
-  };
-
-  const handleInvite = () => {
-    if (inviteMethod === 'email' && !inviteEmail) {
-      toast.error('Insira um email');
-      return;
-    }
-    createInvitation.mutate(inviteMethod);
-  };
+  const inviteTypes: StaffInviteType[] = ['coach', 'assistant_coach', 'staff'];
 
   if (roleLoading) {
     return (
@@ -303,155 +207,17 @@ export default function Coaches() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold">Treinadores</h1>
-            <p className="text-muted-foreground">Gerir os treinadores do seu clube</p>
+            <p className="text-muted-foreground">Treinadores principais, adjuntos e staff do clube</p>
           </div>
-          
-          <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
-            setInviteDialogOpen(open);
-            if (!open) {
-              setGeneratedCode(null);
-              setInviteEmail('');
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Convidar Treinador
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Convidar Treinador</DialogTitle>
-                <DialogDescription>
-                  Envie um convite por email ou gere um código para o treinador usar no registo.
-                </DialogDescription>
-              </DialogHeader>
-              
-              {!generatedCode ? (
-                <div className="space-y-4">
-                  <Tabs value={inviteMethod} onValueChange={(v) => setInviteMethod(v as 'email' | 'code')}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="email">
-                        <Mail className="w-4 h-4 mr-2" />
-                        Por Email
-                      </TabsTrigger>
-                      <TabsTrigger value="code">
-                        <Key className="w-4 h-4 mr-2" />
-                        Por Código
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="email" className="space-y-4 mt-4">
-                      <div className="space-y-2">
-                        <Label>Email do Treinador</Label>
-                        <Input
-                          type="email"
-                          placeholder="treinador@email.com"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                        />
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="code" className="mt-4">
-                      <p className="text-sm text-muted-foreground">
-                        Será gerado um código único que o treinador pode usar ao criar a conta.
-                      </p>
-                    </TabsContent>
-                  </Tabs>
-                  
-                  <Button 
-                    onClick={handleInvite} 
-                    className="w-full"
-                    disabled={createInvitation.isPending}
-                  >
-                    {inviteMethod === 'email' ? 'Enviar Convite' : 'Gerar Código'}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-secondary rounded-lg text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Código de Convite</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-2xl font-mono font-bold tracking-wider">
-                        {generatedCode}
-                      </span>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => copyToClipboard(generatedCode)}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Partilhe este código com o treinador. O código expira em 7 dias.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setInviteDialogOpen(false)}
-                  >
-                    Fechar
-                  </Button>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+
+          <Button onClick={() => setInviteOpen(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Convidar
+          </Button>
         </div>
 
-        {/* Pending Invitations */}
-        {invitations && invitations.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Convites Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {invitations.map((invitation) => (
-                  <div 
-                    key={invitation.id}
-                    className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      {invitation.email ? (
-                        <>
-                          <Mail className="w-4 h-4 text-muted-foreground" />
-                          <span>{invitation.email}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Key className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-mono">{invitation.invite_code}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => copyToClipboard(invitation.invite_code!)}
-                          >
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => deleteInvitation.mutate(invitation.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <StaffInviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} teams={teams ?? []} allowedTypes={inviteTypes} />
+        <PendingStaffInvites teamIds={(teams ?? []).map((t) => t.id)} />
 
         {/* Active Coaches */}
         <Card>
@@ -485,8 +251,8 @@ export default function Coaches() {
                       <p className="text-sm text-muted-foreground">{coach.profile?.email}</p>
                       <div className="flex gap-1 mt-2">
                         {coach.teams?.map((team) => (
-                          <Badge key={team.id} variant="secondary" className="text-xs">
-                            {team.name}
+                          <Badge key={team.id} variant={team.role === 'assistant_coach' ? 'outline' : 'secondary'} className="text-xs">
+                            {team.name} · {team.role === 'assistant_coach' ? 'Adjunto' : 'Principal'}
                           </Badge>
                         ))}
                         {(!coach.teams || coach.teams.length === 0) && (
@@ -513,7 +279,7 @@ export default function Coaches() {
                         size="icon"
                         className="text-destructive hover:text-destructive"
                         onClick={() => {
-                          if (confirm('Tem a certeza que pretende remover este treinador?')) {
+                          if (confirm('Remover este treinador do clube? Deixa de ter acesso às equipas do clube (os dados das equipas ficam).')) {
                             removeCoach.mutate(coach.coach_id);
                           }
                         }}
@@ -540,7 +306,7 @@ export default function Coaches() {
         <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Atribuir Equipa</DialogTitle>
+              <DialogTitle>Atribuir equipa</DialogTitle>
               <DialogDescription>
                 Selecione uma equipa para atribuir a {selectedCoach?.profile?.full_name || 'este treinador'}
               </DialogDescription>
@@ -558,6 +324,16 @@ export default function Coaches() {
                         {team.name}
                       </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Função na equipa</Label>
+                <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as 'head_coach' | 'assistant_coach')}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="head_coach">Treinador principal</SelectItem>
+                    <SelectItem value="assistant_coach">Treinador adjunto</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

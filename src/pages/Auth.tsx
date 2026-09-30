@@ -32,7 +32,7 @@ const signupSchema = z.object({
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get('code');
-  
+
   const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -41,7 +41,6 @@ export default function Auth() {
   const [accountType, setAccountType] = useState<'individual_coach' | 'club'>('individual_coach');
   const [preferredSport, setPreferredSport] = useState<'football' | 'futsal' | 'both'>('football');
   const [clubModalities, setClubModalities] = useState<string[]>(['football']);
-  const [coachInviteCode, setCoachInviteCode] = useState(inviteCode || '');
   const [loading, setLoading] = useState(false);
   const [resendingEmail, setResendingEmail] = useState(false);
   const [showEmailNotConfirmed, setShowEmailNotConfirmed] = useState(false);
@@ -54,6 +53,10 @@ export default function Auth() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const { signIn, signInWithUsername, signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (inviteCode) navigate(`/accept-invite?code=${encodeURIComponent(inviteCode.toUpperCase())}`, { replace: true });
+  }, [inviteCode, navigate]);
 
   // Check if this is a password reset redirect
   useEffect(() => {
@@ -163,7 +166,7 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setShowEmailNotConfirmed(false);
-    
+
     try {
       loginSchema.parse({ identifier, password });
     } catch (err) {
@@ -174,7 +177,7 @@ export default function Auth() {
     }
 
     setLoading(true);
-    
+
     const isEmail = identifier.includes('@');
     let error;
 
@@ -246,34 +249,12 @@ export default function Auth() {
       // If edge function fails, proceed — Supabase will catch duplicates
     }
 
-    // If coach with invite code, validate the code first
-    if (accountType === 'individual_coach' && coachInviteCode) {
-      const { data: invitation, error: invError } = await supabase
-        .from('club_coach_invitations')
-        .select('*')
-        .eq('invite_code', coachInviteCode.toUpperCase())
-        .eq('status', 'pending')
-        .maybeSingle();
-
-      if (invError || !invitation) {
-        setLoading(false);
-        toast.error('Código de convite inválido ou expirado');
-        return;
-      }
-
-      if (new Date(invitation.expires_at) < new Date()) {
-        setLoading(false);
-        toast.error('O código de convite expirou');
-        return;
-      }
-    }
-
     // For clubs, use name as display_name; for coaches, use full name
     const displayName = name;
     const fullNameToSave = accountType === 'club' ? '' : name;
 
-    const { error } = await signUp(email, password, fullNameToSave, username);
-    
+    const { error } = await signUp(email, password, fullNameToSave, username, accountType);
+
     if (error) {
       setLoading(false);
       if (error.message.includes('User already registered')) {
@@ -304,7 +285,7 @@ export default function Auth() {
       if (accountType === 'club') {
         // Ensure at least one modality is selected
         const modalitiesToSave = clubModalities.length > 0 ? clubModalities : ['football'];
-        
+
         const { data: newClub, error: clubError } = await supabase
           .from('clubs')
           .insert({
@@ -328,36 +309,20 @@ export default function Auth() {
             });
         } else {
           console.error('Error creating club:', clubError);
-        }
-      } else if (accountType === 'individual_coach' && coachInviteCode) {
-        // If coach with invite code, accept the invitation
-        const { data: invitation } = await supabase
-          .from('club_coach_invitations')
-          .select('id, club_id')
-          .eq('invite_code', coachInviteCode.toUpperCase())
-          .eq('status', 'pending')
-          .maybeSingle();
-
-        if (invitation) {
-          // Mark invitation as accepted
-          await supabase
-            .from('club_coach_invitations')
-            .update({ status: 'accepted' })
-            .eq('id', invitation.id);
-
-          // Add coach to club
-          await supabase
-            .from('club_coaches')
-            .insert({
-              club_id: invitation.club_id,
-              coach_id: newUser.id,
-            });
+          toast.error('A conta foi criada, mas o clube não. Entre e crie o clube em Clube, ou contacte o apoio.');
         }
       }
     }
 
     setLoading(false);
-    // Show signup success message instead of navigating
+    // Signed in straight away (no email confirmation needed on this server): go in.
+    const { data: { session: newSession } } = await supabase.auth.getSession();
+    if (newSession) {
+      toast.success(accountType === 'club' ? 'Clube criado. Bem-vindo ao TreinON!' : 'Conta criada. Bem-vindo ao TreinON!');
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+    // Otherwise the server requires email confirmation
     setSignupSuccess(true);
   };
 
@@ -746,17 +711,12 @@ export default function Auth() {
 
                   {accountType === 'individual_coach' && (
                     <div className="space-y-2">
-                      <Label htmlFor="inviteCode">Código de Convite (opcional)</Label>
-                      <Input
-                        id="inviteCode"
-                        type="text"
-                        placeholder="ABC123"
-                        value={coachInviteCode}
-                        onChange={(e) => setCoachInviteCode(e.target.value.toUpperCase())}
-                        className="font-mono uppercase"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Se foi convidado por um clube, insira o código aqui
+                      <p className="rounded-md border border-dashed p-2 text-xs text-muted-foreground">
+                        Foi convidado por um clube ou por um treinador?{' '}
+                        <button type="button" className="font-medium text-primary hover:underline" onClick={() => navigate('/accept-invite/code')}>
+                          Use o link ou o código do convite
+                        </button>{' '}
+                        — assim entra logo na equipa certa.
                       </p>
                     </div>
                   )}

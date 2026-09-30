@@ -1,0 +1,96 @@
+-- Club with a head coach and an assistant: who can see and do what (run after all migrations).
+\set ON_ERROR_STOP 1
+
+-- A = club owner, H = head coach, S = assistant, X = outsider
+INSERT INTO auth.users (id, email) VALUES
+  ('a0000000-0000-0000-0000-000000000001', 'admin@clube.pt'),
+  ('a0000000-0000-0000-0000-000000000002', 'principal@clube.pt'),
+  ('a0000000-0000-0000-0000-000000000003', 'adjunto@clube.pt'),
+  ('a0000000-0000-0000-0000-000000000004', 'estranho@outro.pt');
+INSERT INTO public.profiles (id, email, full_name, username) VALUES
+  ('a0000000-0000-0000-0000-000000000001', 'admin@clube.pt', 'Admin', 'admin1'),
+  ('a0000000-0000-0000-0000-000000000002', 'principal@clube.pt', 'Principal', 'princ1'),
+  ('a0000000-0000-0000-0000-000000000003', 'adjunto@clube.pt', 'Adjunto', 'adj1'),
+  ('a0000000-0000-0000-0000-000000000004', 'estranho@outro.pt', 'Estranho', 'estr1')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.clubs (id, name, owner_id) VALUES ('c0000000-0000-0000-0000-000000000001', 'Clube Teste', 'a0000000-0000-0000-0000-000000000001');
+INSERT INTO public.club_coaches (club_id, coach_id) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002'),
+  ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003');
+INSERT INTO public.teams (id, name, owner_id, club_id, sport_type) VALUES
+  ('b0000000-0000-0000-0000-000000000001', 'Sub-13', 'a0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'football_9');
+INSERT INTO public.team_coaches (team_id, coach_id, role) VALUES
+  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'head_coach'),
+  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 'assistant_coach');
+
+-- the invite table accepts coach/assistant invites now
+INSERT INTO public.access_invites (scope_type, club_id, team_id, invite_type, recipient_name, invite_token_hash, invite_code, created_by)
+VALUES ('club', 'c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'assistant_coach', 'Novo', 'h', 'ABC234', 'a0000000-0000-0000-0000-000000000001');
+
+-- Head coach creates a player and a match
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.players (id, name, owner_id, team_id) VALUES
+  ('d0000000-0000-0000-0000-000000000001', 'Rui', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001');
+INSERT INTO public.matches (id, owner_id, team_id, opponent_name, match_date) VALUES
+  ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'Rival', '2026-10-04');
+INSERT INTO public.match_lineups (match_id, player_id, owner_id, is_starter) VALUES
+  ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', true);
+
+-- 1. The assistant sees the head coach's match, lineup and player, and can record events
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant cannot see match'; END IF;
+  IF (SELECT count(*) FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant cannot see lineup'; END IF;
+  IF (SELECT count(*) FROM public.players WHERE id = 'd0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant cannot see player'; END IF;
+  IF (SELECT count(*) FROM public.profiles WHERE id = 'a0000000-0000-0000-0000-000000000002') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant cannot see head coach name'; END IF;
+END $$;
+INSERT INTO public.match_events (match_id, event_type, minute, player_id, is_opponent, owner_id)
+VALUES ('e0000000-0000-0000-0000-000000000001', 'goal', 12, 'd0000000-0000-0000-0000-000000000001', false, 'a0000000-0000-0000-0000-000000000003');
+UPDATE public.match_lineups SET minutes_played = 30 WHERE match_id = 'e0000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+  IF (SELECT minutes_played FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000001') <> 30 THEN RAISE EXCEPTION 'FAIL: assistant cannot update lineup'; END IF;
+END $$;
+-- …but cannot delete the team's players
+DELETE FROM public.players WHERE id = 'd0000000-0000-0000-0000-000000000001';
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.players WHERE id = 'd0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant deleted a player'; END IF;
+END $$;
+
+-- 2. The club owner sees the club team and the coaches' names
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: owner cannot see club match'; END IF;
+  IF (SELECT count(*) FROM public.profiles WHERE id IN ('a0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003')) <> 2 THEN RAISE EXCEPTION 'FAIL: owner cannot see coach names'; END IF;
+END $$;
+
+-- 3. An outsider sees nothing and cannot use the live-match functions or join the club
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000001') <> 0 THEN RAISE EXCEPTION 'FAIL: outsider sees match'; END IF;
+  IF (SELECT count(*) FROM public.players) <> 0 THEN RAISE EXCEPTION 'FAIL: outsider sees players'; END IF;
+  IF (SELECT count(*) FROM public.profiles WHERE id = 'a0000000-0000-0000-0000-000000000002') <> 0 THEN RAISE EXCEPTION 'FAIL: outsider sees coach profile'; END IF;
+END $$;
+DO $$ BEGIN
+  PERFORM public.commit_substitution_batch('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000004', 10, 0, '[]'::jsonb);
+  RAISE EXCEPTION 'FAIL: outsider could call commit_substitution_batch';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: substitution function checks the caller';
+END $$;
+DO $$ BEGIN
+  INSERT INTO public.teams (name, owner_id, club_id, sport_type) VALUES ('Intrusa', 'a0000000-0000-0000-0000-000000000004', 'c0000000-0000-0000-0000-000000000001', 'football_7');
+  RAISE EXCEPTION 'FAIL: outsider put a team in another club';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: cannot add teams to other clubs';
+END $$;
+
+-- 4. Leaving the club removes access to its teams
+RESET ROLE;
+DELETE FROM public.club_coaches WHERE coach_id = 'a0000000-0000-0000-0000-000000000003';
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000001') <> 0 THEN RAISE EXCEPTION 'FAIL: removed assistant still sees match'; END IF;
+END $$;
+RESET ROLE;
+
+SELECT 'TEAM STAFF SMOKE OK' AS result;

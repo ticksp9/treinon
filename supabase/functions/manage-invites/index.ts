@@ -51,51 +51,75 @@ async function deriveInviteContext(
   supabase: any,
   userId: string,
   teamId: string
-): Promise<{ canManage: boolean; scope_type: string; club_id: string | null; owner_coach_id: string | null }> {
+): Promise<{ canManage: boolean; scope_type: string; club_id: string | null; owner_coach_id: string | null; level: InviterLevel }> {
   const { data: team } = await supabase
     .from("teams")
     .select("id, owner_id, club_id")
     .eq("id", teamId)
     .maybeSingle();
 
-  if (!team) return { canManage: false, scope_type: "coach", club_id: null, owner_coach_id: null };
+  if (!team) return { canManage: false, scope_type: "coach", club_id: null, owner_coach_id: null, level: "none" };
 
   // Determine scope from team
   const club_id = team.club_id || null;
   const scope_type = club_id ? "club" : "coach";
   let owner_coach_id: string | null = null;
   let canManage = false;
+  let level: InviterLevel = "none";
 
   if (club_id) {
     // Club mode — check club ownership, staff, coordinator, or team coach
     const { data: club } = await supabase
       .from("clubs").select("owner_id").eq("id", club_id).maybeSingle();
-    if (club?.owner_id === userId) { canManage = true; }
+    if (club?.owner_id === userId) { canManage = true; level = "admin"; }
 
     if (!canManage) {
       const { data: staff } = await supabase
         .from("club_staff").select("id, role")
         .eq("club_id", club_id).eq("user_id", userId).eq("is_active", true)
         .maybeSingle();
-      if (staff) canManage = true;
+      if (staff) {
+        canManage = true;
+        level = staff.role === "admin" ? "admin" : staff.role === "coordenador" ? "coordinator" : "staff";
+      }
     }
 
     if (!canManage) {
-      const { data: coach } = await supabase
-        .from("team_coaches").select("id")
-        .eq("team_id", teamId).eq("coach_id", userId).maybeSingle();
-      if (coach) canManage = true;
+      // a coach only counts while still an active coach of the club
+      const { data: member } = await supabase
+        .from("club_coaches").select("id")
+        .eq("club_id", club_id).eq("coach_id", userId).eq("is_active", true).maybeSingle();
+      const { data: coach } = member
+        ? await supabase.from("team_coaches").select("id, role").eq("team_id", teamId).eq("coach_id", userId).maybeSingle()
+        : { data: null };
+      if (coach) {
+        canManage = true;
+        level = coach.role === "assistant_coach" ? "assistant" : "head_coach";
+      }
     }
   } else {
     // Individual coach mode — only team owner can manage
     if (team.owner_id === userId) {
       canManage = true;
       owner_coach_id = userId;
+      level = "head_coach";
     }
   }
 
-  return { canManage, scope_type, club_id, owner_coach_id };
+  return { canManage, scope_type, club_id, owner_coach_id, level };
 }
+
+type InviterLevel = "admin" | "coordinator" | "staff" | "head_coach" | "assistant" | "none";
+
+/** Who may invite whom: nobody can hand out more access than they have. */
+const ALLOWED_TYPES: Record<InviterLevel, string[]> = {
+  admin: ["coach", "assistant_coach", "staff", "guardian", "player"],
+  coordinator: ["coach", "assistant_coach", "guardian", "player"],
+  head_coach: ["assistant_coach", "guardian", "player"],
+  staff: ["guardian", "player"],
+  assistant: ["guardian", "player"],
+  none: [],
+};
 
 function resolveInviteProfile(inviteType: string): { accountType: string; redirect: string } {
   switch (inviteType) {
@@ -227,6 +251,12 @@ Deno.serve(async (req) => {
 
       // SECURITY: Derive context server-side — never trust client
       const ctx = await deriveInviteContext(supabase, authUser.id, team_id);
+      if (ctx.canManage && !ALLOWED_TYPES[ctx.level].includes(invite_type)) {
+        return new Response(
+          JSON.stringify({ error: "Não tem permissão para este tipo de convite" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       if (!ctx.canManage) {
         console.error(`[manage-invites] DENIED create_invite by ${authUser.id} for team ${team_id}`);
         return new Response(
@@ -469,8 +499,25 @@ Deno.serve(async (req) => {
       const inviteType = invite.invite_type;
       const { accountType, redirect } = resolveInviteProfile(inviteType);
 
-      // Update profile account_type
-      await supabase.from("profiles").update({ account_type: accountType }).eq("id", userId);
+      // Update profile account_type — never turn a club account (or a coach) into something smaller
+      const { data: currentProfile } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+      const current = currentProfile?.account_type ?? null;
+      const isStaffInvite = ["coach", "assistant_coach", "staff"].includes(inviteType);
+      // every new account starts as "individual_coach": a parent/player invite only keeps
+      // coach access when the person really coaches (owns or coaches a team, or is in a club)
+      let coachesAlready = false;
+      if (!isStaffInvite && current === "individual_coach") {
+        const [owned, coached, member] = await Promise.all([
+          supabase.from("teams").select("id", { count: "exact", head: true }).eq("owner_id", userId),
+          supabase.from("team_coaches").select("id", { count: "exact", head: true }).eq("coach_id", userId),
+          supabase.from("club_coaches").select("id", { count: "exact", head: true }).eq("coach_id", userId).eq("is_active", true),
+        ]);
+        coachesAlready = (owned.count ?? 0) + (coached.count ?? 0) + (member.count ?? 0) > 0;
+      }
+      const shouldSet = current !== "club" && !(isStaffInvite && current === "individual_coach") && !coachesAlready;
+      if (shouldSet) {
+        await supabase.from("profiles").update({ account_type: accountType }).eq("id", userId);
+      }
 
       // ── GUARDIAN ──
       if (inviteType === "guardian") {
@@ -535,18 +582,36 @@ Deno.serve(async (req) => {
             .from("club_coaches").select("id")
             .eq("coach_id", userId).eq("club_id", invite.club_id).maybeSingle();
           if (!existingCC) {
-            await supabase.from("club_coaches").insert({
+            const { error: ccError } = await supabase.from("club_coaches").insert({
               club_id: invite.club_id, coach_id: userId, is_active: true,
             });
+            if (ccError) {
+              console.error("[manage-invites] club_coaches error:", ccError.message);
+              return new Response(
+                JSON.stringify({ error: "Não foi possível juntar ao clube" }),
+                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+          } else {
+            // re-invited after leaving: reactivate
+            await supabase.from("club_coaches").update({ is_active: true }).eq("id", existingCC.id);
           }
         }
         const { data: existingTC } = await supabase
           .from("team_coaches").select("id")
           .eq("coach_id", userId).eq("team_id", invite.team_id).maybeSingle();
         if (!existingTC) {
-          await supabase.from("team_coaches").insert({
+          const { error: tcError } = await supabase.from("team_coaches").insert({
             coach_id: userId, team_id: invite.team_id,
+            role: inviteType === "assistant_coach" ? "assistant_coach" : "head_coach",
           });
+          if (tcError) {
+            console.error("[manage-invites] team_coaches error:", tcError.message);
+            return new Response(
+              JSON.stringify({ error: "Não foi possível associar à equipa" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
         }
       }
 

@@ -61,7 +61,7 @@ export function TrainingDashboard({ onNavigate }: TrainingDashboardProps) {
       withSeason(supabase
         .from('training_sessions')
         .select('id, date, title, location, duration_minutes, status, intensity, team_id')
-        .eq('owner_id', user!.id))
+        )
         .gte('date', now)
         .lte('date', weekAhead)
         .neq('status', 'cancelled')
@@ -70,18 +70,18 @@ export function TrainingDashboard({ onNavigate }: TrainingDashboardProps) {
       withSeason(supabase
         .from('training_sessions')
         .select('id, date, status')
-        .eq('owner_id', user!.id))
+        )
         .gte('date', weekBehind)
         .lt('date', now)
         .neq('status', 'cancelled'),
       withSeason(supabase
         .from('training_attendance')
         .select('session_id')
-        .eq('owner_id', user!.id)),
+        ),
       supabase
         .from('training_load')
         .select('session_id')
-        .eq('owner_id', user!.id),
+        ,
     ]);
 
     // Fetch team names for upcoming

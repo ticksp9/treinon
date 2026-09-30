@@ -97,7 +97,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     const { data } = await supabase
       .from('teams')
       .select('id, name, category')
-      .eq('owner_id', user!.id)
+      
       .order('name');
     setTeams(data || []);
   };
@@ -110,7 +110,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     let sessionsQuery = supabase
       .from('training_sessions')
       .select('id, date, title, location, duration_minutes, objectives, status, intensity, session_type, team_id')
-      .eq('owner_id', user!.id)
+      
       .gte('date', weekStartStr)
       .lt('date', weekEndStr)
       .order('date');
@@ -123,7 +123,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     let matchesQuery = supabase
       .from('matches')
       .select('id, match_date, opponent_name, location, team_id')
-      .eq('owner_id', user!.id)
+      
       .gte('match_date', weekStartStr)
       .lt('match_date', weekEndStr);
 
