@@ -86,6 +86,15 @@ export default function Install() {
               <Step n={3}>Deslize a lista para baixo e toque em <SquarePlus className="inline h-4 w-4 align-text-bottom" /> <strong>Adicionar ao ecrã principal</strong>. Se não vir, toque em <strong>Editar ações</strong> e adicione-a.</Step>
               <Step n={4}>Confirme <strong>Abrir como app web</strong> ligado e toque em <strong>Adicionar</strong>. O ícone TreinON aparece no ecrã principal.</Step>
             </ol>
+            <div className="mt-3 rounded-md bg-muted/60 p-3 text-sm">
+              <p className="font-semibold">Não aparece "Adicionar ao ecrã principal"?</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-muted-foreground">
+                <li>Veja se está em <strong>Navegação Privada</strong> (barra escura): aí a opção não existe. Abra um separador normal.</li>
+                <li>No fim da lista do Partilhar, toque em <strong>Editar ações…</strong> e ligue "Adicionar ao ecrã principal".</li>
+                <li>No iPad o botão Partilhar está <strong>em cima, à direita</strong>. Também pode tocar no ícone à esquerda do endereço → <strong>Partilhar</strong>.</li>
+                <li>Se o iPad tiver <strong>Tempo de ecrã</strong> com restrições, a opção pode estar escondida.</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
 
