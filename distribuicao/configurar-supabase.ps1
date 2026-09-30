@@ -67,7 +67,5 @@ Pronto. Opcional (só se usar estas funcionalidades):
   Pagamentos (Stripe):         npx supabase secrets set STRIPE_SECRET_KEY=... STRIPE_WEBHOOK_SECRET=...
   Classificações FPF:          npx supabase secrets set FIRECRAWL_API_KEY=...
 
-Falta ainda no painel da Supabase (ver distribuicao\GUIA-SUPABASE-VERCEL.md):
-  - Authentication > URL Configuration: Site URL = $AppUrl
-  - Authentication > Rate Limits: subir "sign-ups and sign-ins"
+Tudo configurado.
 "@ -ForegroundColor Green
