@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Download, Share, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { currentInstallEnv } from '@/lib/install-env';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -69,11 +71,20 @@ export function InstallPrompt() {
           <p className="font-semibold">Instalar TreinON</p>
           {deferred ? (
             <p className="text-muted-foreground">Abre como uma app, mais rápido e funciona no campo sem rede.</p>
+          ) : currentInstallEnv() === 'ios-in-app' ? (
+            <p className="text-muted-foreground">
+              Aqui dentro não dá para instalar. Toque nos <strong>⋯</strong> e escolha <strong>Abrir no Safari</strong>.
+            </p>
           ) : (
             <p className="text-muted-foreground">
               Toque em <Share className="inline h-4 w-4 align-text-bottom" /> <strong>Partilhar</strong> e depois em{' '}
               <strong>Adicionar ao ecrã principal</strong>.
             </p>
+          )}
+          {!deferred && (
+            <Link to="/instalar" onClick={() => setHidden(true)} className="mt-1 inline-block text-xs font-medium text-primary underline">
+              Ver passo a passo
+            </Link>
           )}
           {deferred && (
             <Button

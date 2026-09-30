@@ -152,6 +152,16 @@ export default function Settings() {
             </Card>
 
             <Card className="mt-4 border-border/50">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <p className="text-sm font-medium">Instalar a app</p>
+                  <p className="text-xs text-muted-foreground">iPhone, Android ou computador — passo a passo.</p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => navigate('/instalar')}>Como instalar</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4 border-border/50">
               <CardHeader>
                 <CardTitle className="font-display text-base">Modalidade</CardTitle>
                 <CardDescription>

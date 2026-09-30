@@ -38,6 +38,7 @@ export default function Index() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => navigate('/biblioteca')} className="hidden sm:inline-flex">Biblioteca</Button>
+            <Button variant="ghost" onClick={() => navigate('/instalar')}>Instalar</Button>
             <ThemeToggle />
             <Button variant="ghost" onClick={() => navigate('/auth')}>Entrar</Button>
             <Button onClick={() => navigate('/auth?tab=signup')} className="hidden sm:inline-flex">Criar conta</Button>
