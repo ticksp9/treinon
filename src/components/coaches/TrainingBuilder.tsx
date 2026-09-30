@@ -16,6 +16,10 @@ import { AGE_GROUPS, FOCUS_AREAS } from '@/lib/coach-constants';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { TrainingFieldEditor } from '@/components/trainings/TrainingFieldEditor';
+import { DrillPicker } from '@/components/library/DrillPicker';
+import { AnimatedDrill } from '@/components/library/AnimatedDrill';
+import type { DiagramEl } from '@/lib/drill-library/types';
+import type { DrillAnimation } from '@/lib/drill-library/animation';
 
 interface Exercise {
   id: string;
@@ -23,6 +27,9 @@ interface Exercise {
   duration: number;
   description: string;
   image_url?: string;
+  /** drawing (and animation) when it comes from an exercise */
+  diagram?: DiagramEl[];
+  anim?: DrillAnimation | null;
 }
 
 interface Training {
@@ -390,6 +397,8 @@ export function TrainingBuilder() {
     }
   };
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   const addExercise = () => {
     setExercises(prev => [
       ...prev,
@@ -714,10 +723,15 @@ export function TrainingBuilder() {
                         <Clock className="w-3 h-3 mr-1" />
                         {calculateTotalDuration()} min
                       </Badge>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                        <Dumbbell className="w-4 h-4 mr-1" />
+                        Dos exercícios
+                      </Button>
                       <Button type="button" variant="outline" size="sm" onClick={addExercise}>
                         <Plus className="w-4 h-4 mr-1" />
                         Adicionar
                       </Button>
+                      <DrillPicker open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={(ex) => setExercises((prev) => [...prev, ex])} />
                     </div>
                   </div>
                   
@@ -773,6 +787,9 @@ export function TrainingBuilder() {
                                   </div>
                                 </div>
                                 
+                                {exercise.diagram && exercise.diagram.length > 0 && (
+                                  <AnimatedDrill elements={exercise.diagram} anim={exercise.anim} title={exercise.name} compact className="max-w-md" />
+                                )}
                                 <Textarea
                                   value={exercise.description}
                                   onChange={(e) => updateExercise(exercise.id, 'description', e.target.value)}

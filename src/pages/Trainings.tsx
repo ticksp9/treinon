@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { LibraryBrowser } from '@/components/library/LibraryBrowser';
 import { useAuth } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClipboardList, Users, FileText, Calendar, Activity, LayoutDashboard } from 'lucide-react';
+import { ClipboardList, Users, FileText, Calendar, Activity, LayoutDashboard, BookOpen } from 'lucide-react';
 import { TrainingBuilder } from '@/components/coaches/TrainingBuilder';
 import { TrainingAttendance } from '@/components/trainings/TrainingAttendance';
 import { MatchCallup } from '@/components/trainings/MatchCallup';
@@ -14,7 +16,12 @@ import { PageLoading } from '@/components/ui/page-states';
 
 export default function Trainings() {
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [params, setParams] = useSearchParams();
+  const [activeTab, setActiveTabState] = useState(params.get('tab') || 'dashboard');
+  const setActiveTab = (t: string) => {
+    setActiveTabState(t);
+    setParams(t === 'dashboard' ? {} : { tab: t }, { replace: true });
+  };
 
   if (loading) {
     return (
@@ -43,6 +50,10 @@ export default function Trainings() {
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">Calendário</span>
             </TabsTrigger>
+            <TabsTrigger value="exercicios" className="flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Exercícios</span>
+            </TabsTrigger>
             <TabsTrigger value="builder" className="flex items-center gap-1.5">
               <ClipboardList className="w-4 h-4" />
               <span className="hidden sm:inline">Criar Treinos</span>
@@ -67,6 +78,10 @@ export default function Trainings() {
 
           <TabsContent value="calendar" className="mt-6">
             <TrainingWeeklyCalendar />
+          </TabsContent>
+
+          <TabsContent value="exercicios" className="mt-6">
+            <LibraryBrowser />
           </TabsContent>
 
           <TabsContent value="builder" className="mt-6">

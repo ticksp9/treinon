@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Trophy, Calendar, BookOpen, Menu, MessageSquare, Settings } from 'lucide-react';
+import { Home, Trophy, Calendar, Users, Menu, MessageSquare, Settings } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,7 @@ const COACH_ITEMS: Item[] = [
   { label: 'Início', icon: Home, path: '/dashboard' },
   { label: 'Jogos', icon: Trophy, path: '/matches' },
   { label: 'Treinos', icon: Calendar, path: '/training' },
-  { label: 'Biblioteca', icon: BookOpen, path: '/biblioteca' },
+  { label: 'Jogadores', icon: Users, path: '/players' },
   { label: 'Mais', icon: Menu, action: 'menu' },
 ];
 

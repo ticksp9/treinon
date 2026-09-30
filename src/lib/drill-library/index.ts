@@ -30,12 +30,15 @@ export function drillToText(d: Drill): string {
 }
 
 /** Exercises in the shape used by coach_trainings.exercises */
-export function drillsToExercises(items: { drill: Drill; minutes: number; note?: string }[]) {
+export function drillsToExercises(items: { drill: Drill & { anim?: unknown }; minutes: number; note?: string }[]) {
   return items.map(({ drill, minutes, note }, i) => ({
     id: `${Date.now()}-${i}`,
     name: drill.name,
     duration: minutes,
     description: (note ? `Nota: ${note}\n\n` : '') + drillToText(drill),
+    // drawing (and animation) shown in the training plan
+    diagram: drill.diagram,
+    anim: drill.anim ?? null,
   }));
 }
 
