@@ -16,6 +16,7 @@ import { getFormation, listAvailableFormations } from '@/lib/tactical-formations
 import { type LiveTactics } from '@/lib/live-tactics';
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
+import { ratingBg } from '@/lib/player-card';
 
 export interface PitchPlayerInfo {
   player_id: string;
@@ -28,6 +29,11 @@ export interface PitchPlayerInfo {
   goals: number;
   yellow: number;
   red: number;
+  /** current ability 1–10 (latest evaluation) — shown before the match */
+  ability?: number | null;
+  /** average of the last match ratings */
+  formAvg?: number | null;
+  formTrend?: 'up' | 'down' | 'flat';
 }
 
 interface Props {
@@ -37,6 +43,10 @@ interface Props {
   /** bench player ids, already sorted (least played first) */
   bench: string[];
   disabled?: boolean;
+  /** 'setup' = before kick-off: pick the XI, show ability/form instead of time/freshness */
+  mode?: 'live' | 'setup';
+  /** bench player dropped on an empty slot (setup) */
+  onFillSlot?: (slotId: string, playerId: string) => void;
   onFormationChange: (code: string) => void;
   onSwap: (slotA: string, slotB: string) => void;
   onSubstitute: (outId: string, inId: string) => void;
@@ -52,14 +62,21 @@ const shortName = (name: string) => {
 
 const freshnessColor = (f: number) => (f >= 70 ? 'bg-emerald-500' : f >= 45 ? 'bg-amber-500' : 'bg-red-500');
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+const trendIcon = (t?: 'up' | 'down' | 'flat') => (t === 'up' ? '▲' : t === 'down' ? '▼' : '');
+
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+  const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const formation = useMemo(() => getFormation(sportType, tactics.formation), [sportType, tactics.formation]);
   const formations = listAvailableFormations(sportType);
   const selectedPlayer = sel ? players.get(sel.playerId) : null;
 
   const tapPitch = (slotId: string, playerId: string | null) => {
-    if (disabled || !playerId) return;
+    if (disabled) return;
+    if (!playerId) {
+      if (sel?.kind === 'bench' && onFillSlot) { onFillSlot(slotId, sel.playerId); setSel(null); }
+      return;
+    }
     if (!sel) return setSel({ kind: 'pitch', slotId, playerId });
     if (sel.kind === 'pitch') {
       if (sel.slotId !== slotId) onSwap(sel.slotId, slotId);
@@ -82,7 +99,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
     ? 'Toque num jogador para o selecionar.'
     : sel.kind === 'pitch'
       ? 'Toque noutro jogador para trocar de posição, ou num suplente para substituir.'
-      : 'Toque no jogador em campo que vai sair.';
+      : setup ? 'Toque no titular a trocar, ou numa posição livre.' : 'Toque no jogador em campo que vai sair.';
 
   return (
     <div className="space-y-3">
@@ -108,7 +125,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
                 key={slot.slot_id}
                 type="button"
                 onClick={() => tapPitch(slot.slot_id, pid)}
-                className="absolute flex w-[4.5rem] -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5 focus:outline-none"
+                className={cn('absolute flex w-[4.5rem] -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5 focus:outline-none', !p && sel?.kind === 'bench' && onFillSlot && 'animate-pulse')}
                 style={{ left: `${slot.x * 100}%`, bottom: `${slot.y * 100}%` }}
                 aria-label={p ? `${p.name}, ${slot.label}` : `${slot.label} livre`}
               >
@@ -131,9 +148,16 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
                 {p && (
                   <>
                     <span className="max-w-full truncate rounded bg-black/55 px-1 text-[10px] font-semibold leading-4 text-white">{shortName(p.name)}</span>
-                    <span className="h-1 w-10 overflow-hidden rounded bg-black/40" title={`Frescura estimada ${p.freshness}%`}>
-                      <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
-                    </span>
+                    {setup ? (
+                      <span className="flex gap-0.5">
+                        {p.ability != null && <span className={cn('rounded px-1 font-mono text-[10px] font-bold leading-4', ratingBg(p.ability))} title="Nota da última avaliação">{p.ability.toFixed(1)}</span>}
+                        {p.formAvg != null && <span className="rounded bg-black/55 px-1 font-mono text-[10px] leading-4 text-white" title="Forma (últimos jogos)">{p.formAvg.toFixed(1)}{trendIcon(p.formTrend)}</span>}
+                      </span>
+                    ) : (
+                      <span className="h-1 w-10 overflow-hidden rounded bg-black/40" title={`Frescura estimada ${p.freshness}%`}>
+                        <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
+                      </span>
+                    )}
                   </>
                 )}
               </button>
@@ -147,9 +171,13 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
         <div className="flex flex-wrap items-center gap-2 rounded-md border bg-card p-2">
           <span className="mr-auto text-sm font-medium">
             {selectedPlayer.number ? `${selectedPlayer.number}. ` : ''}{selectedPlayer.name}
-            <span className="ml-2 font-mono text-xs text-muted-foreground">{formatClock(selectedPlayer.seconds)} · frescura {selectedPlayer.freshness}%</span>
+            <span className="ml-2 font-mono text-xs text-muted-foreground">
+              {setup
+                ? `nota ${selectedPlayer.ability?.toFixed(1) ?? '—'} · forma ${selectedPlayer.formAvg?.toFixed(1) ?? '—'}`
+                : `${formatClock(selectedPlayer.seconds)} · frescura ${selectedPlayer.freshness}%`}
+            </span>
           </span>
-          {sel?.kind === 'pitch' && (
+          {sel?.kind === 'pitch' && !setup && (
             <>
               <Button size="sm" variant="outline" onClick={() => { onEvent('goal', sel.playerId); setSel(null); }}>⚽ Golo</Button>
               <Button size="sm" variant="outline" onClick={() => { onEvent('yellow_card', sel.playerId); setSel(null); }}>
@@ -167,7 +195,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
       {/* Bench, least played first */}
       <div>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Repeat className="h-3.5 w-3.5" /> Banco — menos minutos primeiro
+          <Repeat className="h-3.5 w-3.5" /> {setup ? 'Convocados no banco' : 'Banco — menos minutos primeiro'}
         </p>
         <div className="flex gap-2 overflow-x-auto pb-1">
           {bench.length === 0 && <span className="text-sm text-muted-foreground">Sem suplentes.</span>}
@@ -190,12 +218,21 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
                   <span className="font-mono text-xs text-muted-foreground">{p.number ?? '–'}</span>
                   <span className="truncate">{shortName(p.name)}</span>
                 </span>
-                <span className={cn('font-mono text-[11px]', i === 0 ? 'font-semibold text-accent' : 'text-muted-foreground')}>
-                  {formatClock(p.seconds)}{i === 0 ? ' · menos' : ''}
-                </span>
-                <span className="mt-1 h-1 w-full overflow-hidden rounded bg-muted">
-                  <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
-                </span>
+                {setup ? (
+                  <span className="mt-0.5 flex gap-1 font-mono text-[11px]">
+                    <span className={cn('rounded px-1 font-bold', ratingBg(p.ability))}>{p.ability?.toFixed(1) ?? '—'}</span>
+                    {p.formAvg != null && <span className="text-muted-foreground">forma {p.formAvg.toFixed(1)}{trendIcon(p.formTrend)}</span>}
+                  </span>
+                ) : (
+                  <>
+                    <span className={cn('font-mono text-[11px]', i === 0 ? 'font-semibold text-accent' : 'text-muted-foreground')}>
+                      {formatClock(p.seconds)}{i === 0 ? ' · menos' : ''}
+                    </span>
+                    <span className="mt-1 h-1 w-full overflow-hidden rounded bg-muted">
+                      <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
+                    </span>
+                  </>
+                )}
               </button>
             );
           })}
@@ -203,7 +240,9 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, onForm
       </div>
 
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-        <ArrowLeftRight className="h-3 w-3" /> A barra de frescura é uma estimativa pelo tempo seguido em campo e no banco.
+        <ArrowLeftRight className="h-3 w-3" /> {setup
+          ? 'Nota = última avaliação (1–10). Forma = média das notas dos últimos 5 jogos.'
+          : 'A barra de frescura é uma estimativa pelo tempo seguido em campo e no banco.'}
       </p>
     </div>
   );

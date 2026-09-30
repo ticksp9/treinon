@@ -20,6 +20,7 @@ import {
 } from '@/components/players/PlayerProfileTabs';
 import { PlayerDevelopmentPlanTab, PlayerObservationsTab } from '@/components/players/PlayerDevelopment';
 import { PlayerAnalyticsTab } from '@/components/players/PlayerAnalyticsTab';
+import { PlayerFMCard } from '@/components/players/PlayerFMCard';
 import { PlayerStrengthsPanel, PlayerImprovementPanel } from '@/components/players/PlayerStrengthsPanel';
 import { PlayerSeasonHistoryTab } from '@/components/players/PlayerSeasonHistoryTab';
 import { PlayerPositionsTab } from '@/components/players/PlayerPositionsTab';
@@ -663,6 +664,9 @@ export default function PlayerDetail() {
 
           <TabsContent value="summary" className="space-y-4">
             <ErrorBoundary label="tab Resumo">
+            <ErrorBoundary label="ficha FM">
+              <PlayerFMCard playerId={player.id} />
+            </ErrorBoundary>
             <PlayerSummaryTab player={player} seasonStats={seasonStats} latestEval={latestEval} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ErrorBoundary label="painel Pontos Fortes">

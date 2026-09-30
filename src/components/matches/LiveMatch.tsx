@@ -15,6 +15,8 @@ import { shareText } from '@/lib/share';
 import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
 import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics } from '@/lib/live-tactics';
 import { LivePitch, type PitchPlayerInfo } from './LivePitch';
+import { MatchRatingsPanel } from './MatchRatingsPanel';
+import { useSquadProfiles } from '@/hooks/useSquadProfiles';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -1235,8 +1237,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     ? reconcileTactics(matchSport, match?.live_tactics ?? null, starters.map(l => ({ player_id: l.player_id, position: l.player?.position })))
     : null;
   const pitchTacticsKey = pitchTactics ? JSON.stringify(pitchTactics) : '';
+  // Ability (last evaluation) + form (last match ratings), FM style — shown before kick-off
+  const { data: squadProfiles } = useSquadProfiles(lineups.map(l => l.player_id));
   const pitchPlayers = new Map<string, PitchPlayerInfo>(lineups.map(l => {
     const mine = events.filter(e => e.player_id === l.player_id && !e.is_opponent);
+    const prof = squadProfiles?.get(l.player_id);
     return [l.player_id, {
       player_id: l.player_id,
       name: l.player?.name ?? '—',
@@ -1246,6 +1251,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       goals: mine.filter(e => e.event_type === 'goal').length,
       yellow: mine.filter(e => e.event_type === 'yellow_card').length,
       red: mine.filter(e => e.event_type === 'red_card').length,
+      ability: prof?.ability ?? null,
+      formAvg: prof?.form.average ?? null,
+      formTrend: prof?.form.trend,
     }];
   }));
   const saveTactics = (t: LiveTactics | null) => { if (t) updateMatchRecord({ live_tactics: t }); };
@@ -1253,6 +1261,33 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
     const minute = getCurrentMinute();
     await handleSubstitutionBatch([{ tempId: `pitch-${Date.now()}`, minute, playerOutId: outId, playerInId: inId }], minute);
+  };
+
+  // Before kick-off: moving players on the pitch changes who starts (match_lineups.is_starter)
+  const setStarter = async (playerId: string, isStarter: boolean) => {
+    const row = lineups.find(l => l.player_id === playerId);
+    if (!row) return;
+    const { error } = await supabase.from('match_lineups').update({ is_starter: isStarter }).eq('id', row.id);
+    if (error) throw error;
+  };
+  const handleSetupSubstitute = async (outId: string, inId: string) => {
+    try {
+      if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
+      await setStarter(outId, false);
+      await setStarter(inId, true);
+    } catch { toast.error('Não foi possível alterar o onze.'); }
+    fetchMatchData();
+  };
+  const handleSetupFill = async (slotId: string, playerId: string) => {
+    if (starters.length >= sportRules.playersOnField) {
+      toast.error(`Já tem ${sportRules.playersOnField} titulares. Troque com um jogador em campo.`);
+      return;
+    }
+    try {
+      if (pitchTactics) saveTactics({ ...pitchTactics, slots: { ...pitchTactics.slots, [slotId]: playerId } });
+      await setStarter(playerId, true);
+    } catch { toast.error('Não foi possível alterar o onze.'); }
+    fetchMatchData();
   };
 
   // Keep the stored tactics in step with who is on the field (after subs, edits…)
@@ -1330,7 +1365,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           </div>
         </div>
         
-        <MatchReport 
+        <MatchRatingsPanel matchId={matchId} />
+
+        <MatchReport
           match={match}
           lineups={lineups}
           events={events}
@@ -1499,7 +1536,31 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           </Card>
         )}
 
-        {/* Setup Phase */}
+        {/* Setup Phase: the XI on the pitch, FM style */}
+        {phase === 'setup' && pitchTactics && matchSport && lineups.length > 0 && (
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-base">Tática e onze inicial</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              <LivePitch
+                mode="setup"
+                sportType={matchSport}
+                tactics={pitchTactics}
+                players={pitchPlayers}
+                bench={lineups.filter(l => !l.is_starter)
+                  .sort((a, b) => (pitchPlayers.get(b.player_id)?.ability ?? 0) - (pitchPlayers.get(a.player_id)?.ability ?? 0))
+                  .map(l => l.player_id)}
+                onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
+                onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
+                onSubstitute={handleSetupSubstitute}
+                onFillSlot={handleSetupFill}
+                onEvent={() => {}}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         {phase === 'setup' && (
           <LineupSelector
             matchId={matchId}
