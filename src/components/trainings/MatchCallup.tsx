@@ -215,9 +215,13 @@ export function MatchCallup() {
           .select('id, name, number, position, photo_url, birth_date, team_id')
           .in('team_id', otherTeams.map(t => t.id))
           .eq('is_active', true);
-        guests = (others || [])
-          .filter(p => p.birth_date && check(p.birth_date).eligible)
-          .map(p => ({ ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || 'outra equipa' }));
+        // All of them are loaded: in official matches only the eligible are shown,
+        // in friendlies the coach can call anyone (with a warning).
+        guests = (others || []).map(p => {
+          const r = check(p.birth_date);
+          if (!p.birth_date || !r.eligible) blocked.set(p.id, `Não pode jogar em ${team.category} em jogos oficiais${r.reason ? ` (${r.reason})` : ''}`);
+          return { ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || 'outra equipa' };
+        });
       }
 
       const data = [...(own || []), ...guests];
@@ -322,6 +326,9 @@ export function MatchCallup() {
     return groups;
   };
 
+  /** Friendlies: the coach decides — age rules become a warning */
+  const isFriendlyMatch = matches.find(m => m.id === selectedMatch)?.match_type === 'friendly';
+
   const togglePlayer = (playerId: string) => {
     setSelectedPlayers(prev => {
       const next = new Set(prev);
@@ -329,7 +336,7 @@ export function MatchCallup() {
         next.delete(playerId);
       } else {
         const tooOld = ageBlocked.get(playerId);
-        if (tooOld) {
+        if (tooOld && !isFriendlyMatch) {
           toast.error(tooOld);
           return prev;
         }
@@ -1418,12 +1425,15 @@ export function MatchCallup() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {[...players]
+                // official matches: players from other teams only if they may play here
+                .filter(p => isFriendlyMatch || !(p.fromTeam && ageBlocked.has(p.id)))
                 // own team first, then players from other age groups
                 .sort((a, b) => Number(!!a.fromTeam) - Number(!!b.fromTeam) || (a.number || 99) - (b.number || 99))
                 .map(player => {
                   const av = availabilityMap.get(player.id);
                   const ageReason = ageBlocked.get(player.id);
-                  const blocked = (av && !av.callable) || !!ageReason;
+                  // friendlies: age rules are only a warning
+                  const blocked = (av && !av.callable) || (!!ageReason && !isFriendlyMatch);
                   const restricted = av && av.callable && av.status !== 'apto';
                   const statusOpt = av ? getClinicalStatusOption(av.status) : null;
                   return (
@@ -1463,8 +1473,8 @@ export function MatchCallup() {
                         </Badge>
                       )}
                       {ageReason && (
-                        <Badge variant="outline" className="w-fit text-[10px] py-0 px-1 border-red-500/40 text-red-600">
-                          Idade acima do escalão
+                        <Badge variant="outline" className={`w-fit text-[10px] py-0 px-1 ${isFriendlyMatch ? 'border-amber-500/40 text-amber-600' : 'border-red-500/40 text-red-600'}`}>
+                          {isFriendlyMatch ? 'Fora do escalão (amigável)' : 'Idade acima do escalão'}
                         </Badge>
                       )}
                       {(blocked || restricted) && !ageReason && statusOpt && (

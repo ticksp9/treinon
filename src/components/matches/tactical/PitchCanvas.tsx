@@ -23,8 +23,13 @@ export function PitchCanvas({ sportType, children, className }: Props) {
 
   return (
     <div
-      className={`relative w-full rounded-md overflow-hidden bg-gradient-to-b from-emerald-600/25 to-emerald-700/25 border border-emerald-700/30 ${className ?? ''}`}
-      style={{ paddingTop: `${ratio * 100}%` }}
+      className={`relative w-full rounded-md overflow-hidden border border-black/20 ${className ?? ''}`}
+      style={{
+        paddingTop: `${ratio * 100}%`,
+        // mown-grass stripes in the pitch colours of the theme
+        backgroundImage:
+          'repeating-linear-gradient(0deg, hsl(var(--field)) 0 8%, hsl(var(--field-dark)) 8% 16%)',
+      }}
       aria-label="Campo tático"
     >
       <svg

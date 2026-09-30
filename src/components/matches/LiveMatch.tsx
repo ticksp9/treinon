@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { shareText } from '@/lib/share';
 import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
+import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics } from '@/lib/live-tactics';
+import { LivePitch, type PitchPlayerInfo } from './LivePitch';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -104,6 +106,10 @@ interface Match {
   part_regulation_minutes?: number[] | null;
   starter_ids?: string[] | null;
   last_timer_start?: string | null;
+  /** Modality for this match only (e.g. an 11-a-side friendly); null = team's */
+  sport_type?: string | null;
+  /** Live pitch: formation and who plays in each slot */
+  live_tactics?: LiveTactics | null;
 }
 
 interface Team {
@@ -117,12 +123,22 @@ interface Team {
 
 type MatchPhase = 'setup' | 'playing' | 'interval' | 'finished';
 
+const SPORT_LABELS: Record<string, string> = {
+  football_5: 'F5',
+  football_7: 'F7',
+  football_9: 'F9',
+  football_11: 'F11',
+  futsal: 'Futsal',
+};
+
 export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const { user } = useAuth();
   const { isOnline } = useOnlineStatus();
   const isMobile = useIsMobile();
   const [match, setMatch] = useState<Match | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
+  /** Modality actually used in this match: the match's own choice, else the team's */
+  const matchSport = match?.sport_type || team?.sport_type || null;
   const [lineups, setLineups] = useState<Lineup[]>([]);
   const [events, setEvents] = useState<MatchEvent[]>([]);
   const [phase, setPhase] = useState<MatchPhase>('setup');
@@ -135,6 +151,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
   const [eventSheetDefaults, setEventSheetDefaults] = useState<{ type?: string; playerId?: string }>({});
   const [syncStatus, setSyncStatus] = useState<'saving' | 'saved' | 'pending' | 'error'>('saved');
+  const [liveView, setLiveView] = useState<'pitch' | 'list'>('pitch');
   
   // CRITICAL: Flags to control restoration and prevent unwanted resets
   const hasRestoredRef = useRef(false);
@@ -612,7 +629,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       return;
     }
 
-    const starterValidation = validateStarterCount(starters.length, team?.sport_type);
+    const starterValidation = validateStarterCount(starters.length, matchSport);
     if (!starterValidation.allowed) {
       toast.error(starterValidation.reason || 'Escalação inválida');
       return;
@@ -638,7 +655,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const currentBench = lineups.filter(l => !l.is_starter);
       const starterPlayerIds = currentStarters.map(l => l.player_id);
 
-      const starterValidation = validateStarterCount(starterPlayerIds.length, team?.sport_type);
+      const starterValidation = validateStarterCount(starterPlayerIds.length, matchSport);
       if (!starterValidation.allowed) {
         toast.error(starterValidation.reason || 'Escalação inválida');
         logConflictAlert({
@@ -646,7 +663,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           alertType: 'invalid_lineup',
           severity: 'blocking',
           message: starterValidation.reason || 'Escalação inválida',
-          metadata: { starterCount: starterPlayerIds.length, sportType: team?.sport_type },
+          metadata: { starterCount: starterPlayerIds.length, sportType: matchSport },
         });
         return;
       }
@@ -722,14 +739,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       if (!ruleSnapshot) {
         const ageCode = normalizeAgeGroupCode(team?.category);
         const profile = await getDefaultRuleProfile(
-          team?.sport_type || 'football_7',
+          matchSport || 'football_7',
           ageCode,
           null,
           match?.competition
         );
         const snapshot = profile
           ? buildSnapshotFromProfile(profile)
-          : buildSnapshotFromFallback(team?.sport_type || 'football_7', config.partDurationMinutes, config.partsCount);
+          : buildSnapshotFromFallback(matchSport || 'football_7', config.partDurationMinutes, config.partsCount);
         // Apply config overrides
         snapshot.period_1_minutes = config.partMinutes[0];
         snapshot.period_2_minutes = config.partMinutes[1] ?? config.partMinutes[0];
@@ -807,7 +824,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const regulationPartMinutes = buildRegulationPartMinutes(Math.max(partsCount, nextPart));
     regulationPartMinutes[nextPart - 1] = regulationPartMinutes[nextPart - 1] ?? partDurationMinutes;
 
-    const starterValidation = validateStarterCount(currentStarters.length, team?.sport_type);
+    const starterValidation = validateStarterCount(currentStarters.length, matchSport);
     if (!starterValidation.allowed) {
       toast.error(starterValidation.reason || 'Escalação inválida');
       return;
@@ -1193,7 +1210,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     (e.event_type === 'own_goal' && !e.is_opponent)
   ).length;
   const isOvertime = timer.elapsedSeconds > currentPartRegulation * 60;
-  const sportRules = getSportFormatRules(team?.sport_type);
+  const sportRules = getSportFormatRules(matchSport);
 
   // Playing time to the second, from the same calculation used for the final minutes
   const liveSeconds = currentPart > 0
@@ -1212,6 +1229,39 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     .filter(l => !l.is_starter)
     .sort((a, b) => playerSeconds(a.player_id) - playerSeconds(b.player_id));
 
+  // ── Live pitch (Football Manager style) ──
+  const clockNow = currentPart > 0 ? matchClockSeconds(partElapsedSeconds, currentPart, timer.elapsedSeconds) : 0;
+  const pitchTactics = matchSport
+    ? reconcileTactics(matchSport, match?.live_tactics ?? null, starters.map(l => ({ player_id: l.player_id, position: l.player?.position })))
+    : null;
+  const pitchTacticsKey = pitchTactics ? JSON.stringify(pitchTactics) : '';
+  const pitchPlayers = new Map<string, PitchPlayerInfo>(lineups.map(l => {
+    const mine = events.filter(e => e.player_id === l.player_id && !e.is_opponent);
+    return [l.player_id, {
+      player_id: l.player_id,
+      name: l.player?.name ?? '—',
+      number: l.player?.number,
+      seconds: playerSeconds(l.player_id),
+      freshness: estimateFreshness(liveSeconds.get(l.player_id)?.stints ?? [], clockNow),
+      goals: mine.filter(e => e.event_type === 'goal').length,
+      yellow: mine.filter(e => e.event_type === 'yellow_card').length,
+      red: mine.filter(e => e.event_type === 'red_card').length,
+    }];
+  }));
+  const saveTactics = (t: LiveTactics | null) => { if (t) updateMatchRecord({ live_tactics: t }); };
+  const handlePitchSubstitute = async (outId: string, inId: string) => {
+    if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
+    const minute = getCurrentMinute();
+    await handleSubstitutionBatch([{ tempId: `pitch-${Date.now()}`, minute, playerOutId: outId, playerInId: inId }], minute);
+  };
+
+  // Keep the stored tactics in step with who is on the field (after subs, edits…)
+  useEffect(() => {
+    if (!pitchTactics || phase === 'setup' || phase === 'finished') return;
+    if (JSON.stringify(match?.live_tactics ?? null) !== pitchTacticsKey) saveTactics(pitchTactics);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pitchTacticsKey, phase]);
+
   // Compute consistency issues for conflict display
   const matchEndEstimate = partElapsedSeconds.reduce((s, sec) => s + Math.floor(sec / 60), 0) + (phase === 'playing' ? timer.getMinutes() : 0);
   const starterInfosForCheck = lineups.map(l => ({ player_id: l.player_id, is_starter: l.is_starter }));
@@ -1223,7 +1273,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         firstPartIds.size > 0 ? lineups.map(l => ({ player_id: l.player_id, is_starter: firstPartIds.has(l.player_id) })) : starterInfosForCheck,
         eventsForCheck,
         matchEndEstimate || 90,
-        team?.sport_type,
+        matchSport,
         {
           partStarters: livePartStarters,
           // completed parts + the part in progress (open-ended)
@@ -1290,7 +1340,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           partRegulationMinutes={(match as any)?.part_regulation_minutes ?? null}
           partStartersByIndex={(match as any)?.part_starter_ids ?? null}
           partsCount={(match as any)?.parts_count ?? partsCount}
-          sportType={team?.sport_type}
+          sportType={matchSport}
           ruleSnapshot={ruleSnapshot}
           secondHalfStarterIds={(match as any)?.second_half_starter_ids ?? null}
         />
@@ -1308,7 +1358,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           goalsAgainst={goalsAgainst}
           currentPeriod={phase === 'playing' ? getPartLabel(currentPart, partsCount) : phase === 'interval' ? 'Intervalo' : undefined}
           displayMinute={phase === 'playing' ? displayMinute : undefined}
-          modality={team?.sport_type || undefined}
+          modality={matchSport || undefined}
           ageGroup={team?.category || undefined}
           isOnline={isOnline}
           syncStatus={syncStatus}
@@ -1422,6 +1472,33 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           </Card>
         )}
 
+        {/* Friendlies / tournaments: the coach decides the modality of this match */}
+        {phase === 'setup' && matchType !== 'championship' && (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-medium">Modalidade deste jogo</p>
+                <p className="text-xs text-muted-foreground">
+                  {matchType === 'friendly' ? 'Amigável: escolha livremente (ex.: 11 contra 11).' : 'Torneio: conforme o regulamento do torneio.'}
+                  {team?.sport_type && ` A equipa joga ${SPORT_LABELS[team.sport_type] ?? team.sport_type}.`}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(SPORT_LABELS).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={matchSport === value ? 'default' : 'outline'}
+                    onClick={() => updateMatchRecord({ sport_type: value === team?.sport_type ? null : value, live_tactics: null })}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Setup Phase */}
         {phase === 'setup' && (
           <LineupSelector
@@ -1430,7 +1507,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             lineups={lineups}
             onLineupsChange={fetchMatchData}
             onStartMatch={handleStartMatch}
-            sportType={team?.sport_type}
+            sportType={matchSport}
           />
         )}
 
@@ -1452,7 +1529,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               onLineupsChange={fetchMatchData}
               onStartMatch={handleStartNextPart}
               isHalftime
-              sportType={team?.sport_type}
+              sportType={matchSport}
             />
           </>
         )}
@@ -1475,6 +1552,33 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               </div>
             )}
 
+            {/* View switch: pitch (Football Manager style) or list */}
+            <div className="grid grid-cols-2 gap-1 rounded-md border bg-muted/40 p-1">
+              {(['pitch', 'list'] as const).map(v => (
+                <Button key={v} type="button" size="sm" variant={liveView === v ? 'default' : 'ghost'} onClick={() => setLiveView(v)}>
+                  {v === 'pitch' ? 'Campo' : 'Lista'}
+                </Button>
+              ))}
+            </div>
+
+            {liveView === 'pitch' && pitchTactics && matchSport && (
+              <Card>
+                <CardContent className="p-3">
+                  <LivePitch
+                    sportType={matchSport}
+                    tactics={pitchTactics}
+                    players={pitchPlayers}
+                    bench={substitutes.map(s => s.player_id)}
+                    onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
+                    onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
+                    onSubstitute={handlePitchSubstitute}
+                    onEvent={(type, pid) => handleEvent(type, pid)}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {liveView === 'list' && (<>
             {/* Players on Field */}
             <Card>
               <CardHeader className="py-3 px-4">
@@ -1602,6 +1706,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 )}
               </CardContent>
             </Card>
+            </>)}
           </div>
         )}
 
@@ -1672,7 +1777,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         maxOnField={sportRules.playersOnField}
         reentryAllowed={sportRules.reentryAllowed}
         events={events as any}
-        sportType={team?.sport_type}
+        sportType={matchSport}
         playerPlayTimes={playerPlayTimes}
         onCommit={handleSubstitutionBatch}
       />
@@ -1710,7 +1815,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onLineupsChange={fetchMatchData}
                     onStartMatch={() => setEditLineupOpen(false)}
                     isEditing
-                    sportType={team?.sport_type}
+                    sportType={matchSport}
                   />
                 </div>
               </div>
