@@ -62,6 +62,8 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit
         navigateFallback: '/index.html',
+        // diagnostic page must always come from the network
+        navigateFallbackDenylist: [/^\/diag/],
         cleanupOutdatedCaches: true,
         // config.js points the app at its backend (club server); never serve a stale copy
         globIgnores: ['config.js'],

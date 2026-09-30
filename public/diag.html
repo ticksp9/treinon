@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TreinON — diagnóstico</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 16px; color: #1b2230; background: #fff; font-size: 15px; }
+  h1 { font-size: 20px; }
+  .ok { color: #067647; } .bad { color: #b42318; font-weight: 600; } .warn { color: #b54708; }
+  li { margin: 4px 0; word-break: break-word; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #f2f4f7; padding: 8px; border-radius: 6px; font-size: 12px; }
+  button { font-size: 16px; padding: 10px 14px; border-radius: 8px; border: 1px solid #24558f; background: #24558f; color: #fff; margin: 4px 0; }
+</style>
+</head>
+<body>
+<h1>TreinON — diagnóstico</h1>
+<p>Tire uma captura a este ecrã (e deslize para ver tudo) e envie ao apoio.</p>
+<ul id="out"></ul>
+<h2 style="font-size:16px">Arranque da app</h2>
+<pre id="boot">A testar…</pre>
+<button onclick="location.href='/'">Abrir a app</button>
+<button onclick="clearAll()">Limpar cópia guardada e abrir</button>
+<script>
+  // Plain ES5 on purpose.
+  var out = document.getElementById('out');
+  var boot = document.getElementById('boot');
+  function line(label, value, cls) {
+    var li = document.createElement('li');
+    li.innerHTML = '<b>' + label + ':</b> <span class="' + (cls || '') + '">' + String(value).replace(/</g, '&lt;') + '</span>';
+    out.appendChild(li);
+  }
+  function log(t) { boot.textContent = (boot.textContent === 'A testar…' ? '' : boot.textContent + '\n') + t; }
+  function clearAll() {
+    var jobs = [];
+    try { if (navigator.serviceWorker) jobs.push(navigator.serviceWorker.getRegistrations().then(function (r) { r.forEach(function (x) { x.unregister(); }); })); } catch (e) {}
+    try { if (window.caches) jobs.push(caches.keys().then(function (k) { k.forEach(function (n) { caches['delete'](n); }); })); } catch (e) {}
+    Promise.all(jobs).then(function () { location.href = '/'; }, function () { location.href = '/'; });
+  }
+
+  line('Browser', navigator.userAgent);
+  line('Ecrã', screen.width + '×' + screen.height + ' · janela ' + innerWidth + '×' + innerHeight + ' · zoom ' + (window.devicePixelRatio || 1));
+  line('Toque', ('ontouchend' in document) ? 'sim' : 'não');
+  line('WebAssembly', typeof WebAssembly === 'object' ? 'disponível' : 'DESLIGADO (Modo de Bloqueio?)', typeof WebAssembly === 'object' ? 'ok' : 'bad');
+  var ls = 'ok';
+  try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); } catch (e) { ls = 'BLOQUEADO: ' + e.message; }
+  line('Armazenamento local', ls, ls === 'ok' ? 'ok' : 'bad');
+  line('IndexedDB', window.indexedDB ? 'disponível' : 'NÃO', window.indexedDB ? 'ok' : 'bad');
+  line('Service worker', 'serviceWorker' in navigator ? 'disponível' : 'não', 'serviceWorker' in navigator ? 'ok' : 'warn');
+  try { new Function('var a = null ?? 1; var b = ({})?.x; class C { #p = 1; }'); line('JavaScript moderno', 'ok', 'ok'); }
+  catch (e) { line('JavaScript moderno', 'FALHA: ' + e.message, 'bad'); }
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(function (r) { line('Cópias guardadas (SW)', r.length + ' registo(s)', r.length ? 'warn' : 'ok'); });
+    }
+    if (window.caches && caches.keys) caches.keys().then(function (k) { line('Caches', k.length ? k.join(', ') : 'nenhuma', k.length ? 'warn' : 'ok'); });
+  } catch (e) {}
+
+  var errors = [];
+  window.addEventListener('error', function (e) {
+    var m = (e.message || '') + (e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno + ':' + e.colno : '');
+    if (!m && e.target && e.target.src) m = 'falhou a carregar ' + e.target.src;
+    errors.push(m); log('ERRO: ' + m);
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) { var m = (e.reason && (e.reason.stack || e.reason.message)) || String(e.reason); errors.push(m); log('ERRO (promise): ' + m); });
+
+  // Load the real app inside a hidden frame and watch it start
+  fetch('/?diag=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.text(); }).then(function (html) {
+    var scripts = html.match(/src="\/assets\/[^"]+\.js"/g) || [];
+    log('index.html: ' + html.length + ' bytes, scripts: ' + scripts.map(function (s) { return s.slice(13, -1); }).join(', '));
+    scripts.forEach(function (s) {
+      var url = s.slice(5, -1);
+      fetch(url, { cache: 'no-store' }).then(function (r) { log(url.split('/').pop() + ' → HTTP ' + r.status); }, function (e) { log(url + ' → FALHOU ' + e.message); });
+    });
+    var f = document.createElement('iframe');
+    f.style.cssText = 'width:100%;height:360px;border:1px solid #ccc;margin-top:8px';
+    f.src = '/?diagframe=1';
+    document.body.appendChild(f);
+    var t0 = Date.now();
+    f.onload = function () {
+      try {
+        var w = f.contentWindow;
+        w.addEventListener('error', function (e) { log('ERRO na app: ' + (e.message || '') + (e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno + ':' + e.colno : '')); }, true);
+        w.addEventListener('unhandledrejection', function (e) { log('ERRO na app (promise): ' + ((e.reason && (e.reason.stack || e.reason.message)) || e.reason)); });
+        var origErr = w.console.error;
+        w.console.error = function () { try { log('console.error: ' + Array.prototype.map.call(arguments, function (a) { return a && a.stack ? a.stack : String(a); }).join(' ').slice(0, 600)); } catch (e) {} return origErr.apply(w.console, arguments); };
+      } catch (e) { log('não consegui observar a app: ' + e.message); }
+      var check = setInterval(function () {
+        try {
+          var root = f.contentDocument.getElementById('root');
+          var n = root ? root.children.length : -1;
+          var txt = f.contentDocument.body ? f.contentDocument.body.innerText.length : 0;
+          if (Date.now() - t0 > 12000 || txt > 200) {
+            clearInterval(check);
+            log('Resultado após ' + Math.round((Date.now() - t0) / 1000) + ' s: elementos na app = ' + n + ', texto visível = ' + txt + ' caracteres, arrancou = ' + !!f.contentWindow.__treinonBooted);
+            log(txt > 200 ? '→ A APP ABRE dentro deste teste.' : '→ A APP NÃO MOSTRA NADA.');
+          }
+        } catch (e) { clearInterval(check); log('erro ao verificar: ' + e.message); }
+      }, 500);
+    };
+  }, function (e) { log('Não consegui descarregar a página: ' + e.message); });
+</script>
+</body>
+</html>
