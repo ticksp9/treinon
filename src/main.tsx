@@ -2,6 +2,7 @@ import "./lib/polyfills";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { RootErrorBoundary } from "./components/RootErrorBoundary";
 // Self-hosted fonts: work offline on the pitch and no request to Google (GDPR)
 import "@fontsource/ibm-plex-sans/400.css";
 import "@fontsource/ibm-plex-sans/500.css";
@@ -13,7 +14,9 @@ import "./lib/i18n";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <RootErrorBoundary>
+      <App />
+    </RootErrorBoundary>
   </React.StrictMode>
 );
 
