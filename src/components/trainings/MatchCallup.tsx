@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,6 +82,9 @@ const POSITION_CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function MatchCallup() {
+  const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  // switching team at the top of the screen re-scopes this page
+  useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
   const navigate = useNavigate();
   const [teams, setTeams] = useState<Team[]>([]);
@@ -102,7 +106,7 @@ export function MatchCallup() {
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
   const [clubId, setClubId] = useState<string>('');
   const [loadedRuleSnapshot, setLoadedRuleSnapshot] = useState<MatchRuleSnapshot | null>(null);
-  
+
   // New match form
   const [newMatch, setNewMatch] = useState({
     date: '',
@@ -166,13 +170,15 @@ export function MatchCallup() {
       const { data, error } = await supabase
         .from('teams')
         .select('id, name, category, sport_type, gender')
-        
+
         .order('name');
 
       if (error) throw error;
-      setTeams(data || []);
-      if (data && data.length > 0) {
-        setSelectedTeam(data[0].id);
+      // only the teams of the club/context the coach is working in: guests never come from another club
+      const scoped = scopeTeams(data || []);
+      setTeams(scoped);
+      if (scoped.length > 0) {
+        setSelectedTeam(defaultTeamId(scoped) ?? scoped[0].id);
       }
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -262,7 +268,7 @@ export function MatchCallup() {
 
       if (error) throw error;
       setMatches(data || []);
-      
+
       // Prioritize in_progress match, then next upcoming
       const inProgress = data?.find(m => m.status === 'in_progress');
       if (inProgress) {
@@ -288,7 +294,7 @@ export function MatchCallup() {
         .eq('match_id', selectedMatch);
 
       if (error) throw error;
-      
+
       const playerIds = new Set(data?.map(l => l.player_id) || []);
       setSelectedPlayers(playerIds);
     } catch (error) {
@@ -372,7 +378,7 @@ export function MatchCallup() {
     setCreating(true);
     try {
       const matchDateTime = `${newMatch.date}T${newMatch.time}:00`;
-      
+
       // Determine competition name based on match type
       let competitionName = 'Campeonato';
       if (newMatch.matchType === 'friendly') {
@@ -382,7 +388,7 @@ export function MatchCallup() {
       } else if (newMatch.competition) {
         competitionName = newMatch.competition;
       }
-      
+
       // Create the match with type and configuration
       const { data: matchData, error: matchError } = await supabase
         .from('matches')
@@ -417,7 +423,7 @@ export function MatchCallup() {
         clubId || null,
         competitionName !== 'Amigável' && competitionName !== 'Torneio' ? competitionName : null
       );
-      
+
       if (ruleProfile) {
         const snapshot = buildSnapshotFromProfile(ruleProfile);
         // Apply any manual overrides from the form
@@ -518,14 +524,14 @@ export function MatchCallup() {
 
   const deleteMatch = async () => {
     if (!user || !selectedMatch) return;
-    
+
     // Check if match is in progress
     const matchData = matches.find(m => m.id === selectedMatch);
     if (matchData?.status === 'in_progress') {
       toast.error('Não podes eliminar um jogo a decorrer. Termina ou cancela o jogo primeiro.');
       return;
     }
-    
+
     if (!confirm('Tem a certeza que deseja eliminar este jogo?')) return;
 
     setDeleting(true);
@@ -533,10 +539,10 @@ export function MatchCallup() {
       // Soft delete the match
       const { error } = await supabase
         .from('matches')
-        .update({ 
-          is_deleted: true, 
+        .update({
+          is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id 
+          deleted_by: user.id
         })
         .eq('id', selectedMatch);
 
@@ -555,9 +561,9 @@ export function MatchCallup() {
   const openEditDialog = () => {
     if (!selectedMatchData) return;
     const matchDate = new Date(selectedMatchData.match_date);
-    
+
     // Determine match type from stored type or competition name
-    let matchType: 'championship' | 'friendly' | 'tournament' = 
+    let matchType: 'championship' | 'friendly' | 'tournament' =
       (selectedMatchData.match_type as any) || 'championship';
     if (!selectedMatchData.match_type) {
       if (selectedMatchData.competition === 'Amigável') {
@@ -566,7 +572,7 @@ export function MatchCallup() {
         matchType = 'tournament';
       }
     }
-    
+
     setNewMatch({
       date: format(matchDate, 'yyyy-MM-dd'),
       time: format(matchDate, 'HH:mm'),
@@ -597,7 +603,7 @@ export function MatchCallup() {
     setCreating(true);
     try {
       const matchDateTime = `${newMatch.date}T${newMatch.time}:00`;
-      
+
       // Determine competition name
       let competitionName = 'Campeonato';
       if (newMatch.matchType === 'friendly') {
@@ -698,7 +704,7 @@ export function MatchCallup() {
       <body>
         <h1>CONVOCATÓRIA</h1>
         <h2>${team?.name || ''} ${team?.category ? `(${team.category})` : ''}</h2>
-        
+
         <div class="info">
           <p><strong>Adversário:</strong> ${match.opponent_name}</p>
           <p><strong>Data:</strong> ${format(new Date(match.match_date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: pt })}</p>
@@ -707,7 +713,7 @@ export function MatchCallup() {
           ${match.location ? `<p><strong>Local:</strong> ${match.location}</p>` : ''}
           <p><strong>Tipo:</strong> ${match.competition || 'Campeonato'} <span class="badge">${match.is_home ? 'CASA' : 'FORA'}</span></p>
         </div>
-        
+
         ${Object.entries(groupedPlayers)
           .filter(([_, categoryPlayers]) => categoryPlayers.some(p => selectedPlayers.has(p.id)))
           .map(([category, categoryPlayers]) => `
@@ -724,7 +730,7 @@ export function MatchCallup() {
                 `).join('')}
             </div>
           `).join('')}
-        
+
         <div class="footer">
           <p>Total de Convocados: ${selectedPlayers.size}</p>
           <p>Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
@@ -875,8 +881,8 @@ export function MatchCallup() {
                         value={newMatch.matchType}
                         onValueChange={v => {
                           const matchType = v as 'championship' | 'friendly' | 'tournament';
-                          setNewMatch(prev => ({ 
-                            ...prev, 
+                          setNewMatch(prev => ({
+                            ...prev,
                             matchType,
                             // Reset parts config based on type
                             partsCount: matchType === 'tournament' ? 1 : 2,
@@ -931,8 +937,8 @@ export function MatchCallup() {
                         <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                           <div className="space-y-2">
                             <Label>Minutos por Parte (pré-preenchido pelo escalão, editável)</Label>
-                            <Select 
-                              value={String(newMatch.partDurationMinutes)} 
+                            <Select
+                              value={String(newMatch.partDurationMinutes)}
                               onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
                             >
                               <SelectTrigger>
@@ -956,8 +962,8 @@ export function MatchCallup() {
                       <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-lg">
                         <div className="space-y-2">
                           <Label>Número de Partes</Label>
-                          <Select 
-                            value={String(newMatch.partsCount)} 
+                          <Select
+                            value={String(newMatch.partsCount)}
                             onValueChange={v => setNewMatch(prev => ({ ...prev, partsCount: parseInt(v) }))}
                           >
                             <SelectTrigger>
@@ -972,8 +978,8 @@ export function MatchCallup() {
                         </div>
                         <div className="space-y-2">
                           <Label>Minutos por Parte</Label>
-                          <Select 
-                            value={String(newMatch.partDurationMinutes)} 
+                          <Select
+                            value={String(newMatch.partDurationMinutes)}
                             onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
                           >
                             <SelectTrigger>
@@ -995,8 +1001,8 @@ export function MatchCallup() {
                       <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-lg">
                         <div className="space-y-2">
                           <Label>Número de Partes</Label>
-                          <Select 
-                            value={String(newMatch.partsCount)} 
+                          <Select
+                            value={String(newMatch.partsCount)}
                             onValueChange={v => setNewMatch(prev => ({ ...prev, partsCount: parseInt(v) }))}
                           >
                             <SelectTrigger>
@@ -1011,8 +1017,8 @@ export function MatchCallup() {
                         </div>
                         <div className="space-y-2">
                           <Label>Minutos por Parte</Label>
-                          <Select 
-                            value={String(newMatch.partDurationMinutes)} 
+                          <Select
+                            value={String(newMatch.partDurationMinutes)}
                             onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
                           >
                             <SelectTrigger>
@@ -1234,7 +1240,7 @@ export function MatchCallup() {
 
           {/* Rules Panel */}
           {selectedMatchData && loadedRuleSnapshot && (
-            <MatchRulesPanel 
+            <MatchRulesPanel
               snapshot={loadedRuleSnapshot}
               sportType={teams.find(t => t.id === selectedTeam)?.sport_type}
               category={teams.find(t => t.id === selectedTeam)?.category}

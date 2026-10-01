@@ -20,6 +20,7 @@ const INVITE_TYPE_LABELS: Record<string, string> = {
   player: 'Atleta',
   coach: 'Treinador',
   assistant_coach: 'Treinador Adjunto',
+  coordinator: 'Coordenador',
   staff: 'Staff',
 };
 

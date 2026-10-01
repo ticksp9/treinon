@@ -19,18 +19,20 @@ import { useCreateInvite, useRevokeInvite, useResendInvite, useEmailStatus, type
 import { shareText, copyText } from '@/lib/share';
 import { cn } from '@/lib/utils';
 
-export type StaffInviteType = Extract<InviteType, 'coach' | 'assistant_coach' | 'staff'>;
+export type StaffInviteType = Extract<InviteType, 'coach' | 'assistant_coach' | 'staff' | 'coordinator'>;
 
 export const STAFF_ROLE_LABELS: Record<StaffInviteType, string> = {
   coach: 'Treinador principal',
   assistant_coach: 'Treinador adjunto',
   staff: 'Staff do clube',
+  coordinator: 'Coordenador',
 };
 
 const ROLE_HELP: Record<StaffInviteType, string> = {
   coach: 'Gere a equipa: plantel, treinos, jogos e convites para adjuntos.',
   assistant_coach: 'Ajuda na equipa: treinos, presenças, jogos. Não convida outros treinadores.',
   staff: 'Pessoa da estrutura do clube (secretaria, diretor…).',
+  coordinator: 'Gere todas as equipas: mapa de treinos e de jogos, treinadores e convites.',
 };
 
 interface TeamOpt { id: string; name: string }
@@ -122,7 +124,7 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>{type === 'staff' ? 'Equipa de referência' : 'Equipa'}</Label>
+              <Label>{type === 'staff' || type === 'coordinator' ? 'Equipa de referência' : 'Equipa'}</Label>
               <Select value={teamId} onValueChange={setTeamId}>
                 <SelectTrigger><SelectValue placeholder="Escolher equipa" /></SelectTrigger>
                 <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
@@ -195,7 +197,7 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
         .from('access_invites')
         .select('id, recipient_name, email, invite_type, invite_code, expires_at, team_id, teams(name)')
         .in('team_id', teamIds)
-        .in('invite_type', ['coach', 'assistant_coach', 'staff'])
+        .in('invite_type', ['coach', 'assistant_coach', 'staff', 'coordinator'])
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       if (error) throw error;

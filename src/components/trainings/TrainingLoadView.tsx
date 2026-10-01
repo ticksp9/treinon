@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,9 @@ const INTENSITY_MULTIPLIER: Record<string, number> = {
 };
 
 export function TrainingLoadView() {
+  const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  // switching team at the top of the screen re-scopes this page
+  useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState('');
@@ -95,10 +99,11 @@ export function TrainingLoadView() {
     const { data } = await supabase
       .from('teams')
       .select('id, name, category')
-      
+
       .order('name');
-    setTeams(data || []);
-    if (data?.length) setSelectedTeam(data[0].id);
+    const scoped = scopeTeams(data || []);
+    setTeams(scoped);
+    if (scoped.length) setSelectedTeam(defaultTeamId(scoped) ?? scoped[0].id);
     setLoading(false);
   };
 
@@ -120,14 +125,14 @@ export function TrainingLoadView() {
         ? supabase.from('training_sessions').select('id, date, title, duration_minutes, intensity').eq('season_id', seasonId)
         : supabase.from('training_sessions').select('id, date, title, duration_minutes, intensity'))
         .eq('team_id', selectedTeam)
-        
+
         .gte('date', sinceDate)
         .order('date', { ascending: false }),
       supabase
         .from('training_load')
         .select('*')
         .eq('team_id', selectedTeam)
-        
+
         .gte('created_at', sinceDate),
     ]);
 

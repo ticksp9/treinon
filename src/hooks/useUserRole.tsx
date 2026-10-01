@@ -99,22 +99,33 @@ export function useUserRole(): UserRoleData {
         }
 
         // Standard coach/club flow
-        const { data: ownedClub } = await supabase
-          .from('clubs').select('id').eq('owner_id', user.id).maybeSingle();
+        // A person can belong to more than one club (e.g. coach in two clubs): the club
+        // of the team they chose to work with wins (see useActiveTeam).
+        const [{ data: ownedClubs }, { data: staffRows }, { data: coachRows }] = await Promise.all([
+          supabase.from('clubs').select('id').eq('owner_id', user.id),
+          supabase.from('club_staff').select('club_id, role').eq('user_id', user.id).eq('is_active', true),
+          supabase.from('club_coaches').select('club_id').eq('coach_id', user.id).eq('is_active', true),
+        ]);
+        let chosen: string | null = null;
+        try { chosen = localStorage.getItem(`treinon_active_club_${user.id}`); } catch { /* ignore */ }
+        const allClubIds = [
+          ...(ownedClubs ?? []).map((c) => c.id),
+          ...(staffRows ?? []).map((s) => s.club_id),
+          ...(coachRows ?? []).map((c) => c.club_id),
+        ];
+        const managesAClub = (ownedClubs?.length ?? 0) > 0 || (staffRows?.length ?? 0) > 0;
+        // 'own' = working with their own teams (no club) — only for people who are just coaches
+        const clubId = chosen && allClubIds.includes(chosen) ? chosen
+          : chosen === 'own' && !managesAClub ? null
+          : allClubIds[0] ?? null;
 
-        const { data: staffMembership } = await supabase
-          .from('club_staff').select('club_id, role')
-          .eq('user_id', user.id).eq('is_active', true)
-          .maybeSingle();
-
-        const { data: coachMembership } = await supabase
-          .from('club_coaches').select('club_id')
-          .eq('coach_id', user.id).eq('is_active', true).maybeSingle();
+        const ownedClub = (ownedClubs ?? []).find((c) => c.id === clubId) ?? null;
+        const staffMembership = (staffRows ?? []).find((s) => s.club_id === clubId) ?? null;
+        const coachMembership = (coachRows ?? []).find((c) => c.club_id === clubId) ?? null;
 
         const isClubAdmin = !!ownedClub || staffMembership?.role === 'admin';
         const isClubStaff = !!staffMembership;
         const isCoach = !!coachMembership;
-        const clubId = ownedClub?.id || staffMembership?.club_id || coachMembership?.club_id || null;
 
         const isIndividualCoach = accountType === 'individual_coach' && !clubId;
         const staffRoleValue = staffMembership?.role || null;

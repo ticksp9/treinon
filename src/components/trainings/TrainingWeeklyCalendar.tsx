@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,9 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 };
 
 export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalendarProps) {
+  const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  // switching team at the top of the screen re-scopes this page
+  useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
@@ -97,9 +101,9 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     const { data } = await supabase
       .from('teams')
       .select('id, name, category')
-      
+
       .order('name');
-    setTeams(data || []);
+    setTeams(scopeTeams(data || []));
   };
 
   const fetchWeekData = async () => {
@@ -110,7 +114,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     let sessionsQuery = supabase
       .from('training_sessions')
       .select('id, date, title, location, duration_minutes, objectives, status, intensity, session_type, team_id')
-      
+
       .gte('date', weekStartStr)
       .lt('date', weekEndStr)
       .order('date');
@@ -123,7 +127,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
     let matchesQuery = supabase
       .from('matches')
       .select('id, match_date, opponent_name, location, team_id')
-      
+
       .gte('match_date', weekStartStr)
       .lt('match_date', weekEndStr);
 

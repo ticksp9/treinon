@@ -172,7 +172,7 @@ export default function Coaches() {
     },
   });
 
-  const inviteTypes: StaffInviteType[] = ['coach', 'assistant_coach', 'staff'];
+  const inviteTypes: StaffInviteType[] = ['coach', 'assistant_coach', 'coordinator', 'staff'];
 
   if (roleLoading) {
     return (

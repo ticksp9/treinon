@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -31,6 +32,7 @@ interface Match {
   opponent_name: string;
   is_home: boolean;
   location: string | null;
+  logistics?: Logistics;
   competition: string | null;
   status: string;
   goals_for: number | null;
@@ -45,7 +47,19 @@ interface Match {
   owner_id?: string;
 }
 
+type Logistics = { meet_time?: string; meet_place?: string; transport?: string; kit?: string; info?: string } | null | undefined;
+/** What the coordinator set for the match: meeting time/place, transport, kit, other info. */
+const logisticsLine = (l: Logistics) => !l ? '' : [
+  l.meet_time && `Concentração ${l.meet_time}${l.meet_place ? ` · ${l.meet_place}` : ''}`,
+  l.transport,
+  l.kit && `Equipamento: ${l.kit}`,
+  l.info,
+].filter(Boolean).join(' · ');
+
 export default function Matches() {
+  const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  // switching team at the top of the screen re-scopes this page
+  useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [teams, setTeams] = useState<Team[]>([]);
@@ -80,18 +94,20 @@ export default function Matches() {
       const { data, error } = await supabase
         .from('teams')
         .select('id, name, category')
-        
+
         .order('name');
 
       if (error) throw error;
-      setTeams(data || []);
-      
-      // Use teamId from URL search params if valid, otherwise first team
+      // only the teams of the club/context the coach is working in
+      const scoped = scopeTeams(data || []);
+      setTeams(scoped);
+
+      // Use teamId from URL search params if valid, otherwise the active team
       const paramTeamId = searchParams.get('teamId');
-      if (paramTeamId && data?.some(t => t.id === paramTeamId)) {
+      if (paramTeamId && scoped.some(t => t.id === paramTeamId)) {
         setSelectedTeam(paramTeamId);
-      } else if (data && data.length > 0) {
-        setSelectedTeam(data[0].id);
+      } else if (scoped.length > 0) {
+        setSelectedTeam(defaultTeamId(scoped) ?? scoped[0].id);
       }
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -105,7 +121,7 @@ export default function Matches() {
       // Season scoping: strictly the selected season. No legacy null fallback —
       // records without season are back-filled by migration. Only when the user
       // has no season at all (selectedSeasonId null) the filter is skipped.
-      const MATCH_FIELDS = 'id, match_date, opponent_name, is_home, location, competition, status, goals_for, goals_against, match_type, parts_count, part_duration_minutes, last_timer_start, is_test, is_deleted, deleted_at, owner_id, report_status, report_entry_mode';
+      const MATCH_FIELDS = 'id, match_date, opponent_name, is_home, location, competition, status, goals_for, goals_against, match_type, parts_count, part_duration_minutes, last_timer_start, is_test, is_deleted, deleted_at, owner_id, report_status, report_entry_mode, logistics';
       let activeQuery = supabase
         .from('matches')
         .select(MATCH_FIELDS)
@@ -115,7 +131,7 @@ export default function Matches() {
       const { data, error } = await activeQuery.order('match_date', { ascending: false });
 
       if (error) throw error;
-      setMatches(data || []);
+      setMatches((data || []) as unknown as Match[]);
 
       // Fetch deleted matches (same strict season filter)
       let deletedQuery = supabase
@@ -128,7 +144,7 @@ export default function Matches() {
         .order('deleted_at', { ascending: false });
 
       if (!deletedError) {
-        setDeletedMatches(deletedData || []);
+        setDeletedMatches((deletedData || []) as unknown as Match[]);
       }
     } catch (error) {
       console.error('Error fetching matches:', error);
@@ -180,20 +196,20 @@ export default function Matches() {
 
   const deleteTestMatches = async () => {
     if (!user || testMatchesCount === 0) return;
-    
+
     const confirmed = confirm(`Vais eliminar ${testMatchesCount} jogo${testMatchesCount === 1 ? '' : 's'} de teste. Continuar?`);
     if (!confirmed) return;
 
     try {
       const testMatchIds = matches.filter(m => m.is_test).map(m => m.id);
-      
+
       // Soft delete matches (mark as deleted)
       const { error } = await supabase
         .from('matches')
-        .update({ 
-          is_deleted: true, 
+        .update({
+          is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id 
+          deleted_by: user.id
         })
         .in('id', testMatchIds);
 
@@ -220,10 +236,10 @@ export default function Matches() {
     try {
       const { error } = await supabase
         .from('matches')
-        .update({ 
-          is_deleted: true, 
+        .update({
+          is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id 
+          deleted_by: user.id
         })
         .eq('id', deleteDialogMatch.id);
 
@@ -243,10 +259,10 @@ export default function Matches() {
     try {
       const { error } = await supabase
         .from('matches')
-        .update({ 
-          is_deleted: false, 
+        .update({
+          is_deleted: false,
           deleted_at: null,
-          deleted_by: null 
+          deleted_by: null
         })
         .eq('id', matchId);
 
@@ -262,16 +278,16 @@ export default function Matches() {
   // In-progress matches always show at top
   const inProgressMatches = matches.filter(m => m.status === 'in_progress');
   // Upcoming: future date OR scheduled status (not completed, not in_progress)
-  const upcomingMatches = matches.filter(m => 
-    m.status !== 'completed' && 
-    m.status !== 'in_progress' && 
+  const upcomingMatches = matches.filter(m =>
+    m.status !== 'completed' &&
+    m.status !== 'in_progress' &&
     m.status !== 'cancelled' &&
     (new Date(m.match_date) >= new Date() || m.status === 'scheduled')
   );
   // Past pending: past date, not completed, not in_progress, not scheduled-future
-  const pastMatches = matches.filter(m => 
-    m.status !== 'completed' && 
-    m.status !== 'in_progress' && 
+  const pastMatches = matches.filter(m =>
+    m.status !== 'completed' &&
+    m.status !== 'in_progress' &&
     m.status !== 'cancelled' &&
     m.status !== 'scheduled' &&
     new Date(m.match_date) < new Date()
@@ -494,8 +510,8 @@ export default function Matches() {
                         <div
                           key={match.id}
                           className={`flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
-                            match.is_test 
-                              ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800' 
+                            match.is_test
+                              ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
                               : 'bg-secondary/30'
                           }`}
                         >
@@ -527,6 +543,9 @@ export default function Matches() {
                                   {match.location}
                                 </div>
                               )}
+                              {logisticsLine(match.logistics) && (
+                                <div className="text-xs text-muted-foreground mt-1">{logisticsLine(match.logistics)}</div>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -538,8 +557,8 @@ export default function Matches() {
                               </Button>
                             ) : (
                               <>
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   onClick={() => handleStartMatch(match)}
                                   disabled={!!inProgressMatch}
                                   title={inProgressMatch ? 'Já existe um jogo a decorrer' : ''}
@@ -551,8 +570,8 @@ export default function Matches() {
                                   <ClipboardEdit className="w-4 h-4 mr-1" />
                                   Registar depois
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }}
@@ -586,8 +605,8 @@ export default function Matches() {
                         <div
                           key={match.id}
                           className={`flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
-                            match.is_test 
-                              ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800' 
+                            match.is_test
+                              ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
                               : 'bg-secondary/30'
                           }`}
                         >
@@ -629,9 +648,9 @@ export default function Matches() {
                               </Button>
                             ) : (
                               <>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleStartMatch(match)}
                                   disabled={!!inProgressMatch}
                                   title={inProgressMatch ? 'Já existe um jogo a decorrer' : ''}
@@ -643,8 +662,8 @@ export default function Matches() {
                                   <ClipboardEdit className="w-4 h-4 mr-1" />
                                   Registar depois
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }}
@@ -670,7 +689,7 @@ export default function Matches() {
                         {completedMatches.length > 0 ? 'Todos os Jogos Terminados' : 'Sem Jogos Ativos'}
                       </CardTitle>
                       <CardDescription>
-                        {completedMatches.length > 0 
+                        {completedMatches.length > 0
                           ? `${completedMatches.length} jogo${completedMatches.length !== 1 ? 's' : ''} terminado${completedMatches.length !== 1 ? 's' : ''}. Crie novos jogos em Treinos → Convocatória.`
                           : 'Não existem jogos agendados. Crie novos jogos em Treinos → Convocatória.'
                         }
@@ -838,8 +857,8 @@ export default function Matches() {
                           )}
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => restoreMatch(match.id)}
                       >

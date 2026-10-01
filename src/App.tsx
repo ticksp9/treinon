@@ -9,6 +9,7 @@ import { AuthProvider } from "@/lib/auth";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ActiveTeamProvider } from "@/hooks/useActiveTeam";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ProtectedRoute } from "@/components/route-guards/ProtectedRoute";
 import { RoleProtectedRoute } from "@/components/route-guards/RoleProtectedRoute";
@@ -27,6 +28,7 @@ const Matches = lazy(() => import("./pages/Matches"));
 const TacticalBoard = lazy(() => import("./pages/TacticalBoard"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
+const ClubMap = lazy(() => import("./pages/ClubMap"));
 const PublicClub = lazy(() => import("./pages/PublicClub"));
 const SeasonTransition = lazy(() => import("./pages/SeasonTransition"));
 const SeasonsIndex = lazy(() => import("./pages/SeasonsIndex"));
@@ -109,6 +111,7 @@ function AppContent() {
         {/* inside the router: its iPhone/iPad hint links to /instalar */}
         <InstallPrompt />
         <SeasonProvider>
+        <ActiveTeamProvider>
         {/* one broken screen must never blank the whole app */}
         <ErrorBoundary label="página" fallbackTitle="Esta página teve um problema" showBack>
         <Suspense fallback={<PageLoader />}>
@@ -134,6 +137,7 @@ function AppContent() {
           <Route path="/tactical-board" element={<RoleProtectedRoute><TacticalBoard /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
+          <Route path="/mapa" element={<RoleProtectedRoute><ClubMap /></RoleProtectedRoute>} />
           <Route path="/c/:slug" element={<PublicClub />} />
           <Route path="/season-transition" element={<RoleProtectedRoute><SeasonTransition /></RoleProtectedRoute>} />
           <Route path="/seasons" element={<RoleProtectedRoute><SeasonsPage /></RoleProtectedRoute>} />
@@ -186,6 +190,7 @@ function AppContent() {
         </Routes>
         </Suspense>
         </ErrorBoundary>
+        </ActiveTeamProvider>
         </SeasonProvider>
       </BrowserRouter>
     </>

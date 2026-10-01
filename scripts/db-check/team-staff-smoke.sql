@@ -150,3 +150,35 @@ END $$;
 RESET ROLE;
 
 SELECT 'TEAM STAFF SMOKE OK' AS result;
+
+-- 7. Club map: coordinator writes training slots, club coaches read them and the fixtures
+INSERT INTO auth.users (id, email) VALUES ('a0000000-0000-0000-0000-000000000005', 'coord@clube.pt');
+INSERT INTO public.profiles (id, email, full_name, username) VALUES ('a0000000-0000-0000-0000-000000000005', 'coord@clube.pt', 'Coord', 'coord1') ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.club_staff (club_id, user_id, name, role) VALUES ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000005', 'Coord', 'coordenador');
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000005', false);
+INSERT INTO public.team_training_slots (team_id, weekday, start_time, end_time, location)
+VALUES ('b0000000-0000-0000-0000-000000000001', 2, '18:30', '20:00', 'Campo 1');
+INSERT INTO public.matches (id, owner_id, team_id, opponent_name, match_date, logistics)
+VALUES ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'Amigavel FC', now() + interval '2 days', '{"meet_time": "09:15"}');
+-- head coach reads both
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.team_training_slots) <> 1 THEN RAISE EXCEPTION 'FAIL: coach cannot read training slots'; END IF;
+  IF (SELECT count(*) FROM public.get_club_match_map('c0000000-0000-0000-0000-000000000001', now(), now() + interval '7 days') WHERE opponent_name = 'Amigavel FC' AND logistics->>'meet_time' = '09:15') <> 1 THEN RAISE EXCEPTION 'FAIL: coach cannot read club fixtures'; END IF;
+  IF (SELECT count(*) FROM public.get_club_teams('c0000000-0000-0000-0000-000000000001')) <> 1 THEN RAISE EXCEPTION 'FAIL: get_club_teams'; END IF;
+END $$;
+-- a coach cannot change the coordinator's timetable
+UPDATE public.team_training_slots SET location = 'Mudado';
+-- an outsider sees nothing
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.team_training_slots) <> 0 THEN RAISE EXCEPTION 'FAIL: outsider reads training slots'; END IF;
+  IF (SELECT count(*) FROM public.get_club_match_map('c0000000-0000-0000-0000-000000000001', now(), now() + interval '7 days')) <> 0 THEN RAISE EXCEPTION 'FAIL: outsider reads club fixtures'; END IF;
+END $$;
+RESET ROLE;
+DO $$ BEGIN
+  IF (SELECT location FROM public.team_training_slots LIMIT 1) <> 'Campo 1' THEN RAISE EXCEPTION 'FAIL: coach changed the timetable'; END IF;
+END $$;
+
+SELECT 'CLUB MAP SMOKE OK' AS result;

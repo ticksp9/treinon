@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff';
+export type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff' | 'coordinator';
 
 /**
  * Edge functions answer errors with a non-2xx status: supabase-js then only says

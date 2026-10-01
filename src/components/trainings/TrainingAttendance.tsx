@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
@@ -59,6 +60,9 @@ const WEEKDAYS = [
 ];
 
 export function TrainingAttendance() {
+  const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  // switching team at the top of the screen re-scopes this page
+  useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
@@ -101,13 +105,14 @@ export function TrainingAttendance() {
       const { data, error } = await supabase
         .from('teams')
         .select('id, name, category')
-        
+
         .order('name');
 
       if (error) throw error;
-      setTeams(data || []);
-      if (data && data.length > 0) {
-        setSelectedTeam(data[0].id);
+      const scoped = scopeTeams(data || []);
+      setTeams(scoped);
+      if (scoped.length > 0) {
+        setSelectedTeam(defaultTeamId(scoped) ?? scoped[0].id);
       }
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -210,7 +215,7 @@ export function TrainingAttendance() {
       trainingDays.forEach(trainingDay => {
         // Calculate the date for this weekday
         let targetDate = addDays(weekStart, trainingDay.day === 0 ? 6 : trainingDay.day - 1);
-        
+
         // If the date is in the past, move to next week
         if (targetDate < today) {
           targetDate = addDays(targetDate, 7);
@@ -286,7 +291,7 @@ export function TrainingAttendance() {
     try {
       await supabase.from('training_attendance').delete().eq('session_id', sessionId);
       const { error } = await supabase.from('training_sessions').delete().eq('id', sessionId);
-      
+
       if (error) throw error;
       toast.success('Sessão eliminada');
       fetchSessions();
@@ -391,8 +396,8 @@ export function TrainingAttendance() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label>Dia da Semana</Label>
-                        <Select 
-                          value={newTrainingDay.day.toString()} 
+                        <Select
+                          value={newTrainingDay.day.toString()}
                           onValueChange={v => setNewTrainingDay(prev => ({ ...prev, day: parseInt(v) }))}
                         >
                           <SelectTrigger>
@@ -437,9 +442,9 @@ export function TrainingAttendance() {
                                   </Badge>
                                   <span className="text-sm font-medium">{day.time}</span>
                                 </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-destructive h-8 w-8 p-0"
                                   onClick={() => removeTrainingDay(day.day)}
                                 >
@@ -469,8 +474,8 @@ export function TrainingAttendance() {
                       />
                     </div>
 
-                    <Button 
-                      onClick={generateWeeklySessions} 
+                    <Button
+                      onClick={generateWeeklySessions}
                       className="w-full"
                       disabled={trainingDays.length === 0 || generating}
                     >

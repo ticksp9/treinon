@@ -59,6 +59,7 @@ const staffMenuItems = [
   { title: 'Início', icon: LayoutDashboard, path: '/dashboard' },
   { title: 'Jogos', icon: Trophy, path: '/matches' },
   { title: 'Treinos', icon: Calendar, path: '/training' },
+  { title: 'Mapa do clube', icon: CalendarRange, path: '/mapa' },
   { title: 'Jogadores', icon: Users, path: '/players' },
   { title: 'Equipas', icon: Shirt, path: '/teams' },
   { title: 'Quadro Tático', icon: PenTool, path: '/tactical-board' },
@@ -73,6 +74,7 @@ const clubMenuGroups = [
     title: 'Desporto',
     icon: Trophy,
     items: [
+      { title: 'Mapa de treinos e jogos', icon: CalendarRange, path: '/mapa' },
       { title: 'Épocas', icon: CalendarRange, path: '/seasons' },
       { title: 'Transição de época', icon: ArrowUpRight, path: '/season-transition' },
       { title: 'Coordenação jovens', icon: Users, path: '/club/coordination' },

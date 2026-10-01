@@ -123,7 +123,7 @@ function parseFrom(): { name: string; email: string } {
 }
 
 const INVITE_LABELS: Record<string, string> = {
-  coach: "treinador principal", assistant_coach: "treinador adjunto", staff: "staff do clube",
+  coach: "treinador principal", assistant_coach: "treinador adjunto", staff: "staff do clube", coordinator: "coordenador",
   guardian: "encarregado de educação", player: "atleta",
 };
 
@@ -204,7 +204,7 @@ type InviterLevel = "admin" | "coordinator" | "staff" | "head_coach" | "assistan
 
 /** Who may invite whom: nobody can hand out more access than they have. */
 const ALLOWED_TYPES: Record<InviterLevel, string[]> = {
-  admin: ["coach", "assistant_coach", "staff", "guardian", "player"],
+  admin: ["coach", "assistant_coach", "staff", "coordinator", "guardian", "player"],
   coordinator: ["coach", "assistant_coach", "guardian", "player"],
   head_coach: ["assistant_coach", "guardian", "player"],
   staff: ["guardian", "player"],
@@ -218,6 +218,7 @@ function resolveInviteProfile(inviteType: string): { accountType: string; redire
     case "player": return { accountType: "player", redirect: "/player" };
     case "coach":
     case "assistant_coach":
+    case "coordinator":
     case "staff":
       return { accountType: "individual_coach", redirect: "/dashboard" };
     default:
@@ -337,7 +338,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const validTypes = ["guardian", "player", "coach", "assistant_coach", "staff"];
+      const validTypes = ["guardian", "player", "coach", "assistant_coach", "staff", "coordinator"];
       if (!validTypes.includes(invite_type)) {
         return new Response(
           JSON.stringify({ error: "Invalid invite_type" }),
@@ -599,7 +600,7 @@ Deno.serve(async (req) => {
       // Update profile account_type — never turn a club account (or a coach) into something smaller
       const { data: currentProfile } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
       const current = currentProfile?.account_type ?? null;
-      const isStaffInvite = ["coach", "assistant_coach", "staff"].includes(inviteType);
+      const isStaffInvite = ["coach", "assistant_coach", "staff", "coordinator"].includes(inviteType);
       // every new account starts as "individual_coach": a parent/player invite only keeps
       // coach access when the person really coaches (owns or coaches a team, or is in a club)
       let coachesAlready = false;
@@ -713,7 +714,7 @@ Deno.serve(async (req) => {
       }
 
       // ── STAFF ──
-      if (inviteType === "staff" && invite.club_id) {
+      if ((inviteType === "staff" || inviteType === "coordinator") && invite.club_id) {
         const { data: existingStaff } = await supabase
           .from("club_staff").select("id")
           .eq("user_id", userId).eq("club_id", invite.club_id).maybeSingle();
@@ -724,9 +725,13 @@ Deno.serve(async (req) => {
             club_id: invite.club_id,
             user_id: userId,
             name: invite.recipient_name || profile?.full_name || "Staff",
-            role: "staff",
+            role: inviteType === "coordinator" ? "coordenador" : "staff",
             email: invite.email || profile?.email || null,
           });
+        } else if (inviteType === "coordinator") {
+          // already staff of the club: becomes coordinator (never demotes an admin)
+          await supabase.from("club_staff").update({ role: "coordenador", is_active: true })
+            .eq("id", existingStaff.id).neq("role", "admin");
         }
       }
 

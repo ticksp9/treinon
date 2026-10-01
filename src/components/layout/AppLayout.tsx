@@ -1,4 +1,6 @@
 import { ReactNode } from 'react';
+import { Shirt, ChevronsUpDown } from 'lucide-react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -8,6 +10,27 @@ import { SeasonPicker, SeasonReadOnlyBanner } from './SeasonPicker';
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
+}
+
+/** Which team the coach is working with; tap to switch (only shown with 2+ teams). */
+function ActiveTeamChip() {
+  const { myTeams, activeTeam, openChooser } = useActiveTeam();
+  if (myTeams.length < 2) return null;
+  return (
+    <button
+      type="button"
+      onClick={openChooser}
+      className="flex max-w-[9.5rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-left text-xs hover:border-primary sm:max-w-[14rem]"
+      title="Trocar de equipa"
+    >
+      <Shirt className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="min-w-0">
+        <span className="block truncate font-semibold leading-tight">{activeTeam?.name ?? 'Escolher equipa'}</span>
+        {activeTeam?.club_name && <span className="block truncate text-[10px] leading-tight text-muted-foreground">{activeTeam.club_name}</span>}
+      </span>
+      <ChevronsUpDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+    </button>
+  );
 }
 
 export function AppLayout({ children, title }: AppLayoutProps) {
@@ -25,6 +48,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
               <h1 className="font-display font-semibold text-base text-foreground/90 truncate">{title}</h1>
             )}
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
+              <ActiveTeamChip />
               <SeasonPicker />
               <ThemeToggle />
             </div>
