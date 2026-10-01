@@ -20,7 +20,14 @@ if ($key -notmatch '^xkeysib-[A-Za-z0-9-]{20,}$') { throw "Isso nao parece uma c
 try {
   $acc = Invoke-RestMethod -Uri "https://api.brevo.com/v3/account" -Headers @{ "api-key" = $key; Accept = "application/json" }
   Write-Host "OK: conta Brevo $($acc.email)" -ForegroundColor Green
-} catch { throw "O Brevo recusou a chave: $($_.Exception.Message)" }
+} catch {
+  Write-Host "`nO Brevo recusou o pedido: $($_.Exception.Message)" -ForegroundColor Red
+  Write-Host "Causa mais comum: o Brevo bloqueia enderecos IP nao autorizados." -ForegroundColor Yellow
+  Write-Host "No Brevo: Settings -> Seguranca -> IPs autorizados -> desligar o bloqueio" -ForegroundColor Yellow
+  Write-Host "(o servidor da app nao tem IP fixo, por isso o bloqueio tem de ficar desligado)." -ForegroundColor Yellow
+  Write-Host "Depois volte a correr este script. Se continuar, crie uma chave nova e copie-a inteira." -ForegroundColor Yellow
+  exit 1
+}
 
 $body = @(
   @{ name = "BREVO_API_KEY"; value = $key },
