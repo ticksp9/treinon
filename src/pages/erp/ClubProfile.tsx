@@ -19,10 +19,13 @@ import {
   Upload,
   Plus,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Globe,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
+
+import { PublicPageSettings } from '@/components/club/PublicPageSettings';
 
 export default function ClubProfile() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
@@ -121,6 +124,10 @@ export default function ClubProfile() {
               <History className="w-4 h-4" />
               História
             </TabsTrigger>
+            <TabsTrigger value="publica" className="flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              Página pública
+            </TabsTrigger>
             <TabsTrigger value="documentos" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Documentos
@@ -133,6 +140,10 @@ export default function ClubProfile() {
 
           <TabsContent value="historia" className="space-y-6 mt-6">
             <ClubHistoryForm club={club} clubId={clubId} />
+          </TabsContent>
+
+          <TabsContent value="publica" className="space-y-6 mt-6">
+            <PublicPageSettings club={club} clubId={clubId} />
           </TabsContent>
 
           <TabsContent value="documentos" className="space-y-6 mt-6">

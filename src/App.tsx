@@ -27,6 +27,7 @@ const Matches = lazy(() => import("./pages/Matches"));
 const TacticalBoard = lazy(() => import("./pages/TacticalBoard"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
+const PublicClub = lazy(() => import("./pages/PublicClub"));
 const SeasonTransition = lazy(() => import("./pages/SeasonTransition"));
 const SeasonsIndex = lazy(() => import("./pages/SeasonsIndex"));
 const SeasonClosePage = lazy(() => import("./pages/SeasonClosePage"));
@@ -133,6 +134,7 @@ function AppContent() {
           <Route path="/tactical-board" element={<RoleProtectedRoute><TacticalBoard /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
+          <Route path="/c/:slug" element={<PublicClub />} />
           <Route path="/season-transition" element={<RoleProtectedRoute><SeasonTransition /></RoleProtectedRoute>} />
           <Route path="/seasons" element={<RoleProtectedRoute><SeasonsPage /></RoleProtectedRoute>} />
           <Route path="/seasons/wizard" element={<RoleProtectedRoute><SeasonCreateWizard /></RoleProtectedRoute>} />

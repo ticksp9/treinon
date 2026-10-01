@@ -133,4 +133,20 @@ DO $$ BEGIN
   IF (SELECT permissions ? 'hack' FROM public.team_coaches WHERE coach_id = 'a0000000-0000-0000-0000-000000000003') THEN RAISE EXCEPTION 'FAIL: unknown permission key stored'; END IF;
 END $$;
 
+-- 6. Public club page: off by default, never shows players
+SET ROLE anon;
+DO $$ BEGIN
+  IF public.get_public_club('clube-teste') IS NOT NULL THEN RAISE EXCEPTION 'FAIL: page visible before being enabled'; END IF;
+END $$;
+RESET ROLE;
+UPDATE public.clubs SET public_slug = 'clube-teste', public_page_enabled = true WHERE id = 'c0000000-0000-0000-0000-000000000001';
+SET ROLE anon;
+DO $$ DECLARE j jsonb; BEGIN
+  j := public.get_public_club('Clube-Teste');
+  IF j->>'name' <> 'Clube Teste' THEN RAISE EXCEPTION 'FAIL: public page name'; END IF;
+  IF jsonb_array_length(j->'teams') <> 1 THEN RAISE EXCEPTION 'FAIL: public page teams'; END IF;
+  IF position('Rui' IN j::text) > 0 THEN RAISE EXCEPTION 'FAIL: public page leaks a player name'; END IF;
+END $$;
+RESET ROLE;
+
 SELECT 'TEAM STAFF SMOKE OK' AS result;
