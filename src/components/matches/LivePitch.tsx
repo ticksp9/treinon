@@ -1,19 +1,22 @@
 /**
- * Live pitch, "Football Manager" style: the chosen formation with the players
- * who are on the field right now, their time, estimated freshness, goals and cards.
+ * Pitch, "Football Manager" style: the chosen formation with the players on it.
+ * Before kick-off ('setup') it is the team-selection screen; during the match it
+ * shows time, estimated freshness, goals and cards.
  *
- * Touch interactions (one hand on the touchline):
- *  - player on pitch → another player on pitch: swap positions
+ * Interactions (drag, or tap one then the other):
+ *  - player on pitch → another position: swap / move
  *  - player on pitch ↔ player on the bench: substitution
- *  - selected player: quick buttons for goal / yellow / red
+ *  - bench player → empty position: fill it (setup)
+ *  - player on pitch → bench area: take out of the XI (setup)
+ *  - selected player during the match: quick buttons for goal / yellow / red
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeftRight, Repeat, X } from 'lucide-react';
-import { getFormation, listAvailableFormations } from '@/lib/tactical-formations';
-import { type LiveTactics } from '@/lib/live-tactics';
+import { getFormation, listAvailableFormations, type FormationSlot } from '@/lib/tactical-formations';
+import { fitScore, type LiveTactics } from '@/lib/live-tactics';
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
 import { ratingBg } from '@/lib/player-card';
@@ -22,6 +25,10 @@ export interface PitchPlayerInfo {
   player_id: string;
   name: string;
   number?: number | null;
+  /** natural position (GK, CB, CM, ST…) */
+  position?: string | null;
+  /** preferred foot */
+  foot?: string | null;
   /** total seconds played in this match */
   seconds: number;
   /** estimated freshness 0–100 */
@@ -42,20 +49,23 @@ interface Props {
   sportType: string;
   tactics: LiveTactics;
   players: Map<string, PitchPlayerInfo>;
-  /** bench player ids, already sorted (least played first) */
+  /** bench player ids, already sorted */
   bench: string[];
   disabled?: boolean;
   /** 'setup' = before kick-off: pick the XI, show ability/form instead of time/freshness */
   mode?: 'live' | 'setup';
   /** bench player dropped on an empty slot (setup) */
   onFillSlot?: (slotId: string, playerId: string) => void;
+  /** starter dragged to the bench (setup) */
+  onBench?: (playerId: string) => void;
   onFormationChange: (code: string) => void;
   onSwap: (slotA: string, slotB: string) => void;
   onSubstitute: (outId: string, inId: string) => void;
   onEvent: (type: 'goal' | 'yellow_card' | 'red_card', playerId: string) => void;
 }
 
-type Selection = { kind: 'pitch'; slotId: string; playerId: string } | { kind: 'bench'; playerId: string } | null;
+type Src = { kind: 'pitch'; slotId: string; playerId: string } | { kind: 'bench'; playerId: string };
+type Selection = Src | null;
 
 const shortName = (name: string) => {
   const parts = name.trim().split(/\s+/);
@@ -63,20 +73,36 @@ const shortName = (name: string) => {
 };
 
 const freshnessColor = (f: number) => (f >= 70 ? 'bg-emerald-500' : f >= 45 ? 'bg-amber-500' : 'bg-red-500');
-
 const trendIcon = (t?: 'up' | 'down' | 'flat') => (t === 'up' ? '▲' : t === 'down' ? '▼' : '');
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+/** How well the player fits the slot: natural zone, playable, or out of position. */
+export function positionFit(slot: FormationSlot, position: string | null | undefined): 'natural' | 'ok' | 'out' | 'unknown' {
+  if (!position) return 'unknown';
+  const s = fitScore(slot, { player_id: '', position });
+  return s >= 5 ? 'natural' : s >= 4 ? 'ok' : 'out';
+}
+const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
+  natural: 'bg-emerald-600 text-white',
+  ok: 'bg-emerald-700/90 text-white',
+  out: 'bg-amber-500 text-amber-950',
+  unknown: 'bg-black/55 text-white',
+};
+
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
+  const drag = useRef<{ src: Src; x0: number; y0: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
   const formation = useMemo(() => getFormation(sportType, tactics.formation), [sportType, tactics.formation]);
   const formations = listAvailableFormations(sportType);
   const selectedPlayer = sel ? players.get(sel.playerId) : null;
 
   const tapPitch = (slotId: string, playerId: string | null) => {
-    if (disabled) return;
+    if (disabled || suppressClick.current) return;
     if (!playerId) {
       if (sel?.kind === 'bench' && onFillSlot) { onFillSlot(slotId, sel.playerId); setSel(null); }
+      else if (sel?.kind === 'pitch') { onSwap(sel.slotId, slotId); setSel(null); }
       return;
     }
     if (!sel) return setSel({ kind: 'pitch', slotId, playerId });
@@ -89,7 +115,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
   };
 
   const tapBench = (playerId: string) => {
-    if (disabled) return;
+    if (disabled || suppressClick.current) return;
     if (sel?.kind === 'pitch') {
       onSubstitute(sel.playerId, playerId);
       return setSel(null);
@@ -97,10 +123,55 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
     setSel(sel?.kind === 'bench' && sel.playerId === playerId ? null : { kind: 'bench', playerId });
   };
 
+  // ── Drag and drop (pointer events: works with finger, pencil and mouse) ──
+  const drop = (src: Src, target: string | null) => {
+    if (!target) return;
+    if (target.startsWith('slot:')) {
+      const slotId = target.slice(5);
+      const occupant = tactics.slots[slotId] ?? null;
+      if (src.kind === 'pitch') {
+        if (src.slotId !== slotId) onSwap(src.slotId, slotId);
+      } else if (occupant) onSubstitute(occupant, src.playerId);
+      else onFillSlot?.(slotId, src.playerId);
+    } else if (target.startsWith('bench:')) {
+      if (src.kind === 'pitch') onSubstitute(src.playerId, target.slice(6));
+    } else if (target === 'bencharea') {
+      if (src.kind === 'pitch' && setup) onBench?.(src.playerId);
+    }
+  };
+  const dragProps = (src: Src) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      if (disabled) return;
+      drag.current = { src, x0: e.clientX, y0: e.clientY, moved: false };
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      const d = drag.current;
+      if (!d) return;
+      if (!d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) < 10) return;
+      d.moved = true;
+      const p = players.get(d.src.playerId);
+      setGhost({ x: e.clientX, y: e.clientY, label: p ? `${p.number ?? ''} ${shortName(p.name)}`.trim() : '' });
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      const d = drag.current;
+      drag.current = null;
+      if (!d || !d.moved) return;
+      setGhost(null);
+      setSel(null);
+      // the click that follows a drag must not count as a tap
+      suppressClick.current = true;
+      setTimeout(() => { suppressClick.current = false; }, 50);
+      const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-drop]');
+      drop(d.src, el?.getAttribute('data-drop') ?? null);
+    },
+    onPointerCancel: () => { drag.current = null; setGhost(null); },
+  });
+
   const hint = !sel
-    ? 'Toque num jogador para o selecionar.'
+    ? 'Arraste um jogador, ou toque para o selecionar.'
     : sel.kind === 'pitch'
-      ? 'Toque noutro jogador para trocar de posição, ou num suplente para substituir.'
+      ? 'Toque noutra posição para trocar, ou num suplente para substituir.'
       : setup ? 'Toque no titular a trocar, ou numa posição livre.' : 'Toque no jogador em campo que vai sair.';
 
   return (
@@ -115,20 +186,26 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
         <p className="text-xs text-muted-foreground text-right">{hint}</p>
       </div>
 
-      {/* width capped so the whole pitch + bench fit on a phone screen */}
-      <div className="mx-auto w-full" style={{ maxWidth: 'min(28rem, 40vh)' }}>
+      {/* width capped so the whole pitch + bench fit on the screen */}
+      <div className="mx-auto w-full select-none" style={{ maxWidth: setup ? 'min(34rem, 62vh)' : 'min(28rem, 40vh)' }}>
         <PitchCanvas sportType={sportType}>
           {formation?.slots.map((slot) => {
             const pid = tactics.slots[slot.slot_id] ?? null;
             const p = pid ? players.get(pid) : null;
             const isSel = sel?.kind === 'pitch' && sel.slotId === slot.slot_id;
+            const fit = p ? positionFit(slot, p.position) : 'unknown';
             return (
               <button
                 key={slot.slot_id}
                 type="button"
+                data-drop={`slot:${slot.slot_id}`}
                 onClick={() => tapPitch(slot.slot_id, pid)}
-                className={cn('absolute flex w-[4.5rem] -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5 focus:outline-none', !p && sel?.kind === 'bench' && onFillSlot && 'animate-pulse')}
-                style={{ left: `${slot.x * 100}%`, bottom: `${slot.y * 100}%` }}
+                {...(pid ? dragProps({ kind: 'pitch', slotId: slot.slot_id, playerId: pid }) : {})}
+                className={cn(
+                  'absolute flex w-[4.75rem] -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5 focus:outline-none',
+                  !p && sel && 'animate-pulse',
+                )}
+                style={{ left: `${slot.x * 100}%`, bottom: `${slot.y * 100}%`, touchAction: 'none' }}
                 aria-label={p ? `${p.name}, ${slot.label}` : `${slot.label} livre`}
               >
                 <span
@@ -136,10 +213,10 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                     'relative flex h-9 w-9 items-center justify-center rounded-full border-2 font-mono text-sm font-bold shadow-md transition',
                     slot.role === 'goalkeeper' ? 'bg-amber-400 text-amber-950 border-amber-100' : 'bg-primary text-primary-foreground border-white/80',
                     isSel && 'ring-4 ring-accent scale-110',
-                    !p && 'opacity-40',
+                    !p && 'border-dashed opacity-50',
                   )}
                 >
-                  {p?.number ?? slot.label}
+                  {p ? (p.number ?? '•') : slot.label}
                   {p?.tags?.includes('C') && (
                     <span className="absolute -bottom-1 -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-accent-foreground" title="Capitão">C</span>
                   )}
@@ -152,13 +229,19 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                 </span>
                 {p && (
                   <>
-                    <span className="max-w-full truncate rounded bg-black/55 px-1 text-[10px] font-semibold leading-4 text-white">{shortName(p.name)}</span>
-                    {setup ? (
-                      <span className="flex gap-0.5">
-                        {p.ability != null && <span className={cn('rounded px-1 font-mono text-[10px] font-bold leading-4', ratingBg(p.ability))} title="Nota da última avaliação">{p.ability.toFixed(1)}</span>}
-                        {p.formAvg != null && <span className="rounded bg-black/55 px-1 font-mono text-[10px] leading-4 text-white" title="Forma (últimos jogos)">{p.formAvg.toFixed(1)}{trendIcon(p.formTrend)}</span>}
+                    <span className="max-w-full truncate rounded bg-black/60 px-1 text-[10px] font-semibold leading-4 text-white">{shortName(p.name)}</span>
+                    <span className="flex items-center gap-0.5">
+                      <span
+                        className={cn('rounded px-1 text-[9px] font-bold leading-4', FIT_CLASS[fit])}
+                        title={fit === 'out' ? `Fora de posição (natural: ${p.position})` : p.position ? `Posição natural: ${p.position}` : 'Posição'}
+                      >
+                        {slot.label}
                       </span>
-                    ) : (
+                      {setup && p.ability != null && (
+                        <span className={cn('rounded px-1 font-mono text-[9px] font-bold leading-4', ratingBg(p.ability))} title="Nota da última avaliação">{p.ability.toFixed(1)}</span>
+                      )}
+                    </span>
+                    {!setup && (
                       <span className="h-1 w-10 overflow-hidden rounded bg-black/40" title={`Frescura estimada ${p.freshness}%`}>
                         <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
                       </span>
@@ -178,10 +261,13 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             {selectedPlayer.number ? `${selectedPlayer.number}. ` : ''}{selectedPlayer.name}
             <span className="ml-2 font-mono text-xs text-muted-foreground">
               {setup
-                ? `nota ${selectedPlayer.ability?.toFixed(1) ?? '—'} · forma ${selectedPlayer.formAvg?.toFixed(1) ?? '—'}`
+                ? `${selectedPlayer.position ?? '—'} · nota ${selectedPlayer.ability?.toFixed(1) ?? '—'} · forma ${selectedPlayer.formAvg?.toFixed(1) ?? '—'}`
                 : `${formatClock(selectedPlayer.seconds)} · frescura ${selectedPlayer.freshness}%`}
             </span>
           </span>
+          {sel?.kind === 'pitch' && setup && onBench && (
+            <Button size="sm" variant="outline" onClick={() => { onBench(sel.playerId); setSel(null); }}>Para o banco</Button>
+          )}
           {sel?.kind === 'pitch' && !setup && (
             <>
               <Button size="sm" variant="outline" onClick={() => { onEvent('goal', sel.playerId); setSel(null); }}>⚽ Golo</Button>
@@ -197,12 +283,12 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
         </div>
       )}
 
-      {/* Bench, least played first */}
-      <div>
+      {/* Bench */}
+      <div data-drop="bencharea" className={cn('rounded-md', setup && 'border border-dashed p-2')}>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Repeat className="h-3.5 w-3.5" /> {setup ? 'Convocados no banco' : 'Banco — menos minutos primeiro'}
+          <Repeat className="h-3.5 w-3.5" /> {setup ? `Suplentes (${bench.length}) — arraste para o campo` : 'Banco — menos minutos primeiro'}
         </p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className={cn('flex gap-2', setup ? 'flex-wrap' : 'overflow-x-auto pb-1')}>
           {bench.length === 0 && <span className="text-sm text-muted-foreground">Sem suplentes.</span>}
           {bench.map((id, i) => {
             const p = players.get(id);
@@ -212,9 +298,12 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
               <button
                 key={id}
                 type="button"
+                data-drop={`bench:${id}`}
                 onClick={() => tapBench(id)}
+                {...dragProps({ kind: 'bench', playerId: id })}
+                style={{ touchAction: setup ? 'none' : 'pan-x' }}
                 className={cn(
-                  'flex min-w-[6.5rem] shrink-0 flex-col items-start rounded-md border bg-card px-2.5 py-1.5 text-left transition',
+                  'flex min-w-[6.5rem] shrink-0 select-none flex-col items-start rounded-md border bg-card px-2.5 py-1.5 text-left transition',
                   isSel && 'border-accent ring-2 ring-accent/40',
                   sel?.kind === 'pitch' && 'border-dashed border-primary',
                 )}
@@ -224,9 +313,10 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                   <span className="truncate">{shortName(p.name)}</span>
                 </span>
                 {setup ? (
-                  <span className="mt-0.5 flex gap-1 font-mono text-[11px]">
+                  <span className="mt-0.5 flex items-center gap-1 font-mono text-[11px]">
+                    <span className="rounded bg-muted px-1 font-sans font-semibold">{p.position ?? '—'}</span>
                     <span className={cn('rounded px-1 font-bold', ratingBg(p.ability))}>{p.ability?.toFixed(1) ?? '—'}</span>
-                    {p.formAvg != null && <span className="text-muted-foreground">forma {p.formAvg.toFixed(1)}{trendIcon(p.formTrend)}</span>}
+                    {p.formAvg != null && <span className="text-muted-foreground">{p.formAvg.toFixed(1)}{trendIcon(p.formTrend)}</span>}
                   </span>
                 ) : (
                   <>
@@ -246,9 +336,18 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
 
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
         <ArrowLeftRight className="h-3 w-3" /> {setup
-          ? 'Nota = última avaliação (1–10). Forma = média das notas dos últimos 5 jogos.'
+          ? 'Etiqueta verde = posição natural; amarela = fora de posição. Nota = última avaliação (1–10).'
           : 'A barra de frescura é uma estimativa pelo tempo seguido em campo e no banco.'}
       </p>
+
+      {ghost && (
+        <div
+          className="pointer-events-none fixed z-[100] -translate-x-1/2 -translate-y-[130%] rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground shadow-lg"
+          style={{ left: ghost.x, top: ghost.y }}
+        >
+          {ghost.label}
+        </div>
+      )}
     </div>
   );
 }

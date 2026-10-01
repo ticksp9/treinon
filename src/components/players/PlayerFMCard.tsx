@@ -11,9 +11,49 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianG
 import { ATTRIBUTE_CATALOG, categoryAverage, type AttributeScores } from '@/lib/player-attributes';
 import { abilityStars, computeForm, currentAbility, ratingBg, ratingTone } from '@/lib/player-card';
 import { cn } from '@/lib/utils';
+import { getSeasonName } from '@/lib/constants';
+import { POSITIONS, FOOT_OPTIONS } from '@/lib/player-constants';
 
 interface EvalRow { evaluation_date: string; attributes: AttributeScores | null; overall_rating: number | null }
 interface RatingRow { rating: number; date: string; opponent: string | null }
+interface Bio { position: string | null; secondary_positions: string[] | null; foot: string | null; birth_date: string | null; height_cm: number | null; weight_kg: number | null; number: number | null }
+export interface SeasonLine { season: string; team: string; games: number; starts: number; minutes: number; goals: number; assists: number; yellow: number; red: number; ratingSum: number; rated: number }
+
+const seasonOf = (date: string) => {
+  const d = new Date(date);
+  const start = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1; // season starts in July
+  return getSeasonName(start);
+};
+
+/** Career history per season and team, from the matches the player took part in. */
+export function buildHistory(
+  lineups: { match_id: string; minutes: number; starter: boolean; rating: number | null; date: string; team: string }[],
+  events: { match_id: string; type: string; scorer: boolean; assist: boolean }[],
+): SeasonLine[] {
+  const byMatch = new Map(lineups.map((l) => [l.match_id, l]));
+  const lines = new Map<string, SeasonLine>();
+  const lineFor = (l: { date: string; team: string }) => {
+    const key = `${seasonOf(l.date)}|${l.team}`;
+    if (!lines.has(key)) lines.set(key, { season: seasonOf(l.date), team: l.team, games: 0, starts: 0, minutes: 0, goals: 0, assists: 0, yellow: 0, red: 0, ratingSum: 0, rated: 0 });
+    return lines.get(key)!;
+  };
+  for (const l of lineups) {
+    if (l.minutes <= 0) continue;
+    const x = lineFor(l);
+    x.games += 1; x.minutes += l.minutes; if (l.starter) x.starts += 1;
+    if (l.rating != null) { x.ratingSum += l.rating; x.rated += 1; }
+  }
+  for (const e of events) {
+    const l = byMatch.get(e.match_id);
+    if (!l) continue;
+    const x = lineFor(l);
+    if (e.type === 'goal' && e.scorer) x.goals += 1;
+    if (e.type === 'goal' && e.assist) x.assists += 1;
+    if (e.type === 'yellow_card' && e.scorer) x.yellow += 1;
+    if (e.type === 'red_card' && e.scorer) x.red += 1;
+  }
+  return [...lines.values()].sort((a, b) => b.season.localeCompare(a.season) || a.team.localeCompare(b.team));
+}
 
 const fmtDate = (d: string) => new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
 
@@ -32,34 +72,110 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['player-fm-card', playerId],
     queryFn: async () => {
-      const [evals, lineups] = await Promise.all([
+      const [evals, lineups, bioRes, eventsRes] = await Promise.all([
         supabase.from('player_evaluations')
           .select('evaluation_date, attributes, overall_rating')
           .eq('player_id', playerId)
           .order('evaluation_date', { ascending: true }),
         supabase.from('match_lineups')
-          .select('rating, match:matches(match_date, opponent_name)')
-          .eq('player_id', playerId)
-          .not('rating', 'is', null),
+          .select('match_id, rating, minutes_played, is_starter, match:matches(match_date, opponent_name, team:teams(name))')
+          .eq('player_id', playerId),
+        supabase.from('players')
+          .select('position, secondary_positions, foot, birth_date, height_cm, weight_kg, number')
+          .eq('id', playerId).maybeSingle(),
+        supabase.from('match_events')
+          .select('match_id, event_type, player_id, assist_player_id, is_opponent')
+          .or(`player_id.eq.${playerId},assist_player_id.eq.${playerId}`),
       ]);
+      const history = buildHistory(
+        ((lineups.data ?? []) as any[]).map((l) => {
+          const m = Array.isArray(l.match) ? l.match[0] : l.match;
+          const t = m ? (Array.isArray(m.team) ? m.team[0] : m.team) : null;
+          return m?.match_date ? { match_id: l.match_id as string, minutes: l.minutes_played ?? 0, starter: !!l.is_starter, rating: l.rating != null ? Number(l.rating) : null, date: m.match_date as string, team: t?.name ?? '—' } : null;
+        }).filter((x): x is NonNullable<typeof x> => !!x),
+        ((eventsRes.data ?? []) as any[]).filter((e) => !e.is_opponent).map((e) => ({ match_id: e.match_id as string, type: e.event_type as string, scorer: e.player_id === playerId, assist: e.assist_player_id === playerId })),
+      );
       const ratings: RatingRow[] = ((lineups.data ?? []) as any[])
+        .filter((l) => l.rating != null)
         .map((l) => {
           const m = Array.isArray(l.match) ? l.match[0] : l.match;
           return m?.match_date ? { rating: Number(l.rating), date: m.match_date as string, opponent: m.opponent_name ?? null } : null;
         })
         .filter((r): r is RatingRow => !!r)
         .sort((a, b) => a.date.localeCompare(b.date));
-      return { evals: (evals.data ?? []) as unknown as EvalRow[], ratings };
+      return { evals: (evals.data ?? []) as unknown as EvalRow[], ratings, bio: (bioRes.data ?? null) as Bio | null, history };
     },
   });
 
   if (isLoading || !data) return null;
-  const { evals, ratings } = data;
+  const { evals, ratings, bio, history } = data;
+  const age = bio?.birth_date ? Math.floor((Date.now() - new Date(bio.birth_date).getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
+  const posLabel = (v: string | null | undefined) => (v ? [...POSITIONS.football, ...POSITIONS.futsal].find((p) => p.value === v)?.label ?? v : null);
+  const bioItems: [string, string | null][] = [
+    ['Posição', posLabel(bio?.position)],
+    ['Outras posições', bio?.secondary_positions?.length ? bio.secondary_positions.map((p) => posLabel(p)).join(', ') : null],
+    ['Pé preferido', bio?.foot ? FOOT_OPTIONS.find((o) => o.value === bio.foot)?.label ?? bio.foot : null],
+    ['Idade', age != null ? `${age} anos` : null],
+    ['Altura', bio?.height_cm ? `${bio.height_cm} cm` : null],
+    ['Peso', bio?.weight_kg ? `${bio.weight_kg} kg` : null],
+  ];
+  const Bio = (
+    <div className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border p-3 sm:grid-cols-3 lg:grid-cols-6">
+      {bioItems.map(([label, value]) => (
+        <div key={label}>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+          <p className={cn('text-sm font-semibold', !value && 'font-normal text-muted-foreground')}>{value ?? '—'}</p>
+        </div>
+      ))}
+    </div>
+  );
+  const History = history.length > 0 && (
+    <div>
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Historial</p>
+      <div className="overflow-x-auto rounded-md border">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="px-2 py-1.5 text-left font-medium">Época</th>
+              <th className="px-2 py-1.5 text-left font-medium">Equipa</th>
+              <th className="px-2 py-1.5 font-medium" title="Jogos (titular)">J (T)</th>
+              <th className="px-2 py-1.5 font-medium">Min</th>
+              <th className="px-2 py-1.5 font-medium">Golos</th>
+              <th className="px-2 py-1.5 font-medium" title="Assistências">Ass</th>
+              <th className="px-2 py-1.5 font-medium" title="Amarelos / vermelhos">Cartões</th>
+              <th className="px-2 py-1.5 font-medium" title="Nota média">Nota</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.map((h) => {
+              const avg = h.rated ? h.ratingSum / h.rated : null;
+              return (
+                <tr key={h.season + h.team} className="border-b last:border-0 text-center">
+                  <td className="px-2 py-1.5 text-left font-mono text-xs">{h.season}</td>
+                  <td className="px-2 py-1.5 text-left">{h.team}</td>
+                  <td className="px-2 py-1.5 font-mono">{h.games} ({h.starts})</td>
+                  <td className="px-2 py-1.5 font-mono">{h.minutes}'</td>
+                  <td className="px-2 py-1.5 font-mono">{h.goals}</td>
+                  <td className="px-2 py-1.5 font-mono">{h.assists}</td>
+                  <td className="px-2 py-1.5 font-mono">{h.yellow}/{h.red}</td>
+                  <td className={cn('px-2 py-1.5 font-mono font-semibold', ratingTone(avg))}>{avg != null ? avg.toFixed(1) : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   if (evals.length === 0 && ratings.length === 0) {
     return (
       <Card>
-        <CardContent className="py-4 text-sm text-muted-foreground">
-          Ficha estilo Football Manager: faça uma avaliação e dê notas no fim dos jogos para ver aqui a nota, a forma e a evolução.
+        <CardHeader className="pb-2"><CardTitle className="text-base">Ficha do jogador</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          {Bio}
+          {History}
+          <p className="text-sm text-muted-foreground">Faça uma avaliação e dê notas no fim dos jogos para ver aqui a nota, a forma e a evolução.</p>
         </CardContent>
       </Card>
     );
@@ -85,6 +201,7 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
         <CardTitle className="text-base">Ficha do jogador</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
+        {Bio}
         {/* Header: ability + form */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex items-center gap-3 rounded-md border p-3">
@@ -148,6 +265,8 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
           </div>
         )}
         {previous && <p className="text-[11px] text-muted-foreground">▲▼ = mudança desde a avaliação de {fmtDate(previous.evaluation_date)}.</p>}
+
+        {History}
 
         {/* Evolution */}
         {timeline.length >= 2 && (

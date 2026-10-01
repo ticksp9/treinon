@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { 
-  Play, Pause, Square, ArrowLeft, 
+import {
+  Play, Pause, Square, ArrowLeft,
   UserMinus, RotateCcw,
   Clock, Pencil, AlertTriangle, Share2
 } from 'lucide-react';
@@ -21,6 +21,7 @@ import { useSportScope } from '@/hooks/useSportScope';
 import { isSportAllowed } from '@/lib/sport-scope';
 import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '@/lib/team-selection';
 import { PreMatchPanel } from './PreMatchPanel';
+import { PrepSquadPanel } from './PrepSquadPanel';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -158,7 +159,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const [eventSheetDefaults, setEventSheetDefaults] = useState<{ type?: string; playerId?: string }>({});
   const [syncStatus, setSyncStatus] = useState<'saving' | 'saved' | 'pending' | 'error'>('saved');
   const [liveView, setLiveView] = useState<'pitch' | 'list'>('pitch');
-  
+
   // CRITICAL: Flags to control restoration and prevent unwanted resets
   const hasRestoredRef = useRef(false);
   const isGameActiveRef = useRef(false);
@@ -209,11 +210,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   });
 
   // =================== INITIALIZATION ===================
-  
+
   useEffect(() => {
     console.log('[LiveMatch] Component mounted for match:', matchId);
     fetchMatchData();
-    
+
     return () => {
       console.log('[LiveMatch] Component unmounting, saving state...');
       stopAutoSave();
@@ -225,15 +226,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   }, [matchId]);
 
   // =================== CRITICAL: Restore state when match data is loaded ===================
-  
+
   useEffect(() => {
     if (!match || !team || loading || hasRestoredRef.current) return;
 
     const restore = async () => {
-      console.log('[LiveMatch] Starting restoration check...', { 
-        matchStatus: match.status, 
+      console.log('[LiveMatch] Starting restoration check...', {
+        matchStatus: match.status,
         matchId,
-        hasRestored: hasRestoredRef.current 
+        hasRestored: hasRestoredRef.current
       });
 
       // If match is completed, just show finished
@@ -247,10 +248,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       if (match.status === 'in_progress') {
         hasRestoredRef.current = true;
         isGameActiveRef.current = true;
-        
+
         // Try to restore from local storage first (offline-first)
         const localState = await liveState.loadLocal();
-        
+
         if (localState && localState.phase !== 'setup' && localState.currentPart > 0) {
           console.log('[LiveMatch] Restoring from LOCAL state:', {
             phase: localState.phase,
@@ -258,18 +259,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             isTimerRunning: localState.isTimerRunning,
             partStartedAtMs: localState.partStartedAtMs,
           });
-          
+
           applyRestoredState(localState);
         } else {
           // Fallback: try to restore from backend
           const backendState = await liveState.loadFromBackend();
-          
+
           if (backendState && backendState.phase !== 'setup' && (backendState.currentPart || 0) > 0) {
             console.log('[LiveMatch] Restoring from BACKEND state:', {
               phase: backendState.phase,
               currentPart: backendState.currentPart,
             });
-            
+
             applyRestoredState(backendState as LiveMatchMinimalState);
           } else {
             // Last fallback: use match record directly
@@ -277,22 +278,22 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               phase: match.match_phase,
               currentPart: match.current_part,
             });
-            
+
             const matchPhase = (match.match_phase as MatchPhase) || 'playing';
             const matchCurrentPart = match.current_part || 1;
             const matchPartElapsed = (match.part_elapsed_seconds as number[]) || [];
-            
+
             setPhase(matchPhase);
             setCurrentPart(matchCurrentPart);
             setPartElapsedSeconds(matchPartElapsed);
-            
+
             // Restore timer
             if (matchPhase === 'playing' && match.last_timer_start) {
               const startMs = new Date(match.last_timer_start).getTime();
               const elapsedSinceStart = Math.floor((Date.now() - startMs) / 1000);
               timer.restoreTimer(elapsedSinceStart, startMs);
             }
-            
+
             startAutoSave();
           }
         }
@@ -312,7 +313,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const restoredPhase = (state.phase || 'playing') as MatchPhase;
     const restoredPart = state.currentPart || 1;
     const restoredPartElapsed = state.partElapsedSeconds || [];
-    
+
     setPhase(restoredPhase);
     setCurrentPart(restoredPart);
     setPartElapsedSeconds(restoredPartElapsed);
@@ -331,14 +332,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const partStartedAtMs = state.partStartedAtMs;
       const isTimerRunning = state.isTimerRunning !== false;
       const partElapsedBeforePause = state.partElapsedBeforePause || 0;
-      
+
       if (partStartedAtMs && isTimerRunning) {
         // Timer was running - calculate elapsed from timestamp
         const elapsedSinceStart = Math.floor((Date.now() - partStartedAtMs) / 1000);
-        console.log('[LiveMatch] Restoring RUNNING timer:', { 
-          partStartedAtMs, 
+        console.log('[LiveMatch] Restoring RUNNING timer:', {
+          partStartedAtMs,
           elapsedSinceStart,
-          partElapsedBeforePause 
+          partElapsedBeforePause
         });
         timer.restoreTimer(elapsedSinceStart, partStartedAtMs);
       } else {
@@ -347,10 +348,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         console.log('[LiveMatch] Restoring PAUSED timer:', { savedElapsed });
         timer.restoreTimer(savedElapsed, null);
       }
-      
+
       startAutoSave();
     }
-    
+
     console.log('[LiveMatch] State restoration complete:', {
       phase: restoredPhase,
       currentPart: restoredPart,
@@ -363,17 +364,17 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const buildCurrentState = useCallback((): LiveMatchMinimalState => {
     const currentStarters = lineups.filter(l => l.is_starter);
     const currentBench = lineups.filter(l => !l.is_starter);
-    
+
     // On-field is same as starters (after substitutions, is_starter reflects current field state)
     const onFieldIds = currentStarters.map(l => l.player_id);
-    
+
     // Calculate current part elapsed
     const currentPartElapsed = [...partElapsedSeconds];
     const exactElapsed = timer.getExactElapsedSeconds();
     if (currentPart > 0) {
       currentPartElapsed[currentPart - 1] = exactElapsed;
     }
-    
+
     return {
       matchId,
       phase,
@@ -396,13 +397,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   const saveCurrentState = useCallback(async () => {
     if (!isGameActiveRef.current || phase === 'setup' || phase === 'finished') return;
-    
+
     const state = buildCurrentState();
-    
+
     setSyncStatus('saving');
     // Always save locally first (offline-first)
     await liveState.saveLocal(state);
-    
+
     // Sync to backend if online (state is also kept locally, so a failure is recoverable)
     const synced = isOnline ? await liveState.syncToBackend(state) : false;
     setSyncStatus(synced ? 'saved' : 'pending');
@@ -496,7 +497,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         supabase.from('match_lineups')
           .select(`
             id, player_id, is_starter, minutes_played, position_played,
-            player:players(id, name, number, position)
+            player:players(id, name, number, position, foot)
           `)
           .eq('match_id', matchId),
         supabase.from('match_events')
@@ -656,7 +657,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       }
       const now = new Date().toISOString();
       const nowMs = Date.now();
-      
+
       const currentStarters = lineups.filter(l => l.is_starter);
       const currentBench = lineups.filter(l => !l.is_starter);
       const starterPlayerIds = currentStarters.map(l => l.player_id);
@@ -673,11 +674,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         });
         return;
       }
-      
+
       // Update match in database
       const initialPartStarters = { '1': starterPlayerIds };
       const initialRegulationMinutes = config.partMinutes; // parts may differ, e.g. [15, 15, 30]
-      await updateMatchRecord({ 
+      await updateMatchRecord({
           status: 'in_progress',
           match_phase: 'playing',
           current_part: 1,
@@ -709,18 +710,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       setCurrentPart(1);
       setPartElapsedSeconds([0]);
       setMatch(prev => prev ? { ...prev, status: 'in_progress', last_timer_start: now } : null);
-      
+
       if (matchType === 'tournament') {
         setIsLocked(true);
       }
-      
+
       // Mark game as active
       hasRestoredRef.current = true;
       isGameActiveRef.current = true;
-      
+
       // Start timer
       timer.startTimer(0);
-      
+
       // Save state immediately with presence intervals
       const state: LiveMatchMinimalState = {
         matchId,
@@ -760,7 +761,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         await saveMatchRuleSnapshot(matchId, snapshot, profile?.id);
         setRuleSnapshot(snapshot);
       }
-      
+
       startAutoSave();
       toast.success(`${getPartLabel(1, config.partsCount)} iniciada!`);
     } catch (error) {
@@ -792,8 +793,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       await finishMatch(newPartElapsed, newPartRealSeconds, newPartRegulationMinutes);
     } else {
       setPhase('interval');
-      
-      await updateMatchRecord({ 
+
+      await updateMatchRecord({
           match_phase: 'interval',
           part_elapsed_seconds: newPartElapsed,
           part_real_seconds: newPartRealSeconds,
@@ -801,10 +802,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           last_timer_start: null,
           part_started_at_ms: null,
         });
-      
+
       // Save state
       await saveCurrentState();
-      
+
       toast.info(`${getPartLabel(currentPart, partsCount)} terminada: ${Math.floor(partSeconds / 60)}'`);
     }
   };
@@ -812,16 +813,16 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const handleStartNextPart = async () => {
     const nextPart = currentPart + 1;
     timer.resetTimer();
-    
+
     setPhase('playing');
     setCurrentPart(nextPart);
-    
+
     const newPartElapsed = [...partElapsedSeconds, 0];
     setPartElapsedSeconds(newPartElapsed);
-    
+
     const now = new Date().toISOString();
     const nowMs = Date.now();
-    
+
     const currentStarters = lineups.filter(l => l.is_starter);
     const currentBench = lineups.filter(l => !l.is_starter);
     const onFieldPlayerIds = currentStarters.map(l => l.player_id);
@@ -835,8 +836,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       toast.error(starterValidation.reason || 'Escalação inválida');
       return;
     }
-    
-    await updateMatchRecord({ 
+
+    await updateMatchRecord({
         match_phase: 'playing',
         current_part: nextPart,
         part_elapsed_seconds: newPartElapsed,
@@ -853,9 +854,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       });
 
     isGameActiveRef.current = true;
-    
+
     timer.startTimer(0);
-    
+
     // Save state immediately
     // Re-open presence intervals for players on field at start of new part
     presenceTracker.handleStartPart(onFieldPlayerIds, getCurrentMinute(), true);
@@ -879,15 +880,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       playerPresenceIntervals: presenceTracker.getIntervalsForPersistence(),
     };
     await liveState.saveLocal(state);
-    
+
     startAutoSave();
     toast.success(`${getPartLabel(nextPart, partsCount)} iniciada!`);
   };
 
   const finishMatch = async (finalPartElapsed: number[], finalPartRealSeconds?: number[], finalPartRegulationMinutes?: number[]) => {
     const goalsFor = events.filter(e => e.event_type === 'goal' && !e.is_opponent).length;
-    const goalsAgainst = events.filter(e => 
-      (e.event_type === 'goal' && e.is_opponent) || 
+    const goalsAgainst = events.filter(e =>
+      (e.event_type === 'goal' && e.is_opponent) ||
       (e.event_type === 'own_goal' && !e.is_opponent)
     ).length;
 
@@ -897,7 +898,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const finalMatchEndMinute = calculateMatchEndMinute(finalPartElapsed);
       await updateMinutesPlayed(finalMatchEndMinute);
 
-      await updateMatchRecord({ 
+      await updateMatchRecord({
           status: 'completed',
           match_phase: 'finished',
           goals_for: goalsFor,
@@ -913,7 +914,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       // Also update match_reports status
       await supabase
         .from('match_reports')
-        .update({ 
+        .update({
           report_status: 'pending_completion',
           ended_at: new Date().toISOString(),
           updated_by: user?.id,
@@ -922,16 +923,16 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
       // Clear active match
       await clearActiveMatch();
-      
+
       // Clear local state
       await liveState.clearLocal();
 
       setPhase('finished');
       stopAutoSave();
       isGameActiveRef.current = false;
-      
-      setMatch(prev => prev ? { 
-        ...prev, 
+
+      setMatch(prev => prev ? {
+        ...prev,
         status: 'completed',
         goals_for: goalsFor,
         goals_against: goalsAgainst
@@ -978,7 +979,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   const handleEvent = async (eventType: string, playerId: string | null, isOpponent: boolean = false, assistPlayerId: string | null = null) => {
     if (!user) return;
-    
+
     const clock = getClockSeconds();
     const minute = Math.floor(clock / 60);
     const second = clock % 60;
@@ -1149,7 +1150,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         supabase.from('match_lineups')
           .select(`
             id, player_id, is_starter, minutes_played, position_played,
-            player:players(id, name, number, position)
+            player:players(id, name, number, position, foot)
           `)
           .eq('match_id', matchId),
         supabase.from('match_events')
@@ -1211,8 +1212,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     regulationByPart.slice(0, Math.max(0, currentPart - 1)).reduce((s, m) => s + (m || 0), 0) +
     Math.floor(timer.elapsedSeconds / 60);
   const goalsFor = events.filter(e => e.event_type === 'goal' && !e.is_opponent).length;
-  const goalsAgainst = events.filter(e => 
-    (e.event_type === 'goal' && e.is_opponent) || 
+  const goalsAgainst = events.filter(e =>
+    (e.event_type === 'goal' && e.is_opponent) ||
     (e.event_type === 'own_goal' && !e.is_opponent)
   ).length;
   const isOvertime = timer.elapsedSeconds > currentPartRegulation * 60;
@@ -1251,6 +1252,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       player_id: l.player_id,
       name: l.player?.name ?? '—',
       number: l.player?.number,
+      position: l.player?.position ?? null,
+      foot: (l.player as { foot?: string | null } | undefined)?.foot ?? null,
       seconds: playerSeconds(l.player_id),
       freshness: estimateFreshness(liveSeconds.get(l.player_id)?.stints ?? [], clockNow),
       goals: mine.filter(e => e.event_type === 'goal').length,
@@ -1284,6 +1287,31 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     } catch { toast.error('Não foi possível alterar o onze.'); }
     fetchMatchData();
   };
+  // Before kick-off: convocatória right on the preparation screen
+  const handleCallUp = async (playerId: string) => {
+    const { data: { user: me } } = await supabase.auth.getUser();
+    if (!me) return;
+    const { error } = await supabase.from('match_lineups').insert({ match_id: matchId, player_id: playerId, owner_id: me.id, is_starter: false });
+    if (error) toast.error('Não foi possível convocar: ' + error.message);
+    fetchMatchData();
+  };
+  const handleLeaveOut = async (lineupId: string) => {
+    const { error } = await supabase.from('match_lineups').delete().eq('id', lineupId);
+    if (error) toast.error('Não foi possível retirar: ' + error.message);
+    fetchMatchData();
+  };
+  const handleSetupBench = async (playerId: string) => {
+    try {
+      if (pitchTactics) {
+        const slots = { ...pitchTactics.slots };
+        for (const k of Object.keys(slots)) if (slots[k] === playerId) slots[k] = null;
+        await saveTactics({ ...pitchTactics, slots });
+      }
+      await setStarter(playerId, false);
+    } catch { toast.error('Não foi possível alterar o onze.'); }
+    fetchMatchData();
+  };
+
   const handleSetupFill = async (slotId: string, playerId: string) => {
     if (starters.length >= sportRules.playersOnField) {
       toast.error(`Já tem ${sportRules.playersOnField} titulares. Troque com um jogador em campo.`);
@@ -1400,7 +1428,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             </Badge>
           </div>
         </div>
-        
+
         <MatchRatingsPanel matchId={matchId} />
 
         <MatchReport
@@ -1518,9 +1546,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                       Reiniciar
                     </Button>
                   )}
-                  <Button 
-                    onClick={handleEndPart} 
-                    variant={currentPart >= partsCount ? 'destructive' : 'secondary'} 
+                  <Button
+                    onClick={handleEndPart}
+                    variant={currentPart >= partsCount ? 'destructive' : 'secondary'}
                     size="sm"
                   >
                     {currentPart >= partsCount ? (
@@ -1572,39 +1600,58 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           </Card>
         )}
 
-        {/* Setup Phase: the XI on the pitch, FM style */}
-        {phase === 'setup' && pitchTactics && matchSport && lineups.length > 0 && (
+        {/* Setup Phase: match preparation, FM style — squad list + pitch */}
+        {phase === 'setup' && pitchTactics && matchSport && (
           <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-base">Tática e onze inicial</CardTitle>
+            <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-3 px-4">
+              <CardTitle className="text-base">Preparação do jogo</CardTitle>
+              <Button onClick={handleStartMatch} disabled={starters.length === 0}>
+                <Play className="w-4 h-4 mr-2" />
+                Iniciar jogo ({starters.length}/{sportRules.playersOnField} titulares · {lineups.length - starters.length} suplentes)
+              </Button>
             </CardHeader>
             <CardContent className="p-3 pt-0">
-              <LivePitch
-                mode="setup"
-                sportType={matchSport}
-                tactics={pitchTactics}
-                players={pitchPlayers}
-                bench={lineups.filter(l => !l.is_starter)
-                  .sort((a, b) => (pitchPlayers.get(b.player_id)?.ability ?? 0) - (pitchPlayers.get(a.player_id)?.ability ?? 0))
-                  .map(l => l.player_id)}
-                onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
-                onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
-                onSubstitute={handleSetupSubstitute}
-                onFillSlot={handleSetupFill}
-                onEvent={() => {}}
-              />
-              <PreMatchPanel
-                squad={candidates}
-                roles={pitchTactics.roles ?? {}}
-                notes={assistantNotes}
-                onAutoPick={applyAutoPick}
-                onRolesChange={saveRoles}
-              />
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div>
+                  <LivePitch
+                    mode="setup"
+                    sportType={matchSport}
+                    tactics={pitchTactics}
+                    players={pitchPlayers}
+                    bench={lineups.filter(l => !l.is_starter)
+                      .sort((a, b) => (pitchPlayers.get(b.player_id)?.ability ?? 0) - (pitchPlayers.get(a.player_id)?.ability ?? 0))
+                      .map(l => l.player_id)}
+                    onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
+                    onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
+                    onSubstitute={handleSetupSubstitute}
+                    onFillSlot={handleSetupFill}
+                    onBench={handleSetupBench}
+                    onEvent={() => {}}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <PrepSquadPanel
+                    teamId={teamId}
+                    called={lineups}
+                    maxStarters={sportRules.playersOnField}
+                    onCallUp={handleCallUp}
+                    onLeaveOut={handleLeaveOut}
+                  />
+                  <PreMatchPanel
+                    squad={candidates}
+                    roles={pitchTactics.roles ?? {}}
+                    notes={assistantNotes}
+                    onAutoPick={applyAutoPick}
+                    onRolesChange={saveRoles}
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
 
-        {phase === 'setup' && (
+        {/* No formation for this sport: classic list */}
+        {phase === 'setup' && !(pitchTactics && matchSport) && (
           <LineupSelector
             matchId={matchId}
             teamId={teamId}
@@ -1709,7 +1756,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 {starters.map(lineup => {
                   const playTime = formatClock(playerSeconds(lineup.player_id));
                   return (
-                    <div 
+                    <div
                       key={lineup.id}
                       className="flex items-center justify-between p-2.5 bg-secondary/30 rounded-lg"
                       onClick={() => {
@@ -1831,8 +1878,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
         {/* Events Timeline */}
         {phase !== 'setup' && (
-          <MatchEvents 
-            events={events} 
+          <MatchEvents
+            events={events}
             onDeleteEvent={handleDeleteEvent}
             canEdit={phase !== 'finished'}
           />

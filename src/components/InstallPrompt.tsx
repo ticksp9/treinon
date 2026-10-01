@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, Share, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { currentInstallEnv } from '@/lib/install-env';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -35,7 +35,10 @@ function recentlyDismissed(): boolean {
  * - Android / Windows / ChromeOS (Chrome, Edge): native install prompt
  * - iPhone / iPad (Safari): short instructions, since iOS has no install prompt
  */
+const ENTRY_PAGES = ["/", "/auth", "/biblioteca", "/dashboard"];
+
 export function InstallPrompt() {
+  const { pathname } = useLocation();
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOS, setShowIOS] = useState(false);
   const [hidden, setHidden] = useState(() => isStandalone() || recentlyDismissed());
@@ -61,6 +64,8 @@ export function InstallPrompt() {
     setHidden(true);
   };
 
+  // only on the entry pages: inside the app it would cover the pitch and the buttons
+  if (!ENTRY_PAGES.includes(pathname)) return null;
   if (hidden || (!deferred && !showIOS)) return null;
 
   return (
