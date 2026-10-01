@@ -93,4 +93,44 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 
+-- 5. Permissions per coach
+INSERT INTO public.club_coaches (club_id, coach_id) VALUES ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003');
+INSERT INTO public.team_coaches (team_id, coach_id, role) VALUES ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', 'assistant_coach');
+INSERT INTO public.player_evaluations (player_id, owner_id, overall_rating)
+VALUES ('d0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 7);
+SET ROLE authenticated;
+
+-- assistant by default: matches yes, evaluations no
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000001') <> 1 THEN RAISE EXCEPTION 'FAIL: assistant (default) cannot see lineup'; END IF;
+  IF (SELECT count(*) FROM public.player_evaluations) <> 0 THEN RAISE EXCEPTION 'FAIL: assistant sees evaluations without permission'; END IF;
+END $$;
+-- an assistant cannot change the head coach's permissions
+DO $$ BEGIN
+  PERFORM public.set_team_coach_permissions('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', '{"matches": false}');
+  RAISE EXCEPTION 'FAIL: assistant changed head coach permissions';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: assistant cannot change permissions';
+END $$;
+
+-- head coach gives evaluations and takes matches away
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.player_evaluations) <> 1 THEN RAISE EXCEPTION 'FAIL: head coach cannot see evaluations'; END IF;
+END $$;
+SELECT public.set_team_coach_permissions('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', '{"evaluations": true, "matches": false, "hack": true}');
+
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.player_evaluations) <> 1 THEN RAISE EXCEPTION 'FAIL: assistant with evaluations cannot see them'; END IF;
+  IF (SELECT count(*) FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000001') <> 0 THEN RAISE EXCEPTION 'FAIL: assistant without matches sees lineup'; END IF;
+  IF (public.team_perms_for(auth.uid(), 'b0000000-0000-0000-0000-000000000001') ->> 'matches')::boolean THEN RAISE EXCEPTION 'FAIL: team_perms_for'; END IF;
+END $$;
+UPDATE public.matches SET opponent_name = 'Mudado' WHERE id = 'e0000000-0000-0000-0000-000000000001';
+RESET ROLE;
+DO $$ BEGIN
+  IF (SELECT opponent_name FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000001') <> 'Rival' THEN RAISE EXCEPTION 'FAIL: assistant without matches edited a match'; END IF;
+  IF (SELECT permissions ? 'hack' FROM public.team_coaches WHERE coach_id = 'a0000000-0000-0000-0000-000000000003') THEN RAISE EXCEPTION 'FAIL: unknown permission key stored'; END IF;
+END $$;
+
 SELECT 'TEAM STAFF SMOKE OK' AS result;

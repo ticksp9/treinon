@@ -34,6 +34,8 @@ export interface PlayingTimeInput {
   /** Fallback for part 1 when there is no snapshot. */
   firstPartStarters?: string[];
   events: SubEvent[];
+  /** Minutes typed after the match (quick entry), per player and part: they win over any calculation. */
+  manualMinutes?: Record<string, number[]> | null;
 }
 
 export interface PlayerSeconds {
@@ -154,6 +156,7 @@ export function applyPreciseMinutes<T extends MinuteStats>(
   stats: T[],
   input: PlayingTimeInput,
 ): T[] {
+  if (input.manualMinutes && Object.keys(input.manualMinutes).length > 0) return applyManualMinutes(stats, input.manualMinutes);
   if (!input.partSeconds.some((s) => s > 0)) return stats; // no real timing recorded (manual entry)
   const precise = computePlayingSeconds(input);
   return stats.map((s) => {
@@ -184,4 +187,20 @@ export function matchClockSeconds(partElapsedSeconds: number[], currentPart: num
   let t = 0;
   for (let i = 0; i < currentPart - 1; i++) t += Math.max(0, Math.round(partElapsedSeconds[i] || 0));
   return t + Math.max(0, Math.floor(currentElapsed));
+}
+
+/** Quick post-match entry: the coach typed the minutes of each part for each player. */
+export function applyManualMinutes<T extends MinuteStats>(stats: T[], manual: Record<string, number[]>): T[] {
+  return stats.map((s) => {
+    const parts = (manual[s.playerId] ?? []).map((m) => Math.max(0, Math.round(Number(m) || 0)));
+    const realMinutesByPart: Record<string, number> = {};
+    parts.forEach((m, i) => { realMinutesByPart[String(i + 1)] = m; });
+    return {
+      ...s,
+      totalMinutes: parts.reduce((a, b) => a + b, 0),
+      firstHalfMinutes: parts[0] ?? 0,
+      secondHalfMinutes: parts.slice(1).reduce((a, b) => a + b, 0),
+      realMinutesByPart,
+    };
+  });
 }

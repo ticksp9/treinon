@@ -24,6 +24,7 @@ import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
 import { SquadDepth } from '@/components/teams/SquadDepth';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useUserRole } from '@/hooks/useUserRole';
+import { TeamStaffPanel } from '@/components/teams/TeamStaffPanel';
 import {
   getTeamRoster,
   addPlayerToTeam,
@@ -338,6 +339,7 @@ export default function TeamDetail() {
           </Card>
         )}
         {staffInviteTypes.length > 0 && <PendingStaffInvites teamIds={[team.id]} />}
+        <TeamStaffPanel teamId={team.id} canManageAll={((isClubAdmin || staffRole === 'coordenador') && !!team.club_id) || team.owner_id === user?.id} />
         <StaffInviteDialog
           open={staffInviteOpen}
           onClose={() => setStaffInviteOpen(false)}

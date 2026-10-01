@@ -107,6 +107,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   const [currentStep, setCurrentStep] = useState(0);
   const [lineups, setLineups] = useState<Lineup[]>([]);
   const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [manualMinutes, setManualMinutes] = useState<Record<string, number[]> | null>(null);
   const [goalsFor, setGoalsFor] = useState(0);
   const [goalsAgainst, setGoalsAgainst] = useState(0);
   const [notes, setNotes] = useState('');
@@ -169,6 +170,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
         .eq('id', matchId).single();
 
       if (matchData) {
+        setManualMinutes((matchData as unknown as { manual_minutes?: Record<string, number[]> | null }).manual_minutes ?? null);
         setGoalsFor(matchData.goals_for || 0);
         setGoalsAgainst(matchData.goals_against || 0);
         setPartElapsed((matchData.part_elapsed_seconds as number[]) || []);
@@ -233,12 +235,13 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       ),
       {
         partSeconds: partElapsed,
+        manualMinutes,
         partStarters: mergedPartStarters,
         firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
         events: events as MatchEventForCalc[],
       },
     );
-  }, [lineups, events, partElapsed, partDuration, sportType, manual2ndHalfStarters, partStartersByIndex, partRegulationMinutes, partsCount]);
+  }, [lineups, events, partElapsed, partDuration, sportType, manual2ndHalfStarters, partStartersByIndex, partRegulationMinutes, partsCount, manualMinutes]);
 
   const localIssues = useMemo(() => {
     const { totalMinutes: matchEnd, partMinutes } = partElapsed.length > 0

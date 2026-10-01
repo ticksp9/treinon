@@ -10,6 +10,7 @@ import { pt } from 'date-fns/locale';
 import { Trophy, Eye, MapPin, Pencil, FileSearch } from 'lucide-react';
 import { MatchReport } from './MatchReport';
 import { PostGameStepper } from './PostGameStepper';
+import { QuickMatchEntry } from './QuickMatchEntry';
 import { ReportReviewScreen } from './ReportReviewScreen';
 import { getHalfDurationForCategory } from '@/lib/constants';
 import { isEditableReportStatus, REPORT_STATUS_LABELS, type ReportStatus } from '@/lib/match-report-service';
@@ -82,6 +83,7 @@ function getInitialTab(reportStatus: string | undefined): string {
 
 export function MatchResultsView({ teamId, matches, team }: MatchResultsViewProps) {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [quickEntryId, setQuickEntryId] = useState<string | null>(null);
   const [lineups, setLineups] = useState<Lineup[]>([]);
   const [events, setEvents] = useState<MatchEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -269,11 +271,19 @@ export function MatchResultsView({ teamId, matches, team }: MatchResultsViewProp
         </CardContent>
       </Card>
 
+      {quickEntryId && (
+        <QuickMatchEntry matchId={quickEntryId} open onClose={() => setQuickEntryId(null)} onSaved={() => selectedMatch && fetchMatchDetails(selectedMatch.id)} />
+      )}
       <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />Relatório do Jogo
+              {selectedMatch && (
+                <Button size="sm" variant="outline" className="ml-auto mr-6" onClick={() => setQuickEntryId(selectedMatch.id)} title="Corrigir minutos, golos e cartões de forma simples">
+                  Registo rápido
+                </Button>
+              )}
             </DialogTitle>
           </DialogHeader>
           {loading ? (

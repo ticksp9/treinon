@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Trophy, Calendar, MapPin, Play, Users, Clock, User, Table as TableIcon, Trash2, FlaskConical, AlertTriangle, RotateCcw, Archive } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Play, Users, Clock, User, Table as TableIcon, Trash2, FlaskConical, AlertTriangle, RotateCcw, Archive, ClipboardEdit } from 'lucide-react';
+import { QuickMatchEntry } from '@/components/matches/QuickMatchEntry';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LiveMatch } from '@/components/matches/LiveMatch';
 import { MatchResultsView } from '@/components/matches/MatchResultsView';
@@ -57,6 +58,7 @@ export default function Matches() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [deleteDialogMatch, setDeleteDialogMatch] = useState<Match | null>(null);
   const [deletedMatches, setDeletedMatches] = useState<Match[]>([]);
+  const [quickEntryId, setQuickEntryId] = useState<string | null>(null);
   const selectedSeasonId = useSelectedSeasonId();
 
   useEffect(() => {
@@ -545,6 +547,10 @@ export default function Matches() {
                                   <Play className="w-4 h-4 mr-1" />
                                   Iniciar Jogo
                                 </Button>
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title="Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo">
+                                  <ClipboardEdit className="w-4 h-4 mr-1" />
+                                  Registar depois
+                                </Button>
                                 <Button 
                                   variant="ghost" 
                                   size="icon"
@@ -632,6 +638,10 @@ export default function Matches() {
                                 >
                                   <Play className="w-4 h-4 mr-1" />
                                   Iniciar Jogo
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title="Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo">
+                                  <ClipboardEdit className="w-4 h-4 mr-1" />
+                                  Registar depois
                                 </Button>
                                 <Button 
                                   variant="ghost" 
@@ -893,6 +903,9 @@ export default function Matches() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        {quickEntryId && (
+          <QuickMatchEntry matchId={quickEntryId} open onClose={() => setQuickEntryId(null)} onSaved={() => fetchMatches()} />
+        )}
       </div>
     </AppLayout>
   );

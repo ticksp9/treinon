@@ -90,9 +90,11 @@ async function deriveInviteContext(
         .from("club_coaches").select("id")
         .eq("club_id", club_id).eq("coach_id", userId).eq("is_active", true).maybeSingle();
       const { data: coach } = member
-        ? await supabase.from("team_coaches").select("id, role").eq("team_id", teamId).eq("coach_id", userId).maybeSingle()
+        ? await supabase.from("team_coaches").select("id, role, permissions").eq("team_id", teamId).eq("coach_id", userId).maybeSingle()
         : { data: null };
-      if (coach) {
+      // permission "invites" (head coach: yes by default; assistant: no by default)
+      const canInvite = coach ? (coach.permissions?.invites ?? coach.role !== "assistant_coach") : false;
+      if (coach && canInvite) {
         canManage = true;
         level = coach.role === "assistant_coach" ? "assistant" : "head_coach";
       }
@@ -107,6 +109,95 @@ async function deriveInviteContext(
   }
 
   return { canManage, scope_type, club_id, owner_coach_id, level };
+}
+
+// ─── Email (Brevo free tier: 300/day, sender = a verified Gmail address; or Resend with own domain) ───
+function emailConfigured(): boolean {
+  return !!(Deno.env.get("BREVO_API_KEY") || Deno.env.get("RESEND_API_KEY"));
+}
+
+function parseFrom(): { name: string; email: string } {
+  const raw = Deno.env.get("EMAIL_FROM") ?? "TreinON <treinon.apoio@gmail.com>";
+  const m = raw.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  return m ? { name: m[1] || "TreinON", email: m[2] } : { name: "TreinON", email: raw.trim() };
+}
+
+const INVITE_LABELS: Record<string, string> = {
+  coach: "treinador principal", assistant_coach: "treinador adjunto", staff: "staff do clube",
+  guardian: "encarregado de educação", player: "atleta",
+};
+
+function inviteEmail(p: { name: string; type: string; team: string; club: string; link: string; code: string; from: string }) {
+  const role = INVITE_LABELS[p.type] ?? "membro";
+  const subject = `Convite TreinON: ${role}${p.team ? ` · ${p.team}` : ""}`;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+  const text = [
+    `Olá ${p.name}!`,
+    "",
+    `${p.from || "O seu clube"} convidou-o para ${role}${p.team ? ` da equipa ${p.team}` : ""}${p.club ? ` (${p.club})` : ""} no TreinON.`,
+    "",
+    `Abra este link para criar a conta (ou entrar, se já tem) e ficar ligado à equipa:`,
+    p.link,
+    "",
+    `Se o link não abrir, use o código ${p.code} em ${new URL(p.link).origin}/accept-invite`,
+    "O convite é válido durante 7 dias.",
+  ].join("\n");
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:auto;color:#1b2230">
+    <h2 style="color:#24558f">Convite TreinON</h2>
+    <p>Olá ${esc(p.name)}!</p>
+    <p>${esc(p.from || "O seu clube")} convidou-o para <b>${esc(role)}</b>${p.team ? ` da equipa <b>${esc(p.team)}</b>` : ""}${p.club ? ` (${esc(p.club)})` : ""}.</p>
+    <p style="margin:28px 0"><a href="${esc(p.link)}" style="background:#24558f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">Aceitar convite</a></p>
+    <p style="font-size:13px;color:#555">Se o botão não abrir, use o código <b style="font-size:16px;letter-spacing:2px">${esc(p.code)}</b> em ${esc(new URL(p.link).origin)}/accept-invite<br/>O convite é válido durante 7 dias.</p>
+  </div>`;
+  return { subject, text, html };
+}
+
+async function sendInviteEmail(to: string, toName: string, mail: { subject: string; text: string; html: string }): Promise<{ ok: boolean; error?: string }> {
+  const from = parseFrom();
+  try {
+    const brevo = Deno.env.get("BREVO_API_KEY");
+    if (brevo) {
+      const r = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "api-key": brevo, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ sender: from, to: [{ email: to, name: toName }], subject: mail.subject, htmlContent: mail.html, textContent: mail.text }),
+      });
+      if (r.ok) return { ok: true };
+      return { ok: false, error: `Brevo ${r.status}: ${(await r.text()).slice(0, 200)}` };
+    }
+    const resend = Deno.env.get("RESEND_API_KEY");
+    if (resend) {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from: `${from.name} <${from.email}>`, to: [to], subject: mail.subject, text: mail.text, html: mail.html }),
+      });
+      if (r.ok) return { ok: true };
+      return { ok: false, error: `Resend ${r.status}: ${(await r.text()).slice(0, 200)}` };
+    }
+    return { ok: false, error: "Email não configurado" };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+/** Send the invite email right after creating/renewing it (the token only exists now). */
+async function emailInvite(supabase: any, req: Request, invite: { id: string; email: string | null; recipient_name: string; invite_type: string; team_id: string; club_id: string | null }, token: string, code: string, inviterId: string) {
+  if (!invite.email) return { email_sent: false, email_error: "Sem email" };
+  if (!emailConfigured()) return { email_sent: false, email_error: "Email não configurado" };
+  const appUrl = (Deno.env.get("APP_URL") || req.headers.get("origin") || "https://treinon.vercel.app").replace(/\/$/, "");
+  const [{ data: team }, { data: club }, { data: inviter }] = await Promise.all([
+    supabase.from("teams").select("name").eq("id", invite.team_id).maybeSingle(),
+    invite.club_id ? supabase.from("clubs").select("name").eq("id", invite.club_id).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.from("profiles").select("display_name, full_name").eq("id", inviterId).maybeSingle(),
+  ]);
+  const mail = inviteEmail({
+    name: invite.recipient_name, type: invite.invite_type, team: team?.name ?? "", club: club?.name ?? "",
+    link: `${appUrl}/accept-invite?token=${token}`, code, from: inviter?.display_name || inviter?.full_name || "",
+  });
+  const r = await sendInviteEmail(invite.email, invite.recipient_name, mail);
+  if (!r.ok) console.error("[manage-invites] email failed:", r.error);
+  return { email_sent: r.ok, email_error: r.ok ? undefined : r.error };
 }
 
 type InviterLevel = "admin" | "coordinator" | "staff" | "head_coach" | "assistant" | "none";
@@ -218,6 +309,11 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // Is email delivery set up? (the UI then offers "send by email" instead of only WhatsApp)
+    if (action === "email_status") {
+      return new Response(JSON.stringify({ configured: emailConfigured() }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     // ════════════════════════════════════════════════════════════════
     // CREATE INVITE — server derives all context
     // ════════════════════════════════════════════════════════════════
@@ -318,7 +414,7 @@ Deno.serve(async (req) => {
           created_by: authUser.id,            // DERIVED from auth
           sent_at: email ? new Date().toISOString() : null,
         })
-        .select("id, invite_code, status, expires_at")
+        .select("id, invite_code, status, expires_at, email, recipient_name, invite_type, team_id, club_id")
         .single();
 
       if (error) {
@@ -335,6 +431,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           invite_id: invite.id, token, code,
           status: invite.status, expires_at: invite.expires_at,
+          ...(body.send_email === false ? {} : await emailInvite(supabase, req, invite, token, code, authUser.id)),
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -689,7 +786,7 @@ Deno.serve(async (req) => {
       const { invite_id } = body;
       const { data: existingInvite } = await supabase
         .from("access_invites")
-        .select("id, team_id, created_by, status")
+        .select("id, team_id, created_by, status, email, recipient_name, invite_type, club_id")
         .eq("id", invite_id)
         .maybeSingle();
 
@@ -706,6 +803,13 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Permission denied" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (existingInvite && !['pending', 'expired'].includes(existingInvite.status)) {
+        return new Response(
+          JSON.stringify({ error: existingInvite.status === 'accepted' ? 'Este convite já foi aceite' : 'Este convite foi cancelado; crie um novo' }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -734,7 +838,7 @@ Deno.serve(async (req) => {
       console.log(`[manage-invites] Invite ${invite_id} resent by ${authUser.id}`);
 
       return new Response(
-        JSON.stringify({ success: true, token, code }),
+        JSON.stringify({ success: true, token, code, ...(await emailInvite(supabase, req, existingInvite, token, code, authUser.id)) }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

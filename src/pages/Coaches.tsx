@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, UserPlus, Users, Trash2, CheckCircle2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -22,6 +23,7 @@ interface Coach {
   coach_id: string;
   joined_at: string;
   is_active: boolean;
+  permissions?: { view_all_teams?: boolean } | null;
   profile?: {
     full_name: string | null;
     email: string;
@@ -262,7 +264,18 @@ export default function Coaches() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground" title="Pode ver (sem alterar) todas as equipas do clube">
+                        <Switch
+                          checked={!!coach.permissions?.view_all_teams}
+                          onCheckedChange={async (v) => {
+                            const { error } = await supabase.rpc('set_club_coach_permissions' as never, { _club: clubId, _coach: coach.coach_id, _perms: { view_all_teams: v } } as never);
+                            if (error) toast.error('Não foi possível alterar: ' + error.message);
+                            else { toast.success(v ? 'Passa a ver todas as equipas (só leitura)' : 'Vê só as suas equipas'); queryClient.invalidateQueries({ queryKey: ['club-coaches'] }); }
+                          }}
+                        />
+                        Ver todas as equipas
+                      </label>
                       <Button
                         variant="outline"
                         size="sm"

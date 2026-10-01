@@ -74,6 +74,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
   const [partsCount, setPartsCount] = useState(2);
   const [partStartersByIndex, setPartStartersByIndex] = useState<Record<string, string[]>>({});
   const [partRegulationMinutes, setPartRegulationMinutes] = useState<number[]>([]);
+  const [manualMinutes, setManualMinutes] = useState<Record<string, number[]> | null>(null);
   const [goalsFor, setGoalsFor] = useState(0);
   const [goalsAgainst, setGoalsAgainst] = useState(0);
   const [secondHalfStarterIds, setSecondHalfStarterIds] = useState<string[] | null>(null);
@@ -112,6 +113,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
         .eq('id', matchId).single();
 
       if (matchData) {
+        setManualMinutes((matchData as unknown as { manual_minutes?: Record<string, number[]> | null }).manual_minutes ?? null);
         setGoalsFor(matchData.goals_for || 0);
         setGoalsAgainst(matchData.goals_against || 0);
         setPartElapsed((matchData.part_elapsed_seconds as number[]) || []);
@@ -170,6 +172,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
         computeMatchPlayerStats(starterInfos, events as MatchEventForCalc[], totalMinutes, pm, sportType, { secondHalfStarters: partStartersByIndex['2'] ?? secondHalfStarterIds, partStarters: partStartersByIndex, regulationPartMinutes, numberOfParts: partsCount }),
         {
           partSeconds: partElapsed,
+        manualMinutes,
           partStarters: { ...partStartersByIndex, ...(!partStartersByIndex['2'] && secondHalfStarterIds?.length ? { '2': secondHalfStarterIds } : {}) },
           firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
           events: events as MatchEventForCalc[],

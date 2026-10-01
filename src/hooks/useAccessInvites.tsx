@@ -101,7 +101,7 @@ export function useCreateInvite() {
 
       if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
-      return data as { invite_id: string; token: string; code: string; expires_at: string };
+      return data as { invite_id: string; token: string; code: string; expires_at: string; email_sent?: boolean; email_error?: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-invites'] });
@@ -139,11 +139,23 @@ export function useResendInvite() {
       });
       if (error) throw await fnError(error);
       if (data?.error) throw new Error(data.error);
-      return data as { token: string; code: string };
+      return data as { token: string; code: string; email_sent?: boolean; email_error?: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['access-invites'] });
       queryClient.invalidateQueries({ queryKey: ['access-invites-player'] });
+    },
+  });
+}
+
+/** Is the server set up to send invite emails? */
+export function useEmailStatus() {
+  return useQuery({
+    queryKey: ['invite-email-status'],
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.functions.invoke('manage-invites', { body: { action: 'email_status' } });
+      return !!(data as { configured?: boolean } | null)?.configured;
     },
   });
 }

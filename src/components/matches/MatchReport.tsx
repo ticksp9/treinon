@@ -133,6 +133,7 @@ export function MatchReport({ match, lineups, events, teamName, partElapsedSecon
     {
       // real seconds of each part: same calculation as the live screen
       partSeconds: elapsed,
+      manualMinutes: (match as unknown as { manual_minutes?: Record<string, number[]> | null }).manual_minutes ?? null,
       partStarters: { ...(partStartersByIndex ?? {}), ...(!partStartersByIndex?.['2'] && secondHalfStarterIds?.length ? { '2': secondHalfStarterIds } : {}) },
       firstPartStarters: starterInfos.filter(s => s.is_starter).map(s => s.player_id),
       events: events as MatchEventForCalc[],

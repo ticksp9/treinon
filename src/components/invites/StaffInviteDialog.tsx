@@ -13,9 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Copy, Loader2, Share2, UserPlus, Clock, Trash2, Link2 } from 'lucide-react';
+import { Copy, Loader2, Share2, UserPlus, Clock, Trash2, Link2, Mail, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useCreateInvite, useRevokeInvite, type InviteType } from '@/hooks/useAccessInvites';
+import { useCreateInvite, useRevokeInvite, useResendInvite, useEmailStatus, type InviteType } from '@/hooks/useAccessInvites';
 import { shareText, copyText } from '@/lib/share';
 import { cn } from '@/lib/utils';
 
@@ -66,8 +66,9 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
   const [email, setEmail] = useState('');
   const [type, setType] = useState<StaffInviteType>(allowedTypes[0]);
   const [teamId, setTeamId] = useState(defaultTeamId ?? teams[0]?.id ?? '');
-  const [result, setResult] = useState<{ link: string; code: string; message: string } | null>(null);
+  const [result, setResult] = useState<{ link: string; code: string; message: string; email?: string; emailSent?: boolean; emailError?: string } | null>(null);
   const create = useCreateInvite();
+  const { data: emailReady } = useEmailStatus();
   const qc = useQueryClient();
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
       const r = await create.mutateAsync({ team_id: teamId, invite_type: type, recipient_name: name.trim(), email: email.trim() || undefined });
       const link = inviteLink(r.token);
       const team = teams.find((t) => t.id === teamId)?.name;
-      setResult({ link, code: r.code, message: inviteMessage({ name, type, team, link, code: r.code }) });
+      setResult({ link, code: r.code, message: inviteMessage({ name, type, team, link, code: r.code }), email: email.trim() || undefined, emailSent: r.email_sent, emailError: r.email_error });
       qc.invalidateQueries({ queryKey: ['staff-invites'] });
     } catch (e) {
       toast.error((e as Error).message || 'Não foi possível criar o convite');
@@ -131,14 +132,28 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
             <div className="space-y-1.5">
               <Label htmlFor="inv-email">Email (opcional)</Label>
               <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="treinador@email.com" />
-              <p className="text-xs text-muted-foreground">Se indicar, só quem usar este email pode aceitar o convite.</p>
+              <p className="text-xs text-muted-foreground">
+                {emailReady
+                  ? 'O convite segue também por email. Só quem usar este email o pode aceitar.'
+                  : 'Se indicar, só quem usar este email pode aceitar o convite. (O envio por email ainda não está ligado: envie pelo WhatsApp.)'}
+              </p>
             </div>
             <Button className="w-full" onClick={submit} disabled={create.isPending || teams.length === 0}>
-              {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}Criar convite
+              {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}{emailReady && email.trim() ? 'Criar e enviar por email' : 'Criar convite'}
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
+            {result.email && (
+              <div className={cn('flex items-start gap-2 rounded-md border p-2 text-sm', result.emailSent ? 'border-green-600/40 bg-green-600/5' : 'border-amber-500/50 bg-amber-500/5')}>
+                {result.emailSent ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />}
+                <span>
+                  {result.emailSent
+                    ? <>Email enviado para <b>{result.email}</b>. Peça para ver também a pasta de spam.</>
+                    : <>O email não foi enviado{result.emailError ? ` (${result.emailError})` : ''}. Envie pelo WhatsApp.</>}
+                </span>
+              </div>
+            )}
             <div className="rounded-lg bg-secondary p-4 text-center">
               <p className="text-xs text-muted-foreground">Código</p>
               <p className="font-mono text-3xl font-bold tracking-[0.3em]">{result.code}</p>
@@ -170,6 +185,7 @@ interface PendingRow { id: string; recipient_name: string; email: string | null;
 /** Pending coach/assistant/staff invites for the given teams, with cancel. */
 export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
   const revoke = useRevokeInvite();
+  const resend = useResendInvite();
   const qc = useQueryClient();
   const { data: invites = [] } = useQuery({
     queryKey: ['staff-invites', [...teamIds].sort().join(',')],
@@ -206,6 +222,19 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
             <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Copiar código"
               onClick={async () => { if (await copyText(`${window.location.origin}/accept-invite — código ${i.invite_code}`)) toast.success('Código copiado'); }}>
               <Copy className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={i.email ? 'Reenviar por email' : 'Novo link'}
+              title={i.email ? 'Reenviar (novo link, também por email)' : 'Gerar novo link para enviar'}
+              onClick={async () => {
+                try {
+                  const r = await resend.mutateAsync(i.id);
+                  const link = inviteLink(r.token);
+                  if (r.email_sent) toast.success(`Reenviado para ${i.email}`);
+                  else await shareText(inviteMessage({ name: i.recipient_name, type: i.invite_type, team: i.teams?.name, link, code: r.code }), 'Convite TreinON');
+                  qc.invalidateQueries({ queryKey: ['staff-invites'] });
+                } catch (e) { toast.error((e as Error).message); }
+              }}>
+              {i.email ? <Mail className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
             <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Cancelar convite"
               onClick={async () => {
