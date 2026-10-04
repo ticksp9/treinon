@@ -24,7 +24,9 @@ export default defineConfig(({ mode }) => ({
     }),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // the app decides when to reload (never in the middle of a live match): src/lib/pwa-update.ts
+      registerType: 'prompt',
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
         id: '/',

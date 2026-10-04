@@ -2,6 +2,7 @@ import "./lib/polyfills";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { setupAutoUpdate } from "./lib/pwa-update";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 // Self-hosted fonts: work offline on the pitch and no request to Google (GDPR)
 import "@fontsource/ibm-plex-sans/400.css";
@@ -22,3 +23,6 @@ createRoot(document.getElementById("root")!).render(
 
 // tells the startup safety net in index.html that the app is running
 (window as unknown as { __treinonBooted?: boolean }).__treinonBooted = true;
+
+// new versions reach every installed copy (never in the middle of a live match)
+setupAutoUpdate();

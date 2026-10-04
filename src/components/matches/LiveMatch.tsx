@@ -1361,6 +1361,12 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pitchTacticsKey, phase]);
 
+  // While the match runs, a new app version must not reload the screen (see lib/pwa-update)
+  useEffect(() => {
+    window.__treinonLiveMatch = phase === 'playing' || phase === 'interval';
+    return () => { window.__treinonLiveMatch = false; };
+  }, [phase]);
+
   // Compute consistency issues for conflict display
   const matchEndEstimate = partElapsedSeconds.reduce((s, sec) => s + Math.floor(sec / 60), 0) + (phase === 'playing' ? timer.getMinutes() : 0);
   const starterInfosForCheck = lineups.map(l => ({ player_id: l.player_id, is_starter: l.is_starter }));
