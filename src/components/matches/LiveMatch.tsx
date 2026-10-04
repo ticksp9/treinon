@@ -1984,6 +1984,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         savedPartDuration={match?.part_duration_minutes}
         savedPartsCount={match?.parts_count}
         teamFormat={Array.isArray(team?.match_format?.parts) && team!.match_format!.parts!.length > 0 ? team!.match_format!.parts! : null}
+        savedPartMinutes={Array.isArray((match as any)?.part_regulation_minutes) && (match as any).part_regulation_minutes.length > 0 ? (match as any).part_regulation_minutes : null}
         onConfirm={handleStartMatchWithConfig}
       />
     </div>

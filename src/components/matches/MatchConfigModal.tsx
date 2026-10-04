@@ -32,6 +32,8 @@ interface MatchConfigModalProps {
   savedPartsCount?: number | null;
   /** Format the coach set for this team at the start of the season */
   teamFormat?: number[] | null;
+  /** Parts already chosen for this match (when it was created) */
+  savedPartMinutes?: number[] | null;
   onConfirm: (config: MatchFormatConfig) => void;
   /** 'team' = editing the team's default format (no match is started) */
   mode?: 'match' | 'team';
@@ -58,11 +60,13 @@ export function MatchConfigModal({
   savedPartDuration,
   savedPartsCount,
   teamFormat,
+  savedPartMinutes,
   onConfirm,
   mode = 'match',
 }: MatchConfigModalProps) {
   const teamMode = mode === 'team';
   const initial = (): number[] => {
+    if (savedPartMinutes && savedPartMinutes.length > 0) return savedPartMinutes;
     if (teamFormat && teamFormat.length > 0) return teamFormat;
     const d = savedPartDuration || defaultPartDuration || 45;
     const n = savedPartsCount || (matchType === 'tournament' ? 1 : 2);

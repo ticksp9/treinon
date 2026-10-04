@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PartMinutesEditor } from '@/components/matches/PartMinutesEditor';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -36,6 +37,7 @@ interface Team {
   category: string | null;
   sport_type: string;
   gender?: string | null;
+  match_format?: { parts?: number[] } | null;
 }
 
 interface Player {
@@ -61,9 +63,22 @@ interface Match {
   match_type?: string;
   parts_count?: number;
   part_duration_minutes?: number | null;
+  part_regulation_minutes?: number[] | null;
   is_test?: boolean;
   is_deleted?: boolean;
 }
+
+const teamFormatOf = (t?: { match_format?: { parts?: number[] } | null } | null) =>
+  Array.isArray(t?.match_format?.parts) && t!.match_format!.parts!.length ? [...t!.match_format!.parts!] : null;
+const sameParts = (a: number[], b: number[]) => a.length === b.length && a.every((m, i) => m === b[i]);
+/** rule-snapshot fields for parts of different length */
+const snapshotParts = (parts: number[]) => ({
+  period_count: parts.length,
+  period_1_minutes: parts[0] ?? 0,
+  period_2_minutes: parts[1] ?? 0,
+  period_3_minutes: parts[2] ?? 0,
+  period_4_minutes: parts[3] ?? 0,
+});
 
 // Position categories for grouping
 const POSITION_CATEGORIES = {
@@ -100,6 +115,10 @@ export function MatchCallup() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  /** parts chosen for the match; falls back to equal parts from the old fields */
+  const currentParts = (): number[] => newMatch.partMinutes.length
+    ? newMatch.partMinutes
+    : Array(newMatch.partsCount || 2).fill(newMatch.partDurationMinutes || 25);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showLiveMatch, setShowLiveMatch] = useState(false);
@@ -119,6 +138,7 @@ export function MatchCallup() {
     arrivalTime: '',
     partsCount: 2,
     partDurationMinutes: 0, // 0 = use category default
+    partMinutes: [] as number[], // minutes of each part (e.g. 15, 15, 30); empty = not chosen yet
     isTest: false,
     reportEntryMode: 'live' as ReportEntryMode,
   });
@@ -144,15 +164,20 @@ export function MatchCallup() {
           if (profile) {
             const snapshot = buildSnapshotFromProfile(profile);
             setLoadedRuleSnapshot(snapshot);
+            const fromProfile = [profile.period_1_minutes, profile.period_2_minutes, (profile as any).period_3_minutes, (profile as any).period_4_minutes]
+              .slice(0, profile.period_count || 2).map((m: number | null | undefined) => m || profile.period_1_minutes);
             setNewMatch(prev => ({
               ...prev,
               partDurationMinutes: profile.period_1_minutes,
               partsCount: profile.period_count,
+              // the team's own format (Equipa → Formato de jogo) wins over the generic rule profile
+              partMinutes: teamFormatOf(currentTeam) ?? fromProfile,
             }));
           } else {
             // Build fallback snapshot
             const fallback = buildSnapshotFromFallback(currentTeam.sport_type);
             setLoadedRuleSnapshot(fallback);
+            setNewMatch(prev => ({ ...prev, partMinutes: teamFormatOf(currentTeam) ?? Array(fallback.period_count || 2).fill(fallback.period_1_minutes || 25) }));
           }
         });
       }
@@ -169,13 +194,13 @@ export function MatchCallup() {
     try {
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name, category, sport_type, gender')
+        .select('id, name, category, sport_type, gender, match_format')
 
         .order('name');
 
       if (error) throw error;
       // only the teams of the club/context the coach is working in: guests never come from another club
-      const scoped = scopeTeams(data || []);
+      const scoped = scopeTeams((data || []) as unknown as Team[]);
       setTeams(scoped);
       if (scoped.length > 0) {
         setSelectedTeam(defaultTeamId(scoped) ?? scoped[0].id);
@@ -261,7 +286,7 @@ export function MatchCallup() {
     try {
       const { data, error } = await supabase
         .from('matches')
-        .select('id, match_date, opponent_name, is_home, location, competition, status, match_type, parts_count, part_duration_minutes, is_test, is_deleted')
+        .select('id, match_date, opponent_name, is_home, location, competition, status, match_type, parts_count, part_duration_minutes, part_regulation_minutes, is_test, is_deleted')
         .eq('team_id', selectedTeam)
         .eq('is_deleted', false)
         .order('match_date', { ascending: true });
@@ -378,6 +403,7 @@ export function MatchCallup() {
     setCreating(true);
     try {
       const matchDateTime = `${newMatch.date}T${newMatch.time}:00`;
+      const parts = currentParts();
 
       // Determine competition name based on match type
       let competitionName = 'Campeonato';
@@ -402,8 +428,9 @@ export function MatchCallup() {
           competition: competitionName,
           status: 'scheduled',
           match_type: newMatch.matchType,
-          parts_count: newMatch.partsCount,
-          part_duration_minutes: newMatch.partDurationMinutes || null,
+          parts_count: parts.length,
+          part_duration_minutes: parts[0] ?? null,
+          part_regulation_minutes: parts,
           tournament_locked: newMatch.matchType === 'tournament',
           is_test: newMatch.isTest,
           report_entry_mode: newMatch.reportEntryMode,
@@ -427,21 +454,16 @@ export function MatchCallup() {
       if (ruleProfile) {
         const snapshot = buildSnapshotFromProfile(ruleProfile);
         // Apply any manual overrides from the form
-        if (newMatch.partDurationMinutes > 0) {
-          snapshot.period_1_minutes = newMatch.partDurationMinutes;
-          snapshot.period_2_minutes = newMatch.partDurationMinutes;
-        }
-        if (newMatch.partsCount) {
-          snapshot.period_count = newMatch.partsCount;
-        }
+        Object.assign(snapshot, snapshotParts(parts));
         await saveMatchRuleSnapshot(matchData.id, snapshot, ruleProfile.id);
       } else {
         // Fallback to hardcoded rules
         const snapshot = buildSnapshotFromFallback(
           currentTeam?.sport_type || 'football_7',
-          newMatch.partDurationMinutes || 35,
-          newMatch.partsCount || 2
+          parts[0] || 35,
+          parts.length || 2
         );
+        Object.assign(snapshot, snapshotParts(parts));
         await saveMatchRuleSnapshot(matchData.id, snapshot);
       }
 
@@ -476,6 +498,7 @@ export function MatchCallup() {
         arrivalTime: '',
         partsCount: 2,
         partDurationMinutes: 0,
+        partMinutes: newMatch.partMinutes,
         isTest: false,
         reportEntryMode: 'live' as ReportEntryMode,
       });
@@ -584,6 +607,9 @@ export function MatchCallup() {
       arrivalTime: '',
       partsCount: selectedMatchData.parts_count || 2,
       partDurationMinutes: selectedMatchData.part_duration_minutes || 0,
+      partMinutes: selectedMatchData.part_regulation_minutes?.length
+        ? selectedMatchData.part_regulation_minutes
+        : Array(selectedMatchData.parts_count || 2).fill(selectedMatchData.part_duration_minutes || 25),
       isTest: selectedMatchData.is_test || false,
       reportEntryMode: 'live' as ReportEntryMode,
     });
@@ -626,8 +652,10 @@ export function MatchCallup() {
 
       // Only update parts config if match is not in progress
       if (!isMatchInProgress) {
-        updateData.parts_count = newMatch.partsCount;
-        updateData.part_duration_minutes = newMatch.partDurationMinutes || null;
+        const parts = currentParts();
+        updateData.parts_count = parts.length;
+        updateData.part_duration_minutes = parts[0] ?? null;
+        updateData.part_regulation_minutes = parts;
         updateData.tournament_locked = newMatch.matchType === 'tournament';
       }
 
@@ -884,9 +912,10 @@ export function MatchCallup() {
                           setNewMatch(prev => ({
                             ...prev,
                             matchType,
-                            // Reset parts config based on type
+                            // Reset parts config based on type: championship/friendly start from the team format
                             partsCount: matchType === 'tournament' ? 1 : 2,
                             partDurationMinutes: 0,
+                            partMinutes: matchType === 'tournament' ? [20] : (teamFormatOf(teams.find(t => t.id === selectedTeam)) ?? prev.partMinutes),
                           }));
                         }}
                         className="grid grid-cols-3 gap-2"
@@ -898,7 +927,7 @@ export function MatchCallup() {
                               <Trophy className="w-4 h-4" />
                               Campeonato
                             </Label>
-                            <p className="text-xs text-muted-foreground">2 partes, tempo do escalão</p>
+                            <p className="text-xs text-muted-foreground">Formato da equipa</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50">
@@ -934,107 +963,24 @@ export function MatchCallup() {
                             placeholder="Ex: Campeonato Distrital"
                           />
                         </div>
-                        <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                          <div className="space-y-2">
-                            <Label>Minutos por Parte (pré-preenchido pelo escalão, editável)</Label>
-                            <Select
-                              value={String(newMatch.partDurationMinutes)}
-                              onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="0">Usar tempo do escalão (padrão)</SelectItem>
-                                {[15, 20, 25, 28, 30, 35, 40, 45, 50, 55, 60].map(m => (
-                                  <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <p className="text-xs text-muted-foreground">Pode ajustar antes de iniciar o jogo</p>
-                        </div>
                       </>
                     )}
 
-                    {/* Parts and Duration Config for Friendly */}
-                    {newMatch.matchType === 'friendly' && (
-                      <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-lg">
-                        <div className="space-y-2">
-                          <Label>Número de Partes</Label>
-                          <Select
-                            value={String(newMatch.partsCount)}
-                            onValueChange={v => setNewMatch(prev => ({ ...prev, partsCount: parseInt(v) }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4, 5, 6].map(n => (
-                                <SelectItem key={n} value={String(n)}>{n} {n === 1 ? 'parte' : 'partes'}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Minutos por Parte</Label>
-                          <Select
-                            value={String(newMatch.partDurationMinutes)}
-                            onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0">Usar tempo do escalão</SelectItem>
-                              {[10, 12, 15, 18, 20, 22, 25, 28, 30, 35, 40, 45, 50, 55, 60].map(m => (
-                                <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Tournament Config */}
-                    {newMatch.matchType === 'tournament' && (
-                      <div className="grid grid-cols-2 gap-4 p-3 bg-muted/30 rounded-lg">
-                        <div className="space-y-2">
-                          <Label>Número de Partes</Label>
-                          <Select
-                            value={String(newMatch.partsCount)}
-                            onValueChange={v => setNewMatch(prev => ({ ...prev, partsCount: parseInt(v) }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4].map(n => (
-                                <SelectItem key={n} value={String(n)}>{n} {n === 1 ? 'parte' : 'partes'}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Minutos por Parte</Label>
-                          <Select
-                            value={String(newMatch.partDurationMinutes)}
-                            onValueChange={v => setNewMatch(prev => ({ ...prev, partDurationMinutes: parseInt(v) }))}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="0">Usar tempo do escalão</SelectItem>
-                              {[10, 15, 20, 25, 30, 35, 40, 45].map(m => (
-                                <SelectItem key={m} value={String(m)}>{m} minutos</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <p className="col-span-2 text-xs text-muted-foreground">⚠️ Valores bloqueados após iniciar o jogo</p>
-                      </div>
-                    )}
+                    {/* Parts: number and minutes of each one (e.g. Sub-12 F7: 15 + 15 + 30) */}
+                    <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                      <Label>Partes e minutos</Label>
+                      <PartMinutesEditor
+                        value={currentParts()}
+                        onChange={(partMinutes) => setNewMatch(prev => ({ ...prev, partMinutes, partsCount: partMinutes.length, partDurationMinutes: partMinutes[0] }))}
+                        teamFormat={teamFormatOf(teams.find(t => t.id === selectedTeam))}
+                        maxParts={newMatch.matchType === 'tournament' ? 4 : 6}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {newMatch.matchType === 'championship'
+                          ? 'Vem do formato da equipa (Equipas → equipa → Formato de jogo). Pode ajustar para este jogo.'
+                          : newMatch.matchType === 'tournament' ? '⚠️ Valores bloqueados após iniciar o jogo' : 'Amigável: como combinar com o adversário.'}
+                      </p>
+                    </div>
 
                     {/* Date and Time */}
                     <div className="grid grid-cols-2 gap-4">
@@ -1114,11 +1060,11 @@ export function MatchCallup() {
                     {/* Loaded Rules Preview */}
                     {loadedRuleSnapshot && (
                       <MatchRulesPanel
-                        snapshot={loadedRuleSnapshot}
+                        snapshot={{ ...loadedRuleSnapshot, ...snapshotParts(currentParts()) }}
                         sportType={teams.find(t => t.id === selectedTeam)?.sport_type}
                         category={teams.find(t => t.id === selectedTeam)?.category}
                         compact
-                        isOverridden={newMatch.partDurationMinutes > 0 && newMatch.partDurationMinutes !== loadedRuleSnapshot.period_1_minutes}
+                        isOverridden={!sameParts(currentParts(), teamFormatOf(teams.find(t => t.id === selectedTeam)) ?? [])}
                       />
                     )}
 
@@ -1241,10 +1187,10 @@ export function MatchCallup() {
           {/* Rules Panel */}
           {selectedMatchData && loadedRuleSnapshot && (
             <MatchRulesPanel
-              snapshot={loadedRuleSnapshot}
+              snapshot={{ ...loadedRuleSnapshot, ...snapshotParts(currentParts()) }}
               sportType={teams.find(t => t.id === selectedTeam)?.sport_type}
               category={teams.find(t => t.id === selectedTeam)?.category}
-              isOverridden={newMatch.partDurationMinutes > 0 && newMatch.partDurationMinutes !== loadedRuleSnapshot.period_1_minutes}
+              isOverridden={!sameParts(currentParts(), teamFormatOf(teams.find(t => t.id === selectedTeam)) ?? [])}
             />
           )}
 

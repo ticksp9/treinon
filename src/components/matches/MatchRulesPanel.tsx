@@ -35,6 +35,9 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
   const p1 = snapshot?.period_1_minutes || 45;
   const p2 = snapshot?.period_2_minutes || p1;
   const totalMinutes = p1 + p2 + (snapshot?.period_3_minutes || 0) + (snapshot?.period_4_minutes || 0);
+  // parts can have different lengths (e.g. 15 + 15 + 30)
+  const partsList = [p1, p2, snapshot?.period_3_minutes || p1, snapshot?.period_4_minutes || p1].slice(0, Math.max(1, Math.min(4, periodCount)));
+  const partsLabel = partsList.every((m) => m === partsList[0]) ? `${periodCount}x${p1}'` : partsList.map((m) => `${m}'`).join('+');
 
   if (compact) {
     return (
@@ -49,7 +52,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
         </Badge>
         <Badge variant="outline" className="gap-1">
           <Clock className="w-3 h-3" />
-          {periodCount}x{p1}'
+          {partsLabel}
         </Badge>
         {isOverridden && (
           <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600">
@@ -110,7 +113,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
             <span className="text-xs text-muted-foreground">Tempo de jogo</span>
             <div className="font-medium text-sm flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {periodCount}x{p1}' ({totalMinutes}' total)
+              {partsLabel} ({totalMinutes}' total)
             </div>
           </div>
         </div>
