@@ -58,8 +58,10 @@ function usePlayerCallups(playerId: string | null) {
       if (!playerId) return [];
       const { data, error } = await supabase
         .from('match_lineups')
-        .select('*, matches(*)')
+        .select('*, matches!inner(*)')
         .eq('player_id', playerId)
+        .eq('matches.is_deleted', false)
+        .eq('matches.is_test', false)
         .order('created_at', { ascending: false })
         .limit(20);
       if (error) throw error;

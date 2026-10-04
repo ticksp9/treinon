@@ -13,13 +13,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Plus, Search, Users, Filter, AlertTriangle, Target, UserPlus } from 'lucide-react';
+import { Plus, Search, Users, Filter, AlertTriangle, Target, UserPlus, FileSpreadsheet, CalendarRange } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlayerCard } from '@/components/players/PlayerCard';
 import { PlayerForm } from '@/components/players/PlayerForm';
 import { AGE_CATEGORIES, canPlayerPlayInCategory, Gender } from '@/lib/constants';
 import { sanitizePlayerPayload, queryKeys } from '@/lib/query-helpers';
-import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
+import { useSelectedSeasonId, useSeasonContext } from '@/hooks/useSeasonContext';
+import { PlayerImportDialog } from '@/components/players/PlayerImportDialog';
+import { BirthYearDialog } from '@/components/players/BirthYearDialog';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { getSeasonStartYear, parseSeasonStartYear } from '@/lib/constants';
+import type { YearTeam } from '@/lib/player-import';
 import { classifyEnrollmentEligibility, type AgeGroupRule } from '@/lib/age-group-rules';
 import {
   importRosterFromPreviousSeason,
@@ -57,6 +62,21 @@ export default function Players() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const selectedSeasonId = useSelectedSeasonId();
+  const { selectedSeason } = useSeasonContext();
+  const seasonStartYear = parseSeasonStartYear((selectedSeason as { name?: string } | null)?.name ?? '') ?? getSeasonStartYear();
+  const { scopeTeams } = useActiveTeam();
+  const [importOpen, setImportOpen] = useState(false);
+  const [yearsOpen, setYearsOpen] = useState(false);
+  // teams with their birth years (import / distribute by year), only of the club being worked on
+  const { data: yearTeams = [] } = useQuery({
+    queryKey: ['year-teams', user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from('teams').select('*').order('name');
+      return ((data ?? []) as unknown as YearTeam[]).map((t) => ({ id: t.id, name: t.name, category: t.category, birth_years: t.birth_years ?? null }));
+    },
+  });
+  const scopedYearTeams = scopeTeams(yearTeams);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -365,6 +385,7 @@ export default function Players() {
           description={`${filteredPlayers?.length || 0} jogador(es) registados`}
           icon={<Target className="w-6 h-6 text-primary" />}
           actions={
+            <div className="flex flex-wrap items-center gap-2">
             <Dialog open={dialogOpen} onOpenChange={(open) => {
               setDialogOpen(open);
               if (!open) setEditingPlayer(null);
@@ -398,8 +419,23 @@ export default function Players() {
                 />
               </DialogContent>
             </Dialog>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)} disabled={scopedYearTeams.length === 0} title={scopedYearTeams.length === 0 ? 'Crie primeiro uma equipa' : 'Importar jogadores de um Excel'}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Importar Excel
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setYearsOpen(true)} disabled={scopedYearTeams.length === 0}>
+              <CalendarRange className="w-4 h-4 mr-2" />
+              Escalões por ano
+            </Button>
+            </div>
           }
         />
+        {importOpen && (
+          <PlayerImportDialog open onClose={() => setImportOpen(false)} teams={scopedYearTeams} seasonId={selectedSeasonId} seasonStartYear={seasonStartYear} />
+        )}
+        {yearsOpen && (
+          <BirthYearDialog open onClose={() => { setYearsOpen(false); queryClient.invalidateQueries({ queryKey: ['year-teams'] }); }} teams={scopedYearTeams} seasonId={selectedSeasonId} seasonStartYear={seasonStartYear} />
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">

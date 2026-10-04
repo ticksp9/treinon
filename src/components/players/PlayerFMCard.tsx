@@ -78,13 +78,14 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
           .eq('player_id', playerId)
           .order('evaluation_date', { ascending: true }),
         supabase.from('match_lineups')
-          .select('match_id, rating, minutes_played, is_starter, match:matches(match_date, opponent_name, team:teams(name))')
-          .eq('player_id', playerId),
+          .select('match_id, rating, minutes_played, is_starter, match:matches!inner(match_date, opponent_name, is_deleted, is_test, team:teams(name))')
+          .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false),
         supabase.from('players')
           .select('position, secondary_positions, foot, birth_date, height_cm, weight_kg, number')
           .eq('id', playerId).maybeSingle(),
         supabase.from('match_events')
-          .select('match_id, event_type, player_id, assist_player_id, is_opponent')
+          .select('match_id, event_type, player_id, assist_player_id, is_opponent, match:matches!inner(is_deleted, is_test)')
+          .eq('match.is_deleted', false).eq('match.is_test', false)
           .or(`player_id.eq.${playerId},assist_player_id.eq.${playerId}`),
       ]);
       const history = buildHistory(

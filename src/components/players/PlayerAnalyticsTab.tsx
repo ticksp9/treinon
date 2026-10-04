@@ -74,8 +74,8 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
     queryFn: async () => {
       let q = supabase
         .from('match_lineups')
-        .select('match_id, player_id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, season_id)')
-        .eq('player_id', playerId);
+        .select('match_id, player_id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, season_id, is_deleted, is_test)')
+        .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false);
       if (seasonId) q = q.eq('match.season_id', seasonId);
       const { data, error } = await q;
       if (error) throw error;

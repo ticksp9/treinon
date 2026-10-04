@@ -75,12 +75,15 @@ async function deriveInviteContext(
 
     if (!canManage) {
       const { data: staff } = await supabase
-        .from("club_staff").select("id, role")
+        .from("club_staff").select("id, role, coord_team_ids")
         .eq("club_id", club_id).eq("user_id", userId).eq("is_active", true)
         .maybeSingle();
       if (staff) {
         canManage = true;
-        level = staff.role === "admin" ? "admin" : staff.role === "coordenador" ? "coordinator" : "staff";
+        // a coordinator with an area only coordinates the teams of that area
+        const scope: string[] | null = staff.coord_team_ids;
+        const inArea = !scope || scope.length === 0 || scope.includes(teamId);
+        level = staff.role === "admin" ? "admin" : staff.role === "coordenador" && inArea ? "coordinator" : "staff";
       }
     }
 

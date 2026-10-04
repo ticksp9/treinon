@@ -202,7 +202,7 @@ export async function fetchPlayerSeasonHistory(playerId: string): Promise<Season
         .eq('player_id', playerId),
       supabase
         .from('match_lineups')
-        .select('minutes_played, is_starter, match:matches!inner(season_id, is_deleted)')
+        .select('minutes_played, is_starter, match:matches!inner(season_id, is_deleted, is_test)')
         .eq('player_id', playerId),
       supabase
         .from('training_attendance')
@@ -210,11 +210,11 @@ export async function fetchPlayerSeasonHistory(playerId: string): Promise<Season
         .eq('player_id', playerId),
       supabase
         .from('match_events')
-        .select('event_type, match:matches!inner(season_id, is_deleted)')
+        .select('event_type, match:matches!inner(season_id, is_deleted, is_test)')
         .eq('player_id', playerId),
       supabase
         .from('match_events')
-        .select('event_type, match:matches!inner(season_id, is_deleted)')
+        .select('event_type, match:matches!inner(season_id, is_deleted, is_test)')
         .eq('assist_player_id', playerId),
       supabase
         .from('player_evaluations')
@@ -228,7 +228,7 @@ export async function fetchPlayerSeasonHistory(playerId: string): Promise<Season
 
   const live = aggregateLiveBySeason(
     {
-      lineups: ((lineupsRes.data as any[]) || []).filter((l) => !l.match?.is_deleted).map((l) => ({
+      lineups: ((lineupsRes.data as any[]) || []).filter((l) => !l.match?.is_deleted && !l.match?.is_test).map((l) => ({
         season_id: l.match?.season_id ?? null,
         minutes_played: l.minutes_played,
         is_starter: l.is_starter,
@@ -238,11 +238,11 @@ export async function fetchPlayerSeasonHistory(playerId: string): Promise<Season
         present: a.present,
       })),
       events: [
-        ...((eventsRes.data as any[]) || []).filter((e) => !e.match?.is_deleted).map((e) => ({
+        ...((eventsRes.data as any[]) || []).filter((e) => !e.match?.is_deleted && !e.match?.is_test).map((e) => ({
           season_id: e.match?.season_id ?? null,
           event_type: e.event_type,
         })),
-        ...((assistsRes.data as any[]) || []).filter((e) => !e.match?.is_deleted).map((e) => ({
+        ...((assistsRes.data as any[]) || []).filter((e) => !e.match?.is_deleted && !e.match?.is_test).map((e) => ({
           season_id: e.match?.season_id ?? null,
           event_type: e.event_type,
           is_assist: true,

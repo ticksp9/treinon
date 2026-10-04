@@ -35,8 +35,8 @@ export function useSquadProfiles(playerIds: string[]) {
           .order('evaluation_date', { ascending: false }),
         supabase
           .from('match_lineups')
-          .select('player_id, rating, minutes_played, match:matches(match_date)')
-          .in('player_id', ids),
+          .select('player_id, rating, minutes_played, match:matches!inner(match_date, is_deleted, is_test)')
+          .in('player_id', ids).eq('match.is_deleted', false).eq('match.is_test', false),
       ]);
 
       const out = new Map<string, SquadProfile>();

@@ -290,9 +290,9 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
       let q = supabase
         .from('match_lineups')
         .select(
-          'id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, match_date, opponent_name, is_home, goals_for, goals_against, season_id)'
+          'id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, match_date, opponent_name, is_home, goals_for, goals_against, season_id, is_deleted, is_test)'
         )
-        .eq('player_id', playerId);
+        .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false);
       if (seasonId) q = q.eq('match.season_id', seasonId);
       const { data, error } = await q.order('id', { ascending: false }).limit(50);
       if (error) throw error;
@@ -362,8 +362,8 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
     queryFn: async () => {
       let q = supabase
         .from('match_lineups')
-        .select('minutes_played, is_starter, match:matches!inner(match_date, season_id)')
-        .eq('player_id', playerId);
+        .select('minutes_played, is_starter, match:matches!inner(match_date, season_id, is_deleted, is_test)')
+        .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false);
       if (seasonId) q = q.eq('match.season_id', seasonId);
       const { data, error } = await q;
       if (error) throw error;

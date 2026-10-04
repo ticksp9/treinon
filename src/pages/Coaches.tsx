@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Plus, UserPlus, Users, Trash2, CheckCircle2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { CoordinatorsPanel, useClubCoordinators } from '@/components/club/CoordinatorsPanel';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -45,6 +46,8 @@ export default function Coaches() {
   const { user } = useAuth();
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const { data: coordinators = [] } = useClubCoordinators(clubId);
+  const coordinatorIds = new Set(coordinators.map((c) => c.user_id));
   const [selectedRole, setSelectedRole] = useState<'head_coach' | 'assistant_coach'>('head_coach');
   const queryClient = useQueryClient();
 
@@ -220,6 +223,7 @@ export default function Coaches() {
 
         <StaffInviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} teams={teams ?? []} allowedTypes={inviteTypes} />
         <PendingStaffInvites teamIds={(teams ?? []).map((t) => t.id)} />
+        {clubId && <CoordinatorsPanel clubId={clubId} teams={teams ?? []} />}
 
         {/* Active Coaches */}
         <Card>
@@ -276,6 +280,13 @@ export default function Coaches() {
                         />
                         Ver todas as equipas
                       </label>
+                      {!coordinatorIds.has(coach.coach_id) && (
+                        <Button variant="ghost" size="sm" className="text-xs" onClick={async () => {
+                          const { error } = await supabase.rpc('set_staff_role' as never, { _club: clubId, _user: coach.coach_id, _role: 'coordenador' } as never);
+                          if (error) toast.error(error.message);
+                          else { toast.success('Passa a coordenador. Defina a área em Coordenadores.'); queryClient.invalidateQueries({ queryKey: ['club-coordinators'] }); }
+                        }}>Tornar coordenador</Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

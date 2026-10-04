@@ -25,6 +25,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { shareText } from '@/lib/share';
 import { addDays, findClashes, fixturesText, hhmm, timetableText, weekStart, WEEKDAYS, type MapMatch, type MatchLogistics, type TrainingSlot } from '@/lib/club-map';
 import { cn } from '@/lib/utils';
+import { useClubCoordinators } from '@/components/club/CoordinatorsPanel';
 
 interface Team { id: string; name: string; category: string | null }
 
@@ -39,6 +40,10 @@ export default function ClubMap() {
   const { clubId, isClubAdmin, staffRole, loading: roleLoading } = useUserRole();
   const qc = useQueryClient();
   const canEdit = !clubId || isClubAdmin || staffRole === 'coordenador';
+  const { data: coordinators = [] } = useClubCoordinators(clubId);
+  const myArea = coordinators.find((c) => c.user_id === user?.id)?.team_ids ?? [];
+  // a coordinator with an area edits only the teams of that area (the database enforces it too)
+  const canEditTeam = (teamId: string) => !clubId || isClubAdmin || (staffRole === 'coordenador' && (myArea.length === 0 || myArea.includes(teamId)));
   const [week, setWeek] = useState(() => weekStart(new Date()));
   const [slotForm, setSlotForm] = useState<Partial<TrainingSlot> & { days?: number[] } | null>(null);
   const [matchForm, setMatchForm] = useState<MatchDraft | null>(null);
@@ -65,6 +70,7 @@ export default function ClubMap() {
   });
   const teamIds = useMemo(() => teams.map((t) => t.id), [teams]);
   const teamName = (id: string) => teams.find((t) => t.id === id)?.name ?? '—';
+  const editableTeams = teams.filter((t) => canEditTeam(t.id));
   const tone = (id: string) => TEAM_TONES[Math.max(0, teamIds.indexOf(id)) % TEAM_TONES.length];
 
   const { data: slots = [] } = useQuery({
@@ -148,6 +154,17 @@ export default function ClubMap() {
           icon={<CalendarDays className="w-6 h-6 text-primary" />}
         />
 
+        {coordinators.length > 0 && (
+          <div className="flex flex-wrap gap-2 text-xs">
+            {coordinators.map((c) => (
+              <span key={c.user_id} className="rounded-md border bg-card px-2 py-1">
+                <b>{c.area || 'Coordenação'}</b> · {c.name}
+                <span className="text-muted-foreground"> — {c.team_ids.length ? c.team_ids.map(teamName).join(', ') : 'todas as equipas'}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {teams.length === 0 ? (
           <Card><CardContent className="py-10 text-center text-muted-foreground">Ainda não há equipas. Crie as equipas primeiro.</CardContent></Card>
         ) : (
@@ -168,7 +185,7 @@ export default function ClubMap() {
                 {!isThisWeek && <Button size="sm" variant="ghost" onClick={() => setWeek(weekStart(new Date()))}>Esta semana</Button>}
                 <div className="ml-auto flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => shareText(fixturesText(clubName, week, matches), 'Jogos da semana')}><Share2 className="mr-1.5 h-4 w-4" />Partilhar</Button>
-                  {canEdit && <Button size="sm" onClick={() => setMatchForm(newMatchDraft(teams[0].id, addDays(week, 5)))}><Plus className="mr-1.5 h-4 w-4" />Marcar jogo</Button>}
+                  {canEdit && <Button size="sm" onClick={() => setMatchForm(newMatchDraft((editableTeams[0] ?? teams[0]).id, addDays(week, 5)))}><Plus className="mr-1.5 h-4 w-4" />Marcar jogo</Button>}
                 </div>
               </div>
 
@@ -200,7 +217,7 @@ export default function ClubMap() {
                               {l.info && <p className="mt-0.5 text-xs">{l.info}</p>}
                             </div>
                             {done && <span className="font-mono text-lg font-bold">{m.goals_for ?? 0}–{m.goals_against ?? 0}</span>}
-                            {canEdit && !done && (
+                            {canEditTeam(m.team_id) && !done && (
                               <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setMatchForm(draftFromMatch(m))} aria-label="Editar jogo"><Pencil className="h-4 w-4" /></Button>
                             )}
                           </div>
@@ -222,7 +239,7 @@ export default function ClubMap() {
                 )}
                 <div className="ml-auto flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => shareText(timetableText(clubName, slots, teamName), 'Mapa de treinos')}><Share2 className="mr-1.5 h-4 w-4" />Partilhar</Button>
-                  {canEdit && <Button size="sm" onClick={() => setSlotForm({ team_id: teams[0].id, days: [], start_time: '18:30', end_time: '20:00', location: '' })}><Plus className="mr-1.5 h-4 w-4" />Horário de treino</Button>}
+                  {canEdit && <Button size="sm" onClick={() => setSlotForm({ team_id: (editableTeams[0] ?? teams[0]).id, days: [], start_time: '18:30', end_time: '20:00', location: '' })}><Plus className="mr-1.5 h-4 w-4" />Horário de treino</Button>}
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
@@ -237,9 +254,9 @@ export default function ClubMap() {
                           <button
                             key={s.id}
                             type="button"
-                            disabled={!canEdit}
+                            disabled={!canEditTeam(s.team_id)}
                             onClick={() => setSlotForm({ ...s, start_time: hhmm(s.start_time), end_time: hhmm(s.end_time) })}
-                            className={cn('w-full rounded-md border p-2 text-left text-xs', tone(s.team_id), clashes.has(s.id) && 'ring-2 ring-red-500', canEdit && 'hover:brightness-95')}
+                            className={cn('w-full rounded-md border p-2 text-left text-xs', tone(s.team_id), clashes.has(s.id) && 'ring-2 ring-red-500', canEditTeam(s.team_id) && 'hover:brightness-95')}
                           >
                             <p className="font-mono font-semibold">{hhmm(s.start_time)}–{hhmm(s.end_time)}</p>
                             <p className="text-sm font-semibold">{teamName(s.team_id)}</p>
@@ -271,7 +288,7 @@ export default function ClubMap() {
                 <Label>Equipa</Label>
                 <Select value={slotForm.team_id} onValueChange={(v) => setSlotForm({ ...slotForm, team_id: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{editableTeams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
@@ -318,7 +335,7 @@ export default function ClubMap() {
                   <Label>Equipa</Label>
                   <Select value={matchForm.team_id} onValueChange={(v) => setMatchForm({ ...matchForm, team_id: v })} disabled={!!matchForm.id}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{editableTeams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">

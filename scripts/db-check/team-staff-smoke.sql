@@ -182,3 +182,37 @@ DO $$ BEGIN
 END $$;
 
 SELECT 'CLUB MAP SMOKE OK' AS result;
+
+-- 8. Several coordinators, each with an area: a coordinator only manages their teams
+INSERT INTO auth.users (id, email) VALUES ('a0000000-0000-0000-0000-000000000006', 'coord2@clube.pt');
+INSERT INTO public.profiles (id, email, full_name, username) VALUES ('a0000000-0000-0000-0000-000000000006', 'coord2@clube.pt', 'Coord Seniores', 'coord2') ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.teams (id, name, owner_id, club_id, sport_type) VALUES
+  ('b0000000-0000-0000-0000-000000000002', 'Seniores', 'a0000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'football_11');
+SET ROLE authenticated;
+-- the admin makes user 6 a coordinator for the Seniores only
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+SELECT public.set_staff_role('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000006', 'coordenador');
+SELECT public.set_coordinator_scope('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000006', 'Seniores', ARRAY['b0000000-0000-0000-0000-000000000002']::uuid[]);
+-- a coordinator cannot set areas
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000005', false);
+DO $$ BEGIN
+  PERFORM public.set_coordinator_scope('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000006', 'x', NULL);
+  RAISE EXCEPTION 'FAIL: coordinator changed another coordinator area';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: only the admin sets areas';
+END $$;
+-- the Seniores coordinator manages the Seniores, not the Sub-13
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000006', false);
+INSERT INTO public.team_training_slots (team_id, weekday, start_time, end_time, location) VALUES ('b0000000-0000-0000-0000-000000000002', 4, '20:00', '21:30', 'Campo 1');
+DO $$ BEGIN
+  INSERT INTO public.team_training_slots (team_id, weekday, start_time, end_time) VALUES ('b0000000-0000-0000-0000-000000000001', 5, '18:00', '19:00');
+  RAISE EXCEPTION 'FAIL: area coordinator wrote another team timetable';
+EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'ok: coordinator limited to their teams';
+END $$;
+DO $$ BEGIN
+  IF (SELECT count(*) FROM public.get_club_coordinators('c0000000-0000-0000-0000-000000000001')) <> 2 THEN RAISE EXCEPTION 'FAIL: get_club_coordinators'; END IF;
+  -- still sees the whole club map (read)
+  IF (SELECT count(*) FROM public.team_training_slots) <> 2 THEN RAISE EXCEPTION 'FAIL: coordinator cannot read the whole map'; END IF;
+END $$;
+RESET ROLE;
+
+SELECT 'COORDINATORS SMOKE OK' AS result;

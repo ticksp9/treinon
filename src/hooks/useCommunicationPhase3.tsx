@@ -426,8 +426,9 @@ export function useGuardianCallups(playerIds: string[]) {
       if (!playerIds.length) return [];
       const { data, error } = await supabase
         .from('match_lineups')
-        .select('player_id, match_id, matches(id, match_date, opponent_name, is_home, location, competition, status, team_id)')
+        .select('player_id, match_id, matches!inner(id, match_date, opponent_name, is_home, location, competition, status, team_id)')
         .in('player_id', playerIds)
+        .eq('matches.is_deleted', false)
         .order('match_id', { ascending: false });
       if (error) throw error;
       

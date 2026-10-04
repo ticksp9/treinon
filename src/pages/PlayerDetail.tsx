@@ -134,7 +134,8 @@ export default function PlayerDetail() {
       let matchesQuery = supabase
         .from('matches')
         .select('id, goals_against')
-        .eq('is_deleted', false);
+        .eq('is_deleted', false)
+        .eq('is_test', false);
       if (selectedSeasonId) matchesQuery = matchesQuery.eq('season_id', selectedSeasonId);
       const { data: seasonMatches, error: matchesError } = await matchesQuery;
       if (matchesError) throw matchesError;
@@ -142,24 +143,20 @@ export default function PlayerDetail() {
 
       let lineupQuery = supabase
         .from('match_lineups')
-        .select('minutes_played, is_starter, match_id')
-        .eq('player_id', id!);
-      if (selectedSeasonId) {
-        if (matchIds.length === 0) lineupQuery = lineupQuery.eq('match_id', '00000000-0000-0000-0000-000000000000');
-        else lineupQuery = lineupQuery.in('match_id', matchIds);
-      }
+        // only counted matches: not deleted, not test (filtered on the parent match row)
+        .select('minutes_played, is_starter, match_id, match:matches!inner(season_id, is_deleted, is_test)')
+        .eq('player_id', id!)
+        .eq('match.is_deleted', false).eq('match.is_test', false);
+      if (selectedSeasonId) lineupQuery = lineupQuery.eq('match.season_id', selectedSeasonId);
       const { data: lineups, error: lineupsError } = await lineupQuery;
       if (lineupsError) throw lineupsError;
 
       let eventsQuery = supabase
         .from('match_events')
-        .select('event_type')
-        .eq('player_id', id!);
-      if (selectedSeasonId) {
-        eventsQuery = matchIds.length > 0
-          ? eventsQuery.in('match_id', matchIds)
-          : eventsQuery.eq('match_id', '00000000-0000-0000-0000-000000000000');
-      }
+        .select('event_type, match:matches!inner(season_id, is_deleted, is_test)')
+        .eq('player_id', id!)
+        .eq('match.is_deleted', false).eq('match.is_test', false);
+      if (selectedSeasonId) eventsQuery = eventsQuery.eq('match.season_id', selectedSeasonId);
       const { data: events, error: eventsError } = await eventsQuery;
       if (eventsError) throw eventsError;
 
@@ -189,13 +186,10 @@ export default function PlayerDetail() {
       // Get assists (where player is assist_player)
       let assistQuery = supabase
         .from('match_events')
-        .select('id')
-        .eq('assist_player_id', id!);
-      if (selectedSeasonId) {
-        assistQuery = matchIds.length > 0
-          ? assistQuery.in('match_id', matchIds)
-          : assistQuery.eq('match_id', '00000000-0000-0000-0000-000000000000');
-      }
+        .select('id, match:matches!inner(season_id, is_deleted, is_test)')
+        .eq('assist_player_id', id!)
+        .eq('match.is_deleted', false).eq('match.is_test', false);
+      if (selectedSeasonId) assistQuery = assistQuery.eq('match.season_id', selectedSeasonId);
       const { data: assists, error: assistsError } = await assistQuery;
       if (assistsError) throw assistsError;
 
