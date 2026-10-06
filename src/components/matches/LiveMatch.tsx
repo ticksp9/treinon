@@ -9,8 +9,7 @@ import { toast } from 'sonner';
 import {
   Play, Pause, Square, ArrowLeft,
   UserMinus, RotateCcw,
-  Clock, Pencil, AlertTriangle, Share2
-} from 'lucide-react';
+  Clock, Pencil, AlertTriangle, Share2, PenTool } from 'lucide-react';
 import { shareText } from '@/lib/share';
 import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
 import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics } from '@/lib/live-tactics';
@@ -22,6 +21,8 @@ import { isSportAllowed } from '@/lib/sport-scope';
 import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '@/lib/team-selection';
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
+import { TacticBoard } from '@/components/board/TacticBoard';
+import { emptyBoard, placeFormation } from '@/lib/tactic-board';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -1244,6 +1245,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const pitchTacticsKey = pitchTactics ? JSON.stringify(pitchTactics) : '';
   // Ability (last evaluation) + form (last match ratings), FM style — shown before kick-off
   const { scope: sportScope } = useSportScope();
+  const [boardOpen, setBoardOpen] = useState(false);
   const { data: squadProfiles } = useSquadProfiles(lineups.map(l => l.player_id));
   const pitchPlayers = new Map<string, PitchPlayerInfo>(lineups.map(l => {
     const mine = events.filter(e => e.player_id === l.player_id && !e.is_opponent);
@@ -1671,6 +1673,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         {/* Interval Phase */}
         {phase === 'interval' && (
           <>
+            <Button variant="outline" size="lg" className="w-full h-12" onClick={() => setBoardOpen(true)}>
+              <PenTool className="w-5 h-5 mr-2" />
+              Quadro tático para a palestra
+            </Button>
             {isMobile && (
               <div className="flex justify-center py-3">
                 <Button onClick={handleStartNextPart} size="lg" className="w-full max-w-sm h-14 text-lg">
@@ -1710,12 +1716,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             )}
 
             {/* View switch: pitch (Football Manager style) or list */}
-            <div className="grid grid-cols-2 gap-1 rounded-md border bg-muted/40 p-1">
+            <div className="grid grid-cols-3 gap-1 rounded-md border bg-muted/40 p-1">
               {(['pitch', 'list'] as const).map(v => (
                 <Button key={v} type="button" size="sm" variant={liveView === v ? 'default' : 'ghost'} onClick={() => setLiveView(v)}>
                   {v === 'pitch' ? 'Campo' : 'Lista'}
                 </Button>
               ))}
+              <Button type="button" size="sm" variant="ghost" onClick={() => setBoardOpen(true)}>
+                <PenTool className="w-4 h-4 mr-1" />Quadro
+              </Button>
             </div>
 
             {liveView === 'pitch' && pitchTactics && matchSport && (
@@ -1982,6 +1991,19 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       )}
 
       {/* Match Config Modal */}
+      {boardOpen && matchSport && (
+        <TacticBoard
+          startFull
+          teamId={teamId}
+          initial={pitchTactics
+            ? placeFormation(emptyBoard(matchSport), 'home', pitchTactics.formation,
+                starters.map(l => ({ id: l.player_id, name: l.player?.name ?? '', number: l.player?.number, position: l.player?.position })), pitchTactics.slots)
+            : emptyBoard(matchSport)}
+          players={starters.map(l => ({ id: l.player_id, name: l.player?.name ?? '', number: l.player?.number, position: l.player?.position }))}
+          slotMap={pitchTactics?.slots}
+          onClose={() => setBoardOpen(false)}
+        />
+      )}
       <MatchConfigModal
         open={configModalOpen}
         onOpenChange={setConfigModalOpen}
