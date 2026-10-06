@@ -9,7 +9,7 @@ interface UseMatchTimerProps {
 export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTimerProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
   const pausedAtRef = useRef<number>(0);
@@ -95,10 +95,10 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       pausedAtRef.current = fromSeconds;
       setElapsedSeconds(fromSeconds);
     }
-    
+
     startTimeRef.current = Date.now() - (pausedAtRef.current * 1000);
     setIsRunning(true);
-    
+
     intervalRef.current = setInterval(() => {
       if (startTimeRef.current) {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -157,13 +157,16 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       // Timer was running - calculate elapsed from the actual start timestamp
       // savedStartTime is when the current part started, so elapsed = now - startTime
       const elapsed = Math.floor((Date.now() - savedStartTime) / 1000);
-      
+
       // Ensure we don't go negative and cap at a reasonable value
       const validElapsed = Math.max(0, elapsed);
-      
+
       pausedAtRef.current = validElapsed;
       setElapsedSeconds(validElapsed);
       startTimer(validElapsed);
+      // keep the real start of the part: re-deriving it from whole seconds would
+      // shift the clock a little every time the match screen is reopened
+      startTimeRef.current = Math.min(savedStartTime, Date.now());
     } else {
       // Timer was paused - use the saved seconds directly
       pausedAtRef.current = savedSeconds;

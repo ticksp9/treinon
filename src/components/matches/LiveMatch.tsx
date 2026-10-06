@@ -23,6 +23,7 @@ import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
 import { TacticBoard } from '@/components/board/TacticBoard';
 import { emptyBoard, placeFormation } from '@/lib/tactic-board';
+import { clearLiveClock, readLiveClock, writeLiveClock } from '@/lib/live-clock';
 import { LineupSelector } from './LineupSelector';
 import { MatchEvents } from './MatchEvents';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
@@ -219,9 +220,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     return () => {
       console.log('[LiveMatch] Component unmounting, saving state...');
       stopAutoSave();
-      // Save state on unmount if game is active
+      // Save state on unmount if game is active. Through the ref: this cleanup was
+      // created on the first render, when the match was still in "setup".
       if (isGameActiveRef.current) {
-        saveCurrentState();
+        saveCurrentStateRef.current();
       }
     };
   }, [matchId]);
@@ -245,13 +247,33 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         return;
       }
 
+      // The clock copy saved on this device. It also covers the case where the server
+      // still says "scheduled" (start not synced yet on a bad network): the match must
+      // never go back to the setup screen and start counting again.
+      const clock = readLiveClock();
+      const myClock = clock && clock.matchId === matchId ? clock : null;
+
       // If match is in_progress, MUST restore state and skip setup
-      if (match.status === 'in_progress') {
+      if (match.status === 'in_progress' || myClock) {
         hasRestoredRef.current = true;
         isGameActiveRef.current = true;
+        if (match.status !== 'in_progress') updateMatchRecord({ status: 'in_progress' });
 
         // Try to restore from local storage first (offline-first)
-        const localState = await liveState.loadLocal();
+        let localState = await liveState.loadLocal();
+        if (myClock && (!localState || myClock.lastSavedAt > (localState.lastSavedAt || 0))) {
+          // the synchronous copy is newer (the coach left the screen before the full save ended)
+          localState = {
+            ...(localState ?? { matchId, partsCount, partDurationMinutes, matchType, starterIds: [], benchIds: [], onFieldIds: [] }),
+            phase: myClock.phase,
+            currentPart: myClock.currentPart,
+            partElapsedSeconds: myClock.partElapsedSeconds,
+            partStartedAtMs: myClock.partStartedAtMs,
+            isTimerRunning: myClock.isTimerRunning,
+            partElapsedBeforePause: myClock.isTimerRunning ? 0 : (myClock.partElapsedSeconds[myClock.currentPart - 1] || 0),
+            lastSavedAt: myClock.lastSavedAt,
+          } as LiveMatchMinimalState;
+        }
 
         if (localState && localState.phase !== 'setup' && localState.currentPart > 0) {
           console.log('[LiveMatch] Restoring from LOCAL state:', {
@@ -350,8 +372,12 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         timer.restoreTimer(savedElapsed, null);
       }
 
-      startAutoSave();
+    } else if (restoredPhase === 'interval') {
+      // show the time of the part that just ended
+      timer.restoreTimer(restoredPartElapsed[restoredPart - 1] || 0, null);
     }
+    // interval too: substitutions made at half-time must be saved
+    startAutoSave();
 
     console.log('[LiveMatch] State restoration complete:', {
       phase: restoredPhase,
@@ -372,7 +398,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     // Calculate current part elapsed
     const currentPartElapsed = [...partElapsedSeconds];
     const exactElapsed = timer.getExactElapsedSeconds();
-    if (currentPart > 0) {
+    // only while the part is being played: at the interval the part already has its
+    // final time, and after reopening the screen the timer is at 0 — it must not erase it
+    if (currentPart > 0 && phase === 'playing') {
       currentPartElapsed[currentPart - 1] = exactElapsed;
     }
 
@@ -401,6 +429,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
     const state = buildCurrentState();
 
+    // synchronous copy of the clock first: survives leaving the screen / iOS suspending the app
+    writeLiveClock({
+      matchId, teamId, opponent: match?.opponent_name,
+      phase: state.phase, currentPart: state.currentPart, partElapsedSeconds: state.partElapsedSeconds,
+      partStartedAtMs: state.partStartedAtMs, isTimerRunning: state.isTimerRunning, lastSavedAt: Date.now(),
+    });
+
     setSyncStatus('saving');
     // Always save locally first (offline-first)
     await liveState.saveLocal(state);
@@ -408,7 +443,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     // Sync to backend if online (state is also kept locally, so a failure is recoverable)
     const synced = isOnline ? await liveState.syncToBackend(state) : false;
     setSyncStatus(synced ? 'saved' : 'pending');
-  }, [buildCurrentState, liveState, isOnline, phase]);
+  }, [buildCurrentState, liveState, isOnline, phase, matchId, teamId, match?.opponent_name]);
 
   // Always point the auto-save at the latest state. Without this the interval kept
   // saving the snapshot from when it was started (old lineup after substitutions),
@@ -812,6 +847,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   };
 
   const handleStartNextPart = async () => {
+    // check the lineup BEFORE touching the clock: stopping here afterwards left the
+    // match "playing" with the timer stopped at 00:00
+    const startersNow = lineups.filter(l => l.is_starter);
+    const starterValidation = validateStarterCount(startersNow.length, matchSport);
+    if (!starterValidation.allowed) {
+      toast.error(starterValidation.reason || 'Escalação inválida');
+      return;
+    }
+
     const nextPart = currentPart + 1;
     timer.resetTimer();
 
@@ -831,12 +875,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const nextPartStarters = { ...previousPartStarters, [String(nextPart)]: onFieldPlayerIds };
     const regulationPartMinutes = buildRegulationPartMinutes(Math.max(partsCount, nextPart));
     regulationPartMinutes[nextPart - 1] = regulationPartMinutes[nextPart - 1] ?? partDurationMinutes;
-
-    const starterValidation = validateStarterCount(currentStarters.length, matchSport);
-    if (!starterValidation.allowed) {
-      toast.error(starterValidation.reason || 'Escalação inválida');
-      return;
-    }
 
     await updateMatchRecord({
         match_phase: 'playing',
@@ -927,6 +965,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
       // Clear local state
       await liveState.clearLocal();
+      clearLiveClock(matchId);
 
       setPhase('finished');
       stopAutoSave();

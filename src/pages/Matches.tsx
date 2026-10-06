@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -150,6 +150,18 @@ export default function Matches() {
       console.error('Error fetching matches:', error);
     }
   };
+
+  // "Voltar ao jogo" (bar shown on the other screens): reopen the live match directly
+  const liveParam = searchParams.get('live');
+  const openedLiveRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!liveParam || openedLiveRef.current === liveParam) return;
+    const m = matches.find(x => x.id === liveParam);
+    if (!m) return;
+    openedLiveRef.current = liveParam;
+    setSelectedMatch({ ...m, _isResume: true } as any);
+    setActiveTab('live');
+  }, [liveParam, matches]);
 
   // Find in-progress match (only status = 'in_progress' counts as "a decorrer")
   const inProgressMatch = matches.find(m => m.status === 'in_progress');
