@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { MessageCircle } from 'lucide-react';
+import { announcementText, openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 
 interface CreateAnnouncementDialogProps {
   clubId: string | null;
@@ -35,6 +37,7 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
   const [targetType, setTargetType] = useState('channel');
   const [channelId, setChannelId] = useState('');
   const [targetValue, setTargetValue] = useState('');
+  const [byEmail, setByEmail] = useState(true);
 
   // Only show scopes allowed for this profile
   const allowedScopes = ctx ? getAnnouncementScopes(ctx) : [];
@@ -44,6 +47,11 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
       toast.error('Título e conteúdo são obrigatórios');
       return;
     }
+    if (targetType === 'channel' && !channelId) {
+      toast.error(channels.length ? 'Escolha o grupo que vai receber o anúncio' : 'Crie primeiro um grupo (ex.: Pais Sub-13) para ter a quem enviar');
+      return;
+    }
+    const emailIt = byEmail && targetType === 'channel';
     createAnnouncement.mutate(
       {
         title: title.trim(),
@@ -54,8 +62,10 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
         target_value: targetType !== 'channel' ? targetValue || undefined : undefined,
       },
       {
-        onSuccess: () => {
-          toast.success('Anúncio enviado com sucesso');
+        onSuccess: (created) => {
+          toast.success('Anúncio publicado no grupo');
+          // the app alone reaches nobody who does not open it
+          if (emailIt && created?.id) sendNotice({ kind: 'announcement', announcement_id: created.id }).then(toastNotice);
           setTitle('');
           setContent('');
           setIsImportant(false);
@@ -128,7 +138,26 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
               <Input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Especificar..." />
             </div>
           )}
-          <div className="flex justify-end gap-2">
+          {targetType === 'channel' && (
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Switch checked={byEmail} onCheckedChange={setByEmail} className="mt-0.5" />
+              <div>
+                <Label className="cursor-pointer">Avisar também por email</Label>
+                <p className="text-xs text-muted-foreground">Vai para quem está no grupo e para os emails dos pais que estão na ficha dos jogadores, mesmo que ainda não tenham conta.</p>
+              </div>
+            </div>
+          )}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-auto"
+              disabled={!title.trim() || !content.trim()}
+              onClick={() => openWhatsApp(announcementText({ title, content, priority: isImportant ? 'important' : 'normal' }))}
+              title="Abre o WhatsApp com o texto escrito; escolha o grupo dos pais"
+            >
+              <MessageCircle className="mr-1.5 h-4 w-4" />WhatsApp
+            </Button>
             <Button variant="outline" onClick={onClose}>Cancelar</Button>
             <Button onClick={handleSubmit} disabled={createAnnouncement.isPending}>
               {createAnnouncement.isPending ? 'A enviar...' : 'Enviar Anúncio'}

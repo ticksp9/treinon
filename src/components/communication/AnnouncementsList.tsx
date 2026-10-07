@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Megaphone, CheckCircle2, Eye, Clock, AlertTriangle, Loader2, Shield, Users } from 'lucide-react';
+import { Megaphone, CheckCircle2, Eye, Clock, AlertTriangle, Loader2, Shield, Users, Mail, MessageCircle } from 'lucide-react';
+import { announcementText, openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -39,6 +40,12 @@ export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
   const { data: announcements = [], isLoading } = useAnnouncements(clubId, userId ?? (!clubId ? user?.id : null));
   const markRead = useMarkAnnouncementRead();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [emailing, setEmailing] = useState<string | null>(null);
+  const emailAgain = async (id: string) => {
+    setEmailing(id);
+    toastNotice(await sendNotice({ kind: 'announcement', announcement_id: id }));
+    setEmailing(null);
+  };
 
   const senderIds = useMemo(() => announcements.map(a => a.created_by), [announcements]);
   const { data: senderNames } = useSenderProfiles(senderIds);
@@ -98,16 +105,32 @@ export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
                     }`}>
                       <PriorityIcon className="h-5 w-5" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h4 className="font-semibold text-sm truncate">{a.title}</h4>
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{a.content}</p>
                         </div>
-                        <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex shrink-0 items-center">
+                          {a.created_by === user?.id && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Partilhar no WhatsApp" title="Partilhar no WhatsApp"
+                                onClick={(e) => { e.stopPropagation(); openWhatsApp(announcementText(a)); }}>
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                              {a.channel_id && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Enviar por email" title="Enviar (de novo) por email" disabled={emailing === a.id}
+                                  onClick={(e) => { e.stopPropagation(); emailAgain(a.id); }}>
+                                  {emailing === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         {senderName && (

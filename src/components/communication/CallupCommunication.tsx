@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Send, Users, CheckCircle2, XCircle, Clock, AlertTriangle, Bell, Loader2 } from 'lucide-react';
+import { Trophy, Send, Users, CheckCircle2, XCircle, Clock, AlertTriangle, Bell, Loader2, Mail, MessageCircle } from 'lucide-react';
+import { callupText, openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -48,6 +49,16 @@ export function CallupCommunication({
   const [notifyAudience, setNotifyAudience] = useState('convocados');
   const [notifyType, setNotifyType] = useState('callup_published');
   const [notifyMessage, setNotifyMessage] = useState('');
+  const [emailing, setEmailing] = useState(false);
+  const calledUp = playerIds.map(id => playerNames[id]).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt'));
+  /** email to the parents of the called-up players (accounts and emails on the player record) */
+  const emailParents = async (message?: string) => {
+    if (playerIds.length === 0) return toast.error('Sem jogadores convocados');
+    setEmailing(true);
+    toastNotice(await sendNotice({ kind: 'callup', match_id: matchId, player_ids: playerIds, message: message || undefined }));
+    setEmailing(false);
+  };
+  const shareWhatsApp = (message?: string) => openWhatsApp(callupText({ opponent: opponentName, date: matchDate, players: calledUp, message }));
 
   const confirmed = confirmations.filter(c => c.status === 'confirmed');
   const declined = confirmations.filter(c => c.status === 'declined');
@@ -67,6 +78,8 @@ export function CallupCommunication({
   };
 
   const handleSendNotification = () => {
+    // the email goes out even if the in-app record cannot be saved
+    emailParents(notifyMessage);
     sendNotification.mutate({
       matchId,
       clubId,
@@ -76,11 +89,10 @@ export function CallupCommunication({
       message: notifyMessage || undefined,
     }, {
       onSuccess: () => {
-        toast.success('Notificação enviada');
         setNotifyDialogOpen(false);
         setNotifyMessage('');
       },
-      onError: () => toast.error('Erro ao enviar'),
+      onError: () => setNotifyDialogOpen(false),
     });
   };
 
@@ -160,8 +172,14 @@ export function CallupCommunication({
           {/* Actions */}
           {canManage && (
             <div className="flex gap-2 mt-3 flex-wrap">
+              <Button size="sm" onClick={() => emailParents()} disabled={emailing}>
+                {emailing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />} Enviar convocatória por email
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => shareWhatsApp()}>
+                <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+              </Button>
               <Button size="sm" variant="outline" onClick={() => setNotifyDialogOpen(true)}>
-                <Bell className="h-3 w-3 mr-1" /> Enviar Notificação
+                <Bell className="h-3 w-3 mr-1" /> Com mensagem
               </Button>
               {pending.length > 0 && (
                 <Button
@@ -212,8 +230,8 @@ export function CallupCommunication({
       <Dialog open={notifyDialogOpen} onOpenChange={setNotifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar Notificação</DialogTitle>
-            <DialogDescription>Notificar sobre a convocatória para {opponentName}</DialogDescription>
+            <DialogTitle>Enviar convocatória</DialogTitle>
+            <DialogDescription>Vai por email para os pais dos convocados do jogo contra {opponentName}, com a sua mensagem.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -252,6 +270,9 @@ export function CallupCommunication({
             </div>
           </div>
           <DialogFooter>
+            <Button variant="outline" className="sm:mr-auto" onClick={() => shareWhatsApp(notifyMessage)}>
+              <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+            </Button>
             <Button variant="outline" onClick={() => setNotifyDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSendNotification} disabled={sendNotification.isPending}>
               {sendNotification.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}

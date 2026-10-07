@@ -303,7 +303,7 @@ export function useCreateAnnouncement(clubId: string | null) {
       target_value?: string;
     }) => {
       if (!user) throw new Error('Missing context');
-      const { error } = await supabase
+      const { data: created, error } = await supabase
         .from('communication_announcements')
         .insert({
           club_id: clubId || null,
@@ -314,8 +314,11 @@ export function useCreateAnnouncement(clubId: string | null) {
           channel_id: data.channel_id || null,
           target_type: data.target_type || 'channel',
           target_value: data.target_value || null,
-        });
+        })
+        .select('id')
+        .single();
       if (error) throw error;
+      return created as { id: string };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['communication-announcements'] });

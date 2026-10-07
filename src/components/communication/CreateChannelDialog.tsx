@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { useCreateChannel } from '@/hooks/useCommunication';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,7 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
   const [targetRole, setTargetRole] = useState('');
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [visibilityScope, setVisibilityScope] = useState('team_based');
-  const [allowGuardians, setAllowGuardians] = useState(false);
+  const [allowGuardians, setAllowGuardians] = useState(defaultType === 'team');
   const [allowPlayers, setAllowPlayers] = useState(false);
   const [allowCoaches, setAllowCoaches] = useState(true);
   const [allowStaff, setAllowStaff] = useState(false);
@@ -86,6 +87,13 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
     },
     enabled: open && !!user,
   });
+
+  // a coach with one team should not have to pick it; with several, the active one comes first
+  const { activeTeamId } = useActiveTeam();
+  useEffect(() => {
+    if (!open || selectedTeamId || teams.length === 0 || !['team', 'official_team'].includes(channelType)) return;
+    setSelectedTeamId((teams.find((t) => t.id === activeTeamId) ?? teams[0]).id);
+  }, [open, teams, channelType, selectedTeamId, activeTeamId]);
 
   const handleTypeChange = (type: string) => {
     setChannelType(type);
@@ -130,6 +138,8 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
       case 'official_team':
         setVisibilityScope('team_based');
         setAllowCoaches(true);
+        // a team group is mostly to talk to the parents
+        setAllowGuardians(true);
         break;
       case 'age_group':
         setVisibilityScope('age_group_based');
@@ -190,7 +200,7 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
     setSelectedTeamId('');
     setChannelType(defaultType);
     setVisibilityScope('team_based');
-    setAllowGuardians(false);
+    setAllowGuardians(defaultType === 'team');
     setAllowPlayers(false);
     setAllowCoaches(true);
     setAllowStaff(false);
@@ -292,7 +302,12 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
           </div>
 
           <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Acesso por Função</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quem entra no grupo</Label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedTeamId
+                ? 'As pessoas da equipa escolhida entram sozinhas, agora e sempre que alguém novo se juntar (convite aceite, pai associado a um jogador).'
+                : 'Escolha uma equipa para as pessoas entrarem sozinhas; sem equipa, o grupo fica só consigo.'}
+            </p>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-normal">Treinadores</Label>

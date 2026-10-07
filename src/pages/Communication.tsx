@@ -45,6 +45,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
+/**
+ * Reminders and automations only store a row: nothing sends them at the set time.
+ * Hidden until there is a real sender behind them, so nobody counts on a warning that never arrives.
+ */
+const SHOW_UNSENT_FEATURES = false;
+
 export default function Communication() {
   const { user } = useAuth();
   const { ctx, loading: ctxLoading } = useAccessContext();
@@ -270,10 +276,12 @@ export default function Communication() {
               <ClipboardCheck className="h-4 w-4" />
               <span className="hidden sm:inline">Presenças</span>
             </TabsTrigger>
-            <TabsTrigger value="reminders" className="flex items-center gap-1.5">
-              <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Lembretes</span>
-            </TabsTrigger>
+            {SHOW_UNSENT_FEATURES && (
+              <TabsTrigger value="reminders" className="flex items-center gap-1.5">
+                <Bell className="h-4 w-4" />
+                <span className="hidden sm:inline">Lembretes</span>
+              </TabsTrigger>
+            )}
             {showInvites && (
               <TabsTrigger value="invites" className="flex items-center gap-1.5">
                 <Send className="h-4 w-4" />
@@ -286,7 +294,7 @@ export default function Communication() {
                 <span className="hidden sm:inline">Modelos</span>
               </TabsTrigger>
             )}
-            {showAutomations && (
+            {SHOW_UNSENT_FEATURES && showAutomations && (
               <TabsTrigger value="automations" className="flex items-center gap-1.5">
                 <Zap className="h-4 w-4" />
                 <span className="hidden sm:inline">Automações</span>
@@ -377,7 +385,7 @@ export default function Communication() {
             </TabsContent>
           )}
 
-          {showAutomations && (
+          {SHOW_UNSENT_FEATURES && showAutomations && (
             <TabsContent value="automations">
               <AutomationsTab clubId={clubId} userId={coachUserId} />
             </TabsContent>
