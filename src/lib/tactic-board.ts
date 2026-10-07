@@ -228,6 +228,40 @@ export function drawingAt(state: BoardState, step: number, p: [number, number], 
   return null;
 }
 
+/**
+ * The board the coach left on this device: it stays until "Limpar tudo".
+ * `sig` says who was on the pitch; if that changed meanwhile (substitution, other XI),
+ * the drawings, the opponent and the ball are kept and only my players are refreshed.
+ */
+export interface BoardDraft { state: BoardState; sig?: string; loaded?: { id: string; name: string } | null }
+const DRAFT_KEY = (key: string) => `treinon_board_${key}`;
+
+export function saveBoardDraft(key: string, draft: BoardDraft): void {
+  try { localStorage.setItem(DRAFT_KEY(key), JSON.stringify(draft)); } catch { /* private mode / full */ }
+}
+export function clearBoardDraft(key: string): void {
+  try { localStorage.removeItem(DRAFT_KEY(key)); } catch { /* ignore */ }
+}
+export function loadBoardDraft(key: string, initial: BoardState, sig?: string): { state: BoardState; loaded: { id: string; name: string } | null } | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY(key));
+    if (!raw) return null;
+    const d = JSON.parse(raw) as BoardDraft;
+    if (!d?.state) return null;
+    let state = normalizeBoard(d.state, initial.sport);
+    if ((d.sig ?? '') !== (sig ?? '')) {
+      const home = initial.tokens.filter((t) => t.kind === 'home');
+      const tokens = [...state.tokens.filter((t) => t.kind !== 'home'), ...home];
+      const ids = new Set(tokens.map((t) => t.id));
+      state = {
+        ...state, sport: initial.sport, tokens, homeFormation: initial.homeFormation,
+        steps: state.steps.map((s) => Object.fromEntries(Object.entries(s).filter(([k]) => ids.has(k)))),
+      };
+    }
+    return { state, loaded: d.loaded && typeof d.loaded.id === 'string' ? d.loaded : null };
+  } catch { return null; }
+}
+
 /** Saved boards must survive old/partial data. */
 export function normalizeBoard(raw: unknown, fallbackSport: string): BoardState {
   const r = (raw ?? {}) as Partial<BoardState>;

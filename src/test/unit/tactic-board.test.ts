@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emptyBoard, placeFormation, positionsAt, positionsAtTime, moveToken, addStep, deleteStep, removeToken, drawingAt, normalizeBoard, formationCodes, formationLines, curveFromPath, curvePoints, translateDrawing, BW } from '@/lib/tactic-board';
+import { emptyBoard, placeFormation, positionsAt, positionsAtTime, moveToken, addStep, deleteStep, removeToken, drawingAt, normalizeBoard, saveBoardDraft, loadBoardDraft, clearBoardDraft, formationCodes, formationLines, curveFromPath, curvePoints, translateDrawing, BW } from '@/lib/tactic-board';
 
 const f7 = formationCodes('football_7')[0].code;
 const xi = Array.from({ length: 7 }, (_, i) => ({ id: `p${i + 1}`, name: `Jogador ${i + 1} Silva`, number: i + 1, position: i === 0 ? 'GK' : 'CM' }));
@@ -102,6 +102,30 @@ describe('tactical board', () => {
     expect(drawingAt(b, 0, [61, 11])).toBeNull(); // corner of the box is outside the ellipse
     expect(drawingAt(b, 0, [22, 60])?.id).toBe('x');
     expect(translateDrawing(b.drawings[1], 5, -5).pts).toEqual([[65, 5], [85, 25]]);
+  });
+
+  it('the board is still there when the coach comes back, until it is cleared', () => {
+    localStorage.clear();
+    const initial = placeFormation(placeFormation(emptyBoard('football_7'), 'home', f7, xi), 'away', f7);
+    const id = initial.tokens.find((t) => t.kind === 'home')!.id;
+    let work = moveToken(initial, id, 0, [40, 40]);
+    work = { ...work, note: 'Canto 1', drawings: [{ id: 'd1', t: 'pass', pts: [[10, 10], [40, 10]], color: '#fff', step: 0 }] };
+    saveBoardDraft('k', { state: work, sig: 'A', loaded: { id: 'play1', name: 'Canto 1' } });
+    // same players: exactly as it was left
+    const back = loadBoardDraft('k', initial, 'A')!;
+    expect(back.state.tokens.find((t) => t.id === id)).toMatchObject({ x: 40, y: 40 });
+    expect(back.state.drawings).toHaveLength(1);
+    expect(back.loaded?.name).toBe('Canto 1');
+    // a substitution meanwhile: drawings and opponent stay, my players are the ones on the pitch now
+    const xi2 = [...xi.slice(0, 6), { id: 'sub', name: 'Novo Jogador', number: 12, position: 'CM' }];
+    const initial2 = placeFormation(emptyBoard('football_7'), 'home', f7, xi2);
+    const merged = loadBoardDraft('k', initial2, 'B')!.state;
+    expect(merged.tokens.some((t) => t.id === 'home-sub')).toBe(true);
+    expect(merged.tokens.some((t) => t.id === 'home-p7')).toBe(false);
+    expect(merged.tokens.filter((t) => t.kind === 'away')).toHaveLength(7);
+    expect(merged.drawings).toHaveLength(1);
+    clearBoardDraft('k');
+    expect(loadBoardDraft('k', initial, 'A')).toBeNull();
   });
 
   it('notes and line toggles survive saving', () => {

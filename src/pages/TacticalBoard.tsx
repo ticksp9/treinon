@@ -3,7 +3,7 @@
  * Starts with the active team; "Carregar onze" brings the XI of a match (names,
  * numbers and formation) so there is nothing to set up by hand.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +19,8 @@ interface Team { id: string; name: string; sport_type: string | null }
 interface MatchOpt { id: string; opponent_name: string; match_date: string; status: string; sport_type: string | null; live_tactics: { formation?: string; slots?: Record<string, string | null> } | null }
 
 const NONE = '__none__';
+const SEL_KEY = 'treinon_board_selection';
+const readSel = (): { teamId?: string; matchId?: string } => { try { return JSON.parse(localStorage.getItem(SEL_KEY) || '{}') ?? {}; } catch { return {}; } };
 
 export default function TacticalBoard() {
   const { user } = useAuth();
@@ -26,7 +28,7 @@ export default function TacticalBoard() {
   const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
   const [teamId, setTeamId] = useState<string | null>(null);
   const [matchId, setMatchId] = useState<string>(NONE);
-  const [board, setBoard] = useState<{ key: string; initial: BoardState; players?: BoardPlayer[]; slotMap?: Record<string, string | null> } | null>(null);
+  const [board, setBoard] = useState<{ key: string; sig?: string; initial: BoardState; players?: BoardPlayer[]; slotMap?: Record<string, string | null> } | null>(null);
 
   const { data: teams = [] } = useQuery({
     queryKey: ['board-teams', user?.id],
@@ -36,6 +38,19 @@ export default function TacticalBoard() {
   const myTeams = useMemo(() => scopeTeams(teams), [teams, scopeTeams]);
   useEffect(() => { if (!teamId && myTeams.length) setTeamId(defaultTeamId(myTeams)); }, [myTeams, teamId, defaultTeamId]);
   useEffect(() => { if (activeTeamId && myTeams.some((t) => t.id === activeTeamId)) { setTeamId(activeTeamId); setMatchId(NONE); } }, [activeTeamId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // coming back to the board: same team and same match as before
+  const restoredSel = useRef(false);
+  useEffect(() => {
+    if (!teamId || restoredSel.current) return;
+    restoredSel.current = true;
+    const sel = readSel();
+    if (sel.teamId === teamId && sel.matchId) setMatchId(sel.matchId);
+  }, [teamId]);
+  useEffect(() => {
+    if (!teamId || !restoredSel.current) return;
+    try { localStorage.setItem(SEL_KEY, JSON.stringify({ teamId, matchId })); } catch { /* ignore */ }
+  }, [teamId, matchId]);
 
   const team = myTeams.find((t) => t.id === teamId) ?? null;
   const teamSport = team?.sport_type && isSportAllowed(scope, team.sport_type) ? team.sport_type : defaultSportType(scope);
@@ -74,7 +89,7 @@ export default function TacticalBoard() {
       const code = m?.live_tactics?.formation && codes.some((c) => c.code === m.live_tactics!.formation) ? m.live_tactics.formation : codes[0]?.code;
       const slotMap = m?.live_tactics?.slots ?? undefined;
       const b = code ? placeFormation(emptyBoard(sport), 'home', code, xi, slotMap) : emptyBoard(sport);
-      setBoard({ key: `match-${matchId}`, initial: b, players: xi, slotMap });
+      setBoard({ key: `match-${matchId}`, sig: `${code}|${b.tokens.map((t) => t.id).join(',')}`, initial: b, players: xi, slotMap });
     })();
     return () => { alive = false; };
   }, [matchId, matches, teamSport]);
@@ -102,7 +117,7 @@ export default function TacticalBoard() {
           </Select>
           <span className="text-xs text-muted-foreground">Escolha um jogo para trazer o onze com nomes e a tática.</span>
         </div>
-        {board && <TacticBoard key={board.key} initial={board.initial} players={board.players} slotMap={board.slotMap} teamId={teamId} />}
+        {board && <TacticBoard key={board.key} persistKey={board.key} homeSig={board.sig} initial={board.initial} players={board.players} slotMap={board.slotMap} teamId={teamId} />}
       </div>
     </AppLayout>
   );

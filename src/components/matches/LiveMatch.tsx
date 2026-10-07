@@ -2034,6 +2034,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         <TacticBoard
           startFull
           teamId={teamId}
+          persistKey={`live-${matchId}`}
+          homeSig={`${pitchTactics?.formation ?? ''}|${starters.map(l => l.player_id).sort().join(',')}`}
           initial={pitchTactics
             ? placeFormation(emptyBoard(matchSport), 'home', pitchTactics.formation,
                 starters.map(l => ({ id: l.player_id, name: l.player?.name ?? '', number: l.player?.number, position: l.player?.position })), pitchTactics.slots)

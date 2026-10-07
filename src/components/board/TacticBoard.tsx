@@ -17,7 +17,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import {
-  BH, BW, addStep, curveFromPath, curvePoints, deleteStep, drawingAt, formationCodes, formationLines, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, translateDrawing, uid,
+  BH, BW, addStep, clearBoardDraft, loadBoardDraft, saveBoardDraft, curveFromPath, curvePoints, deleteStep, drawingAt, formationCodes, formationLines, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, translateDrawing, uid,
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,10 @@ interface Props {
   slotMap?: Record<string, string | null>;
   /** saved plays belong to a team */
   teamId?: string | null;
+  /** keep the board on this device under this key until "Limpar tudo" */
+  persistKey?: string;
+  /** who is on the pitch (ids + formation): when it changes, a kept board refreshes my players */
+  homeSig?: string;
   /** start in full-screen talk mode (e.g. opened from the live match) */
   startFull?: boolean;
   onClose?: () => void;
@@ -87,10 +91,12 @@ function PitchLines({ sport }: { sport: string }) {
   );
 }
 
-export function TacticBoard({ initial, players, slotMap, teamId, startFull = false, onClose }: Props) {
+export function TacticBoard({ initial, players, slotMap, teamId, persistKey, homeSig, startFull = false, onClose }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [state, setState] = useState<BoardState>(initial);
+  // what the coach left here last time (leaving the screen must not wipe the board)
+  const [kept] = useState(() => (persistKey ? loadBoardDraft(persistKey, initial, homeSig) : null));
+  const [state, setState] = useState<BoardState>(kept?.state ?? initial);
   const [undo, setUndo] = useState<BoardState[]>([]);
   const [redo, setRedo] = useState<BoardState[]>([]);
   const [tool, setTool] = useState<Tool>('move');
@@ -112,7 +118,10 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
   /** playback: current time, where it stops and the step to land on */
   const play = useRef<{ t: number; end: number; land: number | null }>({ t: 0, end: 0, land: null });
   /** the saved play being edited ("Guardar" updates it) */
-  const [loaded, setLoaded] = useState<{ id: string; name: string } | null>(null);
+  const [loaded, setLoaded] = useState<{ id: string; name: string } | null>(kept?.loaded ?? null);
+  useEffect(() => {
+    if (persistKey) saveBoardDraft(persistKey, { state, sig: homeSig, loaded });
+  }, [persistKey, homeSig, state, loaded]);
 
   const formations = useMemo(() => formationCodes(state.sport), [state.sport]);
   const totalSteps = state.steps.length;
@@ -243,6 +252,11 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
   const setFormation = (side: 'home' | 'away', code: string) => commit(placeFormation(state, side, code, side === 'home' ? players : undefined, side === 'home' ? slotMap : undefined));
   const addLoose = (kind: 'ball' | 'cone') => commit({ ...state, tokens: [...state.tokens, { id: uid(kind[0]), kind, x: state.half ? BW * 0.75 : BW / 2 + (kind === 'cone' ? 4 : 0), y: BH / 2 + (kind === 'cone' ? 4 : 0) }] });
   const clearDrawings = () => commit({ ...state, drawings: state.drawings.filter((d) => d.step !== step) });
+  const clearAll = () => {
+    if (!window.confirm('Limpar tudo? O quadro volta ao início (desenhos, passos, adversário e nota).')) return;
+    if (persistKey) clearBoardDraft(persistKey);
+    commit(initial); setStep(0); setSelected(null); setLoaded(null); setPlayT(null);
+  };
   const clearSide = (side: 'away') => commit({ ...state, tokens: state.tokens.filter((t) => t.kind !== side), awayFormation: null });
   const newStep = () => { commit(addStep(state, step)); setStep(step + 1); setTool('move'); toast.info(`Passo ${step + 2}: arraste os jogadores e a bola para onde vão.`); };
   const selectedToken = state.tokens.find((t) => t.id === selected) ?? null;
@@ -346,6 +360,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
         <Button size="icon" variant="outline" className="h-9 w-9" onClick={doUndo} disabled={!undo.length} aria-label="Desfazer"><Undo2 className="h-4 w-4" /></Button>
         <Button size="icon" variant="outline" className="h-9 w-9" onClick={doRedo} disabled={!redo.length} aria-label="Refazer"><Redo2 className="h-4 w-4" /></Button>
         <Button size="sm" variant="outline" className="h-9" onClick={clearDrawings} title="Apaga os desenhos deste passo"><RotateCcw className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Limpar desenhos</span></Button>
+        <Button size="sm" variant="outline" className="h-9 text-destructive" onClick={clearAll} title="Recomeçar o quadro do início"><Trash2 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Limpar tudo</span></Button>
         <div className="ml-auto flex items-center gap-1.5">
           <Button size="sm" variant={state.half ? 'default' : 'outline'} className="h-9" onClick={() => setState((s) => ({ ...s, half: !s.half }))} title="Meio-campo (bolas paradas)">½ campo</Button>
           <Button size="icon" variant="outline" className="h-9 w-9" onClick={() => setFull((f) => !f)} aria-label={full ? 'Sair do ecrã inteiro' : 'Ecrã inteiro'}>
