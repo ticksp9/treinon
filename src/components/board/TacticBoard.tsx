@@ -12,12 +12,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  ArrowUpRight, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, Play, Plus, Redo2, RotateCcw, Save, Square, Trash2, Undo2, Download, MoveUpRight,
+  ArrowUpRight, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import {
-  BH, BW, addStep, deleteStep, drawingAt, formationCodes, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, uid,
+  BH, BW, addStep, curveFromPath, curvePoints, deleteStep, drawingAt, formationCodes, formationLines, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, translateDrawing, uid,
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
@@ -27,13 +27,17 @@ const TOOLS: { id: Tool; label: string; icon: typeof Hand }[] = [
   { id: 'move', label: 'Mover', icon: Hand },
   { id: 'pass', label: 'Passe', icon: ArrowUpRight },
   { id: 'run', label: 'Corrida', icon: MoveUpRight },
+  { id: 'curve', label: 'Curva', icon: Spline },
   { id: 'free', label: 'Traço', icon: Pencil },
   { id: 'zone', label: 'Zona', icon: Square },
+  { id: 'circle', label: 'Círculo', icon: Circle },
+  { id: 'text', label: 'Texto', icon: Type },
   { id: 'erase', label: 'Borracha', icon: Eraser },
 ];
 const COLORS = ['#ffffff', '#facc15', '#f97316', '#38bdf8', '#111827'];
 const SPORTS: Record<string, string> = { football_11: 'Futebol 11', football_9: 'Futebol 9', football_7: 'Futebol 7', football_5: 'Futebol 5', futsal: 'Futsal' };
 const HOME = '#2563eb', AWAY = '#dc2626';
+const SPEEDS = [0.5, 1, 2];
 
 interface Props {
   initial: BoardState;
@@ -101,7 +105,14 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
   const setDraft = (d: Drawing | null) => { draftRef.current = d; setDraftState(d); };
   const [savedOpen, setSavedOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ id: string; dx: number; dy: number; moved: boolean } | null>(null);
+  const drag = useRef<{ kind: 'token' | 'drawing'; id: string; dx: number; dy: number; last: [number, number]; moved: boolean } | null>(null);
+  const [speed, setSpeed] = useState(1);
+  const speedRef = useRef(1);
+  speedRef.current = speed;
+  /** playback: current time, where it stops and the step to land on */
+  const play = useRef<{ t: number; end: number; land: number | null }>({ t: 0, end: 0, land: null });
+  /** the saved play being edited ("Guardar" updates it) */
+  const [loaded, setLoaded] = useState<{ id: string; name: string } | null>(null);
 
   const formations = useMemo(() => formationCodes(state.sport), [state.sport]);
   const totalSteps = state.steps.length;
@@ -120,16 +131,20 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
     const tick = (now: number) => {
       const dt = last ? now - last : 0;
       last = now;
-      setPlayT((t) => {
-        if (t == null) return t;
-        const n = t + dt / 1300;
-        return n >= totalSteps + 0.5 ? null : n;
-      });
+      const p = play.current;
+      p.t += (dt / 1300) * speedRef.current;
+      if (p.t >= p.end) {
+        setPlayT(null);
+        if (p.land != null) setStep(p.land);
+        return;
+      }
+      setPlayT(p.t);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playT == null, totalSteps]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [playT == null]); // eslint-disable-line react-hooks/exhaustive-deps
+  const startPlay = (from: number, end: number, land: number | null) => { play.current = { t: from, end, land }; setPlayT(from); };
   useEffect(() => { if (playT == null && step > totalSteps) setStep(totalSteps); }, [playT, step, totalSteps]);
 
   // ── pointer ──
@@ -159,10 +174,25 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
       return;
     }
     if (tool === 'move') {
-      if (!t) { setSelected(null); return; }
-      const q = pos[t.id];
-      setUndo((u) => [...u.slice(-40), state]); setRedo([]);
-      drag.current = { id: t.id, dx: p[0] - q[0], dy: p[1] - q[1], moved: false };
+      if (t) {
+        const q = pos[t.id];
+        setUndo((u) => [...u.slice(-40), state]); setRedo([]);
+        drag.current = { kind: 'token', id: t.id, dx: p[0] - q[0], dy: p[1] - q[1], last: p, moved: false };
+        return;
+      }
+      // no player under the finger: an arrow/zone/text can be dragged too
+      const d = drawingAt(state, step, p);
+      if (d) {
+        setUndo((u) => [...u.slice(-40), state]); setRedo([]);
+        drag.current = { kind: 'drawing', id: d.id, dx: 0, dy: 0, last: p, moved: false };
+        return;
+      }
+      setSelected(null);
+      return;
+    }
+    if (tool === 'text') {
+      const text = window.prompt('Texto no campo (ex.: Pressão alta)')?.trim().slice(0, 40);
+      if (text) commit({ ...state, drawings: [...state.drawings, { id: uid('d'), t: 'text', pts: [p], color, step, text }] });
       return;
     }
     setDraft({ id: uid('d'), t: tool, pts: [p, p], color, step });
@@ -172,13 +202,19 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
       const p = toPt(e);
       const d = drag.current;
       d.moved = true;
+      if (d.kind === 'drawing') {
+        const dx = p[0] - d.last[0], dy = p[1] - d.last[1];
+        d.last = p;
+        setState((s) => ({ ...s, drawings: s.drawings.map((x) => (x.id === d.id ? translateDrawing(x, dx, dy) : x)) }));
+        return;
+      }
       setState((s) => moveToken(s, d.id, step, [p[0] - d.dx, p[1] - d.dy]));
       return;
     }
     const d = draftRef.current;
     if (!d) return;
     const p = toPt(e);
-    if (d.t === 'free') {
+    if (d.t === 'free' || d.t === 'curve') {
       const lastP = d.pts[d.pts.length - 1];
       if (Math.hypot(lastP[0] - p[0], lastP[1] - p[1]) > 0.8) setDraft({ ...d, pts: [...d.pts, p] });
       return;
@@ -189,14 +225,16 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
     if (drag.current) {
       const d = drag.current;
       drag.current = null;
-      if (!d.moved) { setUndo((u) => u.slice(0, -1)); setSelected((s) => (s === d.id ? null : d.id)); }
+      if (!d.moved) { setUndo((u) => u.slice(0, -1)); if (d.kind === 'token') setSelected((s) => (s === d.id ? null : d.id)); }
       return;
     }
     const draft = draftRef.current;
     if (draft) {
       const a = draft.pts[0], b = draft.pts[draft.pts.length - 1];
-      const long = draft.t === 'free' ? draft.pts.length > 3 : Math.hypot(a[0] - b[0], a[1] - b[1]) > 2.5;
-      if (long) commit({ ...state, drawings: [...state.drawings, draft] });
+      const far = Math.hypot(a[0] - b[0], a[1] - b[1]) > 2.5;
+      const long = draft.t === 'free' ? draft.pts.length > 3 : far;
+      // the arc drawn with the finger becomes a clean curved arrow
+      if (long) commit({ ...state, drawings: [...state.drawings, draft.t === 'curve' ? { ...draft, pts: curveFromPath(draft.pts) } : draft] });
       setDraft(null);
     }
   };
@@ -223,18 +261,50 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
   });
   const savePlay = async () => {
     if (!user) return;
-    const name = window.prompt('Nome da jogada (ex.: Canto ofensivo 1)');
-    if (!name?.trim()) return;
-    const { error } = await supabase.from('tactical_boards').insert({ name: name.trim(), owner_id: user.id, team_id: teamId ?? null, board_data: JSON.parse(JSON.stringify(state)) } as never);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
-    toast.success('Jogada guardada.');
+    const board_data = JSON.parse(JSON.stringify(state));
+    if (loaded) {
+      const { error } = await supabase.from('tactical_boards').update({ board_data } as never).eq('id', loaded.id);
+      if (error) return toast.error('Não foi possível guardar: ' + error.message);
+      toast.success(`"${loaded.name}" atualizada.`);
+    } else {
+      const name = window.prompt('Nome da jogada (ex.: Canto ofensivo 1)')?.trim();
+      if (!name) return;
+      const { data, error } = await supabase.from('tactical_boards').insert({ name, owner_id: user.id, team_id: teamId ?? null, board_data } as never).select('id').single();
+      if (error) return toast.error('Não foi possível guardar: ' + error.message);
+      if (data) setLoaded({ id: (data as { id: string }).id, name });
+      toast.success('Jogada guardada.');
+    }
+    qc.invalidateQueries({ queryKey: ['tactical-boards'] });
+  };
+  const renamePlay = async (p: { id: string; name: string }) => {
+    const name = window.prompt('Novo nome da jogada', p.name)?.trim();
+    if (!name || name === p.name) return;
+    const { error } = await supabase.from('tactical_boards').update({ name } as never).eq('id', p.id);
+    if (error) return toast.error(error.message);
+    if (loaded?.id === p.id) setLoaded({ id: p.id, name });
+    qc.invalidateQueries({ queryKey: ['tactical-boards'] });
+  };
+  /** variant B of a corner without starting again */
+  const duplicatePlay = async (p: { name: string; board_data: unknown }) => {
+    if (!user) return;
+    const { error } = await supabase.from('tactical_boards').insert({ name: `${p.name} (cópia)`, owner_id: user.id, team_id: teamId ?? null, board_data: p.board_data } as never);
+    if (error) return toast.error(error.message);
+    toast.success('Cópia criada.');
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });
   };
   const deletePlay = async (id: string) => {
     const { error } = await supabase.from('tactical_boards').delete().eq('id', id);
     if (error) return toast.error(error.message);
+    if (loaded?.id === id) setLoaded(null);
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });
   };
+  const toggleLines = (side: 'home' | 'away') => commit({ ...state, lines: { ...state.lines, [side]: !state.lines?.[side] } });
+  const linesBtn = (side: 'home' | 'away') => (
+    <Button size="icon" variant={state.lines?.[side] ? 'default' : 'outline'} className="h-9 w-9" onClick={() => toggleLines(side)}
+      aria-label={side === 'home' ? 'Linhas da minha equipa' : 'Linhas do adversário'} title="Ligar os setores (defesa, meio-campo, ataque)">
+      <Waypoints className="h-4 w-4" />
+    </Button>
+  );
 
   const exportPng = async () => {
     const svg = svgRef.current;
@@ -297,6 +367,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
             <SelectTrigger className="h-9 w-36"><SelectValue placeholder="A minha equipa" /></SelectTrigger>
             <SelectContent>{formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}</SelectContent>
           </Select>
+          {linesBtn('home')}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: AWAY }} />
@@ -304,13 +375,20 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
             <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Adversário" /></SelectTrigger>
             <SelectContent>{formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}</SelectContent>
           </Select>
+          {state.tokens.some((t) => t.kind === 'away') && linesBtn('away')}
           {state.tokens.some((t) => t.kind === 'away') && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => clearSide('away')} aria-label="Tirar adversário"><Trash2 className="h-4 w-4" /></Button>}
         </span>
         <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('ball')}>⚽ Bola</Button>
         <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('cone')}>▲ Cone</Button>
         <div className="ml-auto flex items-center gap-1.5">
           <Button size="sm" variant="outline" className="h-9" onClick={() => setSavedOpen((o) => !o)}><FolderOpen className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Jogadas ({saved.length})</span></Button>
-          <Button size="sm" variant="outline" className="h-9" onClick={savePlay}><Save className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar</span></Button>
+          {loaded && (
+            <span className="flex max-w-[11rem] items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground">
+              <span className="truncate">{loaded.name}</span>
+              <button type="button" onClick={() => setLoaded(null)} aria-label="Guardar como jogada nova" title="Deixar de editar esta jogada (o próximo Guardar cria uma nova)"><X className="h-3.5 w-3.5" /></button>
+            </span>
+          )}
+          <Button size="sm" variant="outline" className="h-9" onClick={savePlay} title={loaded ? `Atualizar "${loaded.name}"` : 'Guardar como jogada nova'}><Save className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar</span></Button>
           <Button size="icon" variant="outline" className="h-9 w-9" onClick={exportPng} aria-label="Exportar imagem"><Download className="h-4 w-4" /></Button>
         </div>
       </div>
@@ -320,7 +398,10 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
           {saved.length === 0 && <span className="text-sm text-muted-foreground">Ainda não há jogadas guardadas. Prepare os cantos, livres e saídas de bola antes do jogo e guarde-os aqui.</span>}
           {saved.map((s) => (
             <span key={s.id} className="flex items-center overflow-hidden rounded-md border">
-              <button type="button" className="px-2.5 py-1.5 text-sm hover:bg-muted" onClick={() => { commit(normalizeBoard(s.board_data, state.sport)); setStep(0); setSavedOpen(false); }}>{s.name}</button>
+              <button type="button" className={cn('px-2.5 py-1.5 text-sm hover:bg-muted', loaded?.id === s.id && 'font-semibold')} title={(s.board_data as { note?: string } | null)?.note || undefined}
+                onClick={() => { commit(normalizeBoard(s.board_data, state.sport)); setLoaded({ id: s.id, name: s.name }); setStep(0); setSavedOpen(false); }}>{s.name}</button>
+              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => renamePlay(s)} aria-label={`Mudar o nome de ${s.name}`}><PencilLine className="h-3.5 w-3.5" /></button>
+              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => duplicatePlay(s)} aria-label={`Duplicar ${s.name}`}><Copy className="h-3.5 w-3.5" /></button>
               <button type="button" className="border-l px-1.5 py-1.5 text-destructive hover:bg-muted" onClick={() => window.confirm(`Apagar "${s.name}"?`) && deletePlay(s.id)} aria-label={`Apagar ${s.name}`}><Trash2 className="h-3.5 w-3.5" /></button>
             </span>
           ))}
@@ -346,8 +427,23 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
           {Array.from({ length: 10 }, (_, i) => <rect key={i} x={i * (BW / 10)} y={0} width={BW / 10} height={BH} fill={i % 2 ? '#256b40' : '#2a7747'} />)}
           <PitchLines sport={state.sport} />
 
+          {(['home', 'away'] as const).map((side) => state.lines?.[side] && formationLines(state, side, pos).map((l, i) => (
+            <polyline key={`fl-${side}-${i}`} points={l.map((p) => p.join(',')).join(' ')} fill="none" stroke={side === 'home' ? '#93c5fd' : '#fca5a5'} strokeWidth={0.6} strokeLinecap="round" strokeLinejoin="round" />
+          )))}
+
           {drawings.map((d) => {
             const ci = Math.max(0, COLORS.indexOf(d.color));
+            if (d.t === 'text') return <text key={d.id} x={d.pts[0][0]} y={d.pts[0][1] + 1} textAnchor="middle" fontSize={3} fontWeight={700} fill={d.color} stroke={d.color === '#111827' ? 'white' : '#0b2a17'} strokeWidth={0.6} paintOrder="stroke" style={{ pointerEvents: 'none' }}>{d.text}</text>;
+            if (d.t === 'circle') {
+              const [a, b] = d.pts;
+              return <ellipse key={d.id} cx={(a[0] + b[0]) / 2} cy={(a[1] + b[1]) / 2} rx={Math.abs(a[0] - b[0]) / 2} ry={Math.abs(a[1] - b[1]) / 2} fill={d.color} fillOpacity={0.22} stroke={d.color} strokeWidth={0.4} strokeDasharray="1.5 1" />;
+            }
+            if (d.t === 'curve') {
+              // while the finger is down it is still the raw path
+              if (d === draft) return <polyline key={d.id} points={d.pts.map((p) => p.join(',')).join(' ')} fill="none" stroke={d.color} strokeWidth={0.7} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.7} />;
+              const [a, c, b] = d.pts;
+              return <path key={d.id} d={`M${a[0]},${a[1]} Q${c[0]},${c[1]} ${b[0]},${b[1]}`} fill="none" stroke={d.color} strokeWidth={0.75} strokeLinecap="round" markerEnd={`url(#tb-arrow-${ci})`} />;
+            }
             if (d.t === 'zone') {
               const [a, b] = d.pts;
               return <rect key={d.id} x={Math.min(a[0], b[0])} y={Math.min(a[1], b[1])} width={Math.abs(a[0] - b[0])} height={Math.abs(a[1] - b[1])} fill={d.color} fillOpacity={0.22} stroke={d.color} strokeWidth={0.4} strokeDasharray="1.5 1" />;
@@ -405,13 +501,24 @@ export function TacticBoard({ initial, players, slotMap, teamId, startFull = fal
         ))}
         <Button size="sm" variant="outline" className="h-9" onClick={newStep} disabled={playT != null}><Plus className="mr-1 h-4 w-4" />Passo</Button>
         {step > 0 && playT == null && <Button size="sm" variant="ghost" className="h-9" onClick={() => { commit(deleteStep(state, step)); setStep(step - 1); }}><Trash2 className="mr-1 h-4 w-4" />Passo</Button>}
-        <Button size="sm" className="ml-auto h-9" disabled={totalSteps === 0} onClick={() => setPlayT((t) => (t == null ? 0 : null))}>
+        <div className="ml-auto flex items-center gap-1.5">
+          <Button size="sm" variant="outline" className="h-9 w-14 px-0 tabular-nums" onClick={() => setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])} title="Velocidade do movimento">
+            {String(speed).replace('.', ',')}×
+          </Button>
+          <Button size="sm" variant="outline" className="h-9" disabled={playT != null || step >= totalSteps} onClick={() => startPlay(step, step + 1, step + 1)} title="Mostrar só o movimento seguinte">
+            <StepForward className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Seguinte</span>
+          </Button>
+        <Button size="sm" className="h-9" disabled={totalSteps === 0} onClick={() => (playT == null ? startPlay(0, totalSteps + 0.5, null) : setPlayT(null))}>
           {playT == null ? <><Play className="mr-1.5 h-4 w-4" />Ver movimento</> : <><Pause className="mr-1.5 h-4 w-4" />Parar</>}
         </Button>
+        </div>
       </div>
+
+      {/* what to remember about this play; saved with it */}
+      <Input className="h-9" maxLength={160} placeholder="Nota da jogada (ex.: o 5 ataca o primeiro poste, o 8 fica à entrada da área)" value={state.note ?? ''} onChange={(e) => setState((st) => ({ ...st, note: e.target.value }))} aria-label="Nota da jogada" />
       {!full && (
         <p className="text-xs text-muted-foreground">
-          Arraste os jogadores. Escolha Passe, Corrida, Traço ou Zona e desenhe com o dedo. Toque num jogador para mudar o número/nome. "+ Passo" cria o movimento seguinte.
+          Arraste os jogadores (e também as setas, zonas e textos já feitos). Escolha uma ferramenta e desenhe com o dedo; em Curva, faça o arco e ele fica uma seta curva. Toque num jogador para mudar o número/nome. "+ Passo" cria o movimento seguinte.
         </p>
       )}
     </div>

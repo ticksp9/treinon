@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emptyBoard, placeFormation, positionsAt, positionsAtTime, moveToken, addStep, deleteStep, removeToken, drawingAt, normalizeBoard, formationCodes, BW } from '@/lib/tactic-board';
+import { emptyBoard, placeFormation, positionsAt, positionsAtTime, moveToken, addStep, deleteStep, removeToken, drawingAt, normalizeBoard, formationCodes, formationLines, curveFromPath, curvePoints, translateDrawing, BW } from '@/lib/tactic-board';
 
 const f7 = formationCodes('football_7')[0].code;
 const xi = Array.from({ length: 7 }, (_, i) => ({ id: `p${i + 1}`, name: `Jogador ${i + 1} Silva`, number: i + 1, position: i === 0 ? 'GK' : 'CM' }));
@@ -63,6 +63,51 @@ describe('tactical board', () => {
     const b = normalizeBoard({ tokens: [{ id: 'a', kind: 'home', x: 1, y: 2 }, null, { id: 'b' }], drawings: 'x' }, 'football_9');
     expect(b.sport).toBe('football_9');
     expect(b.tokens).toHaveLength(1);
+    expect(b.drawings).toEqual([]);
+  });
+
+  it('formation lines link each sector and follow the players', () => {
+    const b = placeFormation(emptyBoard('football_7'), 'home', '2-3-1', xi);
+    const lines = formationLines(b, 'home', positionsAt(b, 0));
+    expect(lines.map((l) => l.length)).toEqual([2, 3]); // defence and midfield; the lone striker has no line
+    // each line goes from one side of the pitch to the other
+    lines.forEach((l) => l.forEach((p, i) => i && expect(p[1]).toBeGreaterThan(l[i - 1][1])));
+    // a midfielder running past the striker stays on the midfield line
+    const mids = lines[1];
+    const runner = b.tokens.find((tk) => tk.x === mids[0][0] && tk.y === mids[0][1])!;
+    const moved = moveToken(addStep(b, 0), runner.id, 1, [90, runner.y]);
+    const after = formationLines(moved, 'home', positionsAt(moved, 1));
+    expect(after[1]).toHaveLength(3);
+    expect(after[1].some((p) => p[0] === 90)).toBe(true);
+    // no formation chosen: players at a similar depth are grouped
+    const free = { ...b, homeFormation: null };
+    expect(formationLines(free, 'home', positionsAt(free, 0)).length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('a finger arc becomes a curve through its furthest point; drawings can be moved and found', () => {
+    const c = curveFromPath([[10, 30], [20, 22], [30, 20], [40, 22], [50, 30]]);
+    expect(c).toHaveLength(3);
+    const mid = curvePoints({ pts: c })[7];
+    expect(mid[0]).toBeCloseTo(30, 0);
+    expect(mid[1]).toBeCloseTo(20, 0);
+    let b = emptyBoard('football_7');
+    b = { ...b, drawings: [
+      { id: 'c', t: 'curve', pts: c, color: '#fff', step: 0 },
+      { id: 'o', t: 'circle', pts: [[60, 10], [80, 30]], color: '#fff', step: 0 },
+      { id: 'x', t: 'text', pts: [[20, 60]], color: '#fff', step: 0, text: 'Pressão' },
+    ] };
+    expect(drawingAt(b, 0, [30, 20.5])?.id).toBe('c');
+    expect(drawingAt(b, 0, [30, 29])).toBeNull(); // the straight line between the ends is not the curve
+    expect(drawingAt(b, 0, [70, 20])?.id).toBe('o');
+    expect(drawingAt(b, 0, [61, 11])).toBeNull(); // corner of the box is outside the ellipse
+    expect(drawingAt(b, 0, [22, 60])?.id).toBe('x');
+    expect(translateDrawing(b.drawings[1], 5, -5).pts).toEqual([[65, 5], [85, 25]]);
+  });
+
+  it('notes and line toggles survive saving', () => {
+    const b = normalizeBoard({ tokens: [], drawings: [{ id: 'e', pts: [] }], lines: { home: 1 }, note: 'Canto 1' }, 'football_7');
+    expect(b.lines).toEqual({ home: true, away: false });
+    expect(b.note).toBe('Canto 1');
     expect(b.drawings).toEqual([]);
   });
 });
