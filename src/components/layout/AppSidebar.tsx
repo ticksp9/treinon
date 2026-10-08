@@ -34,6 +34,7 @@ import {
   Heart,
   MessageSquare,
   Home,
+  CalendarDays,
   BookOpen,
   ClipboardCheck,
   Megaphone,
@@ -60,6 +61,7 @@ const staffMenuItems = [
   { title: 'Jogos', icon: Trophy, path: '/matches' },
   { title: 'Treinos', icon: Calendar, path: '/training' },
   { title: 'Mapa do clube', icon: CalendarRange, path: '/mapa' },
+  { title: 'Eventos', icon: CalendarDays, path: '/eventos' },
   { title: 'Jogadores', icon: Users, path: '/players' },
   { title: 'Equipas', icon: Shirt, path: '/teams' },
   { title: 'Quadro Tático', icon: PenTool, path: '/tactical-board' },
@@ -75,6 +77,7 @@ const clubMenuGroups = [
     icon: Trophy,
     items: [
       { title: 'Mapa de treinos e jogos', icon: CalendarRange, path: '/mapa' },
+      { title: 'Eventos (pais e jogadores)', icon: CalendarDays, path: '/eventos' },
       { title: 'Épocas', icon: CalendarRange, path: '/seasons' },
       { title: 'Transição de época', icon: ArrowUpRight, path: '/season-transition' },
       { title: 'Coordenação jovens', icon: Users, path: '/club/coordination' },
@@ -116,14 +119,14 @@ const OPEN_GROUPS_KEY = 'treinon_sidebar_groups';
 
 // Guardian menu
 const guardianMenuItems = [
-  { title: 'Início', icon: Home, path: '/guardian' },
+  { title: 'Eventos', icon: CalendarDays, path: '/guardian' },
   { title: 'Comunicação', icon: MessageSquare, path: '/communication' },
   { title: 'Definições', icon: Settings, path: '/settings' },
 ];
 
 // Player menu
 const playerMenuItems = [
-  { title: 'Início', icon: Home, path: '/player' },
+  { title: 'Eventos', icon: CalendarDays, path: '/player' },
   { title: 'Comunicação', icon: MessageSquare, path: '/communication' },
   { title: 'Definições', icon: Settings, path: '/settings' },
 ];

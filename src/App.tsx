@@ -65,6 +65,7 @@ const RehabPlanForm = lazy(() => import("./pages/physio/RehabPlanForm"));
 const Communication = lazy(() => import("./pages/Communication"));
 const GuardianPortal = lazy(() => import("./pages/GuardianPortal"));
 const PlayerPortal = lazy(() => import("./pages/PlayerPortal"));
+const Agenda = lazy(() => import("./pages/Agenda"));
 // Youth Coordination
 const YouthCoordinationDashboard = lazy(() => import("./pages/coordination/YouthCoordinationDashboard"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -101,7 +102,7 @@ function PageLoader() {
 
 function AppContent() {
   useLanguage();
-  
+
   return (
     <>
       <Toaster />
@@ -122,8 +123,8 @@ function AppContent() {
           <Route path="/accept-invite" element={<AcceptInvite />} />
           <Route path="/accept-invite/code" element={<AcceptInvite />} />
           <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-          
-          
+
+
           {/* Protected routes - require authentication */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/teams" element={<RoleProtectedRoute><Teams /></RoleProtectedRoute>} />
@@ -147,15 +148,20 @@ function AppContent() {
           <Route path="/seasons/close" element={<RoleProtectedRoute><SeasonClosePage /></RoleProtectedRoute>} />
           <Route path="/seasons/transition" element={<RoleProtectedRoute><SeasonTransitionWizard /></RoleProtectedRoute>} />
           <Route path="/communication" element={<ProtectedRoute><Communication /></ProtectedRoute>} />
-          <Route path="/guardian" element={<ProtectedRoute><GuardianPortal /></ProtectedRoute>} />
-          <Route path="/player" element={<ProtectedRoute><PlayerPortal /></ProtectedRoute>} />
+          {/* Parents and players: the app is the calendar (Eventos) and Comunicação. */}
+          <Route path="/guardian" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+          <Route path="/player" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+          <Route path="/eventos" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+          {/* The former portals (call-up confirmations, payments) are kept, unlinked, for later. */}
+          <Route path="/guardian/portal" element={<ProtectedRoute><GuardianPortal /></ProtectedRoute>} />
+          <Route path="/player/portal" element={<ProtectedRoute><PlayerPortal /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          
-          
+
+
           {/* Club admin routes */}
           <Route path="/club" element={<RoleProtectedRoute requireClubOrCoach><Club /></RoleProtectedRoute>} />
           <Route path="/finances" element={<RoleProtectedRoute requireClubOrCoach><Finances /></RoleProtectedRoute>} />
-          
+
           {/* ERP Routes - Club admin only */}
           <Route path="/erp" element={<RoleProtectedRoute requireClubAdmin><ERPDashboard /></RoleProtectedRoute>} />
           <Route path="/erp/perfil" element={<RoleProtectedRoute requireClubAdmin><ClubProfile /></RoleProtectedRoute>} />
@@ -172,20 +178,20 @@ function AppContent() {
           <Route path="/erp/academy" element={<RoleProtectedRoute requireClubAdmin><AcademyDashboard /></RoleProtectedRoute>} />
           <Route path="/erp/scouting" element={<RoleProtectedRoute requireClubAdmin><ScoutingDashboard /></RoleProtectedRoute>} />
           <Route path="/erp/match-rules" element={<RoleProtectedRoute requireClubAdmin><MatchRulesDashboard /></RoleProtectedRoute>} />
-          
+
           {/* Physio Routes - Physio/Admin access */}
           <Route path="/club/physio" element={<PhysioRoute><PhysioDashboard /></PhysioRoute>} />
           <Route path="/club/physio/injuries" element={<PhysioRoute><InjuriesList /></PhysioRoute>} />
           <Route path="/club/physio/injuries/:id" element={<PhysioRoute><InjuryForm /></PhysioRoute>} />
           <Route path="/club/physio/rehab" element={<PhysioRoute><RehabPlansList /></PhysioRoute>} />
           <Route path="/club/physio/rehab/:id" element={<PhysioRoute><RehabPlanForm /></PhysioRoute>} />
-          
+
           {/* Youth Coordination */}
           <Route path="/club/coordination" element={<RoleProtectedRoute requireClubAdmin><YouthCoordinationDashboard /></RoleProtectedRoute>} />
-          
+
           {/* Admin Templates */}
           <Route path="/admin/invite-templates" element={<RoleProtectedRoute requireClubOrCoach><InviteTemplatesAdmin /></RoleProtectedRoute>} />
-          
+
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>

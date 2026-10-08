@@ -2,6 +2,7 @@
 // The app alone reaches nobody who does not open it; parents read email.
 //   { kind: "announcement", announcement_id }
 //   { kind: "callup", match_id, player_ids: string[], message?: string }
+//   { kind: "event", event_id }
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
@@ -159,6 +160,34 @@ Deno.serve(async (req) => {
         html: layout(title,
           `<p><b>Quando:</b> ${esc(when)}<br/><b>Onde:</b> ${esc(where)}</p>${extra ? paragraphs(extra) : ""}<p><b>Convocados (${names.length})</b></p><ul>${names.map((n: string) => `<li>${esc(n)}</li>`).join("")}</ul>`,
           appUrl, `Enviado ${senderName ? "por " + senderName + " " : ""}aos encarregados de educação dos convocados.`),
+      };
+    } else if (body.kind === "event") {
+      const { data: ev } = await db.from("club_events").select("*").eq("id", body.event_id).maybeSingle();
+      if (!ev) return json({ error: "Evento não encontrado" }, 404);
+      if (ev.owner_id !== user.id) {
+        const { data: admin } = ev.club_id ? await userClient.rpc("is_club_admin", { _user_id: user.id, _club_id: ev.club_id }) : { data: false };
+        if (!admin) return json({ error: "Só quem criou o evento o pode enviar" }, 403);
+      }
+      // the teams the event is for: one team, the whole club, or every team of the coach
+      let teamQuery = db.from("teams").select("id, name");
+      teamQuery = ev.team_id ? teamQuery.eq("id", ev.team_id) : ev.club_id ? teamQuery.eq("club_id", ev.club_id) : teamQuery.eq("owner_id", ev.owner_id).is("club_id", null);
+      const { data: teams } = await teamQuery;
+      const ids = (teams ?? []).map((t: { id: string }) => t.id);
+      const { data: players } = ids.length ? await db.from("players").select("id").in("team_id", ids).limit(2000) : { data: [] };
+      emails = await parentEmails(db, (players ?? []).map((p: { id: string }) => p.id));
+
+      const tz = { timeZone: "Europe/Lisbon" } as const;
+      const start = new Date(ev.starts_at);
+      const when = start.toLocaleString("pt-PT", { ...tz, weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" })
+        + (ev.ends_at ? " – " + new Date(ev.ends_at).toLocaleTimeString("pt-PT", { ...tz, hour: "2-digit", minute: "2-digit" }) : "");
+      const scope = ev.team_id ? (teams?.[0]?.name ?? "") : ev.club_id ? "Todo o clube" : "";
+      const details = typeof ev.description === "string" ? ev.description.trim() : "";
+      mail = {
+        subject: `${ev.title} · ${when}`,
+        text: [ev.title, scope, "", `Quando: ${when}`, ev.location ? `Onde: ${ev.location}` : null, "", details, "", appUrl].filter((x) => x !== null).join("\n"),
+        html: layout(ev.title,
+          `<p><b>Quando:</b> ${esc(when)}${ev.location ? `<br/><b>Onde:</b> ${esc(ev.location)}` : ""}${scope ? `<br/><b>Para:</b> ${esc(scope)}` : ""}</p>${details ? paragraphs(details) : ""}`,
+          appUrl, `Enviado ${senderName ? "por " + senderName + " " : ""}aos encarregados de educação. Veja todos os eventos e jogos no TreinON.`),
       };
     } else {
       return json({ error: "Pedido inválido" }, 400);

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Trophy, Calendar, Users, Menu, MessageSquare, Settings } from 'lucide-react';
+import { Home, Trophy, Calendar, CalendarDays, Users, Menu, MessageSquare, Settings } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ const COACH_ITEMS: Item[] = [
 ];
 
 const FAMILY_ITEMS = (home: string): Item[] => [
-  { label: 'Início', icon: Home, path: home },
+  { label: 'Eventos', icon: CalendarDays, path: home },
   { label: 'Mensagens', icon: MessageSquare, path: '/communication' },
   { label: 'Definições', icon: Settings, path: '/settings' },
   { label: 'Mais', icon: Menu, action: 'menu' },

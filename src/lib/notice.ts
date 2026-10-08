@@ -11,7 +11,8 @@ export interface NoticeResult { configured?: boolean; total?: number; sent?: num
 
 export type NoticeRequest =
   | { kind: 'announcement'; announcement_id: string }
-  | { kind: 'callup'; match_id: string; player_ids: string[]; message?: string };
+  | { kind: 'callup'; match_id: string; player_ids: string[]; message?: string }
+  | { kind: 'event'; event_id: string };
 
 export async function sendNotice(body: NoticeRequest): Promise<NoticeResult> {
   try {
