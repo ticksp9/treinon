@@ -102,6 +102,22 @@ export function timeLabel(i: Pick<AgendaItem, 'start' | 'end'>): string {
   return isSameDay(i.start, i.end) ? `${s}–${format(i.end, 'HH:mm')}` : `${s} até ${format(i.end, "d MMM HH:mm", { locale: pt })}`;
 }
 
+export interface RsvpRow { event_id: string; user_id: string; status: 'yes' | 'no'; people: number }
+/** For the organiser: how many answered and how many people are actually coming. */
+export function rsvpSummary(rows: RsvpRow[], eventId: string): { yes: number; no: number; people: number } {
+  let yes = 0, no = 0, people = 0;
+  for (const r of rows) {
+    if (r.event_id !== eventId) continue;
+    if (r.status === 'yes') { yes += 1; people += Math.max(1, r.people || 1); } else no += 1;
+  }
+  return { yes, no, people };
+}
+export function rsvpSummaryText(s: { yes: number; no: number; people: number }): string {
+  if (s.yes + s.no === 0) return 'Ainda sem respostas';
+  const going = s.yes === 0 ? 'Ninguém vai' : `${s.yes} ${s.yes === 1 ? 'resposta' : 'respostas'} "vou" · ${s.people} ${s.people === 1 ? 'pessoa' : 'pessoas'}`;
+  return s.no ? `${going} · ${s.no} não ${s.no === 1 ? 'vai' : 'vão'}` : going;
+}
+
 /** Text to paste in the parents' WhatsApp group. */
 export function eventShareText(e: { title: string; start: Date; end?: Date | null; location?: string | null; detail?: string | null; scope?: string }): string {
   return [

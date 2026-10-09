@@ -132,3 +132,38 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.club_events) = 2, 'assistant sees team and club events';
 END $$;
 RESET ROLE;
+
+-- ── Event answers: each one answers for himself; only the organisers see everybody ──
+SET ROLE authenticated;
+-- parent of the Sub-13 player goes to the team dinner with 3 people
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+INSERT INTO public.club_event_rsvps (event_id, status, people) VALUES ('98000000-0000-0000-0000-000000000001', 'yes', 3);
+-- the second parent does not go
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000012', false);
+INSERT INTO public.club_event_rsvps (event_id, status) VALUES ('98000000-0000-0000-0000-000000000001', 'no');
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.club_event_rsvps) = 1, 'a parent sees only his own answer';
+  ASSERT (SELECT count(*) FROM public.get_event_rsvps('98000000-0000-0000-0000-000000000001')) = 0, 'and cannot list the others';
+  BEGIN
+    INSERT INTO public.club_event_rsvps (event_id, user_id, status) VALUES ('98000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000011', 'no');
+    RAISE EXCEPTION 'answered for someone else';
+  EXCEPTION WHEN insufficient_privilege OR unique_violation THEN NULL;
+  END;
+END $$;
+-- a parent of another club cannot answer an event he does not see
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000021', false);
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.club_event_rsvps (event_id, status) VALUES ('98000000-0000-0000-0000-000000000001', 'yes');
+    RAISE EXCEPTION 'answered an event of another club';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+-- the head coach who published it sees both answers with names and the children
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.club_event_rsvps WHERE event_id = '98000000-0000-0000-0000-000000000001') = 2, 'organiser sees all answers';
+  ASSERT (SELECT sum(people) FROM public.get_event_rsvps('98000000-0000-0000-0000-000000000001') WHERE status = 'yes') = 3, 'three people are coming';
+  ASSERT (SELECT players FROM public.get_event_rsvps('98000000-0000-0000-0000-000000000001') WHERE status = 'yes') = 'Rui', 'with the child''s name';
+END $$;
+RESET ROLE;

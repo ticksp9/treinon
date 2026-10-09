@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildAgenda, dayLabel, eventShareText, groupByDay, splitAgenda, timeLabel } from '@/lib/agenda';
+import { buildAgenda, dayLabel, eventShareText, groupByDay, rsvpSummary, rsvpSummaryText, splitAgenda, timeLabel } from '@/lib/agenda';
 
 const now = new Date('2026-10-08T15:00:00');
 const teamNames = { t1: 'Sub-13' };
@@ -47,6 +47,19 @@ describe('family agenda', () => {
     expect(dayLabel(days[1].day, now)).toBe('Hoje · quinta-feira, 8 de outubro');
     expect(dayLabel(new Date('2026-10-09T08:00:00'), now).startsWith('Amanhã')).toBe(true);
     expect(dayLabel(days[2].day, now)).toBe('Sábado, 10 de outubro');
+  });
+
+  it('counts who is coming to an event, in people', () => {
+    const rows = [
+      { event_id: 'e1', user_id: 'a', status: 'yes' as const, people: 3 },
+      { event_id: 'e1', user_id: 'b', status: 'yes' as const, people: 1 },
+      { event_id: 'e1', user_id: 'c', status: 'no' as const, people: 1 },
+      { event_id: 'e2', user_id: 'a', status: 'no' as const, people: 4 },
+    ];
+    expect(rsvpSummary(rows, 'e1')).toEqual({ yes: 2, no: 1, people: 4 });
+    expect(rsvpSummaryText(rsvpSummary(rows, 'e1'))).toBe('2 respostas "vou" · 4 pessoas · 1 não vai');
+    expect(rsvpSummaryText(rsvpSummary(rows, 'e2'))).toBe('Ninguém vai · 1 não vai');
+    expect(rsvpSummaryText(rsvpSummary(rows, 'e9'))).toBe('Ainda sem respostas');
   });
 
   it('shows times and writes the event for WhatsApp', () => {

@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Dumbbell, Loader2, Mail, MapPin, MessageCircle, PartyPopper, Pencil, Plus, Trash2, Trophy } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Dumbbell, Loader2, Mail, MapPin, MessageCircle, Minus, PartyPopper, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -23,13 +23,14 @@ import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import {
-  EVENT_KIND_LABELS, buildAgenda, dayLabel, eventShareText, groupByDay, splitAgenda, timeLabel,
-  type AgendaItem, type AgendaKind, type ClubEventRow, type EventKind, type MatchRow, type TrainingRow,
+  EVENT_KIND_LABELS, buildAgenda, dayLabel, eventShareText, groupByDay, rsvpSummary, rsvpSummaryText, splitAgenda, timeLabel,
+  type AgendaItem, type AgendaKind, type ClubEventRow, type EventKind, type MatchRow, type RsvpRow, type TrainingRow,
 } from '@/lib/agenda';
 import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { cn } from '@/lib/utils';
 
 interface FamilyRow { team_id: string; team_name: string; club_id: string | null; player_id: string; player_name: string }
+interface RsvpDetail { user_id: string; name: string; players: string | null; status: 'yes' | 'no'; people: number; note: string | null }
 interface TeamRow { id: string; name: string; club_id: string | null; owner_id?: string | null }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,6 +59,8 @@ export default function Agenda() {
   const [form, setForm] = useState<EventForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [emailing, setEmailing] = useState<string | null>(null);
+  const [answersFor, setAnswersFor] = useState<string | null>(null);
+  const [answering, setAnswering] = useState<string | null>(null);
 
   // ── whose calendar: my children's teams, or the teams I coach ──
   const { data: family = [], isLoading: familyLoading } = useQuery({
@@ -104,7 +107,10 @@ export default function Agenda() {
         const { data: lu } = await supabase.from('match_lineups').select('match_id').in('match_id', matches.map((x) => x.id));
         called = new Set((lu ?? []).map((l) => l.match_id as string));
       }
-      return { matches, trainings: (t.data ?? []) as TrainingRow[], events: (e.data ?? []) as ClubEventRow[], called };
+      const events = (e.data ?? []) as ClubEventRow[];
+      // my own answer; organisers also get everybody's (the database decides)
+      const { data: rs } = events.length ? await db.from('club_event_rsvps').select('event_id, user_id, status, people').in('event_id', events.map((x) => x.id)) : { data: [] };
+      return { matches, trainings: (t.data ?? []) as TrainingRow[], events, called, rsvps: (rs ?? []) as RsvpRow[] };
     },
   });
 
@@ -166,6 +172,24 @@ export default function Agenda() {
     toastNotice(await sendNotice({ kind: 'event', event_id: id }));
     setEmailing(null);
   };
+
+  // ── "Vou / Não vou" ──
+  const answer = async (eventId: string, status: 'yes' | 'no', people = 1) => {
+    if (!user) return;
+    setAnswering(eventId);
+    const { error } = await db.from('club_event_rsvps').upsert(
+      { event_id: eventId, user_id: user.id, status, people: Math.min(20, Math.max(1, people)), updated_at: new Date().toISOString() },
+      { onConflict: 'event_id,user_id' });
+    setAnswering(null);
+    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
+    qc.invalidateQueries({ queryKey: ['agenda'] });
+    qc.invalidateQueries({ queryKey: ['event-rsvps', eventId] });
+  };
+  const { data: answers = [], isLoading: answersLoading } = useQuery({
+    queryKey: ['event-rsvps', answersFor],
+    enabled: !!answersFor,
+    queryFn: async () => ((await db.rpc('get_event_rsvps', { _event: answersFor })).data ?? []) as RsvpDetail[],
+  });
 
   const children = useMemo(() => [...new Set(family.map((f) => f.player_name))], [family]);
 
@@ -235,6 +259,60 @@ export default function Agenda() {
                           {i.kind === 'match' && i.detail && <span>{i.detail}</span>}
                         </div>
                         {i.kind === 'event' && i.detail && <p className="mt-1.5 whitespace-pre-line text-sm">{i.detail}</p>}
+                        {i.kind === 'event' && (() => {
+                          const rows = data?.rsvps ?? [];
+                          const my = rows.find((r) => r.event_id === i.id && r.user_id === user?.id);
+                          const over = (i.end ?? i.start).getTime() < Date.now();
+                          const busy = answering === i.id;
+                          const summary = rsvpSummary(rows, i.id);
+                          return (
+                            <div className="mt-2 space-y-2">
+                              {over ? (
+                                my && <p className="text-xs text-muted-foreground">A sua resposta: {my.status === 'yes' ? `fui (${my.people} ${my.people === 1 ? 'pessoa' : 'pessoas'})` : 'não fui'}</p>
+                              ) : (
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <Button size="sm" variant={my?.status === 'yes' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answer(i.id, 'yes', my?.people ?? 1)} aria-pressed={my?.status === 'yes'}>
+                                    <Check className="mr-1 h-4 w-4" />Vou
+                                  </Button>
+                                  <Button size="sm" variant={my?.status === 'no' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answer(i.id, 'no')} aria-pressed={my?.status === 'no'}>
+                                    <X className="mr-1 h-4 w-4" />Não vou
+                                  </Button>
+                                  {my?.status === 'yes' && (
+                                    <span className="ml-1 flex items-center gap-1 text-sm">
+                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people <= 1} onClick={() => answer(i.id, 'yes', my.people - 1)} aria-label="Menos uma pessoa"><Minus className="h-4 w-4" /></Button>
+                                      <span className="min-w-[4.5rem] text-center tabular-nums">{my.people} {my.people === 1 ? 'pessoa' : 'pessoas'}</span>
+                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people >= 20} onClick={() => answer(i.id, 'yes', my.people + 1)} aria-label="Mais uma pessoa"><Plus className="h-4 w-4" /></Button>
+                                    </span>
+                                  )}
+                                  {!my && <span className="text-xs text-muted-foreground">Diga se vai</span>}
+                                </div>
+                              )}
+                              {/* everybody's answers: only for who organises (the database returns nothing to the others) */}
+                              {!isFamily && (i.ownerId === user?.id || isClubAdmin || isCoordinator || (!!i.teamId && teamIds.includes(i.teamId))) && (
+                                <div>
+                                  <button type="button" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline" onClick={() => setAnswersFor((v) => (v === i.id ? null : i.id))} aria-expanded={answersFor === i.id}>
+                                    {rsvpSummaryText(summary)}
+                                    {summary.yes + summary.no > 0 && <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', answersFor === i.id && 'rotate-180')} />}
+                                  </button>
+                                  {answersFor === i.id && summary.yes + summary.no > 0 && (
+                                    answersLoading ? <Loader2 className="mt-1 h-4 w-4 animate-spin text-muted-foreground" /> : (
+                                      <ul className="mt-1 divide-y rounded-md border text-sm">
+                                        {answers.map((a) => (
+                                          <li key={a.user_id} className="flex items-center gap-2 px-2 py-1.5">
+                                            {a.status === 'yes' ? <Check className="h-4 w-4 shrink-0 text-primary" /> : <X className="h-4 w-4 shrink-0 text-destructive" />}
+                                            <span className="min-w-0 truncate">{a.name}{a.players ? <span className="text-muted-foreground"> · {a.players}</span> : null}</span>
+                                            {a.status === 'yes' && <span className="ml-auto shrink-0 font-mono text-xs">{a.people} {a.people === 1 ? 'pessoa' : 'pessoas'}</span>}
+                                          </li>
+                                        ))}
+                                        {answers.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">Só quem organiza o evento vê os nomes.</li>}
+                                      </ul>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {mine && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openWhatsApp(eventShareText(i))}><MessageCircle className="mr-1 h-3.5 w-3.5" />WhatsApp</Button>
