@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { sendNotice } from '@/lib/notice';
 import { Calendar, Clock, Users, Save, Plus, Trash2, Settings } from 'lucide-react';
 import { format, addDays, startOfWeek, parse } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -178,6 +179,10 @@ export function TrainingAttendance() {
     }
   };
 
+  const setReason = (playerId: string, notes: string) => {
+    setAttendance(prev => ({ ...prev, [playerId]: { ...prev[playerId], player_id: playerId, present: prev[playerId]?.present ?? false, notes: notes || null } }));
+  };
+
   const toggleAttendance = (playerId: string) => {
     setAttendance(prev => ({
       ...prev,
@@ -278,6 +283,12 @@ export function TrainingAttendance() {
 
       if (error) throw error;
       toast.success('Presenças guardadas!');
+      // two trainings missed in a row without a reason: the club coordinator is told right away
+      if (selectedTeam) {
+        sendNotice({ kind: 'absence_alert', team_id: selectedTeam }).then((r) => {
+          if ((r.groups?.coordenador ?? 0) > 0) toast.info('O coordenador foi avisado: há jogadores com dois treinos seguidos sem motivo de falta.');
+        });
+      }
     } catch (error: any) {
       toast.error('Erro ao guardar: ' + error.message);
     } finally {
@@ -534,6 +545,10 @@ export function TrainingAttendance() {
             </div>
           </CardHeader>
           <CardContent>
+            <datalist id="absence-reasons">
+              <option value="Doença" /><option value="Lesão" /><option value="Escola" /><option value="Motivo familiar" /><option value="Avisou" />
+            </datalist>
+            <p className="mb-2 text-xs text-muted-foreground">Escreva o motivo quando alguém falta e avisou. Duas faltas seguidas sem motivo geram um alerta para o coordenador do clube.</p>
             <div className="space-y-2">
               {players.map(player => (
                 <div
@@ -561,9 +576,22 @@ export function TrainingAttendance() {
                       )}
                     </div>
                   </div>
-                  <Badge variant={attendance[player.id]?.present ? 'default' : 'secondary'}>
-                    {attendance[player.id]?.present ? 'Presente' : 'Ausente'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {!attendance[player.id]?.present && (
+                      <Input
+                        className="h-8 w-32 text-xs sm:w-48"
+                        maxLength={120}
+                        placeholder="Motivo da falta"
+                        list="absence-reasons"
+                        value={attendance[player.id]?.notes ?? ''}
+                        onChange={(e) => setReason(player.id, e.target.value)}
+                        aria-label={`Motivo da falta de ${player.name}`}
+                      />
+                    )}
+                    <Badge variant={attendance[player.id]?.present ? 'default' : 'secondary'}>
+                      {attendance[player.id]?.present ? 'Presente' : 'Ausente'}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>

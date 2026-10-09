@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { callupSummary, sendNotice, type CallupTargets } from '@/lib/notice';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -120,6 +122,23 @@ export function MatchCallup() {
     ? newMatch.partMinutes
     : Array(newMatch.partsCount || 2).fill(newMatch.partDurationMinutes || 25);
   const [creating, setCreating] = useState(false);
+  // who gets the call-up by email (the club coordinator always does: the server sees to it)
+  const [notify, setNotify] = useState<CallupTargets>({ parents: false, players: false });
+  const emailCallup = (matchId: string, playerIds: string[]) => {
+    if (playerIds.length === 0) return;
+    sendNotice({ kind: 'callup', match_id: matchId, player_ids: playerIds, to: notify }).then((r) => {
+      const s = callupSummary(r);
+      if (s) toast[s.level](s.text);
+    });
+  };
+  const NotifyOptions = (
+    <div className="space-y-2 rounded-md border p-3">
+      <p className="text-sm font-medium">Enviar a convocatória por email</p>
+      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.parents} onCheckedChange={(v) => setNotify((n) => ({ ...n, parents: v }))} />Pais dos convocados</label>
+      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.players} onCheckedChange={(v) => setNotify((n) => ({ ...n, players: v }))} />Jogadores convocados</label>
+      <p className="text-xs text-muted-foreground">Diz que o jogador está convocado, a data, a hora, o local e o adversário. Numa equipa de clube, o coordenador recebe sempre a convocatória completa.</p>
+    </div>
+  );
   const [deleting, setDeleting] = useState(false);
   const [showLiveMatch, setShowLiveMatch] = useState(false);
   const [liveMatchId, setLiveMatchId] = useState<string | null>(null);
@@ -484,6 +503,7 @@ export function MatchCallup() {
 
         if (lineupError) throw lineupError;
       }
+      emailCallup(matchData.id, Array.from(selectedPlayers));
 
       toast.success('Jogo e convocatória criados! A redirecionar para Jogos...');
       setDialogOpen(false);
@@ -540,6 +560,7 @@ export function MatchCallup() {
       }
 
       toast.success('Convocatória guardada!');
+      emailCallup(selectedMatch, Array.from(selectedPlayers));
     } catch (error: any) {
       toast.error('Erro ao guardar: ' + error.message);
     }
@@ -1125,6 +1146,8 @@ export function MatchCallup() {
                       </div>
                     </div>
 
+                    {NotifyOptions}
+
                     <Button onClick={createMatchAndCallup} className="w-full" disabled={creating}>
                       {creating ? 'A criar...' : 'Criar Jogo e Convocatória'}
                     </Button>
@@ -1374,6 +1397,7 @@ export function MatchCallup() {
               </div>
             </div>
           </CardHeader>
+          <div className="px-6 pb-3">{NotifyOptions}</div>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {[...players]

@@ -1,8 +1,10 @@
-// Emails an announcement or a match call-up to the people it is meant for.
-// The app alone reaches nobody who does not open it; parents read email.
+// Emails what must leave the app: the app alone reaches nobody who does not open it.
 //   { kind: "announcement", announcement_id }
-//   { kind: "callup", match_id, player_ids: string[], message?: string }
+//   { kind: "callup", match_id, player_ids: string[], message?: string, to?: { parents?: boolean, players?: boolean, coordinator?: boolean } }
+//       in a club team the coordinator ALWAYS gets the call-up when it is saved, whatever `to` says
+//       (resend: true = the coach is sending it again by hand to parents/players only)
 //   { kind: "event", event_id }
+//   { kind: "absence_alert", team_id }   two trainings missed without a reason -> coordinator
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
@@ -18,13 +20,17 @@ const MAX_RECIPIENTS = 150;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 
+interface Mail { subject: string; text: string; html: string }
+/** one message and who gets it; `group` is what the coach is told ("pais", "coordenador"…) */
+interface Batch { group: string; to: string[]; mail: Mail }
+
 function parseFrom(): { name: string; email: string } {
   const raw = Deno.env.get("EMAIL_FROM") ?? "TreinON <treinon.apoio@gmail.com>";
   const m = raw.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return m ? { name: m[1] || "TreinON", email: m[2] } : { name: "TreinON", email: raw.trim() };
 }
 
-async function sendEmail(to: string, mail: { subject: string; text: string; html: string }, fromName: string): Promise<{ ok: boolean; error?: string }> {
+async function sendEmail(to: string, mail: Mail, fromName: string): Promise<{ ok: boolean; error?: string }> {
   const from = parseFrom();
   const sender = { name: fromName ? `${fromName} (TreinON)` : from.name, email: from.email };
   try {
@@ -65,29 +71,58 @@ const paragraphs = (text: string) => text.split(/\n{2,}/).map((p) => `<p>${esc(p
 // deno-lint-ignore no-explicit-any
 type Db = any;
 
-/** Emails of the parents of these players: registered guardians and the emails on the player record. */
-async function parentEmails(db: Db, playerIds: string[]): Promise<string[]> {
-  if (playerIds.length === 0) return [];
-  const [{ data: players }, { data: links }] = await Promise.all([
-    db.from("players").select("parent_email, parent_email_2").in("id", playerIds),
-    db.from("player_guardians").select("guardian:guardian_profiles(email, user_id)").in("player_id", playerIds),
-  ]);
-  const out: string[] = [];
-  for (const p of players ?? []) out.push(p.parent_email, p.parent_email_2);
-  const userIds: string[] = [];
-  for (const l of links ?? []) {
-    const g = Array.isArray(l.guardian) ? l.guardian[0] : l.guardian;
-    if (g?.email) out.push(g.email);
-    if (g?.user_id) userIds.push(g.user_id);
-  }
-  out.push(...(await profileEmails(db, userIds)));
-  return out.filter(Boolean);
-}
-
 async function profileEmails(db: Db, userIds: string[]): Promise<string[]> {
   if (userIds.length === 0) return [];
   const { data } = await db.from("profiles").select("email").in("id", userIds);
   return (data ?? []).map((p: { email: string | null }) => p.email).filter(Boolean);
+}
+
+/** player id → emails of the parents (registered guardians and the emails on the player record). */
+async function parentEmailsByPlayer(db: Db, playerIds: string[]): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>(playerIds.map((id) => [id, []]));
+  if (playerIds.length === 0) return out;
+  const [{ data: players }, { data: links }] = await Promise.all([
+    db.from("players").select("id, parent_email, parent_email_2").in("id", playerIds),
+    db.from("player_guardians").select("player_id, guardian:guardian_profiles(email, user_id)").in("player_id", playerIds),
+  ]);
+  for (const p of players ?? []) out.get(p.id)?.push(p.parent_email, p.parent_email_2);
+  const byUser = new Map<string, string[]>();
+  for (const l of links ?? []) {
+    const g = Array.isArray(l.guardian) ? l.guardian[0] : l.guardian;
+    if (g?.email) out.get(l.player_id)?.push(g.email);
+    if (g?.user_id) byUser.set(g.user_id, [...(byUser.get(g.user_id) ?? []), l.player_id]);
+  }
+  if (byUser.size) {
+    const { data: profs } = await db.from("profiles").select("id, email").in("id", [...byUser.keys()]);
+    for (const pr of profs ?? []) if (pr.email) for (const pid of byUser.get(pr.id) ?? []) out.get(pid)?.push(pr.email);
+  }
+  for (const [k, v] of out) out.set(k, v.filter(Boolean));
+  return out;
+}
+const parentEmails = async (db: Db, playerIds: string[]) => [...(await parentEmailsByPlayer(db, playerIds)).values()].flat();
+
+/** player id → the player's own emails (record and account). */
+async function playerEmailsByPlayer(db: Db, playerIds: string[]): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>(playerIds.map((id) => [id, []]));
+  if (playerIds.length === 0) return out;
+  const [{ data: players }, { data: accounts }] = await Promise.all([
+    db.from("players").select("id, email").in("id", playerIds),
+    db.from("player_accounts").select("player_id, user_id").in("player_id", playerIds),
+  ]);
+  for (const p of players ?? []) if (p.email) out.get(p.id)?.push(p.email);
+  const ids = (accounts ?? []).map((a: { user_id: string }) => a.user_id);
+  if (ids.length) {
+    const { data: profs } = await db.from("profiles").select("id, email").in("id", ids);
+    const mail = new Map((profs ?? []).map((p: { id: string; email: string | null }) => [p.id, p.email]));
+    for (const a of accounts ?? []) { const e = mail.get(a.user_id); if (e) out.get(a.player_id)?.push(e as string); }
+  }
+  return out;
+}
+
+async function coordinatorEmails(db: Db, teamId: string): Promise<string[]> {
+  const { data, error } = await db.rpc("team_coordinator_emails", { _team: teamId });
+  if (error) console.warn("[send-notice] coordinators:", error.message);
+  return (data ?? []).map((r: { email: string }) => r.email).filter(Boolean);
 }
 
 Deno.serve(async (req) => {
@@ -106,11 +141,15 @@ Deno.serve(async (req) => {
     const appUrl = (Deno.env.get("APP_URL") || req.headers.get("origin") || "https://treinon.vercel.app").replace(/\/$/, "");
     const { data: me } = await db.from("profiles").select("display_name, full_name, email").eq("id", user.id).maybeSingle();
     const senderName: string = me?.display_name || me?.full_name || "";
+    const by = senderName ? `por ${senderName} ` : "";
 
-    let emails: string[] = [];
+    const batches: Batch[] = [];
     let memberIds: string[] = [];
-    let mail: { subject: string; text: string; html: string };
     let notif: { title: string; body: string; type: string; channel_id: string | null; team_id: string | null; club_id: string | null; entity_id: string; entity_type: string } | null = null;
+    /** runs after the emails went out (e.g. remember which alerts were sent) */
+    let afterSend: (() => Promise<void>) | null = null;
+    /** the sender is normally left out; a coordinator who is also the coach still gets his copy */
+    let keepSender = false;
 
     if (body.kind === "announcement") {
       const { data: a } = await db.from("communication_announcements").select("*").eq("id", body.announcement_id).maybeSingle();
@@ -122,21 +161,21 @@ Deno.serve(async (req) => {
 
       const { data: members } = await db.from("communication_channel_members").select("user_id").eq("channel_id", ch.id);
       memberIds = (members ?? []).map((m: { user_id: string }) => m.user_id).filter((id: string) => id !== user.id);
-      emails = await profileEmails(db, memberIds);
+      const emails = await profileEmails(db, memberIds);
       // parents who have no account yet still get the email
       if (ch.team_id && ch.allow_guardians) {
         const { data: players } = await db.from("players").select("id").eq("team_id", ch.team_id);
         emails.push(...(await parentEmails(db, (players ?? []).map((p: { id: string }) => p.id))));
       }
       const important = a.priority === "important";
-      mail = {
+      batches.push({ group: "grupo", to: emails, mail: {
         subject: `${important ? "[Importante] " : ""}${a.title} · ${ch.name}`,
         text: [a.title, "", a.content, "", `${senderName ? senderName + " · " : ""}${ch.name}`, appUrl].join("\n"),
-        html: layout(a.title, paragraphs(a.content), `${appUrl}/communication`, `Enviado ${senderName ? "por " + senderName + " " : ""}para o grupo "${ch.name}" no TreinON.`),
-      };
+        html: layout(a.title, paragraphs(a.content), `${appUrl}/communication`, `Enviado ${by}para o grupo "${ch.name}" no TreinON.`),
+      } });
       notif = { title: a.title, body: String(a.content).slice(0, 240), type: "announcement", channel_id: ch.id, team_id: ch.team_id, club_id: ch.club_id, entity_id: a.id, entity_type: "announcement" };
     } else if (body.kind === "callup") {
-      const { data: m } = await db.from("matches").select("id, team_id, opponent_name, match_date, location, is_home").eq("id", body.match_id).maybeSingle();
+      const { data: m } = await db.from("matches").select("id, team_id, opponent_name, match_date, location, is_home, competition, logistics").eq("id", body.match_id).maybeSingle();
       if (!m) return json({ error: "Jogo não encontrado" }, 404);
       const { data: allowed } = await userClient.rpc("can_coach_team", { _user: user.id, _team: m.team_id });
       if (!allowed) return json({ error: "Sem permissão nesta equipa" }, 403);
@@ -145,22 +184,65 @@ Deno.serve(async (req) => {
       const { data: players } = asked.length
         ? await db.from("players").select("id, name, number").eq("team_id", m.team_id).in("id", asked).order("name")
         : { data: [] };
-      const list = players ?? [];
+      const list: { id: string; name: string; number: number | null }[] = players ?? [];
       if (list.length === 0) return json({ configured: true, total: 0, sent: 0, failed: 0, note: "Sem jogadores convocados." });
-      emails = await parentEmails(db, list.map((p: { id: string }) => p.id));
 
-      const when = new Date(m.match_date).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon", weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
+      // old callers sent no `to`: that meant "the parents"
+      const to = body.to && typeof body.to === "object" ? body.to : { parents: true };
+      const inClub = !!team?.club_id;
+
+      const tz = { timeZone: "Europe/Lisbon" } as const;
+      const date = new Date(m.match_date);
+      const day = date.toLocaleDateString("pt-PT", { ...tz, weekday: "long", day: "2-digit", month: "long" });
+      const hour = date.toLocaleTimeString("pt-PT", { ...tz, hour: "2-digit", minute: "2-digit" });
       const where = m.location || (m.is_home ? "Casa" : "Fora");
-      const names = list.map((p: { name: string; number: number | null }) => (p.number != null ? `${p.number} · ${p.name}` : p.name));
+      const lg = (m.logistics ?? {}) as { meet_time?: string; meet_place?: string; transport?: string; kit?: string; info?: string };
+      const facts: [string, string][] = [
+        ["Adversário", m.opponent_name], ["Data", day], ["Hora do jogo", hour], ["Local", where],
+        ...(m.competition ? [["Competição", m.competition] as [string, string]] : []),
+        ...(lg.meet_time ? [["Concentração", `${lg.meet_time}${lg.meet_place ? " · " + lg.meet_place : ""}`] as [string, string]] : []),
+        ...(lg.transport ? [["Transporte", lg.transport] as [string, string]] : []),
+        ...(lg.kit ? [["Equipamento", lg.kit] as [string, string]] : []),
+      ];
+      const factsText = facts.map(([k, v]) => `${k}: ${v}`);
+      const factsHtml = `<p>${facts.map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`).join("<br/>")}</p>`;
       const extra = typeof body.message === "string" ? body.message.trim().slice(0, 1000) : "";
-      const title = `Convocatória: ${team?.name ?? "Equipa"} vs ${m.opponent_name}`;
-      mail = {
-        subject: `${title} · ${when}`,
-        text: [title, "", `Quando: ${when}`, `Onde: ${where}`, "", extra, extra ? "" : null, "Convocados:", ...names.map((n: string) => `- ${n}`), "", appUrl].filter((x) => x !== null).join("\n"),
-        html: layout(title,
-          `<p><b>Quando:</b> ${esc(when)}<br/><b>Onde:</b> ${esc(where)}</p>${extra ? paragraphs(extra) : ""}<p><b>Convocados (${names.length})</b></p><ul>${names.map((n: string) => `<li>${esc(n)}</li>`).join("")}</ul>`,
-          appUrl, `Enviado ${senderName ? "por " + senderName + " " : ""}aos encarregados de educação dos convocados.`),
-      };
+      const teamName = team?.name ?? "Equipa";
+      const names = list.map((p) => (p.number != null ? `${p.number} · ${p.name}` : p.name));
+
+      // the coordinator: always in a club team, with the whole list
+      if (inClub && body.resend !== true) {
+        keepSender = true;
+        const title = `Convocatória ${teamName} vs ${m.opponent_name}`;
+        batches.push({ group: "coordenador", to: await coordinatorEmails(db, m.team_id), mail: {
+          subject: `${title} · ${day}, ${hour}`,
+          text: [title, "", ...factsText, "", extra, extra ? "" : null, `Convocados (${names.length}):`, ...names.map((n) => `- ${n}`), "", appUrl].filter((x) => x !== null).join("\n"),
+          html: layout(title, `${factsHtml}${extra ? paragraphs(extra) : ""}<p><b>Convocados (${names.length})</b></p><ul>${names.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`,
+            appUrl, `Convocatória feita ${by}— enviada à coordenação do clube.`),
+        } });
+      }
+      // parents and players: one message per player, saying that he/she is called up
+      if (to.parents || to.players) {
+        const ids = list.map((p) => p.id);
+        const [parents, own] = await Promise.all([
+          to.parents ? parentEmailsByPlayer(db, ids) : Promise.resolve(new Map<string, string[]>()),
+          to.players ? playerEmailsByPlayer(db, ids) : Promise.resolve(new Map<string, string[]>()),
+        ]);
+        for (const p of list) {
+          const mailFor = (who: "parent" | "player"): Mail => {
+            const line = who === "parent" ? `${p.name} está convocado(a) para o jogo ${teamName} vs ${m.opponent_name}.` : `Estás convocado(a) para o jogo ${teamName} vs ${m.opponent_name}.`;
+            return {
+              subject: `Convocatória: ${p.name} · ${teamName} vs ${m.opponent_name} · ${day}, ${hour}`,
+              text: [line, "", ...factsText, "", extra, "", appUrl].join("\n"),
+              html: layout(`Convocatória · ${teamName} vs ${m.opponent_name}`, `<p>${esc(line)}</p>${factsHtml}${extra ? paragraphs(extra) : ""}`, appUrl,
+                `Enviado ${by}${who === "parent" ? `aos encarregados de educação de ${p.name}` : `a ${p.name}`}.`),
+            };
+          };
+          if (to.parents) batches.push({ group: "pais", to: parents.get(p.id) ?? [], mail: mailFor("parent") });
+          if (to.players) batches.push({ group: "jogadores", to: own.get(p.id) ?? [], mail: mailFor("player") });
+        }
+      }
+      if (batches.length === 0) return json({ configured: true, total: 0, sent: 0, failed: 0, groups: {}, note: "Convocatória guardada, sem envio." });
     } else if (body.kind === "event") {
       const { data: ev } = await db.from("club_events").select("*").eq("id", body.event_id).maybeSingle();
       if (!ev) return json({ error: "Evento não encontrado" }, 404);
@@ -174,7 +256,7 @@ Deno.serve(async (req) => {
       const { data: teams } = await teamQuery;
       const ids = (teams ?? []).map((t: { id: string }) => t.id);
       const { data: players } = ids.length ? await db.from("players").select("id").in("team_id", ids).limit(2000) : { data: [] };
-      emails = await parentEmails(db, (players ?? []).map((p: { id: string }) => p.id));
+      const emails = await parentEmails(db, (players ?? []).map((p: { id: string }) => p.id));
 
       const tz = { timeZone: "Europe/Lisbon" } as const;
       const start = new Date(ev.starts_at);
@@ -182,12 +264,43 @@ Deno.serve(async (req) => {
         + (ev.ends_at ? " – " + new Date(ev.ends_at).toLocaleTimeString("pt-PT", { ...tz, hour: "2-digit", minute: "2-digit" }) : "");
       const scope = ev.team_id ? (teams?.[0]?.name ?? "") : ev.club_id ? "Todo o clube" : "";
       const details = typeof ev.description === "string" ? ev.description.trim() : "";
-      mail = {
+      batches.push({ group: "pais", to: emails, mail: {
         subject: `${ev.title} · ${when}`,
         text: [ev.title, scope, "", `Quando: ${when}`, ev.location ? `Onde: ${ev.location}` : null, "", details, "", appUrl].filter((x) => x !== null).join("\n"),
         html: layout(ev.title,
           `<p><b>Quando:</b> ${esc(when)}${ev.location ? `<br/><b>Onde:</b> ${esc(ev.location)}` : ""}${scope ? `<br/><b>Para:</b> ${esc(scope)}` : ""}</p>${details ? paragraphs(details) : ""}`,
-          appUrl, `Enviado ${senderName ? "por " + senderName + " " : ""}aos encarregados de educação. Veja todos os eventos e jogos no TreinON.`),
+          appUrl, `Enviado ${by}aos encarregados de educação. Veja todos os eventos e jogos no TreinON.`),
+      } });
+    } else if (body.kind === "absence_alert") {
+      // called right after the coach saves the attendance of a training
+      const teamId = String(body.team_id ?? "");
+      const { data: allowed } = await userClient.rpc("can_coach_team", { _user: user.id, _team: teamId });
+      if (!allowed) return json({ error: "Sem permissão nesta equipa" }, 403);
+      const { data: team } = await db.from("teams").select("name, club_id").eq("id", teamId).maybeSingle();
+      if (!team?.club_id) return json({ configured: true, total: 0, sent: 0, failed: 0, alerts: 0 });
+      const { data: alerts, error: aErr } = await db.rpc("team_absence_alerts", { _team: teamId });
+      if (aErr) return json({ error: aErr.message }, 500);
+      const rows: { player_id: string; player_name: string; last_absence: string; previous_absence: string }[] = alerts ?? [];
+      if (rows.length === 0) return json({ configured: true, total: 0, sent: 0, failed: 0, alerts: 0 });
+      // only what the coordinator was not told yet
+      const { data: known } = await db.from("coordinator_alert_state").select("player_id, ref_key, emailed_at").eq("kind", "absence").in("player_id", rows.map((r) => r.player_id));
+      const told = new Set((known ?? []).filter((k: { emailed_at: string | null }) => k.emailed_at).map((k: { player_id: string; ref_key: string }) => `${k.player_id}|${k.ref_key}`));
+      const fresh = rows.filter((r) => !told.has(`${r.player_id}|${r.last_absence}`));
+      if (fresh.length === 0) return json({ configured: true, total: 0, sent: 0, failed: 0, alerts: 0 });
+      const d = (s: string) => new Date(s + "T12:00:00").toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+      const lines = fresh.map((r) => `${r.player_name}: faltou a ${d(r.previous_absence)} e ${d(r.last_absence)}`);
+      keepSender = true;
+      batches.push({ group: "coordenador", to: await coordinatorEmails(db, teamId), mail: {
+        subject: `Alerta de faltas · ${team.name}: ${fresh.map((r) => r.player_name).join(", ")}`,
+        text: [`${team.name}: dois treinos seguidos sem motivo comunicado`, "", ...lines.map((l) => `- ${l}`), "", `${appUrl}/coordenacao/alertas`].join("\n"),
+        html: layout(`Alerta de faltas · ${team.name}`,
+          `<p>Dois treinos seguidos sem presença e sem motivo comunicado:</p><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`,
+          `${appUrl}/coordenacao/alertas`, `Aviso automático depois de o treinador ${senderName || ""} registar as presenças.`),
+      } });
+      afterSend = async () => {
+        await db.from("coordinator_alert_state").upsert(
+          fresh.map((r) => ({ kind: "absence", player_id: r.player_id, ref_key: r.last_absence, club_id: team.club_id, emailed_at: new Date().toISOString() })),
+          { onConflict: "kind,player_id,ref_key" });
       };
     } else {
       return json({ error: "Pedido inválido" }, 400);
@@ -203,19 +316,27 @@ Deno.serve(async (req) => {
     }
 
     const mine = (me?.email || user.email || "").toLowerCase();
-    const unique = [...new Set(emails.map((e) => String(e).trim().toLowerCase()).filter((e) => EMAIL_RE.test(e) && e !== mine))];
-    if (!(Deno.env.get("BREVO_API_KEY") || Deno.env.get("RESEND_API_KEY"))) {
-      return json({ configured: false, total: unique.length, sent: 0, failed: 0 });
+    // one email per person and message (nobody sees the other addresses)
+    const jobs: { group: string; to: string; mail: Mail }[] = [];
+    for (const b of batches) {
+      const unique = [...new Set(b.to.map((e) => String(e).trim().toLowerCase()).filter((e) => EMAIL_RE.test(e) && (keepSender && b.group === "coordenador" ? true : e !== mine)))];
+      for (const to of unique) jobs.push({ group: b.group, to, mail: b.mail });
     }
-    const targets = unique.slice(0, MAX_RECIPIENTS);
+    const groups: Record<string, number> = {};
+    for (const b of batches) groups[b.group] ??= 0;
+    if (!(Deno.env.get("BREVO_API_KEY") || Deno.env.get("RESEND_API_KEY"))) {
+      return json({ configured: false, total: jobs.length, sent: 0, failed: 0, groups });
+    }
+    const targets = jobs.slice(0, MAX_RECIPIENTS);
     let sent = 0, failed = 0, firstError: string | undefined;
-    // one email per person (nobody sees the other addresses), a few at a time
     for (let i = 0; i < targets.length; i += 5) {
-      const results = await Promise.all(targets.slice(i, i + 5).map((to) => sendEmail(to, mail, senderName)));
-      for (const r of results) { if (r.ok) sent++; else { failed++; firstError ??= r.error; } }
+      const chunk = targets.slice(i, i + 5);
+      const results = await Promise.all(chunk.map((j) => sendEmail(j.to, j.mail, senderName)));
+      results.forEach((r, k) => { if (r.ok) { sent++; groups[chunk[k].group] = (groups[chunk[k].group] ?? 0) + 1; } else { failed++; firstError ??= r.error; } });
     }
     if (firstError) console.error("[send-notice] email failed:", firstError);
-    return json({ configured: true, total: unique.length, sent, failed, skipped: unique.length - targets.length, error: firstError });
+    if (afterSend && sent > 0) await afterSend();
+    return json({ configured: true, total: jobs.length, sent, failed, skipped: jobs.length - targets.length, groups, error: firstError });
   } catch (e) {
     console.error("[send-notice]", e);
     return json({ error: (e as Error).message }, 500);

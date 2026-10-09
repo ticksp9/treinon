@@ -35,6 +35,7 @@ import {
   MessageSquare,
   Home,
   CalendarDays,
+  BellRing,
   BookOpen,
   ClipboardCheck,
   Megaphone,
@@ -62,6 +63,7 @@ const staffMenuItems = [
   { title: 'Treinos', icon: Calendar, path: '/training' },
   { title: 'Mapa do clube', icon: CalendarRange, path: '/mapa' },
   { title: 'Eventos', icon: CalendarDays, path: '/eventos' },
+  { title: 'Alertas', icon: BellRing, path: '/coordenacao/alertas' },
   { title: 'Jogadores', icon: Users, path: '/players' },
   { title: 'Equipas', icon: Shirt, path: '/teams' },
   { title: 'Quadro Tático', icon: PenTool, path: '/tactical-board' },
@@ -81,6 +83,7 @@ const clubMenuGroups = [
       { title: 'Épocas', icon: CalendarRange, path: '/seasons' },
       { title: 'Transição de época', icon: ArrowUpRight, path: '/season-transition' },
       { title: 'Coordenação jovens', icon: Users, path: '/club/coordination' },
+      { title: 'Alertas (faltas e mensalidades)', icon: BellRing, path: '/coordenacao/alertas' },
       { title: 'Treinadores', icon: UserCog, path: '/coaches' },
       { title: 'Formação & academia', icon: BookOpen, path: '/erp/academy' },
       { title: 'Scouting', icon: Shield, path: '/erp/scouting' },
@@ -133,7 +136,7 @@ const playerMenuItems = [
 
 export function AppSidebar() {
   const { user, signOut } = useAuth();
-  const { isClubAdmin, isCoach, isGuardian, isPlayer, isIndividualCoach, accountType, loading: roleLoading } = useUserRole();
+  const { isClubAdmin, isCoach, isGuardian, isPlayer, isIndividualCoach, isCoordinator, accountType, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
@@ -184,6 +187,8 @@ export function AppSidebar() {
     isPlayer ? playerMenuItems :
     staffMenuItems).filter((item) => {
       if (item.path === '/communication') return canAccessCommunication;
+      // only who coordinates (or runs) a club has alerts to look at
+      if (item.path === '/coordenacao/alertas') return isCoordinator && !showClubMenu;
       if (item.path === '/subscription') return false;
       return true;
     });

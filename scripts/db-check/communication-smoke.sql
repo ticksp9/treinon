@@ -167,3 +167,62 @@ DO $$ BEGIN
   ASSERT (SELECT players FROM public.get_event_rsvps('98000000-0000-0000-0000-000000000001') WHERE status = 'yes') = 'Rui', 'with the child''s name';
 END $$;
 RESET ROLE;
+
+-- ── Coordinator alerts: two trainings missed without a reason; overdue fees ──
+INSERT INTO auth.users (id, email) VALUES ('a0000000-0000-0000-0000-000000000031', 'coord@clube.pt');
+INSERT INTO public.profiles (id, email, full_name, username) VALUES ('a0000000-0000-0000-0000-000000000031', 'coord@clube.pt', 'Coordenador', 'coord1') ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.club_staff (club_id, user_id, name, role, is_active) VALUES ('c0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000031', 'Coordenador', 'coordenador', true);
+INSERT INTO public.players (id, name, owner_id, team_id) VALUES
+  ('d0000000-0000-0000-0000-000000000002', 'Tiago', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001'),
+  ('d0000000-0000-0000-0000-000000000003', 'Vasco', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001');
+INSERT INTO public.training_sessions (id, owner_id, team_id, date, status) VALUES
+  ('97000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', current_date - 6, 'completed'),
+  ('97000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', current_date - 4, 'completed'),
+  ('97000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', current_date - 1, 'completed');
+-- Rui: present, absent, absent (no reason)  -> alert
+-- Tiago: absent, absent (ill), absent       -> no alert (a reason was given for one of the last two)
+-- Vasco: absent, absent, present            -> no alert (came back)
+INSERT INTO public.training_attendance (session_id, player_id, owner_id, present, notes) VALUES
+  ('97000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', true, null),
+  ('97000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', false, null),
+  ('97000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', false, '  '),
+  ('97000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', false, null),
+  ('97000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', false, 'Doente, a mãe avisou'),
+  ('97000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002', false, null),
+  ('97000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', false, null),
+  ('97000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', false, null),
+  ('97000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000002', true, null);
+
+DO $$ BEGIN
+  ASSERT (SELECT array_agg(player_name) FROM public.team_absence_alerts('b0000000-0000-0000-0000-000000000001')) = ARRAY['Rui'], 'only the player with two unexplained absences in a row';
+  ASSERT 'coord@clube.pt' IN (SELECT email FROM public.team_coordinator_emails('b0000000-0000-0000-0000-000000000001')), 'the team coordinator is who gets warned';
+  ASSERT (SELECT count(*) FROM public.team_coordinator_emails('b0000000-0000-0000-0000-000000000009')) = 0, 'a team without a club has no coordinator';
+END $$;
+
+SET ROLE authenticated;
+-- the coordinator sees the alert and marks it as dealt with
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000031', false);
+DO $$ DECLARE k text; BEGIN
+  ASSERT (SELECT count(*) FROM public.get_coordinator_alerts() WHERE kind = 'absence' AND NOT resolved) = 1, 'coordinator sees the absence alert';
+  SELECT ref_key INTO k FROM public.get_coordinator_alerts() WHERE kind = 'absence';
+  PERFORM public.resolve_coordinator_alert('absence', 'd0000000-0000-0000-0000-000000000001', k, 'Falei com a mãe');
+  ASSERT (SELECT resolved AND note = 'Falei com a mãe' FROM public.get_coordinator_alerts() WHERE kind = 'absence'), 'alert marked as dealt with, note kept';
+  PERFORM public.resolve_coordinator_alert('absence', 'd0000000-0000-0000-0000-000000000001', k, NULL, false);
+  ASSERT (SELECT NOT resolved FROM public.get_coordinator_alerts() WHERE kind = 'absence'), 'and can be reopened';
+END $$;
+-- a coach is not a coordinator: sees nothing and cannot resolve
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.get_coordinator_alerts()) = 0, 'a coach gets no coordinator alerts';
+  BEGIN
+    PERFORM public.resolve_coordinator_alert('absence', 'd0000000-0000-0000-0000-000000000001', 'x', NULL);
+    RAISE EXCEPTION 'coach resolved an alert';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+-- the club owner sees it too
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.get_coordinator_alerts() WHERE kind = 'absence') = 1, 'club admin sees the alerts';
+END $$;
+RESET ROLE;

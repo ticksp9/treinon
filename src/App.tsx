@@ -66,6 +66,7 @@ const Communication = lazy(() => import("./pages/Communication"));
 const GuardianPortal = lazy(() => import("./pages/GuardianPortal"));
 const PlayerPortal = lazy(() => import("./pages/PlayerPortal"));
 const Agenda = lazy(() => import("./pages/Agenda"));
+const CoordinatorAlerts = lazy(() => import("./pages/coordination/CoordinatorAlerts"));
 // Youth Coordination
 const YouthCoordinationDashboard = lazy(() => import("./pages/coordination/YouthCoordinationDashboard"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -152,6 +153,7 @@ function AppContent() {
           <Route path="/guardian" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
           <Route path="/player" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
           <Route path="/eventos" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
+          <Route path="/coordenacao/alertas" element={<RoleProtectedRoute><CoordinatorAlerts /></RoleProtectedRoute>} />
           {/* The former portals (call-up confirmations, payments) are kept, unlinked, for later. */}
           <Route path="/guardian/portal" element={<ProtectedRoute><GuardianPortal /></ProtectedRoute>} />
           <Route path="/player/portal" element={<ProtectedRoute><PlayerPortal /></ProtectedRoute>} />

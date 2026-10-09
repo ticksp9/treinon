@@ -55,7 +55,7 @@ export function CallupCommunication({
   const emailParents = async (message?: string) => {
     if (playerIds.length === 0) return toast.error('Sem jogadores convocados');
     setEmailing(true);
-    toastNotice(await sendNotice({ kind: 'callup', match_id: matchId, player_ids: playerIds, message: message || undefined }));
+    toastNotice(await sendNotice({ kind: 'callup', match_id: matchId, player_ids: playerIds, message: message || undefined, to: { parents: true }, resend: true }));
     setEmailing(false);
   };
   const shareWhatsApp = (message?: string) => openWhatsApp(callupText({ opponent: opponentName, date: matchDate, players: calledUp, message }));
@@ -173,7 +173,7 @@ export function CallupCommunication({
           {canManage && (
             <div className="flex gap-2 mt-3 flex-wrap">
               <Button size="sm" onClick={() => emailParents()} disabled={emailing}>
-                {emailing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />} Enviar convocatória por email
+                {emailing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />} Enviar aos pais por email
               </Button>
               <Button size="sm" variant="outline" onClick={() => shareWhatsApp()}>
                 <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 
-import { announcementText, callupText, noticeSummary, whatsappUrl } from '@/lib/notice';
+import { announcementText, callupSummary, callupText, noticeSummary, whatsappUrl } from '@/lib/notice';
 
 describe('notices leaving the app', () => {
   it('tells the coach plainly what happened with the email', () => {
@@ -12,6 +12,13 @@ describe('notices leaving the app', () => {
     expect(noticeSummary({ configured: true, total: 0, sent: 0 }).text).toContain('WhatsApp');
     expect(noticeSummary({ configured: false, total: 4 }).level).toBe('info');
     expect(noticeSummary({ error: 'boom' }).level).toBe('error');
+  });
+
+  it('says who received the call-up, and stays quiet when nothing was to be sent', () => {
+    expect(callupSummary({ configured: true, sent: 13, groups: { coordenador: 1, pais: 12 } })).toEqual({ level: 'success', text: 'Convocatória enviada por email — coordenador: 1 · pais: 12' });
+    expect(callupSummary({ configured: true, sent: 1, groups: { coordenador: 1, jogadores: 0 } })!.text).toContain('jogadores: sem email');
+    expect(callupSummary({ configured: true, sent: 0, groups: {} })).toBeNull();
+    expect(callupSummary({ error: 'boom' })!.level).toBe('error');
   });
 
   it('writes the call-up ready to paste in the parents group', () => {

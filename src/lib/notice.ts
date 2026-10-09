@@ -7,11 +7,14 @@ import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface NoticeResult { configured?: boolean; total?: number; sent?: number; failed?: number; skipped?: number; note?: string; error?: string }
+export interface NoticeResult { configured?: boolean; total?: number; sent?: number; failed?: number; skipped?: number; note?: string; error?: string; groups?: Record<string, number>; alerts?: number }
+/** who a call-up email goes to; in a club team the coordinator always gets it, whatever is chosen here */
+export interface CallupTargets { parents?: boolean; players?: boolean }
 
 export type NoticeRequest =
   | { kind: 'announcement'; announcement_id: string }
-  | { kind: 'callup'; match_id: string; player_ids: string[]; message?: string }
+  | { kind: 'callup'; match_id: string; player_ids: string[]; message?: string; to?: CallupTargets; /** sending again by hand: the coordinator already got it when it was saved */ resend?: boolean }
+  | { kind: 'absence_alert'; team_id: string }
   | { kind: 'event'; event_id: string };
 
 export async function sendNotice(body: NoticeRequest): Promise<NoticeResult> {
@@ -39,6 +42,18 @@ export function noticeSummary(r: NoticeResult): { level: 'success' | 'info' | 'e
 export function toastNotice(r: NoticeResult): void {
   const s = noticeSummary(r);
   toast[s.level](s.text);
+}
+
+const GROUP_LABELS: Record<string, string> = { coordenador: 'coordenador', pais: 'pais', jogadores: 'jogadores' };
+/** After saving a call-up: who actually received it ("coordenador 1 · pais 12 · jogadores: sem email"). */
+export function callupSummary(r: NoticeResult): { level: 'success' | 'info' | 'error'; text: string } | null {
+  if (r.error && !r.sent) return { level: 'error', text: `A convocatória não foi enviada por email: ${r.error}` };
+  const groups = r.groups ?? {};
+  const keys = Object.keys(groups);
+  if (keys.length === 0) return null; // nothing was asked for and there is no coordinator: stay quiet
+  if (r.configured === false) return { level: 'info', text: 'O envio por email ainda não está configurado.' };
+  const parts = keys.map((k) => `${GROUP_LABELS[k] ?? k}: ${groups[k] > 0 ? groups[k] : 'sem email'}`);
+  return { level: keys.some((k) => groups[k] === 0) ? 'info' : 'success', text: `Convocatória enviada por email — ${parts.join(' · ')}` };
 }
 
 /** Opens WhatsApp with the text written; the coach picks the parents' group. */
