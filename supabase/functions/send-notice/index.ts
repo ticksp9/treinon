@@ -6,7 +6,8 @@
 //   { kind: "event", event_id }
 //   { kind: "absence_alert", team_id }   two trainings missed without a reason -> coordinator
 //   { kind: "event_reminder", event_id }  whoever has not answered "Vou / Não vou" yet
-//   { kind: "cron" } + header x-cron-secret: the daily job (event reminders before the deadline)
+//   { kind: "cron" } + header x-cron-secret: the daily job (event reminders before the deadline,
+//       overdue fees -> coordinator)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
@@ -159,7 +160,55 @@ async function runDaily(db: Db, appUrl: string) {
     await db.from("club_events").update({ reminder_sent_at: now.toISOString() }).eq("id", ev.id);
     reminded++;
   }
-  return { ok: true, events: reminded, sent };
+  const fees = await overdueFeeNotices(db, appUrl, MAX_RECIPIENTS - sent);
+  return { ok: true, events: reminded, sent, fee_players: fees.players, fee_emails: fees.sent };
+}
+
+/**
+ * Overdue fees: each coordinator gets one email per team with the players that became
+ * overdue since the last time he was told. A player is reported once per debt (again only
+ * if he pays and falls behind again); the full list is always on the Alertas page.
+ */
+async function overdueFeeNotices(db: Db, appUrl: string, budget: number) {
+  const { data: rows, error } = await db.rpc("overdue_fee_alerts");
+  if (error) { console.error("[send-notice] overdue fees:", error.message); return { players: 0, sent: 0 }; }
+  type Row = { club_id: string; team_id: string; team_name: string; player_id: string; player_name: string; ref_key: string; items: number; amount: number; since: string };
+  const all: Row[] = rows ?? [];
+  if (all.length === 0) return { players: 0, sent: 0 };
+  const known = new Set<string>();
+  for (let i = 0; i < all.length; i += 200) {
+    const { data } = await db.from("coordinator_alert_state").select("player_id, ref_key, emailed_at").eq("kind", "payment").in("player_id", all.slice(i, i + 200).map((r) => r.player_id));
+    for (const k of data ?? []) if (k.emailed_at) known.add(`${k.player_id}|${k.ref_key}`);
+  }
+  const fresh = all.filter((r) => !known.has(`${r.player_id}|${r.ref_key}`));
+  const byTeam = new Map<string, Row[]>();
+  for (const r of fresh) byTeam.set(r.team_id, [...(byTeam.get(r.team_id) ?? []), r]);
+  const euro = (n: number) => Number(n).toLocaleString("pt-PT", { style: "currency", currency: "EUR" });
+  const d = (x: string) => new Date(x + "T12:00:00").toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric" });
+  let sent = 0, players = 0;
+  for (const [teamId, list] of byTeam) {
+    if (sent >= budget) break;
+    const to = [...new Set((await coordinatorEmails(db, teamId)).map((e) => e.trim().toLowerCase()).filter((e) => EMAIL_RE.test(e)))];
+    if (to.length === 0) continue; // nobody to tell yet: try again tomorrow
+    list.sort((a, b) => a.player_name.localeCompare(b.player_name, "pt"));
+    const lines = list.map((r) => `${r.player_name}: ${r.items} ${r.items === 1 ? "mensalidade" : "mensalidades"} · ${euro(r.amount)} · desde ${d(r.since)}`);
+    const title = `Mensalidades em atraso · ${list[0].team_name}`;
+    const mail: Mail = {
+      subject: `${title}: ${list.length} ${list.length === 1 ? "jogador" : "jogadores"}`,
+      text: [title, "", ...lines.map((l) => `- ${l}`), "", `${appUrl}/coordenacao/alertas`].join("\n"),
+      html: layout(title, `<p>Passaram a ter mensalidades por pagar depois do vencimento:</p><ul>${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`,
+        `${appUrl}/coordenacao/alertas`, "Aviso automático do TreinON. A lista completa e o botão Tratado estão em Alertas."),
+    };
+    let ok = 0;
+    for (const addr of to) { if (sent >= budget) break; if ((await sendEmail(addr, mail, "")).ok) { ok++; sent++; } }
+    if (ok === 0) continue;
+    // emailed_at only: a coordinator's "Tratado" and note are left as they are
+    await db.from("coordinator_alert_state").upsert(
+      list.map((r) => ({ kind: "payment", player_id: r.player_id, ref_key: r.ref_key, club_id: r.club_id, emailed_at: new Date().toISOString() })),
+      { onConflict: "kind,player_id,ref_key" });
+    players += list.length;
+  }
+  return { players, sent };
 }
 
 Deno.serve(async (req) => {

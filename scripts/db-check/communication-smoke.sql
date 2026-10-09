@@ -276,3 +276,20 @@ DO $$ BEGIN
   ASSERT (SELECT status FROM public.callup_confirmations WHERE match_id = 'e0000000-0000-0000-0000-000000000001' AND player_id = 'd0000000-0000-0000-0000-000000000001') = 'confirmed', 'coach sees the call-up confirmation';
 END $$;
 RESET ROLE;
+
+-- ── Overdue fees for the daily job and for the coordinator's page ──
+INSERT INTO public.charges (club_id, player_id, description, original_amount, final_amount, balance_due, due_date, status) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'Mensalidade setembro', 25, 25, 25, current_date - 40, 'pending'),
+  ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'Mensalidade outubro', 25, 25, 10, current_date - 9, 'partial'),
+  ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000003', 'Mensalidade outubro', 25, 25, 0, current_date - 9, 'paid'),
+  ('c0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'Mensalidade novembro', 25, 25, 25, current_date + 20, 'pending');
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.overdue_fee_alerts()) = 1, 'only the player with unpaid charges past the due date';
+  ASSERT (SELECT items = 2 AND amount = 35 AND player_name = 'Tiago' AND since = current_date - 40 FROM public.overdue_fee_alerts()), 'two fees, 35 euros, since the oldest one';
+END $$;
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000031', false);
+DO $$ BEGIN
+  ASSERT (SELECT amount FROM public.get_coordinator_alerts() WHERE kind = 'payment') = 35, 'the coordinator page shows the same debt';
+END $$;
+RESET ROLE;
