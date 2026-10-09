@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Users, Play, Star, UserMinus } from 'lucide-react';
+import { Users, Play, Star, UserMinus, UserX } from 'lucide-react';
 import { getSportFormatRules } from '@/lib/match-playing-time';
 
 interface Player {
@@ -34,6 +34,10 @@ interface LineupSelectorProps {
   isHalftime?: boolean;
   isEditing?: boolean;
   sportType?: string | null;
+  /** the substitute did not come to the match: take him out (asks the reason) */
+  onAbsent?: (playerId: string) => void;
+  /** who can still be taken out; omitted = every substitute (before kick-off) */
+  absentable?: Set<string>;
 }
 
 // Position categories for grouping
@@ -52,7 +56,7 @@ const POSITION_CATEGORY_LABELS: Record<string, string> = {
   other: 'Outros',
 };
 
-export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onStartMatch, isHalftime = false, isEditing = false, sportType }: LineupSelectorProps) {
+export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onStartMatch, isHalftime = false, isEditing = false, sportType, onAbsent, absentable }: LineupSelectorProps) {
   const { user } = useAuth();
   const [selectedStarters, setSelectedStarters] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -96,7 +100,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
 
   const toggleStarter = async (playerId: string) => {
     if (!user) return;
-    
+
     const lineup = lineups.find(l => l.player_id === playerId);
     if (!lineup) return;
 
@@ -108,7 +112,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
         toast.error(`Escalação inválida: máximo de ${sportRules.playersOnField} jogadores titulares no ${sportRules.label}.`);
         return;
       }
-      
+
       const { error } = await supabase
         .from('match_lineups')
         .update({ is_starter: newIsStarter })
@@ -199,7 +203,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
       <CardContent className="space-y-6">
         {lineups.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            Nenhum jogador convocado para este jogo. 
+            Nenhum jogador convocado para este jogo.
             Vá à secção de Treino &gt; Convocatórias para adicionar jogadores.
           </p>
         ) : (
@@ -217,8 +221,8 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={clearStarters}
                   disabled={saving || starterCount === 0}
@@ -277,7 +281,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                 .map(([category, players]) => {
                   const subs = players.filter(l => !selectedStarters.has(l.player_id));
                   if (subs.length === 0) return null;
-                  
+
                   return (
                     <div key={category} className="space-y-2">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -299,6 +303,16 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                                 {lineup.player?.position || 'Sem posição'}
                               </div>
                             </div>
+                            {onAbsent && (!absentable || absentable.has(lineup.player_id)) && (
+                              <Button
+                                type="button" size="icon" variant="ghost"
+                                className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={(e) => { e.stopPropagation(); onAbsent(lineup.player_id); }}
+                                aria-label={`${lineup.player?.name ?? 'Jogador'} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -309,16 +323,16 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
 
             <Separator />
 
-            <Button 
-              onClick={onStartMatch} 
-              className="w-full" 
+            <Button
+              onClick={onStartMatch}
+              className="w-full"
               size="lg"
               disabled={starterCount === 0 || saving}
             >
               <Play className="w-5 h-5 mr-2" />
-              {isEditing 
+              {isEditing
                 ? `Confirmar Alterações (${starterCount} titulares)`
-                : isHalftime 
+                : isHalftime
                   ? `Iniciar 2ª Parte (${starterCount} titulares, ${substituteCount} suplentes)`
                   : `Iniciar Jogo (${starterCount} titulares, ${substituteCount} suplentes)`
               }

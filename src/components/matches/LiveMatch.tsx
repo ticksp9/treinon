@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import {
   Play, Pause, Square, ArrowLeft,
   UserMinus, RotateCcw,
-  Clock, Pencil, AlertTriangle, Share2, PenTool } from 'lucide-react';
+  Clock, Pencil, AlertTriangle, Share2, PenTool, UserX } from 'lucide-react';
 import { shareText } from '@/lib/share';
 import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
 import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics } from '@/lib/live-tactics';
@@ -1741,6 +1741,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             teamId={teamId}
             lineups={lineups}
             onLineupsChange={fetchMatchData}
+            onAbsent={setAbsentFor}
             onStartMatch={handleStartMatch}
             sportType={matchSport}
           />
@@ -1766,6 +1767,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               teamId={teamId}
               lineups={lineups}
               onLineupsChange={fetchMatchData}
+              onAbsent={setAbsentFor}
+              absentable={neverPlayed}
               onStartMatch={handleStartNextPart}
               isHalftime
               sportType={matchSport}
@@ -1940,6 +1943,16 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           </span>
                         </div>
                       </div>
+                      {neverPlayed.has(lineup.player_id) && (
+                        <Button
+                          size="icon" variant="ghost"
+                          className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => setAbsentFor(lineup.player_id)}
+                          aria-label={`${lineup.player.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                        >
+                          <UserX className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
@@ -2057,6 +2070,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     teamId={teamId}
                     lineups={lineups}
                     onLineupsChange={fetchMatchData}
+              onAbsent={setAbsentFor}
+              absentable={phase === 'setup' ? undefined : neverPlayed}
                     onStartMatch={() => setEditLineupOpen(false)}
                     isEditing
                     sportType={matchSport}
