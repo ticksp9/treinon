@@ -1318,6 +1318,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const setStarter = async (playerId: string, isStarter: boolean) => {
     const row = lineups.find(l => l.player_id === playerId);
     if (!row) return;
+    if (phase !== 'setup' && !neverPlayed.has(playerId)) {
+      toast.error('Este jogador já entrou no jogo: não pode ser retirado.');
+      return;
+    }
     const { error } = await supabase.from('match_lineups').update({ is_starter: isStarter }).eq('id', row.id);
     if (error) throw error;
   };
@@ -1346,6 +1350,12 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   // A called-up player did not come (ill, injured…): out of this match before kick-off,
   // so the live game has no one on the bench who is not there.
   const [absentFor, setAbsentFor] = useState<string | null>(null);
+  // after kick-off only someone who never set foot on the pitch can still be taken out
+  const neverPlayed = new Set(
+    lineups.filter(l => !l.is_starter
+      && (pitchPlayers.get(l.player_id)?.seconds ?? 0) === 0
+      && !events.some(e => e.player_id === l.player_id || e.assist_player_id === l.player_id))
+      .map(l => l.player_id));
   const absences = (((match as any)?.absences ?? {}) as Record<string, string>);
   const handleAbsent = async (playerId: string, reason: string) => {
     setAbsentFor(null);
@@ -1804,6 +1814,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
                     onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
                     onSubstitute={handlePitchSubstitute}
+                    onAbsent={setAbsentFor}
+                    absentable={neverPlayed}
                     onEvent={(type, pid) => handleEvent(type, pid)}
                   />
                 </CardContent>

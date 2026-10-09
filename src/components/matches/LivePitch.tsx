@@ -58,8 +58,10 @@ interface Props {
   onFillSlot?: (slotId: string, playerId: string) => void;
   /** starter dragged to the bench (setup) */
   onBench?: (playerId: string) => void;
-  /** bench player did not come to the match (setup) */
+  /** bench player did not come to the match */
   onAbsent?: (playerId: string) => void;
+  /** during the match only these bench players can be marked absent (they never came on) */
+  absentable?: Set<string>;
   onFormationChange: (code: string) => void;
   onSwap: (slotA: string, slotB: string) => void;
   onSubstitute: (outId: string, inId: string) => void;
@@ -90,7 +92,7 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
   unknown: 'bg-black/55 text-white',
 };
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
@@ -298,7 +300,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             const isSel = sel?.kind === 'bench' && sel.playerId === id;
             return (
               <div key={id} className="relative shrink-0">
-              {setup && onAbsent && (
+              {onAbsent && (setup || absentable?.has(id)) && (
                 <button type="button" onClick={() => onAbsent(id)} aria-label={`${p.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
                   className="absolute -right-1.5 -top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground">
                   <UserX className="h-3.5 w-3.5" />

@@ -55,6 +55,22 @@ export function buildHistory(
   return [...lines.values()].sort((a, b) => b.season.localeCompare(a.season) || a.team.localeCompare(b.team));
 }
 
+export interface AbsenceLine { date: string; opponent: string | null; reason: string }
+/** Matches the player was called up for but missed, newest first, with a count per reason. */
+export function summarizeAbsences(rows: { match_date: string; opponent_name: string | null; absences: unknown }[], playerId: string) {
+  const list: AbsenceLine[] = [];
+  for (const r of rows) {
+    const map = (r.absences && typeof r.absences === 'object' ? r.absences : {}) as Record<string, unknown>;
+    if (!(playerId in map)) continue;
+    const reason = typeof map[playerId] === 'string' && (map[playerId] as string).trim() ? (map[playerId] as string).trim() : 'Sem motivo indicado';
+    list.push({ date: r.match_date, opponent: r.opponent_name, reason });
+  }
+  list.sort((a, b) => b.date.localeCompare(a.date));
+  const counts = new Map<string, number>();
+  list.forEach((l) => counts.set(l.reason, (counts.get(l.reason) ?? 0) + 1));
+  return { total: list.length, byReason: [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])), list };
+}
+
 const fmtDate = (d: string) => new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
 
 function Stars({ value }: { value: number }) {
@@ -72,7 +88,7 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   const { data, isLoading } = useQuery({
     queryKey: ['player-fm-card', playerId],
     queryFn: async () => {
-      const [evals, lineups, bioRes, eventsRes] = await Promise.all([
+      const [evals, lineups, bioRes, eventsRes, absRes] = await Promise.all([
         supabase.from('player_evaluations')
           .select('evaluation_date, attributes, overall_rating')
           .eq('player_id', playerId)
@@ -87,7 +103,14 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
           .select('match_id, event_type, player_id, assist_player_id, is_opponent, match:matches!inner(is_deleted, is_test)')
           .eq('match.is_deleted', false).eq('match.is_test', false)
           .or(`player_id.eq.${playerId},assist_player_id.eq.${playerId}`),
+        // called up but did not come (ill, injured, no-show)
+        (supabase.from('matches') as any)
+          .select('match_date, opponent_name, absences')
+          .not(`absences->>${playerId}`, 'is', null)
+          .eq('is_deleted', false).eq('is_test', false)
+          .order('match_date', { ascending: false }).limit(100),
       ]);
+      const absences = summarizeAbsences((absRes?.data ?? []) as { match_date: string; opponent_name: string | null; absences: unknown }[], playerId);
       const history = buildHistory(
         ((lineups.data ?? []) as any[]).map((l) => {
           const m = Array.isArray(l.match) ? l.match[0] : l.match;
@@ -104,12 +127,12 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
         })
         .filter((r): r is RatingRow => !!r)
         .sort((a, b) => a.date.localeCompare(b.date));
-      return { evals: (evals.data ?? []) as unknown as EvalRow[], ratings, bio: (bioRes.data ?? null) as Bio | null, history };
+      return { evals: (evals.data ?? []) as unknown as EvalRow[], ratings, bio: (bioRes.data ?? null) as Bio | null, history, absences };
     },
   });
 
   if (isLoading || !data) return null;
-  const { evals, ratings, bio, history } = data;
+  const { evals, ratings, bio, history, absences } = data;
   const age = bio?.birth_date ? Math.floor((Date.now() - new Date(bio.birth_date).getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
   const posLabel = (v: string | null | undefined) => (v ? [...POSITIONS.football, ...POSITIONS.futsal].find((p) => p.value === v)?.label ?? v : null);
   const bioItems: [string, string | null][] = [
@@ -130,7 +153,23 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
       ))}
     </div>
   );
-  const History = history.length > 0 && (
+  const Absences = absences.total > 0 && (
+    <div>
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        Faltas a jogos ({absences.total}) · {absences.byReason.map(([r, n]) => `${r} ${n}`).join(' · ')}
+      </p>
+      <ul className="divide-y rounded-md border text-sm">
+        {absences.list.slice(0, 8).map((a) => (
+          <li key={a.date + a.opponent} className="flex items-center gap-2 px-2 py-1.5">
+            <span className="font-mono text-xs text-muted-foreground">{fmtDate(a.date.slice(0, 10))}</span>
+            <span className="truncate">vs {a.opponent ?? '—'}</span>
+            <span className="ml-auto rounded bg-destructive/10 px-1.5 text-xs font-medium text-destructive">{a.reason}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+  const HistoryTable = history.length > 0 && (
     <div>
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Historial</p>
       <div className="overflow-x-auto rounded-md border">
@@ -168,6 +207,8 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
       </div>
     </div>
   );
+
+  const History = (HistoryTable || Absences) && <div className="space-y-3">{HistoryTable}{Absences}</div>;
 
   if (evals.length === 0 && ratings.length === 0) {
     return (

@@ -1,6 +1,7 @@
 /**
- * Before kick-off: a called-up player did not come (ill, injured, no-show).
- * One tap takes him out of the match so he is not sitting on the bench of the live game.
+ * A called-up player did not come (ill, injured, no-show). One tap takes him out of the
+ * match so he is not sitting on the bench of the live game. Before kick-off anyone can be
+ * taken out; after it, only a substitute who never came on.
  */
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
