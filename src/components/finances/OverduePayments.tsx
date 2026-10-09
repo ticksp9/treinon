@@ -1,3 +1,4 @@
+import { fetchPlayerPrivate, withPrivate } from '@/lib/player-private';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +23,7 @@ const MONTHS = [
 export function OverduePayments({ clubId }: OverduePaymentsProps) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
-  
+
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
 
   // Fetch teams
@@ -62,8 +63,11 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
         }
       }
 
-      const { data: players, error } = await query.order('name');
+      const { data: rows, error } = await query.order('name');
       if (error) throw error;
+      // the parents' contacts live in the personal-data table (club administration can read it)
+      const priv = await fetchPlayerPrivate((rows || []).map(p => p.id));
+      const players = (rows || []).map(p => withPrivate(p, priv.get(p.id)));
 
       // Check overdue for each player
       const playersWithOverdue = await Promise.all(
@@ -202,8 +206,8 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
                         <Mail className="w-3 h-3" /> {player.parent_email}
                       </a>
                     )}
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       onClick={() => sendNotification(player)}
                     >

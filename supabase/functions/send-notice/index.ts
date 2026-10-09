@@ -85,7 +85,7 @@ async function parentEmailsByPlayer(db: Db, playerIds: string[]): Promise<Map<st
   const out = new Map<string, string[]>(playerIds.map((id) => [id, []]));
   if (playerIds.length === 0) return out;
   const [{ data: players }, { data: links }] = await Promise.all([
-    db.from("players").select("id, parent_email, parent_email_2").in("id", playerIds),
+    db.from("player_private").select("id:player_id, parent_email, parent_email_2").in("player_id", playerIds),
     db.from("player_guardians").select("player_id, guardian:guardian_profiles(email, user_id)").in("player_id", playerIds),
   ]);
   for (const p of players ?? []) out.get(p.id)?.push(p.parent_email, p.parent_email_2);
@@ -109,7 +109,7 @@ async function playerEmailsByPlayer(db: Db, playerIds: string[]): Promise<Map<st
   const out = new Map<string, string[]>(playerIds.map((id) => [id, []]));
   if (playerIds.length === 0) return out;
   const [{ data: players }, { data: accounts }] = await Promise.all([
-    db.from("players").select("id, email").in("id", playerIds),
+    db.from("player_private").select("id:player_id, email").in("player_id", playerIds),
     db.from("player_accounts").select("player_id, user_id").in("player_id", playerIds),
   ]);
   for (const p of players ?? []) if (p.email) out.get(p.id)?.push(p.email);

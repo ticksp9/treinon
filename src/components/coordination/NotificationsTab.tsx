@@ -1,12 +1,13 @@
+import { fetchPlayerPrivate, withPrivate } from '@/lib/player-private';
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { 
-  AlertTriangle, 
-  FileWarning, 
-  CreditCard, 
+import {
+  AlertTriangle,
+  FileWarning,
+  CreditCard,
   Calendar,
   User,
   Users
@@ -35,28 +36,31 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
     queryFn: async () => {
       const today = new Date();
       const alertThreshold = addDays(today, 30);
-      
-      const { data: players, error } = await supabase
+
+      const { data: rows, error } = await supabase
         .from('players')
         .select(`
-          id, 
-          name, 
+          id,
+          name,
           medical_certificate_expiry,
           id_document_expiry,
           team:teams(name)
         `)
         .eq('is_active', true);
-      
+
       if (error) throw error;
-      
+      // the ID document belongs to the personal data
+      const priv = await fetchPlayerPrivate((rows || []).map(p => p.id));
+      const players = (rows || []).map(p => withPrivate(p, priv.get(p.id)));
+
       const alerts: PlayerWithIssue[] = [];
-      
+
       players?.forEach(player => {
         // Check medical certificate
         if (player.medical_certificate_expiry) {
           const expiryDate = new Date(player.medical_certificate_expiry);
           const daysUntil = differenceInDays(expiryDate, today);
-          
+
           if (daysUntil < 0) {
             alerts.push({
               id: player.id,
@@ -77,12 +81,12 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
             });
           }
         }
-        
+
         // Check ID document
         if (player.id_document_expiry) {
           const expiryDate = new Date(player.id_document_expiry);
           const daysUntil = differenceInDays(expiryDate, today);
-          
+
           if (daysUntil < 0) {
             alerts.push({
               id: player.id,
@@ -104,7 +108,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
           }
         }
       });
-      
+
       return alerts;
     },
     enabled: !!clubId
@@ -117,7 +121,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
       const today = new Date();
       const currentMonth = today.getMonth() + 1;
       const currentYear = today.getFullYear();
-      
+
       // Get all unpaid fees
       const { data: unpaidFees, error } = await supabase
         .from('player_fees')
@@ -130,27 +134,27 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
         `)
         .eq('club_id', clubId)
         .eq('is_paid', false);
-      
+
       if (error) throw error;
-      
+
       // Group by player and count overdue months
-      const playerOverdue: Record<string, { 
+      const playerOverdue: Record<string, {
         player: { id: string; name: string; team_name?: string };
         overdueMonths: number;
         totalAmount: number;
       }> = {};
-      
+
       unpaidFees?.forEach(fee => {
         // Calculate months overdue
         const feeDate = new Date(fee.year, fee.month - 1);
         const monthsDiff = (currentYear - fee.year) * 12 + (currentMonth - fee.month);
-        
+
         if (monthsDiff >= 2) {
           const playerId = fee.player_id;
           if (!playerOverdue[playerId]) {
             playerOverdue[playerId] = {
-              player: { 
-                id: fee.player?.id || playerId, 
+              player: {
+                id: fee.player?.id || playerId,
                 name: fee.player?.name || 'Desconhecido',
                 team_name: fee.player?.team?.name
               },
@@ -162,7 +166,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
           playerOverdue[playerId].totalAmount += fee.amount;
         }
       });
-      
+
       return Object.values(playerOverdue).map(p => ({
         id: p.player.id,
         name: p.player.name,
@@ -176,7 +180,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
   });
 
   const isLoading = loadingDocs || loadingPayments;
-  
+
   const expiredMedical = documentAlerts?.filter(a => a.issue_type === 'medical_expired') || [];
   const expiringMedical = documentAlerts?.filter(a => a.issue_type === 'medical_expiring') || [];
   const expiredDocs = documentAlerts?.filter(a => a.issue_type === 'document_expired') || [];
@@ -250,8 +254,8 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
                             )}
                           </span>
                           <span>
-                            {alert.days_until === 0 ? 'Expira hoje' : 
-                             alert.days_until === 1 ? 'Expira amanhã' : 
+                            {alert.days_until === 0 ? 'Expira hoje' :
+                             alert.days_until === 1 ? 'Expira amanhã' :
                              `Expira em ${alert.days_until} dias`}
                           </span>
                         </div>
@@ -302,8 +306,8 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
                             )}
                           </span>
                           <span>
-                            {alert.days_until === 0 ? 'Expira hoje' : 
-                             alert.days_until === 1 ? 'Expira amanhã' : 
+                            {alert.days_until === 0 ? 'Expira hoje' :
+                             alert.days_until === 1 ? 'Expira amanhã' :
                              `Expira em ${alert.days_until} dias`}
                           </span>
                         </div>

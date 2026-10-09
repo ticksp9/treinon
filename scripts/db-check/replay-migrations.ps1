@@ -70,6 +70,14 @@ try {
     exit 1
   }
   Write-Host "OK: comunicacao (grupos de equipa)" -ForegroundColor Green
+
+  $out = & $psql[0] $psql[1..($psql.Length-1)] -d treinon_test -f (Join-Path $PSScriptRoot "privacy-smoke.sql") 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "FALHOU: privacidade (dados pessoais dos jogadores)" -ForegroundColor Red
+    $out | Select-Object -Last 10 | ForEach-Object { Write-Host "  $_" }
+    exit 1
+  }
+  Write-Host "OK: privacidade (dados pessoais dos jogadores)" -ForegroundColor Green
 }
 finally {
   Start-Process -FilePath "$PgBin\pg_ctl.exe" -ArgumentList @("-D", "`"$data`"", "stop", "-m", "fast") -NoNewWindow -Wait

@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Edit, Calendar, Ruler, Weight, MapPin, FileText, Shield, Heart, Download, Upload, Lock, Unlock, Activity } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Ruler, Weight, MapPin, FileText, Shield, Heart, Download, Upload, Lock, Unlock, Activity, Phone } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { PlayerSeasonStats } from '@/components/players/PlayerSeasonStats';
 import { PlayerInjuries } from '@/components/players/PlayerInjuries';
@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlayerDocuments } from '@/components/players/PlayerDocuments';
 import { format, differenceInYears } from 'date-fns';
 import { generatePlayerPdf } from '@/lib/generatePlayerPdf';
+import { canSeePlayerPrivate, fetchPlayerPrivate, getEmergencyContact, withPrivate, type EmergencyContact } from '@/lib/player-private';
 import { toast } from 'sonner';
 import { useSecurityPin } from '@/hooks/useSecurityPin';
 import { PinDialog } from '@/components/security/PinDialog';
@@ -68,10 +69,29 @@ export default function PlayerDetail() {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      if (!data) return data;
+      // personal data (contacts, documents, parents) comes from its own table and only
+      // for who may see it; a club coach gets none and the personal sections stay hidden
+      const priv = (await fetchPlayerPrivate([data.id])).get(data.id);
+      return withPrivate(data, priv);
     },
     enabled: !!id,
   });
+  const { user: currentUser } = useAuth();
+  const { data: canSeePrivate = false } = useQuery({
+    queryKey: ['player-private-access', id, currentUser?.id],
+    enabled: !!id && !!currentUser,
+    queryFn: () => canSeePlayerPrivate(currentUser!.id, id!),
+  });
+  const [emergency, setEmergency] = useState<EmergencyContact | 'loading' | null>(null);
+  const askEmergency = async () => {
+    if (!id) return;
+    if (!window.confirm('Ver o contacto de emergência dos encarregados? A consulta fica registada para o clube.')) return;
+    setEmergency('loading');
+    const { contact, error } = await getEmergencyContact(id);
+    if (error) { setEmergency(null); toast.error('Não foi possível obter o contacto: ' + error); return; }
+    setEmergency(contact ?? { parent_name: null, parent_phone: null, parent_name_2: null, parent_phone_2: null });
+  };
 
 
   // Last evaluation of the SELECTED season (used in Resumo). Never falls back to
@@ -332,6 +352,12 @@ export default function PlayerDetail() {
               ))}
             </SelectContent>
           </Select>
+          {!canSeePrivate && (
+            <Button variant="outline" size="sm" onClick={askEmergency} disabled={emergency === 'loading'} title="Telefone dos encarregados, para uma emergência">
+              <Phone className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Contacto de emergência</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => generatePlayerPdf(player)}
@@ -419,7 +445,7 @@ export default function PlayerDetail() {
             </div>
 
             {/* Sensitive Data Section - Protected by PIN */}
-            {(player.email || player.phone || player.address || 
+            {(player.email || player.phone || player.address ||
               player.id_document_type || player.federation_id || player.tax_id ||
               player.parent_name || player.parent_name_2) && (
               <>
@@ -437,8 +463,8 @@ export default function PlayerDetail() {
                           </p>
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setPinDialogMode('verify');
@@ -456,8 +482,8 @@ export default function PlayerDetail() {
                       <p className="text-sm text-warning">
                         ⚠️ Dados sensíveis não protegidos. Configure um PIN nas definições.
                       </p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setPinDialogMode('create');
@@ -468,7 +494,7 @@ export default function PlayerDetail() {
                         Criar PIN
                       </Button>
                     </div>
-                    
+
                     {/* Show data without protection warning */}
                     {/* Contact Info */}
                     {(player.email || player.phone || player.address) && (
@@ -506,9 +532,9 @@ export default function PlayerDetail() {
                           <Unlock className="w-3 h-3" />
                           Desbloqueado
                         </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={lockSensitiveData}
                           className="h-6 text-xs"
                         >
@@ -637,6 +663,18 @@ export default function PlayerDetail() {
         </Card>
 
         {/* Tabs - 360º Player Profile */}
+        {emergency && emergency !== 'loading' && (
+          <Card className="border-accent/50">
+            <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 text-sm">
+              <span className="font-semibold">Contacto de emergência</span>
+              {[[emergency.parent_name, emergency.parent_phone], [emergency.parent_name_2, emergency.parent_phone_2]].filter(([, ph]) => ph).map(([n, ph]) => (
+                <a key={ph} href={`tel:${ph}`} className="flex items-center gap-1.5 font-medium text-primary hover:underline"><Phone className="h-4 w-4" />{n ? `${n}: ` : ''}{ph}</a>
+              ))}
+              {!emergency.parent_phone && !emergency.parent_phone_2 && <span className="text-muted-foreground">Não há telefone dos encarregados registado. Fale com a secretaria do clube.</span>}
+              <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setEmergency(null)}>Fechar</Button>
+            </CardContent>
+          </Card>
+        )}
         <Tabs defaultValue="summary" className="space-y-4">
           <TabsList className="flex flex-wrap h-auto justify-start">
             <TabsTrigger value="summary">Resumo</TabsTrigger>
@@ -651,7 +689,7 @@ export default function PlayerDetail() {
             <TabsTrigger value="observations">Observações</TabsTrigger>
             <TabsTrigger value="health">Saúde / Lesões</TabsTrigger>
             <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
-            <TabsTrigger value="documents">Documentos</TabsTrigger>
+            {canSeePrivate && <TabsTrigger value="documents">Documentos</TabsTrigger>}
             <TabsTrigger value="seasons">Histórico Época</TabsTrigger>
             <TabsTrigger value="history">Auditoria</TabsTrigger>
           </TabsList>

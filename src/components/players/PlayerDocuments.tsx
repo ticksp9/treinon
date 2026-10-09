@@ -1,3 +1,4 @@
+import { updatePlayerPrivate } from '@/lib/player-private';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,13 +30,13 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    const allowedTypes = field === 'photo_url' 
+    const allowedTypes = field === 'photo_url'
       ? ['image/jpeg', 'image/png', 'image/webp']
       : ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    
+
     if (!allowedTypes.includes(file.type)) {
-      toast.error(field === 'photo_url' 
-        ? 'Use apenas imagens (JPEG, PNG, WebP)' 
+      toast.error(field === 'photo_url'
+        ? 'Use apenas imagens (JPEG, PNG, WebP)'
         : 'Use imagens ou PDF');
       return;
     }
@@ -87,17 +88,23 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
   const handleRemove = async (field: 'photo_url' | 'id_document_url' | 'medical_certificate_url') => {
     try {
       const currentPath = player[field];
-      
+
       if (currentPath) {
         await supabase.storage
           .from('player-documents')
           .remove([currentPath]);
       }
 
-      await supabase
-        .from('players')
-        .update({ [field]: null })
-        .eq('id', playerId);
+      if (field === 'id_document_url') {
+        // personal data: cleared where it lives (an empty value on the player row is ignored)
+        const failed = await updatePlayerPrivate(playerId, { id_document_url: null });
+        if (failed) throw new Error(failed);
+      } else {
+        await supabase
+          .from('players')
+          .update({ [field]: null })
+          .eq('id', playerId);
+      }
 
       setSignedUrls(prev => {
         const newUrls = { ...prev };
@@ -115,11 +122,11 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
 
   const getSignedUrl = async (path: string, field: string) => {
     if (signedUrls[field]) return signedUrls[field];
-    
+
     const { data } = await supabase.storage
       .from('player-documents')
       .createSignedUrl(path, 60 * 60);
-    
+
     if (data?.signedUrl) {
       setSignedUrls(prev => ({ ...prev, [field]: data.signedUrl }));
       return data.signedUrl;
