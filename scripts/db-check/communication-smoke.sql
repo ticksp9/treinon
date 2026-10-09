@@ -226,3 +226,53 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.get_coordinator_alerts() WHERE kind = 'absence') = 1, 'club admin sees the alerts';
 END $$;
 RESET ROLE;
+
+-- ── Answers everywhere: deadline on events, match call-ups, trainings ──
+DO $$ BEGIN
+  -- parent 11 answered the dinner, parent 12 too; nobody pending with an account except none
+  ASSERT (SELECT count(*) FROM public.event_pending_emails('98000000-0000-0000-0000-000000000001')) = 0, 'everyone invited to the dinner has answered';
+  ASSERT (SELECT count(*) FROM public.event_pending_emails('98000000-0000-0000-0000-000000000002')) = 2, 'the club party still waits for both parents';
+END $$;
+UPDATE public.club_events SET rsvp_deadline = now() - interval '1 hour' WHERE id = '98000000-0000-0000-0000-000000000002';
+
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  -- after the deadline the answer is refused
+  BEGIN
+    INSERT INTO public.club_event_rsvps (event_id, status) VALUES ('98000000-0000-0000-0000-000000000002', 'yes');
+    RAISE EXCEPTION 'answered after the deadline';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- the parent sees the team's training sessions and says the child will miss one
+  ASSERT (SELECT count(*) FROM public.training_sessions WHERE team_id = 'b0000000-0000-0000-0000-000000000001') = 3, 'parent sees the team sessions';
+  INSERT INTO public.training_rsvps (session_id, player_id, status, reason) VALUES ('97000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', 'no', 'Doente');
+  -- not for a child that is not his
+  BEGIN
+    INSERT INTO public.training_rsvps (session_id, player_id, status) VALUES ('97000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000002', 'no');
+    RAISE EXCEPTION 'answered a training for someone else''s child';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- call-up: confirms his own child, not another player
+  INSERT INTO public.callup_confirmations (match_id, player_id, confirmed_by, status, responded_at)
+  VALUES ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000011', 'confirmed', now());
+  BEGIN
+    INSERT INTO public.callup_confirmations (match_id, player_id, confirmed_by, status)
+    VALUES ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000011', 'declined');
+    RAISE EXCEPTION 'confirmed a call-up for someone else''s child';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+-- a parent of another club sees none of it
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000021', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.training_sessions WHERE team_id = 'b0000000-0000-0000-0000-000000000001') = 0, 'other parent sees no sessions of this team';
+  ASSERT (SELECT count(*) FROM public.training_rsvps) = 0, 'nor the answers';
+END $$;
+-- the coach sees who warned that he will miss the training, and the call-up answer
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT reason FROM public.training_rsvps WHERE session_id = '97000000-0000-0000-0000-000000000003') = 'Doente', 'coach sees the reason given by the parent';
+  ASSERT (SELECT status FROM public.callup_confirmations WHERE match_id = 'e0000000-0000-0000-0000-000000000001' AND player_id = 'd0000000-0000-0000-0000-000000000001') = 'confirmed', 'coach sees the call-up confirmation';
+END $$;
+RESET ROLE;

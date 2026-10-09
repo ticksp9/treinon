@@ -5,6 +5,8 @@
 //       (resend: true = the coach is sending it again by hand to parents/players only)
 //   { kind: "event", event_id }
 //   { kind: "absence_alert", team_id }   two trainings missed without a reason -> coordinator
+//   { kind: "event_reminder", event_id }  whoever has not answered "Vou / Não vou" yet
+//   { kind: "cron" } + header x-cron-secret: the daily job (event reminders before the deadline)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
@@ -125,11 +127,52 @@ async function coordinatorEmails(db: Db, teamId: string): Promise<string[]> {
   return (data ?? []).map((r: { email: string }) => r.email).filter(Boolean);
 }
 
+// deno-lint-ignore no-explicit-any
+function reminderMail(ev: any, appUrl: string): Mail {
+  const tz = { timeZone: "Europe/Lisbon" } as const;
+  const when = new Date(ev.starts_at).toLocaleString("pt-PT", { ...tz, weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" });
+  const until = ev.rsvp_deadline ? new Date(ev.rsvp_deadline).toLocaleDateString("pt-PT", { ...tz, weekday: "long", day: "2-digit", month: "long" }) : "";
+  const ask = until ? `Responda até ${until}.` : "Diga se vai, para a organização saber com quantas pessoas contar.";
+  return {
+    subject: `Ainda não respondeu: ${ev.title} · ${when}`,
+    text: [`${ev.title}`, `Quando: ${when}`, ev.location ? `Onde: ${ev.location}` : null, "", `Ainda não disse se vai. ${ask}`, "", `${appUrl}/eventos`].filter((x) => x !== null).join("\n"),
+    html: layout(ev.title, `<p><b>Quando:</b> ${esc(when)}${ev.location ? `<br/><b>Onde:</b> ${esc(ev.location)}` : ""}</p><p>Ainda não disse se vai. ${esc(ask)}</p>`,
+      `${appUrl}/eventos`, "Lembrete do TreinON: basta abrir a app e tocar em Vou ou Não vou."),
+  };
+}
+
+/** The daily job: events whose deadline (or date) is close and that still wait for answers. */
+async function runDaily(db: Db, appUrl: string) {
+  const now = new Date();
+  const h = (n: number) => new Date(now.getTime() + n * 3_600_000).toISOString();
+  const { data: events } = await db.from("club_events").select("*").is("reminder_sent_at", null).gt("starts_at", now.toISOString()).lte("starts_at", h(24 * 21)).limit(200);
+  let reminded = 0, sent = 0;
+  for (const ev of events ?? []) {
+    const due = ev.rsvp_deadline
+      ? ev.rsvp_deadline > now.toISOString() && ev.rsvp_deadline <= h(36)
+      : ev.starts_at <= h(48);
+    if (!due) continue;
+    const { data: pending } = await db.rpc("event_pending_emails", { _event: ev.id });
+    const emails = [...new Set((pending ?? []).map((p: { email: string }) => String(p.email).trim().toLowerCase()).filter((e: string) => EMAIL_RE.test(e)))] as string[];
+    const mail = reminderMail(ev, appUrl);
+    for (const to of emails) { if (sent >= MAX_RECIPIENTS) break; if ((await sendEmail(to, mail, "")).ok) sent++; }
+    await db.from("club_events").update({ reminder_sent_at: now.toISOString() }).eq("id", ev.id);
+    reminded++;
+  }
+  return { ok: true, events: reminded, sent };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    // the scheduled job has no user: it proves itself with the shared secret
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    if (cronSecret && req.headers.get("x-cron-secret") === cronSecret) {
+      const svc = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      return json(await runDaily(svc, (Deno.env.get("APP_URL") || "https://treinon.vercel.app").replace(/\/$/, "")));
+    }
     const token = (req.headers.get("authorization") ?? "").replace("Bearer ", "");
     if (!token || token === anonKey) return json({ error: "Não autenticado" }, 401);
     const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
@@ -271,6 +314,16 @@ Deno.serve(async (req) => {
           `<p><b>Quando:</b> ${esc(when)}${ev.location ? `<br/><b>Onde:</b> ${esc(ev.location)}` : ""}${scope ? `<br/><b>Para:</b> ${esc(scope)}` : ""}</p>${details ? paragraphs(details) : ""}`,
           appUrl, `Enviado ${by}aos encarregados de educação. Veja todos os eventos e jogos no TreinON.`),
       } });
+    } else if (body.kind === "event_reminder") {
+      const { data: ev } = await db.from("club_events").select("*").eq("id", body.event_id).maybeSingle();
+      if (!ev) return json({ error: "Evento não encontrado" }, 404);
+      const { data: can } = await userClient.rpc("can_manage_event_rsvps", { _user: user.id, _event: ev.id });
+      if (!can) return json({ error: "Só quem organiza o evento pode enviar lembretes" }, 403);
+      const { data: pending } = await db.rpc("event_pending_emails", { _event: ev.id });
+      const emails = (pending ?? []).map((p: { email: string }) => p.email);
+      if (emails.length === 0) return json({ configured: true, total: 0, sent: 0, failed: 0, note: "Ninguém por lembrar: quem tem conta na app já respondeu." });
+      batches.push({ group: "lembrete", to: emails, mail: reminderMail(ev, appUrl) });
+      afterSend = async () => { await db.from("club_events").update({ reminder_sent_at: new Date().toISOString() }).eq("id", ev.id); };
     } else if (body.kind === "absence_alert") {
       // called right after the coach saves the attendance of a training
       const teamId = String(body.team_id ?? "");

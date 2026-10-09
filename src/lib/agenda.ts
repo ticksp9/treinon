@@ -33,14 +33,20 @@ export interface AgendaItem {
   /** matches: one of my children / me is in the squad list */
   calledUp?: boolean;
   ownerId?: string | null;
+  /** trainings: a real session of the attendance sheet, so the family can say who comes */
+  answerable?: boolean;
+  /** events: answers are accepted until then */
+  rsvpDeadline?: Date | null;
 }
 
 export interface MatchRow { id: string; match_date: string; opponent_name: string; is_home: boolean; location: string | null; competition?: string | null; status?: string | null; team_id: string | null }
 export interface TrainingRow { id: string; name: string | null; training_date: string | null; team_id: string | null; status?: string | null }
-export interface ClubEventRow { id: string; owner_id: string; club_id: string | null; team_id: string | null; title: string; description: string | null; kind: string; starts_at: string; ends_at: string | null; location: string | null }
+/** a training of the attendance sheet (training_sessions) */
+export interface SessionRow { id: string; title: string | null; date: string; team_id: string | null; location: string | null; status?: string | null }
+export interface ClubEventRow { id: string; owner_id: string; club_id: string | null; team_id: string | null; title: string; description: string | null; kind: string; starts_at: string; ends_at: string | null; location: string | null; rsvp_deadline?: string | null; reminder_sent_at?: string | null }
 
 export function buildAgenda(input: {
-  matches?: MatchRow[]; trainings?: TrainingRow[]; events?: ClubEventRow[];
+  matches?: MatchRow[]; trainings?: TrainingRow[]; sessions?: SessionRow[]; events?: ClubEventRow[];
   teamNames: Record<string, string>; calledUpMatchIds?: Set<string>;
 }): AgendaItem[] {
   const { teamNames, calledUpMatchIds } = input;
@@ -55,8 +61,17 @@ export function buildAgenda(input: {
       calledUp: calledUpMatchIds?.has(m.id) ?? false,
     });
   }
+  // the sessions of the attendance sheet are the trainings that really happen; a training
+  // plan on the same day for the same team is the same training, not a second one
+  const sessionDays = new Set<string>();
+  for (const s of input.sessions ?? []) {
+    const start = new Date(s.date);
+    sessionDays.add(`${s.team_id}|${start.toDateString()}`);
+    items.push({ id: s.id, kind: 'training', start, teamId: s.team_id, scope: name(s.team_id), title: s.title?.trim() || 'Treino', location: s.location, status: s.status ?? null, answerable: true });
+  }
   for (const t of input.trainings ?? []) {
     if (!t.training_date) continue;
+    if (sessionDays.has(`${t.team_id}|${new Date(t.training_date).toDateString()}`)) continue;
     items.push({ id: t.id, kind: 'training', start: new Date(t.training_date), teamId: t.team_id, scope: name(t.team_id), title: t.name?.trim() || 'Treino', status: t.status ?? null });
   }
   for (const e of input.events ?? []) {
@@ -65,6 +80,7 @@ export function buildAgenda(input: {
       scope: e.team_id ? name(e.team_id) : e.club_id ? 'Todo o clube' : 'Todas as equipas',
       title: e.title, location: e.location, detail: e.description,
       eventKind: (e.kind in EVENT_KIND_LABELS ? e.kind : 'other') as EventKind, ownerId: e.owner_id,
+      rsvpDeadline: e.rsvp_deadline ? new Date(e.rsvp_deadline) : null,
     });
   }
   return items.filter((i) => !Number.isNaN(i.start.getTime())).sort((a, b) => a.start.getTime() - b.start.getTime());

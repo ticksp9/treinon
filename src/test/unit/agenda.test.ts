@@ -62,6 +62,22 @@ describe('family agenda', () => {
     expect(rsvpSummaryText(rsvpSummary(rows, 'e9'))).toBe('Ainda sem respostas');
   });
 
+  it('a session of the attendance sheet replaces the plan of the same day and can be answered', () => {
+    const a = buildAgenda({
+      teamNames,
+      sessions: [{ id: 's1', title: null, date: '2026-10-12T18:30:00', team_id: 't1', location: 'Campo 2' }],
+      trainings: [
+        { id: 'p1', name: 'Plano de segunda', training_date: '2026-10-12T18:00:00', team_id: 't1' },
+        { id: 'p2', name: 'Plano de quarta', training_date: '2026-10-14T18:00:00', team_id: 't1' },
+      ],
+      events: [{ id: 'e9', owner_id: 'u', club_id: null, team_id: 't1', title: 'Jantar', description: null, kind: 'social', starts_at: '2026-10-20T20:00:00', ends_at: null, location: null, rsvp_deadline: '2026-10-17T23:59:00' }],
+    });
+    expect(a.map((i) => i.id)).toEqual(['s1', 'p2', 'e9']);
+    expect(a[0]).toMatchObject({ kind: 'training', title: 'Treino', location: 'Campo 2', answerable: true });
+    expect(a[1].answerable).toBeUndefined();
+    expect(a[2].rsvpDeadline?.getDate()).toBe(17);
+  });
+
   it('shows times and writes the event for WhatsApp', () => {
     const e1 = agenda.find((i) => i.id === 'e1')!;
     expect(timeLabel(e1)).toBe('20:00–23:00');

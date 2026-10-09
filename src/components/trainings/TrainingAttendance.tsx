@@ -168,10 +168,21 @@ export function TrainingAttendance() {
 
       if (error) throw error;
 
+      // parents / players who said in the app that the player misses this training
+      const { data: warned } = await (supabase as any).from('training_rsvps').select('player_id, status, reason').eq('session_id', selectedSession);
+      const warnedMap: Record<string, string> = {};
+      ((warned ?? []) as { player_id: string; status: string; reason: string | null }[]).forEach(w => {
+        if (w.status === 'no') warnedMap[w.player_id] = w.reason?.trim() ? `Avisou: ${w.reason.trim()}` : 'Avisou que falta';
+      });
+      setWarned(warnedMap);
+
       const attendanceMap: Record<string, Attendance> = {};
       players.forEach(player => {
         const existing = data?.find(a => a.player_id === player.id);
-        attendanceMap[player.id] = existing || { player_id: player.id, present: false, notes: null };
+        // the reason given by the family is already the reason of the absence
+        attendanceMap[player.id] = existing
+          ? { ...existing, notes: existing.notes || (!existing.present ? warnedMap[player.id] ?? null : null) }
+          : { player_id: player.id, present: false, notes: warnedMap[player.id] ?? null };
       });
       setAttendance(attendanceMap);
     } catch (error) {
@@ -179,6 +190,7 @@ export function TrainingAttendance() {
     }
   };
 
+  const [warned, setWarned] = useState<Record<string, string>>({});
   const setReason = (playerId: string, notes: string) => {
     setAttendance(prev => ({ ...prev, [playerId]: { ...prev[playerId], player_id: playerId, present: prev[playerId]?.present ?? false, notes: notes || null } }));
   };
@@ -571,6 +583,7 @@ export function TrainingAttendance() {
                         </Badge>
                       )}
                       <span className="font-medium">{player.name}</span>
+                      {warned[player.id] && <Badge variant="outline" className="border-accent text-accent">Avisou</Badge>}
                       {player.position && (
                         <span className="text-sm text-muted-foreground">({player.position})</span>
                       )}

@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Check, ChevronDown, Dumbbell, Loader2, Mail, MapPin, MessageCircle, Minus, PartyPopper, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
+import { BellRing, CalendarDays, Check, ChevronDown, Dumbbell, Loader2, Mail, MapPin, MessageCircle, Minus, PartyPopper, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import {
   EVENT_KIND_LABELS, buildAgenda, dayLabel, eventShareText, groupByDay, rsvpSummary, rsvpSummaryText, splitAgenda, timeLabel,
-  type AgendaItem, type AgendaKind, type ClubEventRow, type EventKind, type MatchRow, type RsvpRow, type TrainingRow,
+  type AgendaItem, type AgendaKind, type ClubEventRow, type EventKind, type MatchRow, type RsvpRow, type SessionRow, type TrainingRow,
 } from '@/lib/agenda';
 import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const toDateInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const toTimeInput = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-interface EventForm { id?: string; title: string; kind: EventKind; date: string; time: string; endTime: string; location: string; description: string; audience: string; email: boolean }
+interface EventForm { id?: string; title: string; kind: EventKind; date: string; time: string; endTime: string; location: string; description: string; audience: string; email: boolean; deadline: string }
+interface CallupAnswer { match_id: string; player_id: string; status: string }
+interface TrainingAnswer { session_id: string; player_id: string; status: 'yes' | 'no'; reason: string | null }
 
 export default function Agenda() {
   const { user } = useAuth();
@@ -91,7 +93,7 @@ export default function Agenda() {
     queryFn: async () => {
       const since = new Date(Date.now() - 60 * 86_400_000).toISOString();
       const none = Promise.resolve({ data: [] });
-      const [m, t, e] = await Promise.all([
+      const [m, t, e, ss] = await Promise.all([
         teamIds.length
           ? supabase.from('matches').select('id, match_date, opponent_name, is_home, location, competition, status, team_id').in('team_id', teamIds).eq('is_deleted', false).gte('match_date', since).order('match_date').limit(300)
           : none,
@@ -99,22 +101,36 @@ export default function Agenda() {
           ? supabase.from('coach_trainings').select('id, name, training_date, team_id, status').in('team_id', teamIds).gte('training_date', since).order('training_date').limit(300)
           : none,
         db.from('club_events').select('*').gte('starts_at', since).order('starts_at').limit(300),
+        teamIds.length
+          ? supabase.from('training_sessions').select('id, title, date, team_id, location, status').in('team_id', teamIds).gte('date', since).order('date').limit(300)
+          : none,
       ]);
+      const sessions = (ss.data ?? []) as SessionRow[];
       const matches = (m.data ?? []) as MatchRow[];
       // which matches my child / I was called up for (the database only returns our own rows)
       let called = new Set<string>();
+      let lineups: { match_id: string; player_id: string }[] = [];
+      let callupAnswers: CallupAnswer[] = [];
       if (isFamily && matches.length) {
-        const { data: lu } = await supabase.from('match_lineups').select('match_id').in('match_id', matches.map((x) => x.id));
-        called = new Set((lu ?? []).map((l) => l.match_id as string));
+        const ids = matches.map((x) => x.id);
+        const [lu, cc] = await Promise.all([
+          supabase.from('match_lineups').select('match_id, player_id').in('match_id', ids),
+          supabase.from('callup_confirmations').select('match_id, player_id, status').in('match_id', ids),
+        ]);
+        lineups = (lu.data ?? []) as { match_id: string; player_id: string }[];
+        callupAnswers = (cc.data ?? []) as CallupAnswer[];
+        called = new Set(lineups.map((l) => l.match_id));
       }
+      // who said he comes / does not come to a training (family: own children; coaches: the team)
+      const { data: tr } = sessions.length ? await db.from('training_rsvps').select('session_id, player_id, status, reason').in('session_id', sessions.map((x) => x.id)) : { data: [] };
       const events = (e.data ?? []) as ClubEventRow[];
       // my own answer; organisers also get everybody's (the database decides)
       const { data: rs } = events.length ? await db.from('club_event_rsvps').select('event_id, user_id, status, people').in('event_id', events.map((x) => x.id)) : { data: [] };
-      return { matches, trainings: (t.data ?? []) as TrainingRow[], events, called, rsvps: (rs ?? []) as RsvpRow[] };
+      return { matches, trainings: (t.data ?? []) as TrainingRow[], sessions, events, called, lineups, callupAnswers, trainingAnswers: (tr ?? []) as TrainingAnswer[], rsvps: (rs ?? []) as RsvpRow[] };
     },
   });
 
-  const all = useMemo(() => buildAgenda({ matches: data?.matches, trainings: data?.trainings, events: data?.events, teamNames, calledUpMatchIds: data?.called }), [data, teamNames]);
+  const all = useMemo(() => buildAgenda({ matches: data?.matches, trainings: data?.trainings, sessions: data?.sessions, events: data?.events, teamNames, calledUpMatchIds: data?.called }), [data, teamNames]);
   const { upcoming, past } = useMemo(() => splitAgenda(all.filter((i) => filters[i.kind])), [all, filters]);
   const days = useMemo(() => groupByDay(showPast ? past : upcoming), [showPast, past, upcoming]);
   const loading = roleLoading || agendaLoading || (isFamily ? familyLoading : teamsLoading);
@@ -125,7 +141,7 @@ export default function Agenda() {
   const defaultAudience = teams[0]?.id ?? (canClubWide ? WHOLE_CLUB : ALL_TEAMS);
   const openNew = () => {
     const d = new Date(); d.setDate(d.getDate() + 7);
-    setForm({ title: '', kind: 'social', date: toDateInput(d), time: '19:30', endTime: '', location: '', description: '', audience: defaultAudience, email: true });
+    setForm({ title: '', kind: 'social', date: toDateInput(d), time: '19:30', endTime: '', location: '', description: '', audience: defaultAudience, email: true, deadline: '' });
   };
   const openEdit = (i: AgendaItem) => {
     const row = data?.events.find((e) => e.id === i.id);
@@ -134,6 +150,7 @@ export default function Agenda() {
       id: row.id, title: row.title, kind: i.eventKind ?? 'other', date: toDateInput(i.start), time: toTimeInput(i.start),
       endTime: i.end ? toTimeInput(i.end) : '', location: row.location ?? '', description: row.description ?? '',
       audience: row.team_id ?? (row.club_id ? WHOLE_CLUB : ALL_TEAMS), email: false,
+      deadline: row.rsvp_deadline ? toDateInput(new Date(row.rsvp_deadline)) : '',
     });
   };
   const save = async () => {
@@ -144,7 +161,11 @@ export default function Agenda() {
     let end: Date | null = form.endTime ? new Date(`${form.date}T${form.endTime}`) : null;
     if (end && end <= start) end = new Date(end.getTime() + 86_400_000); // ends after midnight
     const team = teams.find((t) => t.id === form.audience);
+    // answers are accepted until the end of the chosen day
+    const deadline = form.deadline ? new Date(`${form.deadline}T23:59:00`) : null;
+    if (deadline && deadline > (end ?? start)) return toast.error('O prazo para responder tem de ser antes do evento');
     const payload = {
+      rsvp_deadline: deadline ? deadline.toISOString() : null,
       title: form.title.trim(), kind: form.kind, starts_at: start.toISOString(), ends_at: end ? end.toISOString() : null,
       location: form.location.trim() || null, description: form.description.trim() || null,
       team_id: team ? team.id : null,
@@ -190,6 +211,38 @@ export default function Agenda() {
     enabled: !!answersFor,
     queryFn: async () => ((await db.rpc('get_event_rsvps', { _event: answersFor })).data ?? []) as RsvpDetail[],
   });
+
+  // ── matches and trainings: the family answers for each child ──
+  const answerMatch = async (matchId: string, playerId: string, playerName: string, status: 'confirmed' | 'declined') => {
+    if (!user) return;
+    const comment = status === 'declined' ? window.prompt(`Porque é que ${playerName} não pode ir? (opcional)`, '') : null;
+    if (status === 'declined' && comment === null) return;
+    setAnswering(matchId + playerId);
+    const { error } = await supabase.from('callup_confirmations').upsert(
+      { match_id: matchId, player_id: playerId, confirmed_by: user.id, status, comment: comment?.trim() || null, responded_at: new Date().toISOString() },
+      { onConflict: 'match_id,player_id' });
+    setAnswering(null);
+    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
+    toast.success(status === 'confirmed' ? `${playerName}: presença confirmada` : `${playerName}: o treinador fica a saber que não vai`);
+    qc.invalidateQueries({ queryKey: ['agenda'] });
+  };
+  const answerTraining = async (sessionId: string, playerId: string, playerName: string, status: 'yes' | 'no') => {
+    if (!user) return;
+    const reason = status === 'no' ? window.prompt(`Porque é que ${playerName} falta ao treino? (ex.: doença, escola)`, '') : null;
+    if (status === 'no' && reason === null) return;
+    setAnswering(sessionId + playerId);
+    const { error } = await db.from('training_rsvps').upsert(
+      { session_id: sessionId, player_id: playerId, status, reason: reason?.trim().slice(0, 120) || null, answered_by: user.id, updated_at: new Date().toISOString() },
+      { onConflict: 'session_id,player_id' });
+    setAnswering(null);
+    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
+    qc.invalidateQueries({ queryKey: ['agenda'] });
+  };
+  const remind = async (id: string) => {
+    setEmailing(id);
+    toastNotice(await sendNotice({ kind: 'event_reminder', event_id: id }));
+    setEmailing(null);
+  };
 
   const children = useMemo(() => [...new Set(family.map((f) => f.player_name))], [family]);
 
@@ -259,14 +312,53 @@ export default function Agenda() {
                           {i.kind === 'match' && i.detail && <span>{i.detail}</span>}
                         </div>
                         {i.kind === 'event' && i.detail && <p className="mt-1.5 whitespace-pre-line text-sm">{i.detail}</p>}
+                        {/* match: the family confirms each called-up child */}
+                        {i.kind === 'match' && isFamily && i.start.getTime() > Date.now() && family
+                          .filter((f) => (data?.lineups ?? []).some((l) => l.match_id === i.id && l.player_id === f.player_id))
+                          .map((f) => {
+                            const a = data?.callupAnswers.find((c) => c.match_id === i.id && c.player_id === f.player_id);
+                            const busy = answering === i.id + f.player_id;
+                            return (
+                              <div key={f.player_id} className="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span className="text-sm font-medium">{f.player_name}:</span>
+                                <Button size="sm" variant={a?.status === 'confirmed' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'confirmed')} aria-pressed={a?.status === 'confirmed'}><Check className="mr-1 h-4 w-4" />Vai</Button>
+                                <Button size="sm" variant={a?.status === 'declined' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'declined')} aria-pressed={a?.status === 'declined'}><X className="mr-1 h-4 w-4" />Não pode ir</Button>
+                              </div>
+                            );
+                          })}
+                        {/* training: say in advance who misses it (it reaches the coach's attendance sheet) */}
+                        {i.kind === 'training' && i.answerable && isFamily && i.start.getTime() > Date.now() && family
+                          .filter((f) => f.team_id === i.teamId)
+                          .map((f) => {
+                            const a = data?.trainingAnswers.find((c) => c.session_id === i.id && c.player_id === f.player_id);
+                            const busy = answering === i.id + f.player_id;
+                            return (
+                              <div key={f.player_id} className="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span className="text-sm font-medium">{f.player_name}:</span>
+                                <Button size="sm" variant={a?.status === 'yes' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'yes')} aria-pressed={a?.status === 'yes'}><Check className="mr-1 h-4 w-4" />Vai</Button>
+                                <Button size="sm" variant={a?.status === 'no' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'no')} aria-pressed={a?.status === 'no'}><X className="mr-1 h-4 w-4" />Falta</Button>
+                                {a?.status === 'no' && a.reason && <span className="text-xs text-muted-foreground">{a.reason}</span>}
+                              </div>
+                            );
+                          })}
+                        {i.kind === 'training' && i.answerable && !isFamily && (() => {
+                          const out = (data?.trainingAnswers ?? []).filter((c) => c.session_id === i.id && c.status === 'no').length;
+                          return out > 0 ? <p className="mt-1 text-xs font-medium text-accent">{out} {out === 1 ? 'jogador avisou que falta' : 'jogadores avisaram que faltam'} (ver nas presenças)</p> : null;
+                        })()}
                         {i.kind === 'event' && (() => {
                           const rows = data?.rsvps ?? [];
                           const my = rows.find((r) => r.event_id === i.id && r.user_id === user?.id);
-                          const over = (i.end ?? i.start).getTime() < Date.now();
+                          const closed = !!i.rsvpDeadline && i.rsvpDeadline.getTime() < Date.now();
+                          const over = (i.end ?? i.start).getTime() < Date.now() || closed;
                           const busy = answering === i.id;
                           const summary = rsvpSummary(rows, i.id);
                           return (
                             <div className="mt-2 space-y-2">
+                              {i.rsvpDeadline && (
+                                <p className={cn('text-xs', closed ? 'text-destructive' : 'text-muted-foreground')}>
+                                  {closed ? 'O prazo para responder terminou a ' : 'Responder até '}{i.rsvpDeadline.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </p>
+                              )}
                               {over ? (
                                 my && <p className="text-xs text-muted-foreground">A sua resposta: {my.status === 'yes' ? `fui (${my.people} ${my.people === 1 ? 'pessoa' : 'pessoas'})` : 'não fui'}</p>
                               ) : (
@@ -319,6 +411,11 @@ export default function Agenda() {
                             <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={emailing === i.id} onClick={() => emailEvent(i.id)}>
                               {emailing === i.id ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-1 h-3.5 w-3.5" />}Email aos pais
                             </Button>
+                            {(i.end ?? i.start).getTime() > Date.now() && (
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={emailing === i.id} onClick={() => remind(i.id)} title="Email só a quem tem conta e ainda não respondeu">
+                                <BellRing className="mr-1 h-3.5 w-3.5" />Lembrar quem falta
+                              </Button>
+                            )}
                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openEdit(i)}><Pencil className="mr-1 h-3.5 w-3.5" />Editar</Button>
                             <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive" onClick={() => remove(i)}><Trash2 className="mr-1 h-3.5 w-3.5" />Apagar</Button>
                           </div>
@@ -369,6 +466,11 @@ export default function Agenda() {
                 <div><Label>Data *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
                 <div><Label>Início</Label><Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
                 <div><Label>Fim</Label><Input type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} /></div>
+              </div>
+              <div>
+                <Label>Responder até (opcional)</Label>
+                <Input type="date" value={form.deadline} max={form.date} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+                <p className="mt-1 text-xs text-muted-foreground">Depois desse dia já não dá para responder. Quem ainda não respondeu recebe um lembrete por email na véspera do prazo (sem prazo: dois dias antes do evento).</p>
               </div>
               <div>
                 <Label>Local</Label>
