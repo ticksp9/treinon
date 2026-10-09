@@ -14,7 +14,7 @@ import { useMemo, useRef, useState } from 'react';
 import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeftRight, Repeat, X } from 'lucide-react';
+import { ArrowLeftRight, Repeat, X, UserX } from 'lucide-react';
 import { getFormation, listAvailableFormations, type FormationSlot } from '@/lib/tactical-formations';
 import { fitScore, type LiveTactics } from '@/lib/live-tactics';
 import { formatClock } from '@/lib/playing-time-seconds';
@@ -58,6 +58,8 @@ interface Props {
   onFillSlot?: (slotId: string, playerId: string) => void;
   /** starter dragged to the bench (setup) */
   onBench?: (playerId: string) => void;
+  /** bench player did not come to the match (setup) */
+  onAbsent?: (playerId: string) => void;
   onFormationChange: (code: string) => void;
   onSwap: (slotA: string, slotB: string) => void;
   onSubstitute: (outId: string, inId: string) => void;
@@ -88,7 +90,7 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
   unknown: 'bg-black/55 text-white',
 };
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
@@ -286,7 +288,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
       {/* Bench */}
       <div data-drop="bencharea" className={cn('rounded-md', setup && 'border border-dashed p-2')}>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Repeat className="h-3.5 w-3.5" /> {setup ? `Suplentes (${bench.length}) — arraste para o campo` : 'Banco — menos minutos primeiro'}
+          <Repeat className="h-3.5 w-3.5" /> {setup ? `Suplentes (${bench.length}) — arraste para o campo · ✕ = não veio` : 'Banco — menos minutos primeiro'}
         </p>
         <div className={cn('flex gap-2', setup ? 'flex-wrap' : 'overflow-x-auto pb-1')}>
           {bench.length === 0 && <span className="text-sm text-muted-foreground">Sem suplentes.</span>}
@@ -295,8 +297,14 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             if (!p) return null;
             const isSel = sel?.kind === 'bench' && sel.playerId === id;
             return (
+              <div key={id} className="relative shrink-0">
+              {setup && onAbsent && (
+                <button type="button" onClick={() => onAbsent(id)} aria-label={`${p.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                  className="absolute -right-1.5 -top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground">
+                  <UserX className="h-3.5 w-3.5" />
+                </button>
+              )}
               <button
-                key={id}
                 type="button"
                 data-drop={`bench:${id}`}
                 onClick={() => tapBench(id)}
@@ -329,6 +337,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                   </>
                 )}
               </button>
+              </div>
             );
           })}
         </div>

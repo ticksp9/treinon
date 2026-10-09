@@ -21,6 +21,7 @@ import { isSportAllowed } from '@/lib/sport-scope';
 import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '@/lib/team-selection';
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
+import { AbsenceDialog } from './AbsenceDialog';
 import { TacticBoard } from '@/components/board/TacticBoard';
 import { emptyBoard, placeFormation } from '@/lib/tactic-board';
 import { clearLiveClock, readLiveClock, writeLiveClock } from '@/lib/live-clock';
@@ -1334,11 +1335,35 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     if (!me) return;
     const { error } = await supabase.from('match_lineups').insert({ match_id: matchId, player_id: playerId, owner_id: me.id, is_starter: false });
     if (error) toast.error('Não foi possível convocar: ' + error.message);
+    else if (playerId in absences) {
+      // he came after all
+      const rest = { ...absences };
+      delete rest[playerId];
+      await updateMatchRecord({ absences: rest });
+    }
     fetchMatchData();
   };
-  const handleLeaveOut = async (lineupId: string) => {
-    const { error } = await supabase.from('match_lineups').delete().eq('id', lineupId);
-    if (error) toast.error('Não foi possível retirar: ' + error.message);
+  // A called-up player did not come (ill, injured…): out of this match before kick-off,
+  // so the live game has no one on the bench who is not there.
+  const [absentFor, setAbsentFor] = useState<string | null>(null);
+  const absences = (((match as any)?.absences ?? {}) as Record<string, string>);
+  const handleAbsent = async (playerId: string, reason: string) => {
+    setAbsentFor(null);
+    const row = lineups.find(l => l.player_id === playerId);
+    if (!row) return;
+    try {
+      if (row.is_starter && pitchTactics) {
+        const slots = { ...pitchTactics.slots };
+        for (const k of Object.keys(slots)) if (slots[k] === playerId) slots[k] = null;
+        await saveTactics({ ...pitchTactics, slots });
+      }
+      const { error } = await supabase.from('match_lineups').delete().eq('id', row.id);
+      if (error) throw error;
+      await updateMatchRecord({ absences: { ...absences, [playerId]: reason } });
+      toast.success(`${row.player?.name ?? 'Jogador'} retirado do jogo${reason ? ` (${reason})` : ''}`);
+    } catch (e) {
+      toast.error('Não foi possível retirar: ' + ((e as Error)?.message ?? ''));
+    }
     fetchMatchData();
   };
   const handleSetupBench = async (playerId: string) => {
@@ -1673,6 +1698,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onSubstitute={handleSetupSubstitute}
                     onFillSlot={handleSetupFill}
                     onBench={handleSetupBench}
+                    onAbsent={setAbsentFor}
                     onEvent={() => {}}
                   />
                 </div>
@@ -1682,7 +1708,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     called={lineups}
                     maxStarters={sportRules.playersOnField}
                     onCallUp={handleCallUp}
-                    onLeaveOut={handleLeaveOut}
+                    onAbsent={setAbsentFor}
+                    absences={absences}
                   />
                   <PreMatchPanel
                     squad={candidates}
@@ -2045,6 +2072,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           onClose={() => setBoardOpen(false)}
         />
       )}
+      <AbsenceDialog
+        playerName={absentFor ? (lineups.find(l => l.player_id === absentFor)?.player?.name ?? 'jogador') : null}
+        onConfirm={(reason) => absentFor && handleAbsent(absentFor, reason)}
+        onClose={() => setAbsentFor(null)}
+      />
       <MatchConfigModal
         open={configModalOpen}
         onOpenChange={setConfigModalOpen}

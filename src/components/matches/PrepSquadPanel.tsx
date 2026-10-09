@@ -6,7 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus } from 'lucide-react';
+import { Plus, UserX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSquadProfiles } from '@/hooks/useSquadProfiles';
 import { ratingBg, ratingTone } from '@/lib/player-card';
@@ -19,14 +19,17 @@ interface Props {
   called: { id: string; player_id: string; is_starter: boolean; player?: { name?: string; number?: number | null; position?: string | null; foot?: string | null } | null }[];
   maxStarters: number;
   onCallUp: (playerId: string) => void;
-  onLeaveOut: (lineupId: string) => void;
+  /** the player did not come: take him out of this match (asks the reason) */
+  onAbsent: (playerId: string) => void;
+  /** player id → reason, for those already taken out */
+  absences?: Record<string, string>;
 }
 
 const FOOT: Record<string, string> = { right: 'D', left: 'E', both: 'A', direito: 'D', esquerdo: 'E', ambos: 'A' };
 export const footLabel = (f: string | null | undefined) => (f ? FOOT[f.toLowerCase()] ?? f.slice(0, 1).toUpperCase() : '–');
 const trend = (t?: string) => (t === 'up' ? '▲' : t === 'down' ? '▼' : '');
 
-export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onLeaveOut }: Props) {
+export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onAbsent, absences = {} }: Props) {
   const calledIds = new Set(called.map((c) => c.player_id));
   const { data: roster = [] } = useQuery({
     queryKey: ['prep-roster', teamId],
@@ -52,15 +55,22 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onLeaveO
         <td className="w-7 py-1.5 text-center font-mono text-xs text-muted-foreground">{r.number ?? '–'}</td>
         <td className="max-w-[9rem] truncate py-1.5 pr-1">
           <Link to={`/players/${r.player_id}`} className="font-medium hover:underline">{r.name}</Link>
+          {kind === 'out' && r.player_id in absences && (
+            <span className="ml-1.5 rounded bg-destructive/10 px-1 text-[10px] font-semibold uppercase text-destructive">Ausente{absences[r.player_id] ? ` · ${absences[r.player_id]}` : ''}</span>
+          )}
         </td>
         <td className="py-1.5 text-center text-xs font-semibold">{r.position ?? '–'}</td>
         <td className="py-1.5 text-center text-xs" title="Pé preferido">{footLabel(r.foot)}</td>
         <td className="py-1.5 text-center"><span className={cn('rounded px-1 font-mono text-xs font-bold', ratingBg(p?.ability))}>{p?.ability?.toFixed(1) ?? '—'}</span></td>
         <td className={cn('py-1.5 text-center font-mono text-xs', ratingTone(p?.form.average))}>{p?.form.average != null ? `${p.form.average.toFixed(1)}${trend(p.form.trend)}` : '—'}</td>
         <td className="py-1.5 text-right font-mono text-xs">{p?.seasonMinutes ?? 0}'</td>
-        <td className="w-9 py-1 text-right">
+        <td className="py-1 text-right">
           {kind === 'out' && <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" onClick={() => onCallUp(r.player_id)} aria-label={`Convocar ${r.name}`} title="Convocar"><Plus className="h-4 w-4" /></Button>}
-          {kind === 'sub' && r.lineupId && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onLeaveOut(r.lineupId!)} aria-label={`Retirar ${r.name} da convocatória`} title="Retirar da convocatória"><Minus className="h-4 w-4" /></Button>}
+          {kind !== 'out' && (
+            <Button size="sm" variant="ghost" className="h-7 px-1.5 text-xs text-destructive hover:text-destructive" onClick={() => onAbsent(r.player_id)} aria-label={`${r.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar">
+              <UserX className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Ausente</span>
+            </Button>
+          )}
         </td>
       </tr>
     );
@@ -76,6 +86,8 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onLeaveO
   );
 
   return (
+    <div className="space-y-1.5">
+    <p className="text-xs text-muted-foreground">Faltou alguém (doença, lesão…)? Toque em <span className="font-semibold text-destructive">Ausente</span> para o tirar deste jogo antes de começar.</p>
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full text-sm">
         <thead>
@@ -96,6 +108,7 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onLeaveO
           <Section title={`Não convocados (${out.length})`} rows={out} kind="out" empty="Todo o plantel está convocado." />
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
