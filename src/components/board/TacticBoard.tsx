@@ -21,6 +21,7 @@ import {
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
+import { promptNewFormation, useFormationsVersion } from '@/lib/custom-formations';
 
 type Tool = 'move' | DrawKind | 'erase';
 const TOOLS: { id: Tool; label: string; icon: typeof Hand }[] = [
@@ -38,6 +39,7 @@ const COLORS = ['#ffffff', '#facc15', '#f97316', '#38bdf8', '#111827'];
 const SPORTS: Record<string, string> = { football_11: 'Futebol 11', football_9: 'Futebol 9', football_7: 'Futebol 7', football_5: 'Futebol 5', futsal: 'Futsal' };
 const HOME = '#2563eb', AWAY = '#dc2626';
 const SPEEDS = [0.5, 1, 2];
+const NEW_FORMATION = '__new__';
 
 interface Props {
   initial: BoardState;
@@ -123,7 +125,9 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
     if (persistKey) saveBoardDraft(persistKey, { state, sig: homeSig, loaded });
   }, [persistKey, homeSig, state, loaded]);
 
-  const formations = useMemo(() => formationCodes(state.sport), [state.sport]);
+  const formationsVersion = useFormationsVersion();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const formations = useMemo(() => formationCodes(state.sport), [state.sport, formationsVersion]);
   const totalSteps = state.steps.length;
   const pos = playT != null ? positionsAtTime(state, playT) : positionsAt(state, step);
   const shownStep = playT != null ? Math.min(totalSteps, Math.floor(playT + 0.001)) : step;
@@ -249,7 +253,14 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
   };
 
   // ── actions ──
-  const setFormation = (side: 'home' | 'away', code: string) => commit(placeFormation(state, side, code, side === 'home' ? players : undefined, side === 'home' ? slotMap : undefined));
+  const setFormation = async (side: 'home' | 'away', picked: string) => {
+    // the coach's own shape (e.g. 4-1-2-1): typed once, then it is in the list
+    const code = picked === NEW_FORMATION
+      ? await promptNewFormation(user?.id, state.sport, (msg, ok) => (ok ? toast.success(msg) : toast.error(msg)))
+      : picked;
+    if (code) applyFormation(side, code);
+  };
+  const applyFormation = (side: 'home' | 'away', code: string) => commit(placeFormation(state, side, code, side === 'home' ? players : undefined, side === 'home' ? slotMap : undefined));
   const addLoose = (kind: 'ball' | 'cone') => commit({ ...state, tokens: [...state.tokens, { id: uid(kind[0]), kind, x: state.half ? BW * 0.75 : BW / 2 + (kind === 'cone' ? 4 : 0), y: BH / 2 + (kind === 'cone' ? 4 : 0) }] });
   const clearDrawings = () => commit({ ...state, drawings: state.drawings.filter((d) => d.step !== step) });
   const clearAll = () => {
@@ -380,7 +391,10 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: HOME }} />
           <Select value={state.homeFormation ?? ''} onValueChange={(v) => setFormation('home', v)}>
             <SelectTrigger className="h-9 w-36"><SelectValue placeholder="A minha equipa" /></SelectTrigger>
-            <SelectContent>{formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
+            </SelectContent>
           </Select>
           {linesBtn('home')}
         </span>
@@ -388,7 +402,10 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: AWAY }} />
           <Select value={state.awayFormation ?? ''} onValueChange={(v) => setFormation('away', v)}>
             <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Adversário" /></SelectTrigger>
-            <SelectContent>{formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
+            </SelectContent>
           </Select>
           {state.tokens.some((t) => t.kind === 'away') && linesBtn('away')}
           {state.tokens.some((t) => t.kind === 'away') && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => clearSide('away')} aria-label="Tirar adversário"><Trash2 className="h-4 w-4" /></Button>}

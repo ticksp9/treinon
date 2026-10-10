@@ -15,11 +15,16 @@ import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeftRight, Repeat, X, UserX } from 'lucide-react';
+import { promptNewFormation, useFormationsVersion } from '@/lib/custom-formations';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { getFormation, listAvailableFormations, type FormationSlot } from '@/lib/tactical-formations';
 import { fitScore, type LiveTactics } from '@/lib/live-tactics';
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
 import { ratingBg } from '@/lib/player-card';
+
+const NEW_FORMATION = '__new__';
 
 export interface PitchPlayerInfo {
   player_id: string;
@@ -99,7 +104,14 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
   const drag = useRef<{ src: Src; x0: number; y0: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const formation = useMemo(() => getFormation(sportType, tactics.formation), [sportType, tactics.formation]);
+  useFormationsVersion(); // re-render when the coach adds a formation
   const formations = listAvailableFormations(sportType);
+  const pickFormation = async (picked: string) => {
+    const code = picked === NEW_FORMATION
+      ? await promptNewFormation((await supabase.auth.getUser()).data.user?.id, sportType, (msg, ok) => (ok ? toast.success(msg) : toast.error(msg)))
+      : picked;
+    if (code) onFormationChange(code);
+  };
   const selectedPlayer = sel ? players.get(sel.playerId) : null;
 
   const tapPitch = (slotId: string, playerId: string | null) => {
@@ -181,10 +193,13 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <Select value={tactics.formation} onValueChange={onFormationChange} disabled={disabled}>
+        <Select value={tactics.formation} onValueChange={pickFormation} disabled={disabled}>
           <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
+            {/* a formation made by a colleague is not in my list but must still show as selected */}
+            {!formations.some((f) => f.code === tactics.formation) && <SelectItem value={tactics.formation}>{tactics.formation}</SelectItem>}
             {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+            <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
           </SelectContent>
         </Select>
         <p className="text-xs text-muted-foreground text-right">{hint}</p>

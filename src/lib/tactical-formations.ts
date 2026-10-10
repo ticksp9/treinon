@@ -330,13 +330,88 @@ const ALL_FORMATIONS: Record<SportType, Formation[]> = {
   futsal: FUTSAL,
 };
 
+// ─── Formações do treinador ────────────────────────────────────────────────
+// A coach plays in shapes the catalogue does not have (e.g. 4-1-2-1 in football 9).
+// Any "a-b-c" whose numbers add up to the outfield players is a valid formation:
+// the lines are laid out from defence to attack, evenly spread.
+
+/** "4-1-2-1", "4 1 2 1", "4.1.2.1" → [4,1,2,1]; null when it is not a list of lines. */
+export function parseFormationCode(input: string): number[] | null {
+  const parts = (input ?? '').trim().split(/[^0-9]+/).filter(Boolean).map(Number);
+  if (parts.length < 2 || parts.length > 5 || parts.some((n) => n < 1 || n > 6)) return null;
+  return parts;
+}
+export const normalizeFormationCode = (lines: number[]) => lines.join('-');
+
+/** Why a typed formation cannot be used for this sport (null = it is fine). */
+export function formationCodeProblem(sportType: SportType | string, input: string): string | null {
+  const lines = parseFormationCode(input);
+  if (!lines) return 'Escreva as linhas da defesa para o ataque, separadas por hífen (ex.: 4-1-2-1).';
+  const outfield = expectedPlayersForSport(sportType) - 1;
+  const sum = lines.reduce((a, b) => a + b, 0);
+  if (sum !== outfield) return `As linhas têm de somar ${outfield} jogadores de campo (o guarda-redes não conta); ${normalizeFormationCode(lines)} soma ${sum}.`;
+  return null;
+}
+
+/** Builds the formation for a valid code; undefined when the code does not fit the sport. */
+export function buildFormationFromCode(sportType: SportType | string, input: string): Formation | undefined {
+  if (formationCodeProblem(sportType, input)) return undefined;
+  const lines = parseFormationCode(input)!;
+  const L = lines.length;
+  const slots: FormationSlot[] = [s('GK', 'goalkeeper', 'GR', 0.5, 0.05)];
+  lines.forEach((n, li) => {
+    const y = L === 1 ? 0.5 : 0.2 + (li * 0.65) / (L - 1);
+    const spread = n === 1 ? 0 : Math.min(0.7 / (n - 1), 0.3);
+    const kind: 'D' | 'M' | 'A' = li === 0 ? 'D' : li === L - 1 ? 'A' : 'M';
+    for (let j = 0; j < n; j++) {
+      const x = 0.5 + (j - (n - 1) / 2) * spread;
+      const side = x < 0.42 ? 'L' : x > 0.58 ? 'R' : 'C';
+      let role: SlotRole, label: string;
+      if (kind === 'D') {
+        const wide = n >= 3 && (j === 0 || j === n - 1);
+        role = wide ? (side === 'L' ? 'defender_left' : 'defender_right') : side === 'L' ? 'defender_center_left' : side === 'R' ? 'defender_center_right' : 'defender_center';
+        label = wide ? (side === 'L' ? 'DE' : 'DD') : 'DC';
+      } else if (kind === 'A') {
+        role = n === 1 ? 'striker' : side === 'L' ? 'forward_left' : side === 'R' ? 'forward_right' : 'forward_center';
+        label = n === 1 || side === 'C' ? 'PL' : side === 'L' ? 'EE' : 'ED';
+      } else if (n === 1) {
+        // a lone midfielder: holding when he is the first line after the defence, playmaker otherwise
+        role = li === 1 && L > 3 ? 'midfielder_defensive' : li === L - 2 && L > 3 ? 'midfielder_attacking' : 'midfielder_center';
+        label = role === 'midfielder_defensive' ? 'MDC' : role === 'midfielder_attacking' ? 'MOC' : 'MC';
+      } else {
+        const wide = n >= 3 && (j === 0 || j === n - 1);
+        role = wide ? (side === 'L' ? 'midfielder_left' : 'midfielder_right') : side === 'L' ? 'midfielder_center_left' : side === 'R' ? 'midfielder_center_right' : 'midfielder_center';
+        label = side === 'L' ? 'ME' : side === 'R' ? 'MD' : 'MC';
+      }
+      slots.push(s(`L${li + 1}P${j + 1}`, role, label, Math.round(x * 100) / 100, Math.round(y * 100) / 100));
+    }
+  });
+  const code = normalizeFormationCode(lines);
+  return { code, name: code, sport_type: sportType as SportType, slots };
+}
+
+/** the coach's own formations, per sport (filled by lib/custom-formations) */
+let CUSTOM: Partial<Record<string, Formation[]>> = {};
+export function setCustomFormations(codesBySport: Record<string, string[]>): void {
+  const next: Partial<Record<string, Formation[]>> = {};
+  for (const [sport, codes] of Object.entries(codesBySport)) {
+    const builtIn = new Set((ALL_FORMATIONS[sport as SportType] ?? []).map((f) => f.code));
+    const list = [...new Set(codes)].filter((c) => !builtIn.has(c)).map((c) => buildFormationFromCode(sport, c)).filter((f): f is Formation => !!f);
+    if (list.length) next[sport] = list;
+  }
+  CUSTOM = next;
+}
+export const isBuiltInFormation = (sportType: SportType | string, code: string) =>
+  (ALL_FORMATIONS[sportType as SportType] ?? []).some((f) => f.code === code);
+
 export function listAvailableFormations(sportType: SportType | string | null | undefined): Formation[] {
   if (!sportType) return [];
-  return ALL_FORMATIONS[sportType as SportType] ?? [];
+  return [...(ALL_FORMATIONS[sportType as SportType] ?? []), ...(CUSTOM[sportType] ?? [])];
 }
 
 export function getFormation(sportType: SportType | string, code: string): Formation | undefined {
-  return listAvailableFormations(sportType).find(f => f.code === code);
+  // a formation created on another device (or by a colleague) still draws: any valid code can be built
+  return listAvailableFormations(sportType).find(f => f.code === code) ?? buildFormationFromCode(sportType, code);
 }
 
 export function expectedPlayersForSport(sportType: SportType | string): number {

@@ -8,6 +8,9 @@ import { ThemeToggle } from './ThemeToggle';
 import { SeasonPicker, SeasonReadOnlyBanner } from './SeasonPicker';
 import { LiveMatchBar } from '@/components/matches/LiveMatchBar';
 import { ConsentGate } from '@/components/family/ConsentGate';
+import { useEffect } from 'react';
+import { useAuth } from '@/lib/auth';
+import { loadCustomFormations } from '@/lib/custom-formations';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -36,6 +39,9 @@ function ActiveTeamChip() {
 }
 
 export function AppLayout({ children, title }: AppLayoutProps) {
+  // the coach's own formations (4-1-2-1…): in every formation list of the app
+  const { user } = useAuth();
+  useEffect(() => { if (user?.id) loadCustomFormations(user.id); }, [user?.id]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
