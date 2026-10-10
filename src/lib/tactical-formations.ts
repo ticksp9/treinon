@@ -391,22 +391,54 @@ export function buildFormationFromCode(sportType: SportType | string, input: str
 }
 
 /** the coach's own formations, per sport (filled by lib/custom-formations) */
+/** where the coach dragged each position: slot id → [x, y] in the same 0..1 coordinates */
+export type FormationLayout = Record<string, [number, number]>;
+export interface CustomFormationEntry { code: string; layout?: FormationLayout | null }
+
+const clamp01 = (v: number) => Math.min(0.98, Math.max(0.02, Math.round(v * 100) / 100));
+/** The formation with the coach's positions; slots without a saved position keep the default one. */
+export function applyFormationLayout(f: Formation, layout: FormationLayout | null | undefined): Formation {
+  if (!layout) return f;
+  return {
+    ...f,
+    slots: f.slots.map((sl) => {
+      const p = layout[sl.slot_id];
+      return Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]) ? { ...sl, x: clamp01(p[0]), y: clamp01(p[1]) } : sl;
+    }),
+  };
+}
+
 let CUSTOM: Partial<Record<string, Formation[]>> = {};
-export function setCustomFormations(codesBySport: Record<string, string[]>): void {
+/** the coach's drawing of a formation that comes with the app (his 3-3-2), by sport and code */
+let LAYOUTS: Partial<Record<string, Record<string, FormationLayout>>> = {};
+export function setCustomFormations(bySport: Record<string, (string | CustomFormationEntry)[]>): void {
   const next: Partial<Record<string, Formation[]>> = {};
-  for (const [sport, codes] of Object.entries(codesBySport)) {
+  const layouts: Partial<Record<string, Record<string, FormationLayout>>> = {};
+  for (const [sport, raw] of Object.entries(bySport)) {
     const builtIn = new Set((ALL_FORMATIONS[sport as SportType] ?? []).map((f) => f.code));
-    const list = [...new Set(codes)].filter((c) => !builtIn.has(c)).map((c) => buildFormationFromCode(sport, c)).filter((f): f is Formation => !!f);
+    const seen = new Set<string>();
+    const list: Formation[] = [];
+    for (const item of raw) {
+      const e: CustomFormationEntry = typeof item === 'string' ? { code: item } : item;
+      if (seen.has(e.code)) continue;
+      seen.add(e.code);
+      if (e.layout) (layouts[sport] ??= {})[e.code] = e.layout;
+      if (builtIn.has(e.code)) continue;
+      const f = buildFormationFromCode(sport, e.code);
+      if (f) list.push(applyFormationLayout(f, e.layout));
+    }
     if (list.length) next[sport] = list;
   }
   CUSTOM = next;
+  LAYOUTS = layouts;
 }
 export const isBuiltInFormation = (sportType: SportType | string, code: string) =>
   (ALL_FORMATIONS[sportType as SportType] ?? []).some((f) => f.code === code);
 
 export function listAvailableFormations(sportType: SportType | string | null | undefined): Formation[] {
   if (!sportType) return [];
-  return [...(ALL_FORMATIONS[sportType as SportType] ?? []), ...(CUSTOM[sportType] ?? [])];
+  const mine = LAYOUTS[sportType] ?? {};
+  return [...(ALL_FORMATIONS[sportType as SportType] ?? []).map((f) => applyFormationLayout(f, mine[f.code])), ...(CUSTOM[sportType] ?? [])];
 }
 
 export function getFormation(sportType: SportType | string, code: string): Formation | undefined {

@@ -12,16 +12,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  ArrowUpRight, ListX, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
+  ArrowUpRight, LayoutGrid, ListX, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import {
-  BH, BW, addStep, clearBoardDraft, loadBoardDraft, saveBoardDraft, curveFromPath, curvePoints, deleteStep, drawingAt, formationCodes, formationLines, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, translateDrawing, uid,
+  BH, BW, addStep, layoutFromBoard, clearBoardDraft, loadBoardDraft, saveBoardDraft, curveFromPath, curvePoints, deleteStep, drawingAt, formationCodes, formationLines, moveToken, normalizeBoard, placeFormation, positionsAt, positionsAtTime, removeToken, translateDrawing, uid,
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
-import { customFormationCodes, promptNewFormation, removeCustomFormation, useFormationsVersion } from '@/lib/custom-formations';
+import { customFormationCodes, hasFormationLayout, promptNewFormation, removeCustomFormation, saveFormationLayout, useFormationsVersion } from '@/lib/custom-formations';
 
 type Tool = 'move' | DrawKind | 'erase';
 const TOOLS: { id: Tool; label: string; icon: typeof Hand }[] = [
@@ -335,6 +335,22 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
       <ListX className="h-4 w-4" />
     </Button>
   );
+  // drag the positions where you want them, then keep that drawing as the formation
+  const homeLayout = layoutFromBoard(state);
+  const saveLayout = async () => {
+    const code = state.homeFormation;
+    if (!code || !homeLayout) return;
+    const failed = await saveFormationLayout(user?.id, state.sport, code, homeLayout);
+    if (failed) toast.error('O desenho fica neste aparelho, mas não foi guardado na conta: ' + failed);
+    else toast.success(`Desenho guardado: a formação ${code} passa a abrir assim, no quadro e nos jogos.`);
+  };
+  const resetLayout = async () => {
+    const code = state.homeFormation;
+    if (!code || !window.confirm(`Repor as posições originais da formação ${code}?`)) return;
+    await saveFormationLayout(user?.id, state.sport, code, null);
+    applyFormation('home', code);
+    toast.success(`Formação ${code} reposta.`);
+  };
   const linesBtn = (side: 'home' | 'away') => (
     <Button size="icon" variant={state.lines?.[side] ? 'default' : 'outline'} className="h-9 w-9" onClick={() => toggleLines(side)}
       aria-label={side === 'home' ? 'Linhas da minha equipa' : 'Linhas do adversário'} title="Ligar os setores (defesa, meio-campo, ataque)">
@@ -407,6 +423,16 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
               <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
             </SelectContent>
           </Select>
+          {state.homeFormation && homeLayout && (
+            <Button size="sm" variant="outline" className="h-9" onClick={saveLayout} title="Arraste os jogadores para onde quer e guarde: a formação passa a abrir com este desenho">
+              <LayoutGrid className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar posições</span>
+            </Button>
+          )}
+          {state.homeFormation && hasFormationLayout(state.sport, state.homeFormation) && (
+            <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground" onClick={resetLayout} aria-label="Repor as posições originais da formação" title="Repor as posições originais desta formação">
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
           {forgetBtn(state.homeFormation)}
           {linesBtn('home')}
         </span>

@@ -4,8 +4,8 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ up
 import {
   buildFormationFromCode, formationCodeProblem, getFormation, listAvailableFormations, parseFormationCode, setCustomFormations,
 } from '@/lib/tactical-formations';
-import { addCustomFormation, customFormationCodes, removeCustomFormation } from '@/lib/custom-formations';
-import { emptyBoard, formationLines, placeFormation, positionsAt } from '@/lib/tactic-board';
+import { addCustomFormation, customFormationCodes, hasFormationLayout, removeCustomFormation, saveFormationLayout } from '@/lib/custom-formations';
+import { emptyBoard, formationLines, layoutFromBoard, moveToken, placeFormation, positionsAt, removeToken } from '@/lib/tactic-board';
 
 describe('formations created by the coach', () => {
   beforeEach(() => setCustomFormations({}));
@@ -69,5 +69,50 @@ describe('formations created by the coach', () => {
     expect(getFormation('football_9', '5-2-1')?.slots).toHaveLength(9);
     await removeCustomFormation('u1', 'football_9', '4-1-2-1');
     expect(customFormationCodes('football_9')).toEqual([]);
+  });
+
+  it('positions dragged on the board become the drawing of the formation', async () => {
+    await addCustomFormation('u1', 'football_9', '4-1-2-1');
+    let b = placeFormation(emptyBoard('football_9'), 'home', '4-1-2-1');
+    // untouched board gives back the default layout
+    const def = getFormation('football_9', '4-1-2-1')!;
+    const same = layoutFromBoard(b)!;
+    def.slots.forEach((sl) => { expect(same[sl.slot_id][0]).toBeCloseTo(sl.x, 1); expect(same[sl.slot_id][1]).toBeCloseTo(sl.y, 1); });
+    // the striker (last slot) is dragged wide and deeper
+    const striker = b.tokens[b.tokens.length - 1];
+    b = moveToken(b, striker.id, 0, [striker.x - 10, striker.y + 18]);
+    const layout = layoutFromBoard(b)!;
+    await saveFormationLayout('u1', 'football_9', '4-1-2-1', layout);
+    expect(hasFormationLayout('football_9', '4-1-2-1')).toBe(true);
+    // a new board opens with the saved drawing
+    const again = placeFormation(emptyBoard('football_9'), 'home', '4-1-2-1');
+    const s2 = again.tokens[again.tokens.length - 1];
+    expect(s2.x).toBeCloseTo(striker.x - 10, 0);
+    expect(s2.y).toBeCloseTo(striker.y + 18, 0);
+    // the others did not move
+    expect(again.tokens[1].x).toBeCloseTo(b.tokens[1].x, 0);
+    // a board that no longer has the whole team cannot be saved as the formation
+    expect(layoutFromBoard(removeToken(b, striker.id))).toBeNull();
+    // back to the original positions
+    await saveFormationLayout('u1', 'football_9', '4-1-2-1', null);
+    expect(hasFormationLayout('football_9', '4-1-2-1')).toBe(false);
+    expect(customFormationCodes('football_9')).toContain('4-1-2-1');
+    const reset = placeFormation(emptyBoard('football_9'), 'home', '4-1-2-1');
+    expect(reset.tokens[reset.tokens.length - 1].x).toBeCloseTo(striker.x, 0);
+    await removeCustomFormation('u1', 'football_9', '4-1-2-1');
+  });
+
+  it('a formation of the app can get my drawing too, without becoming "mine" in the list', async () => {
+    let b = placeFormation(emptyBoard('football_9'), 'home', '3-3-2');
+    const gk = b.tokens[0];
+    b = moveToken(b, b.tokens[2].id, 0, [b.tokens[2].x + 8, b.tokens[2].y]);
+    await saveFormationLayout('u1', 'football_9', '3-3-2', layoutFromBoard(b));
+    expect(customFormationCodes('football_9')).not.toContain('3-3-2');
+    expect(listAvailableFormations('football_9').filter((f) => f.code === '3-3-2')).toHaveLength(1);
+    const again = placeFormation(emptyBoard('football_9'), 'home', '3-3-2');
+    expect(again.tokens[2].x).toBeCloseTo(b.tokens[2].x, 0);
+    expect(again.tokens[0].x).toBeCloseTo(gk.x, 0);
+    await saveFormationLayout('u1', 'football_9', '3-3-2', null);
+    expect(placeFormation(emptyBoard('football_9'), 'home', '3-3-2').tokens[2].x).toBeCloseTo(b.tokens[2].x - 8, 0);
   });
 });

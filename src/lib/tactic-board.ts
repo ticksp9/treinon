@@ -3,7 +3,7 @@
  * move the tokens — for the team talk and half-time, where time is short.
  * Board units: 105 × 68 (a pitch seen from the side, own goal on the left).
  */
-import { getFormation, listAvailableFormations } from './tactical-formations';
+import { getFormation, listAvailableFormations, type FormationLayout } from './tactical-formations';
 
 export const BW = 105;
 export const BH = 68;
@@ -50,6 +50,30 @@ export function slotToBoard(slot: { x: number; y: number }, side: 'home' | 'away
   return side === 'home' ? [round(bx), round(by)] : [round(BW - bx), round(BH - by)];
 }
 const round = (v: number) => Math.round(v * 10) / 10;
+/** Inverse of slotToBoard for my team: a point of the board in formation coordinates. */
+export function boardToSlot(p: [number, number]): [number, number] {
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  return [r2((p[1] - 4) / (BH - 8)), r2((p[0] - 3.5) / (0.47 * BW))];
+}
+
+/**
+ * The drawing of my formation as it is on the board now (first step), to save with the
+ * formation. Null when the team on the board is no longer exactly that formation
+ * (a player was removed or added), because then positions cannot be matched to slots.
+ */
+export function layoutFromBoard(state: BoardState): FormationLayout | null {
+  if (!state.homeFormation) return null;
+  const formation = getFormation(state.sport, state.homeFormation);
+  const home = state.tokens.filter((t) => t.kind === 'home');
+  if (!formation || home.length !== formation.slots.length) return null;
+  const out: FormationLayout = {};
+  // placeFormation creates the tokens in the order of the slots
+  formation.slots.forEach((sl, i) => {
+    const [x, y] = boardToSlot([home[i].x, home[i].y]);
+    out[sl.slot_id] = [Math.min(0.98, Math.max(0.02, x)), Math.min(0.98, Math.max(0.02, y))];
+  });
+  return out;
+}
 
 export function formationCodes(sport: string) {
   return listAvailableFormations(sport).map((f) => ({ code: f.code, name: f.name }));
