@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BellRing, CalendarDays, Check, ChevronDown, Dumbbell, Loader2, Mail, MapPin, MessageCircle, Minus, PartyPopper, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
+import { BellRing, CalendarDays, Check, ShieldCheck, ChevronDown, Dumbbell, Loader2, Mail, MapPin, MessageCircle, Minus, PartyPopper, Pencil, Plus, Trash2, Trophy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
   type AgendaItem, type AgendaKind, type ClubEventRow, type EventKind, type MatchRow, type RsvpRow, type SessionRow, type TrainingRow,
 } from '@/lib/agenda';
 import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
+import { ConsentDialog, useChildrenConsents } from '@/components/family/ConsentGate';
 import { cn } from '@/lib/utils';
 
 interface FamilyRow { team_id: string; team_name: string; club_id: string | null; player_id: string; player_name: string }
@@ -62,6 +63,8 @@ export default function Agenda() {
   const [saving, setSaving] = useState(false);
   const [emailing, setEmailing] = useState<string | null>(null);
   const [answersFor, setAnswersFor] = useState<string | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const { data: consents = [] } = useChildrenConsents();
   const [answering, setAnswering] = useState<string | null>(null);
 
   // ── whose calendar: my children's teams, or the teams I coach ──
@@ -261,6 +264,9 @@ export default function Agenda() {
           {!isFamily && !roleLoading && (
             <Button className="ml-auto" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />Novo evento</Button>
           )}
+          {isGuardian && consents.length > 0 && (
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setPrivacyOpen(true)}><ShieldCheck className="mr-1.5 h-4 w-4" />Privacidade</Button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -429,6 +435,8 @@ export default function Agenda() {
           ))
         )}
       </div>
+
+      <ConsentDialog open={privacyOpen} required={false} children={consents} onClose={() => setPrivacyOpen(false)} />
 
       <Dialog open={!!form} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">

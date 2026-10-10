@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Edit, Calendar, Ruler, Weight, MapPin, FileText, Shield, Heart, Download, Upload, Lock, Unlock, Activity, Phone } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Ruler, Weight, MapPin, FileText, Shield, Heart, Download, Upload, Lock, Unlock, Activity, Phone, Camera } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { PlayerSeasonStats } from '@/components/players/PlayerSeasonStats';
 import { PlayerInjuries } from '@/components/players/PlayerInjuries';
@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlayerDocuments } from '@/components/players/PlayerDocuments';
 import { format, differenceInYears } from 'date-fns';
 import { generatePlayerPdf } from '@/lib/generatePlayerPdf';
+import { IMAGE_LABELS, consentStatus, type ConsentRow } from '@/lib/consent';
 import { canSeePlayerPrivate, fetchPlayerPrivate, getEmergencyContact, withPrivate, type EmergencyContact } from '@/lib/player-private';
 import { toast } from 'sonner';
 import { useSecurityPin } from '@/hooks/useSecurityPin';
@@ -82,6 +83,14 @@ export default function PlayerDetail() {
     queryKey: ['player-private-access', id, currentUser?.id],
     enabled: !!id && !!currentUser,
     queryFn: () => canSeePlayerPrivate(currentUser!.id, id!),
+  });
+  const { data: consent } = useQuery({
+    queryKey: ['player-consent', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data } = await (supabase as any).from('guardian_consents').select('user_id, policy_version, data_processing, image_use').eq('player_id', id);
+      return consentStatus((data ?? []) as ConsentRow[]);
+    },
   });
   const [emergency, setEmergency] = useState<EmergencyContact | 'loading' | null>(null);
   const askEmergency = async () => {
@@ -330,6 +339,15 @@ export default function PlayerDetail() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-display font-bold truncate">{player.name}</h1>
+              {consent && (
+                <Badge variant="outline" title="Resposta dos encarregados de educação sobre fotografias e vídeos"
+                  className={consent.image === 'yes' ? 'border-primary text-primary' : consent.image === 'no' ? 'border-destructive text-destructive' : 'text-muted-foreground'}>
+                  <Camera className="mr-1 h-3 w-3" />{IMAGE_LABELS[consent.image]}
+                </Badge>
+              )}
+              {consent && !consent.dataOk && (
+                <Badge variant="outline" className="text-muted-foreground" title="Nenhum encarregado de educação aceitou ainda o tratamento de dados na aplicação">Sem consentimento dos pais</Badge>
+              )}
               {statusOption && (
                 <Badge className={statusOption.tone}>
                   <Activity className="w-3 h-3 mr-1" />

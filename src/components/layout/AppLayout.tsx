@@ -7,6 +7,7 @@ import { MobileBottomNav } from './MobileBottomNav';
 import { ThemeToggle } from './ThemeToggle';
 import { SeasonPicker, SeasonReadOnlyBanner } from './SeasonPicker';
 import { LiveMatchBar } from '@/components/matches/LiveMatchBar';
+import { ConsentGate } from '@/components/family/ConsentGate';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -56,6 +57,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           </header>
           <SeasonReadOnlyBanner />
           <LiveMatchBar />
+          <ConsentGate />
           {/* bottom padding leaves room for the phone navigation bar */}
           <div className="flex-1 p-4 pb-24 sm:p-6 md:pb-6 overflow-auto">
             {children}

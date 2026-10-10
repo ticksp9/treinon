@@ -60,3 +60,40 @@ DO $$ BEGIN
   END;
 END $$;
 RESET ROLE;
+
+-- ── Parents' consent, per child ──
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.my_children_consents() WHERE NOT data_processing) = 1, 'the parent still has to consent for his child';
+  INSERT INTO public.guardian_consents (player_id, policy_version, data_processing, image_use)
+  VALUES ('d0000000-0000-0000-0000-000000000001', '2026-10', true, false);
+  ASSERT (SELECT data_processing AND data_processing_at IS NOT NULL AND image_use = false FROM public.my_children_consents()), 'consent recorded with its date';
+  -- not for a child that is not his, and not in someone else's name
+  BEGIN
+    INSERT INTO public.guardian_consents (player_id, policy_version, data_processing) VALUES ('d0000000-0000-0000-0000-000000000002', '2026-10', true);
+    RAISE EXCEPTION 'consented for someone else''s child';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  BEGIN
+    INSERT INTO public.guardian_consents (player_id, user_id, policy_version, data_processing) VALUES ('d0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000012', '2026-10', true);
+    RAISE EXCEPTION 'consented in the other parent''s name';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  -- changing his mind about the image keeps the date of the data consent
+  UPDATE public.guardian_consents SET image_use = true WHERE player_id = 'd0000000-0000-0000-0000-000000000001';
+  ASSERT (SELECT image_use AND image_use_at IS NOT NULL AND data_processing_at IS NOT NULL FROM public.guardian_consents WHERE player_id = 'd0000000-0000-0000-0000-000000000001'), 'image choice changed';
+END $$;
+-- the team coach sees the answer (may he photograph the child?) but cannot change it
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT image_use FROM public.guardian_consents WHERE player_id = 'd0000000-0000-0000-0000-000000000001'), 'coach sees the image consent';
+  UPDATE public.guardian_consents SET image_use = false WHERE player_id = 'd0000000-0000-0000-0000-000000000001';
+  ASSERT NOT FOUND, 'coach cannot change a consent';
+END $$;
+-- someone from another club sees nothing
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.guardian_consents) = 0, 'outsider sees no consents';
+END $$;
+RESET ROLE;
