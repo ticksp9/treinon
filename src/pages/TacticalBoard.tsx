@@ -14,6 +14,8 @@ import { useSportScope } from '@/hooks/useSportScope';
 import { defaultSportType, isSportAllowed } from '@/lib/sport-scope';
 import { TacticBoard } from '@/components/board/TacticBoard';
 import { emptyBoard, placeFormation, formationCodes, type BoardPlayer, type BoardState } from '@/lib/tactic-board';
+import { useTeamTactics } from '@/hooks/useTeamTactics';
+import { defaultTacticCode } from '@/lib/team-tactics';
 
 interface Team { id: string; name: string; sport_type: string | null }
 interface MatchOpt { id: string; opponent_name: string; match_date: string; status: string; sport_type: string | null; live_tactics: { formation?: string; slots?: Record<string, string | null> } | null }
@@ -64,13 +66,16 @@ export default function TacticalBoard() {
     },
   });
 
+  const { map: teamTacticsMap } = useTeamTactics(teamId);
+  const teamDefault = defaultTacticCode(teamTacticsMap, teamSport);
+
   // a clean board for the team (my shape with numbers, no opponent yet)
   useEffect(() => {
     if (matchId !== NONE) return;
-    const first = formationCodes(teamSport)[0]?.code;
+    const first = teamDefault ?? formationCodes(teamSport)[0]?.code;
     const b = first ? placeFormation(emptyBoard(teamSport), 'home', first) : emptyBoard(teamSport);
-    setBoard({ key: `team-${teamId}-${teamSport}`, initial: b });
-  }, [teamId, teamSport, matchId]);
+    setBoard({ key: `team-${teamId}-${teamSport}${teamDefault ? `-${teamDefault}` : ''}`, initial: b });
+  }, [teamId, teamSport, matchId, teamDefault]);
 
   // the XI of a match, with names, in the match's formation
   useEffect(() => {
@@ -86,7 +91,7 @@ export default function TacticalBoard() {
       const xi = starters.length ? starters : rows.map(toPlayer).filter((p): p is BoardPlayer => !!p);
       const sport = m?.sport_type || teamSport;
       const codes = formationCodes(sport);
-      const code = m?.live_tactics?.formation && codes.some((c) => c.code === m.live_tactics!.formation) ? m.live_tactics.formation : codes[0]?.code;
+      const code = m?.live_tactics?.formation && codes.some((c) => c.code === m.live_tactics!.formation) ? m.live_tactics.formation : (sport === teamSport && teamDefault) || codes[0]?.code;
       const slotMap = m?.live_tactics?.slots ?? undefined;
       const b = code ? placeFormation(emptyBoard(sport), 'home', code, xi, slotMap) : emptyBoard(sport);
       setBoard({ key: `match-${matchId}`, sig: `${code}|${b.tokens.map((t) => t.id).join(',')}`, initial: b, players: xi, slotMap });

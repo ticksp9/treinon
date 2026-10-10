@@ -13,8 +13,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeftRight, ListX, Repeat, X, UserX } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { ArrowLeftRight, ListX, Repeat, Star, X, UserX } from 'lucide-react';
+import { splitFormations, type SportTactics } from '@/lib/team-tactics';
 import { customFormationCodes, promptNewFormation, removeCustomFormation, useFormationsVersion } from '@/lib/custom-formations';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -63,6 +64,10 @@ interface Props {
   onFillSlot?: (slotId: string, playerId: string) => void;
   /** starter dragged to the bench (setup) */
   onBench?: (playerId: string) => void;
+  /** the team's tactics for this sport: listed first, default on top */
+  teamTactics?: SportTactics;
+  /** keep the formation in use as one of the team's tactics / as the default one */
+  onKeepTactic?: (code: string, asDefault: boolean) => void;
   /** bench player did not come to the match */
   onAbsent?: (playerId: string) => void;
   /** during the match only these bench players can be marked absent (they never came on) */
@@ -97,7 +102,7 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
   unknown: 'bg-black/55 text-white',
 };
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
@@ -106,6 +111,9 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
   const formation = useMemo(() => getFormation(sportType, tactics.formation), [sportType, tactics.formation]);
   useFormationsVersion(); // re-render when the coach adds a formation
   const formations = listAvailableFormations(sportType);
+  const { mine: myTactics, others: otherFormations } = splitFormations(formations, teamTactics ?? { list: [], default: null });
+  const inMyTactics = myTactics.some((f) => f.code === tactics.formation);
+  const isDefaultTactic = myTactics.some((f) => f.code === tactics.formation && f.isDefault);
   const pickFormation = async (picked: string) => {
     const code = picked === NEW_FORMATION
       ? await promptNewFormation((await supabase.auth.getUser()).data.user?.id, sportType, (msg, ok) => (ok ? toast.success(msg) : toast.error(msg)))
@@ -197,11 +205,27 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
           <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             {/* a formation made by a colleague is not in my list but must still show as selected */}
-            {!formations.some((f) => f.code === tactics.formation) && <SelectItem value={tactics.formation}>{tactics.formation}</SelectItem>}
-            {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+            {!formations.some((f) => f.code === tactics.formation) && !inMyTactics && <SelectItem value={tactics.formation}>{tactics.formation}</SelectItem>}
+            {myTactics.length > 0 && (
+              <SelectGroup>
+                <SelectLabel>As nossas táticas</SelectLabel>
+                {myTactics.map((f) => <SelectItem key={f.code} value={f.code}>{f.isDefault ? '★ ' : ''}{f.label}</SelectItem>)}
+              </SelectGroup>
+            )}
+            <SelectGroup>
+              {myTactics.length > 0 && <SelectLabel>Outras formações</SelectLabel>}
+              {otherFormations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+            </SelectGroup>
             <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
           </SelectContent>
         </Select>
+        {onKeepTactic && !disabled && !isDefaultTactic && (
+          <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted"
+            onClick={() => onKeepTactic(tactics.formation, inMyTactics)}
+            title={inMyTactics ? 'Os próximos jogos abrem com esta tática' : 'Juntar esta formação às táticas da equipa'}>
+            <Star className="h-3.5 w-3.5" />{inMyTactics ? 'Tornar a nossa tática por defeito' : 'Guardar nas nossas táticas'}
+          </button>
+        )}
         {customFormationCodes(sportType).includes(tactics.formation) && !disabled && (
           <button type="button" className="shrink-0 rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label={`Apagar a formação ${tactics.formation} da lista`} title="Apagar esta formação da minha lista"
             onClick={async () => {

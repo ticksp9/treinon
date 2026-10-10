@@ -22,6 +22,7 @@ import { differenceInYears } from 'date-fns';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
 import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
 import { SquadDepth } from '@/components/teams/SquadDepth';
+import { TeamTacticsCard } from '@/components/teams/TeamTacticsCard';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TeamStaffPanel } from '@/components/teams/TeamStaffPanel';
@@ -442,6 +443,8 @@ export default function TeamDetail() {
             </DialogContent>
           </Dialog>
 
+          <TeamTacticsCard teamId={team.id} sportType={team.sport_type} />
+
           {players.length > 0 && <SquadDepth players={players} />}
 
           {players.length === 0 ? (
@@ -463,8 +466,8 @@ export default function TeamDetail() {
           ) : (
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {players.map((player) => {
-                const age = player.birth_date 
-                  ? differenceInYears(new Date(), new Date(player.birth_date)) 
+                const age = player.birth_date
+                  ? differenceInYears(new Date(), new Date(player.birth_date))
                   : null;
                 const initials = player.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
                 const playerIsFemale = player.gender === 'female';

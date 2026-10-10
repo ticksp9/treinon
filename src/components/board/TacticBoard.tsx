@@ -9,7 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   ArrowUpRight, LayoutGrid, ListX, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
@@ -21,6 +21,8 @@ import {
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
+import { useTeamTactics } from '@/hooks/useTeamTactics';
+import { splitFormations, tacticsFor } from '@/lib/team-tactics';
 import { customFormationCodes, hasFormationLayout, promptNewFormation, removeCustomFormation, saveFormationLayout, useFormationsVersion } from '@/lib/custom-formations';
 
 type Tool = 'move' | DrawKind | 'erase';
@@ -128,6 +130,8 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
   const formationsVersion = useFormationsVersion();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const formations = useMemo(() => formationCodes(state.sport), [state.sport, formationsVersion]);
+  const { map: teamTacticsMap } = useTeamTactics(teamId);
+  const { mine: myTactics, others: otherFormations } = splitFormations(formations, tacticsFor(teamTacticsMap, state.sport));
   const totalSteps = state.steps.length;
   const pos = playT != null ? positionsAtTime(state, playT) : positionsAt(state, step);
   const shownStep = playT != null ? Math.min(totalSteps, Math.floor(playT + 0.001)) : step;
@@ -419,7 +423,16 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
           <Select value={state.homeFormation ?? ''} onValueChange={(v) => setFormation('home', v)}>
             <SelectTrigger className="h-9 w-36"><SelectValue placeholder="A minha equipa" /></SelectTrigger>
             <SelectContent>
-              {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+              {myTactics.length > 0 && (
+                <SelectGroup>
+                  <SelectLabel>As nossas táticas</SelectLabel>
+                  {myTactics.map((f) => <SelectItem key={f.code} value={f.code}>{f.isDefault ? '★ ' : ''}{f.label}</SelectItem>)}
+                </SelectGroup>
+              )}
+              <SelectGroup>
+                {myTactics.length > 0 && <SelectLabel>Outras formações</SelectLabel>}
+                {otherFormations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
+              </SelectGroup>
               <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
             </SelectContent>
           </Select>

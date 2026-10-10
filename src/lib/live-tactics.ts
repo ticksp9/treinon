@@ -59,6 +59,8 @@ export function fitScore(slot: FormationSlot, p: PitchPlayer): number {
   return score;
 }
 
+const formationCodeFits = (sportType: string | null | undefined, code: string) => !!getFormation(sportType || '', code);
+
 export function defaultFormationCode(sportType: string | null | undefined): string | null {
   return listAvailableFormations(sportType)[0]?.code ?? null;
 }
@@ -93,10 +95,12 @@ export function reconcileTactics(
   sportType: string | null | undefined,
   current: LiveTactics | null | undefined,
   onField: PitchPlayer[],
+  /** the team's default tactic: used when the match has no formation yet */
+  preferred?: string | null,
 ): LiveTactics | null {
   const code = current?.formation && getFormation(sportType || '', current.formation)
     ? current.formation
-    : defaultFormationCode(sportType);
+    : preferred && formationCodeFits(sportType, preferred) ? preferred : defaultFormationCode(sportType);
   if (!code) return null;
   const formation = getFormation(sportType || '', code)!;
   const onIds = new Set(onField.map((p) => p.player_id));

@@ -22,6 +22,8 @@ import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
 import { AbsenceDialog } from './AbsenceDialog';
+import { useTeamTactics } from '@/hooks/useTeamTactics';
+import { setDefaultTactic, tacticsFor, upsertTactic } from '@/lib/team-tactics';
 import { TacticBoard } from '@/components/board/TacticBoard';
 import { emptyBoard, placeFormation } from '@/lib/tactic-board';
 import { clearLiveClock, readLiveClock, writeLiveClock } from '@/lib/live-clock';
@@ -1279,8 +1281,16 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   // ── Live pitch (Football Manager style) ──
   const clockNow = currentPart > 0 ? matchClockSeconds(partElapsedSeconds, currentPart, timer.elapsedSeconds) : 0;
+  // how this team plays: its tactics come first in the list and the default opens a new match
+  const { map: teamTacticsMap, save: saveTeamTactics } = useTeamTactics(teamId);
+  const teamTactics = tacticsFor(teamTacticsMap, matchSport);
+  const keepTactic = async (code: string, asDefault: boolean) => {
+    if (!matchSport) return;
+    const ok = await saveTeamTactics(asDefault ? setDefaultTactic(teamTacticsMap, matchSport, code) : upsertTactic(teamTacticsMap, matchSport, code));
+    if (ok) toast.success(asDefault ? `${code} é agora a tática por defeito da equipa.` : `${code} guardada nas táticas da equipa.`);
+  };
   const pitchTactics = matchSport
-    ? reconcileTactics(matchSport, match?.live_tactics ?? null, starters.map(l => ({ player_id: l.player_id, position: l.player?.position })))
+    ? reconcileTactics(matchSport, match?.live_tactics ?? null, starters.map(l => ({ player_id: l.player_id, position: l.player?.position })), teamTactics.default)
     : null;
   const pitchTacticsKey = pitchTactics ? JSON.stringify(pitchTactics) : '';
   // Ability (last evaluation) + form (last match ratings), FM style — shown before kick-off
@@ -1741,6 +1751,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onSubstitute={handleSetupSubstitute}
                     onFillSlot={handleSetupFill}
                     onBench={handleSetupBench}
+                    teamTactics={teamTactics}
+                    onKeepTactic={keepTactic}
                     onAbsent={setAbsentFor}
                     onEvent={() => {}}
                   />
@@ -1850,6 +1862,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
                     onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
                     onSubstitute={handlePitchSubstitute}
+                    teamTactics={teamTactics}
                     onAbsent={setAbsentFor}
                     absentable={neverPlayed}
                     onEvent={(type, pid) => handleEvent(type, pid)}
