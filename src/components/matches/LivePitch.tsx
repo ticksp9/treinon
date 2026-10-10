@@ -14,8 +14,8 @@ import { useMemo, useRef, useState } from 'react';
 import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeftRight, Repeat, X, UserX } from 'lucide-react';
-import { promptNewFormation, useFormationsVersion } from '@/lib/custom-formations';
+import { ArrowLeftRight, ListX, Repeat, X, UserX } from 'lucide-react';
+import { customFormationCodes, promptNewFormation, removeCustomFormation, useFormationsVersion } from '@/lib/custom-formations';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getFormation, listAvailableFormations, type FormationSlot } from '@/lib/tactical-formations';
@@ -202,7 +202,17 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground text-right">{hint}</p>
+        {customFormationCodes(sportType).includes(tactics.formation) && !disabled && (
+          <button type="button" className="shrink-0 rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label={`Apagar a formação ${tactics.formation} da lista`} title="Apagar esta formação da minha lista"
+            onClick={async () => {
+              if (!window.confirm(`Apagar a formação ${tactics.formation} da sua lista? Este jogo continua com ela até escolher outra.`)) return;
+              await removeCustomFormation((await supabase.auth.getUser()).data.user?.id, sportType, tactics.formation);
+              toast.success(`Formação ${tactics.formation} apagada da lista.`);
+            }}>
+            <ListX className="h-4 w-4" />
+          </button>
+        )}
+        <p className="ml-auto text-xs text-muted-foreground text-right">{hint}</p>
       </div>
 
       {/* width capped so the whole pitch + bench fit on the screen */}

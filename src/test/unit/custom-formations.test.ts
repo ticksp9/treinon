@@ -1,7 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ upsert: async () => ({ error: null }), delete: () => ({ eq: () => ({ eq: () => ({ eq: async () => ({ error: null }) }) }) }) }) } }));
 import {
   buildFormationFromCode, formationCodeProblem, getFormation, listAvailableFormations, parseFormationCode, setCustomFormations,
 } from '@/lib/tactical-formations';
+import { addCustomFormation, customFormationCodes, removeCustomFormation } from '@/lib/custom-formations';
 import { emptyBoard, formationLines, placeFormation, positionsAt } from '@/lib/tactic-board';
 
 describe('formations created by the coach', () => {
@@ -53,5 +56,18 @@ describe('formations created by the coach', () => {
     expect(b.tokens).toHaveLength(9);
     expect(b.homeFormation).toBe('4-1-2-1');
     expect(formationLines(b, 'home', positionsAt(b, 0)).map((l) => l.length)).toEqual([4, 2]);
+  });
+
+  it('a formation created by mistake can be removed from the list; what uses it still draws', async () => {
+    expect((await addCustomFormation('u1', 'football_9', '4 1 2 1')).code).toBe('4-1-2-1');
+    expect((await addCustomFormation('u1', 'football_9', '5-2-1')).code).toBe('5-2-1');
+    expect((await addCustomFormation('u1', 'football_9', '4-4-2')).error).toContain('somar 8');
+    expect(customFormationCodes('football_9')).toEqual(['4-1-2-1', '5-2-1']);
+    await removeCustomFormation('u1', 'football_9', '5-2-1');
+    expect(customFormationCodes('football_9')).toEqual(['4-1-2-1']);
+    expect(listAvailableFormations('football_9').some((f) => f.code === '5-2-1')).toBe(false);
+    expect(getFormation('football_9', '5-2-1')?.slots).toHaveLength(9);
+    await removeCustomFormation('u1', 'football_9', '4-1-2-1');
+    expect(customFormationCodes('football_9')).toEqual([]);
   });
 });

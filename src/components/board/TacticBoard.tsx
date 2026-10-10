@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
-  ArrowUpRight, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
+  ArrowUpRight, ListX, Circle, Copy, Eraser, FolderOpen, Hand, Maximize2, Minimize2, Pause, Pencil, PencilLine, Play, Plus, Redo2, RotateCcw, Save, Spline, Square, StepForward, Trash2, Type, Undo2, Download, MoveUpRight, Waypoints, X,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -21,7 +21,7 @@ import {
   type BoardPlayer, type BoardState, type DrawKind, type Drawing, type Token,
 } from '@/lib/tactic-board';
 import { cn } from '@/lib/utils';
-import { promptNewFormation, useFormationsVersion } from '@/lib/custom-formations';
+import { customFormationCodes, promptNewFormation, removeCustomFormation, useFormationsVersion } from '@/lib/custom-formations';
 
 type Tool = 'move' | DrawKind | 'erase';
 const TOOLS: { id: Tool; label: string; icon: typeof Hand }[] = [
@@ -324,6 +324,17 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });
   };
   const toggleLines = (side: 'home' | 'away') => commit({ ...state, lines: { ...state.lines, [side]: !state.lines?.[side] } });
+  /** shown next to a formation the coach created himself (typed wrong, no longer used…) */
+  const forgetBtn = (code: string | null | undefined) => code && customFormationCodes(state.sport).includes(code) && (
+    <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-destructive" aria-label={`Apagar a formação ${code} da lista`} title="Apagar esta formação da minha lista"
+      onClick={async () => {
+        if (!window.confirm(`Apagar a formação ${code} da sua lista? O que já está no quadro não muda.`)) return;
+        await removeCustomFormation(user?.id, state.sport, code);
+        toast.success(`Formação ${code} apagada da lista.`);
+      }}>
+      <ListX className="h-4 w-4" />
+    </Button>
+  );
   const linesBtn = (side: 'home' | 'away') => (
     <Button size="icon" variant={state.lines?.[side] ? 'default' : 'outline'} className="h-9 w-9" onClick={() => toggleLines(side)}
       aria-label={side === 'home' ? 'Linhas da minha equipa' : 'Linhas do adversário'} title="Ligar os setores (defesa, meio-campo, ataque)">
@@ -396,6 +407,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
               <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
             </SelectContent>
           </Select>
+          {forgetBtn(state.homeFormation)}
           {linesBtn('home')}
         </span>
         <span className="flex items-center gap-1.5">
@@ -407,6 +419,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
               <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
             </SelectContent>
           </Select>
+          {state.awayFormation !== state.homeFormation && forgetBtn(state.awayFormation)}
           {state.tokens.some((t) => t.kind === 'away') && linesBtn('away')}
           {state.tokens.some((t) => t.kind === 'away') && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => clearSide('away')} aria-label="Tirar adversário"><Trash2 className="h-4 w-4" /></Button>}
         </span>
