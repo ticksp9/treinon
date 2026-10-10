@@ -37,6 +37,8 @@ interface EventSheetProps {
   }) => void;
 }
 
+const NO_ASSIST = '__none__';
+
 const EVENT_TYPES = [
   { value: 'goal', label: '⚽ Golo', icon: '⚽' },
   { value: 'own_goal', label: '⚽ Auto-golo', icon: '⚽' },
@@ -181,12 +183,13 @@ export function EventSheet({
           {eventType === 'goal' && !isOpponent && (
             <div>
               <Label className="text-xs text-muted-foreground">Assistência (opcional)</Label>
-              <Select value={assistPlayerId} onValueChange={setAssistPlayerId}>
+              {/* "none" needs a real value: an empty one makes the list component throw */}
+              <Select value={assistPlayerId || NO_ASSIST} onValueChange={(v) => setAssistPlayerId(v === NO_ASSIST ? '' : v)}>
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Selecionar (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value={NO_ASSIST}>Nenhuma</SelectItem>
                   {players.filter(p => p.id !== playerId).map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.number ? `${p.number} - ` : ''}{p.name}

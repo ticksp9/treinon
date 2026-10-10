@@ -611,10 +611,10 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
             {newEvent.event_type === 'goal' && (
               <div>
                 <Label>Assistência</Label>
-                <Select value={newEvent.assist_player_id} onValueChange={v => setNewEvent(prev => ({ ...prev, assist_player_id: v }))}>
+                <Select value={newEvent.assist_player_id || '__none__'} onValueChange={v => setNewEvent(prev => ({ ...prev, assist_player_id: v === '__none__' ? '' : v }))}>
                   <SelectTrigger><SelectValue placeholder="Selecionar (opcional)" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
                     {allPlayers.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} - ` : ''}{p.name}</SelectItem>
                     ))}

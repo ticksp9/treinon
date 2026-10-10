@@ -1101,6 +1101,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   const handleSubstitutionBatch = async (substitutions: PendingSubstitution[], _minute: number) => {
     if (!user || substitutions.length === 0) return;
+    // Where everyone stands right now (after any position changes made on the pitch).
+    // Applied once the squad has changed: each player coming in takes the exact position of
+    // the one he replaces — before, with the "Subst." button, the app re-placed the new
+    // players by their usual position, undoing the coach's changes.
+    const positionsBefore = pitchTactics;
+    const keepPositions = () => {
+      if (positionsBefore) saveTactics(substitutions.reduce((t, s) => applySubstitution(t, s.playerOutId, s.playerInId), positionsBefore));
+    };
 
     const clock = getClockSeconds();
     const minute = Math.floor(clock / 60);
@@ -1158,6 +1166,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           { id: `local-${crypto.randomUUID()}`, event_type: 'substitution_in', minute, second: second + i, player_id: s.playerInId, assist_player_id: null, is_opponent: false, notes: null, player: findPlayer(s.playerInId) },
         ]));
         setEvents(prev => [...prev, ...localSubEvents].sort((a, b) => a.minute - b.minute));
+        keepPositions();
         presenceTracker.handleSubstitutionBatch(
           substitutions.map(s => ({ playerOutId: s.playerOutId, playerInId: s.playerInId })),
           minute,
@@ -1180,6 +1189,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       );
 
       await refreshLineupsAndEvents();
+      keepPositions();
       await saveCurrentState();
     } catch (error) {
       console.error('[LiveMatch] Error committing substitution batch:', error);
@@ -1319,7 +1329,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   }));
   const saveTactics = (t: LiveTactics | null) => (t ? updateMatchRecord({ live_tactics: t }) : Promise.resolve());
   const handlePitchSubstitute = async (outId: string, inId: string) => {
-    if (pitchTactics) saveTactics(applySubstitution(pitchTactics, outId, inId));
     const minute = getCurrentMinute();
     await handleSubstitutionBatch([{ tempId: `pitch-${Date.now()}`, minute, playerOutId: outId, playerInId: inId }], minute);
   };
