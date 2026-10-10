@@ -73,7 +73,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
           {isOverridden && (
             <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
               <AlertTriangle className="w-3 h-3 mr-1" />
-              Override manual
+              Diferente do formato da equipa
             </Badge>
           )}
         </CardTitle>

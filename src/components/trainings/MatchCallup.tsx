@@ -1213,14 +1213,22 @@ export function MatchCallup() {
           )}
 
           {/* Rules Panel */}
-          {selectedMatchData && loadedRuleSnapshot && (
-            <MatchRulesPanel
-              snapshot={{ ...loadedRuleSnapshot, ...snapshotParts(currentParts()) }}
-              sportType={teams.find(t => t.id === selectedTeam)?.sport_type}
-              category={teams.find(t => t.id === selectedTeam)?.category}
-              isOverridden={!sameParts(currentParts(), teamFormatOf(teams.find(t => t.id === selectedTeam)) ?? [])}
-            />
-          )}
+          {selectedMatchData && loadedRuleSnapshot && (() => {
+            // the parts of THIS match (e.g. 15+15+30) — not the ones left in the "new match" form,
+            // which made a three-part match show as 2x30' with an "override" warning
+            const parts = selectedMatchData.part_regulation_minutes?.length
+              ? selectedMatchData.part_regulation_minutes
+              : Array(selectedMatchData.parts_count || 2).fill(selectedMatchData.part_duration_minutes || loadedRuleSnapshot.period_1_minutes || 25);
+            const teamParts = teamFormatOf(teams.find(t => t.id === selectedTeam));
+            return (
+              <MatchRulesPanel
+                snapshot={{ ...loadedRuleSnapshot, ...snapshotParts(parts) }}
+                sportType={teams.find(t => t.id === selectedTeam)?.sport_type}
+                category={teams.find(t => t.id === selectedTeam)?.category}
+                isOverridden={!!teamParts && !sameParts(parts, teamParts)}
+              />
+            );
+          })()}
 
           {/* Edit Match Dialog */}
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
