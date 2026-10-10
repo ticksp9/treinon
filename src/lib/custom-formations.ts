@@ -53,6 +53,32 @@ export async function loadCustomFormations(userId: string): Promise<void> {
   publish(next, others);
 }
 
+/**
+ * Keeps the list fresh while the app is open: when I or a coach of my teams adds, draws or
+ * deletes a formation, everyone's list follows within a second. Also refreshes when the
+ * app comes back to the foreground, in case the live connection dropped (tablet asleep).
+ * Returns the function that stops watching.
+ */
+export function watchCustomFormations(userId: string): () => void {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const refresh = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => { loadCustomFormations(userId); }, 250); // several rows changed at once = one reload
+  };
+  const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+  document.addEventListener('visibilitychange', onVisible);
+  // the database only delivers the rows this user may read (his and his colleagues')
+  const channel = supabase
+    .channel(`custom-formations-${userId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'custom_formations' }, refresh)
+    .subscribe();
+  return () => {
+    if (timer) clearTimeout(timer);
+    document.removeEventListener('visibilitychange', onVisible);
+    supabase.removeChannel(channel);
+  };
+}
+
 /** the formations the coach created (not his drawings of the ones that come with the app) */
 export const customFormationCodes = (sport: string) => (codes[sport] ?? []).map((e) => e.code).filter((c) => !isBuiltInFormation(sport, c));
 /** has the coach saved his own drawing of this formation? */
