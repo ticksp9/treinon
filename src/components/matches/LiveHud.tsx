@@ -113,7 +113,7 @@ export function LiveHud(p: Props) {
       {p.phase === 'playing' && (
         <p className={cn('mx-auto mt-1.5 max-w-6xl truncate text-xs', p.selectedName ? 'font-semibold text-accent' : 'text-muted-foreground')} aria-live="polite">
           {p.selectedName
-            ? `${p.selectedName} selecionado: toque em Golo, Amarelo ou Vermelho para registar já.`
+            ? `${p.selectedName} selecionado: toque em Golo (pergunta a assistência), Amarelo ou Vermelho.`
             : 'Toque num jogador no campo e depois em Golo, Amarelo ou Vermelho. Sem jogador escolhido, pergunta quem foi.'}
         </p>
       )}

@@ -22,6 +22,7 @@ import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
 import { AbsenceDialog } from './AbsenceDialog';
+import { AssistDialog } from './AssistDialog';
 import { LiveHud } from './LiveHud';
 import { useTeamTactics } from '@/hooks/useTeamTactics';
 import { setDefaultTactic, tacticsFor, upsertTactic } from '@/lib/team-tactics';
@@ -1021,10 +1022,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     fetchMatchData();
   };
 
-  const handleEvent = async (eventType: string, playerId: string | null, isOpponent: boolean = false, assistPlayerId: string | null = null) => {
+  const handleEvent = async (eventType: string, playerId: string | null, isOpponent: boolean = false, assistPlayerId: string | null = null, atClock?: number) => {
     if (!user) return;
 
-    const clock = getClockSeconds();
+    // atClock: the moment of the goal, when the coach still had to say who assisted
+    const clock = atClock ?? getClockSeconds();
     const minute = Math.floor(clock / 60);
     const second = clock % 60;
     // Client-generated id so the same event can be queued offline and synced later
@@ -1378,10 +1380,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   // Player tapped on the pitch: the buttons of the top bar record the goal/card for him at once
   const [pitchSelected, setPitchSelected] = useState<string | null>(null);
   const [selectionResetKey, setSelectionResetKey] = useState(0);
+  const [assistFor, setAssistFor] = useState<{ scorerId: string; clock: number } | null>(null);
+  const confirmGoal = (assistId: string | null) => {
+    if (!assistFor) return;
+    handleEvent('goal', assistFor.scorerId, false, assistId, assistFor.clock);
+    setAssistFor(null);
+  };
   const recordFromBar = (type: 'goal' | 'yellow_card' | 'red_card') => {
     const stillOnPitch = pitchSelected && lineups.some(l => l.player_id === pitchSelected && l.is_starter);
     if (liveView === 'pitch' && stillOnPitch) {
-      handleEvent(type, pitchSelected);
+      // a goal: keep the exact time and ask who assisted (one tap); cards are recorded at once
+      if (type === 'goal') setAssistFor({ scorerId: pitchSelected, clock: getClockSeconds() });
+      else handleEvent(type, pitchSelected);
       setSelectionResetKey(k => k + 1);
       setPitchSelected(null);
       return;
@@ -2053,6 +2063,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           onClose={() => setBoardOpen(false)}
         />
       )}
+      <AssistDialog
+        scorerName={assistFor ? (lineups.find(l => l.player_id === assistFor.scorerId)?.player?.name ?? 'jogador') : null}
+        minute={assistFor ? Math.floor(assistFor.clock / 60) : 0}
+        teammates={assistFor ? starters.filter(l => l.player_id !== assistFor.scorerId).map(l => ({ id: l.player_id, name: l.player?.name ?? '', number: l.player?.number ?? null })) : []}
+        onConfirm={confirmGoal}
+        onCancelGoal={() => setAssistFor(null)}
+      />
       <AbsenceDialog
         playerName={absentFor ? (lineups.find(l => l.player_id === absentFor)?.player?.name ?? 'jogador') : null}
         onConfirm={(reason) => absentFor && handleAbsent(absentFor, reason)}
