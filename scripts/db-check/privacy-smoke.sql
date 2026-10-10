@@ -120,3 +120,38 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.custom_formations) = 0, 'outsider sees no formations of this team';
 END $$;
 RESET ROLE;
+
+-- ── Every match gets its season (the "Jogos" page lists by season) ──
+SET ROLE authenticated;
+-- coach without a club: a match created before he has any season
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+INSERT INTO public.matches (id, owner_id, team_id, opponent_name, match_date) VALUES
+  ('e0000000-0000-0000-0000-000000000091', 'a0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000009', 'Antes da epoca', '2026-10-03 10:00+00');
+INSERT INTO public.match_lineups (match_id, player_id, owner_id, is_starter) VALUES
+  ('e0000000-0000-0000-0000-000000000091', 'd0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000004', true);
+DO $$ BEGIN
+  ASSERT (SELECT season_id IS NULL FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000091'), 'no season exists yet';
+END $$;
+-- he creates his season: the match (and its line-up) join it
+INSERT INTO public.seasons (id, owner_id, name, start_date, end_date, is_active)
+VALUES ('5e000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000004', '2026/2027', '2026-07-01', '2027-06-30', true);
+DO $$ BEGIN
+  ASSERT (SELECT season_id FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000091') = '5e000000-0000-0000-0000-000000000001', 'existing match adopted by the new season';
+  ASSERT (SELECT season_id FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000091') = '5e000000-0000-0000-0000-000000000001', 'and its line-up';
+END $$;
+-- a match created afterwards, without saying the season (as the call-up page does), gets it
+INSERT INTO public.matches (id, owner_id, team_id, opponent_name, match_date) VALUES
+  ('e0000000-0000-0000-0000-000000000092', 'a0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000009', 'Santa Maria', '2026-10-10 10:00+00');
+INSERT INTO public.match_lineups (match_id, player_id, owner_id, is_starter) VALUES
+  ('e0000000-0000-0000-0000-000000000092', 'd0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT season_id FROM public.matches WHERE id = 'e0000000-0000-0000-0000-000000000092') = '5e000000-0000-0000-0000-000000000001', 'new match gets the season';
+  ASSERT (SELECT season_id FROM public.match_lineups WHERE match_id = 'e0000000-0000-0000-0000-000000000092') = '5e000000-0000-0000-0000-000000000001', 'so does its line-up';
+  -- what the Jogos page asks for
+  ASSERT (SELECT count(*) FROM public.matches WHERE team_id = 'b0000000-0000-0000-0000-000000000009' AND season_id = '5e000000-0000-0000-0000-000000000001' AND is_deleted = false) = 2, 'both matches are listed for the season';
+END $$;
+RESET ROLE;
+-- another coach's season never takes these matches
+DO $$ BEGIN
+  ASSERT public.resolve_season_for_team('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', '2026-10-10') IS DISTINCT FROM '5e000000-0000-0000-0000-000000000001', 'a club team does not get a private coach''s season';
+END $$;
