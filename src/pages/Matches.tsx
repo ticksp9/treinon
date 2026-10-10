@@ -14,6 +14,7 @@ import { pt } from 'date-fns/locale';
 import { Trophy, Calendar, MapPin, Play, Users, Clock, User, Table as TableIcon, Trash2, FlaskConical, AlertTriangle, RotateCcw, Archive, ClipboardEdit } from 'lucide-react';
 import { QuickMatchEntry } from '@/components/matches/QuickMatchEntry';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { clearLiveClock } from '@/lib/live-clock';
 import { LiveMatch } from '@/components/matches/LiveMatch';
 import { MatchResultsView } from '@/components/matches/MatchResultsView';
 import { ChampionshipManager } from '@/components/matches/ChampionshipManager';
@@ -234,9 +235,16 @@ export default function Matches() {
     }
   };
 
+  /**
+   * Friendlies and test matches are what coaches try the app with: they can be deleted in
+   * any state — even running or already finished. A deleted match does not count for
+   * minutes, goals or ratings.
+   */
+  const canDeleteAnytime = (match: Match) => match.match_type === 'friendly' || !!match.is_test;
+
   const handleDeleteMatch = (match: Match) => {
-    if (match.status === 'in_progress') {
-      toast.error('Não podes eliminar um jogo a decorrer. Termina ou cancela o jogo primeiro.');
+    if (match.status === 'in_progress' && !canDeleteAnytime(match)) {
+      toast.error('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro (ou muda-o para amigável na preparação).');
       return;
     }
     setDeleteDialogMatch(match);
@@ -251,11 +259,18 @@ export default function Matches() {
         .update({
           is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id
-        })
+          deleted_by: user.id,
+          // a running match is stopped for good: restored later, it must not come back with the clock going
+          ...(deleteDialogMatch.status === 'in_progress'
+            ? { status: 'cancelled', match_phase: 'finished', last_timer_start: null, part_started_at_ms: null }
+            : {}),
+        } as never)
         .eq('id', deleteDialogMatch.id);
 
       if (error) throw error;
+      // nothing of it stays "a decorrer" on this device
+      clearLiveClock(deleteDialogMatch.id);
+      try { if (localStorage.getItem('tacticaflow_active_match_id') === deleteDialogMatch.id) localStorage.removeItem('tacticaflow_active_match_id'); } catch { /* ignore */ }
 
       toast.success('Jogo eliminado!');
       setDeleteDialogMatch(null);
@@ -563,10 +578,18 @@ export default function Matches() {
                           <div className="flex items-center gap-3">
                             {getStatusBadge(match.status)}
                             {match.status === 'in_progress' ? (
-                              <Button size="sm" onClick={() => handleContinueMatch(match)}>
-                                <Play className="w-4 h-4 mr-1 fill-current" />
-                                Continuar
-                              </Button>
+                              <>
+                                <Button size="sm" onClick={() => handleContinueMatch(match)}>
+                                  <Play className="w-4 h-4 mr-1 fill-current" />
+                                  Continuar
+                                </Button>
+                                {canDeleteAnytime(match) && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }} title="Eliminar este jogo (amigável/teste)" aria-label="Eliminar jogo">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </>
                             ) : (
                               <>
                                 <Button
@@ -744,8 +767,16 @@ export default function Matches() {
                               </div>
                             </div>
                           </div>
-                          <div className="font-bold text-sm">
-                            {match.goals_for ?? 0} - {match.goals_against ?? 0}
+                          <div className="flex items-center gap-2">
+                            <div className="font-bold text-sm">
+                              {match.goals_for ?? 0} - {match.goals_against ?? 0}
+                            </div>
+                            {canDeleteAnytime(match) && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteMatch(match)} title="Eliminar este jogo (amigável/teste): os minutos deixam de contar" aria-label="Eliminar jogo">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -785,6 +816,8 @@ export default function Matches() {
               teamId={selectedTeam}
               matches={matches}
               team={selectedTeamData}
+              onDelete={(m) => { const full = matches.find(x => x.id === m.id); if (full) handleDeleteMatch(full); }}
+              canDelete={(m) => { const full = matches.find(x => x.id === m.id); return !!full && canDeleteAnytime(full); }}
             />
           </TabsContent>
 
@@ -919,7 +952,9 @@ export default function Matches() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
-                  O jogo será movido para "Eliminados" e poderá ser restaurado posteriormente.
+                  {deleteDialogMatch.status === 'in_progress' && 'O jogo está a decorrer: o relógio pára e o jogo fica cancelado. '}
+                  Os minutos, golos, cartões e notas deste jogo deixam de contar nas fichas dos jogadores.
+                  O jogo fica em "Eliminados" e pode ser restaurado mais tarde.
                 </p>
               </div>
             )}

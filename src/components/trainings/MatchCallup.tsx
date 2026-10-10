@@ -576,12 +576,17 @@ export function MatchCallup() {
 
     // Check if match is in progress
     const matchData = matches.find(m => m.id === selectedMatch);
-    if (matchData?.status === 'in_progress') {
-      toast.error('Não podes eliminar um jogo a decorrer. Termina ou cancela o jogo primeiro.');
+    // friendlies and test matches (what coaches try the app with) can go at any time
+    const running = matchData?.status === 'in_progress';
+    const anytime = matchData?.match_type === 'friendly' || !!matchData?.is_test;
+    if (running && !anytime) {
+      toast.error('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro.');
       return;
     }
 
-    if (!confirm('Tem a certeza que deseja eliminar este jogo?')) return;
+    if (!confirm(running
+      ? 'Este jogo está a decorrer. Eliminar? O relógio pára e os minutos deixam de contar.'
+      : 'Tem a certeza que deseja eliminar este jogo? Os minutos e golos deixam de contar.')) return;
 
     setDeleting(true);
     try {
@@ -591,8 +596,9 @@ export function MatchCallup() {
         .update({
           is_deleted: true,
           deleted_at: new Date().toISOString(),
-          deleted_by: user.id
-        })
+          deleted_by: user.id,
+          ...(running ? { status: 'cancelled', match_phase: 'finished', last_timer_start: null, part_started_at_ms: null } : {}),
+        } as never)
         .eq('id', selectedMatch);
 
       if (error) throw error;

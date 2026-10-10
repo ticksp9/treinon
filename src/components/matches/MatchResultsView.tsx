@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Trophy, Eye, MapPin, Pencil, FileSearch } from 'lucide-react';
+import { Trophy, Eye, MapPin, Pencil, FileSearch, Trash2 } from 'lucide-react';
 import { MatchReport } from './MatchReport';
 import { PostGameStepper } from './PostGameStepper';
 import { QuickMatchEntry } from './QuickMatchEntry';
@@ -71,6 +71,9 @@ interface MatchResultsViewProps {
   teamId: string;
   matches: Match[];
   team?: Team;
+  /** friendlies / test matches can be deleted after they ended */
+  onDelete?: (match: { id: string }) => void;
+  canDelete?: (match: { id: string }) => boolean;
 }
 
 function getInitialTab(reportStatus: string | undefined): string {
@@ -81,7 +84,7 @@ function getInitialTab(reportStatus: string | undefined): string {
   return 'edit';
 }
 
-export function MatchResultsView({ teamId, matches, team }: MatchResultsViewProps) {
+export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }: MatchResultsViewProps) {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [quickEntryId, setQuickEntryId] = useState<string | null>(null);
   const [lineups, setLineups] = useState<Lineup[]>([]);
@@ -259,6 +262,12 @@ export function MatchResultsView({ teamId, matches, team }: MatchResultsViewProp
                     {match.is_home ? `${goalsFor} - ${goalsAgainst}` : `${goalsAgainst} - ${goalsFor}`}
                   </div>
                   <Button variant="ghost" size="sm"><Eye className="w-4 h-4 mr-1" />Ver</Button>
+                  {onDelete && canDelete?.(match) && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={(e) => { e.stopPropagation(); onDelete(match); }} title="Eliminar este jogo (amigável/teste): os minutos deixam de contar" aria-label="Eliminar jogo">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                   {match.report_status && match.report_status !== 'locked' && (
                     <Badge variant="outline" className="text-xs">
                       {REPORT_STATUS_LABELS[(match.report_status as ReportStatus)] || match.report_status}
