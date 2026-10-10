@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ upsert: async () => ({ error: null }), delete: () => ({ eq: () => ({ eq: () => ({ eq: async () => ({ error: null }) }) }) }) }) } }));
 import {
-  buildFormationFromCode, formationCodeProblem, getFormation, listAvailableFormations, parseFormationCode, setCustomFormations,
+  applyFormationLayout, buildFormationFromCode, formationCodeProblem, roleFromPosition, getFormation, listAvailableFormations, parseFormationCode, setCustomFormations,
 } from '@/lib/tactical-formations';
 import { addCustomFormation, customFormationCodes, hasFormationLayout, mergeFormationEntries, removeCustomFormation, saveFormationLayout } from '@/lib/custom-formations';
 import { emptyBoard, formationLines, layoutFromBoard, moveToken, placeFormation, positionsAt, removeToken } from '@/lib/tactic-board';
@@ -129,5 +129,36 @@ describe('formations created by the coach', () => {
     setCustomFormations({ football_9: mergeFormationEntries([], head) });
     const striker = getFormation('football_9', '4-1-2-1')!.slots.find((sl) => sl.slot_id === 'L4P1')!;
     expect([striker.x, striker.y]).toEqual([0.3, 0.9]);
+  });
+
+  it('a dragged position takes the role of where it now stands', () => {
+    const f = buildFormationFromCode('football_9', '4-1-2-1')!;
+    const by = (id: string, form = f) => form.slots.find((sl) => sl.slot_id === id)!;
+    expect(by('L3P1').role).toBe('midfielder_center_left');
+    const moved = applyFormationLayout(f, {
+      L3P1: [0.12, 0.8],            // left midfielder pushed up on the touchline → left winger
+      L2P1: [0.5, 0.2],             // holding midfielder dropped between the centre-backs → centre-back
+      L4P1: [by('L4P1').x + 0.03, by('L4P1').y], // striker only nudged → still the striker
+      GK: [0.5, 0.3],               // the keeper is always the keeper
+    });
+    expect(by('L3P1', moved)).toMatchObject({ role: 'winger_left', label: 'EE', x: 0.12, y: 0.8 });
+    expect(by('L2P1', moved)).toMatchObject({ role: 'defender_center', label: 'DC' });
+    expect(by('L4P1', moved)).toMatchObject({ role: 'striker', label: 'PL' });
+    expect(by('GK', moved).role).toBe('goalkeeper');
+    expect(by('L3P2', moved)).toEqual(by('L3P2')); // not in the drawing: untouched
+  });
+
+  it('reads the role from the place on the pitch, in football and in futsal', () => {
+    const r = (sport: string, x: number, y: number) => roleFromPosition(sport, x, y).role;
+    expect(r('football_9', 0.15, 0.2)).toBe('defender_left');
+    expect(r('football_9', 0.85, 0.2)).toBe('defender_right');
+    expect(r('football_9', 0.5, 0.4)).toBe('midfielder_defensive');
+    expect(r('football_9', 0.2, 0.5)).toBe('midfielder_left');
+    expect(r('football_9', 0.5, 0.68)).toBe('midfielder_attacking');
+    expect(r('football_9', 0.85, 0.85)).toBe('winger_right');
+    expect(r('football_9', 0.5, 0.9)).toBe('striker');
+    expect(r('futsal', 0.5, 0.2)).toBe('fixo');
+    expect(r('futsal', 0.2, 0.5)).toBe('ala_left');
+    expect(r('futsal', 0.5, 0.8)).toBe('pivot');
   });
 });

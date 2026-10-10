@@ -396,14 +396,56 @@ export type FormationLayout = Record<string, [number, number]>;
 export interface CustomFormationEntry { code: string; layout?: FormationLayout | null }
 
 const clamp01 = (v: number) => Math.min(0.98, Math.max(0.02, Math.round(v * 100) / 100));
-/** The formation with the coach's positions; slots without a saved position keep the default one. */
+
+const ROLE_SHORT: Partial<Record<SlotRole, string>> = {
+  defender_left: 'DE', defender_right: 'DD', defender_center: 'DC', defender_center_left: 'DC', defender_center_right: 'DC',
+  midfielder_defensive: 'MDC', midfielder_center: 'MC', midfielder_center_left: 'MC', midfielder_center_right: 'MC',
+  midfielder_left: 'ME', midfielder_right: 'MD', midfielder_attacking: 'MOC',
+  winger_left: 'EE', winger_right: 'ED', forward_left: 'PL', forward_right: 'PL', forward_center: 'PL', striker: 'PL',
+  fixo: 'Fixo', ala_left: 'Ala E', ala_right: 'Ala D', pivot: 'Pivô',
+};
+
+/**
+ * What a position is, from where it stands (x across, y from own goal to the other):
+ * a midfielder dragged to the touchline is a wide midfielder, pushed up he is a winger,
+ * pulled back between the centre-backs he is a defender. This is what the automatic
+ * line-up uses to choose who fits each position.
+ */
+export function roleFromPosition(sportType: SportType | string, x: number, y: number): { role: SlotRole; label: string } {
+  const wideL = x < 0.3, wideR = x > 0.7, left = x < 0.42, right = x > 0.58;
+  let role: SlotRole;
+  if (sportType === 'futsal' || sportType === 'football_5') {
+    role = y < 0.32 ? 'fixo' : y > 0.68 && !wideL && !wideR ? 'pivot' : x < 0.5 ? 'ala_left' : 'ala_right';
+  } else if (y < 0.36) {
+    role = wideL ? 'defender_left' : wideR ? 'defender_right' : left ? 'defender_center_left' : right ? 'defender_center_right' : 'defender_center';
+  } else if (y < 0.62) {
+    role = wideL ? 'midfielder_left' : wideR ? 'midfielder_right'
+      : y < 0.46 ? 'midfielder_defensive'
+      : left ? 'midfielder_center_left' : right ? 'midfielder_center_right' : 'midfielder_center';
+  } else if (y < 0.74) {
+    role = wideL ? 'winger_left' : wideR ? 'winger_right' : 'midfielder_attacking';
+  } else {
+    role = wideL ? 'winger_left' : wideR ? 'winger_right' : left ? 'forward_left' : right ? 'forward_right' : 'striker';
+  }
+  return { role, label: ROLE_SHORT[role] ?? '' };
+}
+
+/**
+ * The formation with the coach's positions; slots without a saved position keep the default
+ * one. A position that was really moved (not just nudged) also takes the role of where it
+ * is now; the goalkeeper stays the goalkeeper.
+ */
 export function applyFormationLayout(f: Formation, layout: FormationLayout | null | undefined): Formation {
   if (!layout) return f;
   return {
     ...f,
     slots: f.slots.map((sl) => {
       const p = layout[sl.slot_id];
-      return Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]) ? { ...sl, x: clamp01(p[0]), y: clamp01(p[1]) } : sl;
+      if (!(Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))) return sl;
+      const x = clamp01(p[0]), y = clamp01(p[1]);
+      const moved = Math.abs(x - sl.x) > 0.06 || Math.abs(y - sl.y) > 0.06;
+      if (!moved || sl.role === 'goalkeeper') return { ...sl, x, y };
+      return { ...sl, x, y, ...roleFromPosition(f.sport_type, x, y) };
     }),
   };
 }
