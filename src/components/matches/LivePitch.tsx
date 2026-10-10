@@ -10,7 +10,7 @@
  *  - player on pitch → bench area: take out of the XI (setup)
  *  - selected player during the match: quick buttons for goal / yellow / red
  */
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { PitchCanvas } from './tactical/PitchCanvas';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
@@ -64,6 +64,10 @@ interface Props {
   onFillSlot?: (slotId: string, playerId: string) => void;
   /** starter dragged to the bench (setup) */
   onBench?: (playerId: string) => void;
+  /** tells who is selected on the pitch (null = nobody), so the bar at the top can act on him */
+  onSelectPlayer?: (playerId: string | null) => void;
+  /** change it to drop the selection (after the goal/card was recorded from outside) */
+  selectionResetKey?: number;
   /** a position dragged to a free spot of the pitch (x across, y from own goal) */
   onMoveSlot?: (slotId: string, x: number, y: number) => void;
   /** back to the positions of the formation */
@@ -106,10 +110,22 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
   unknown: 'bg-black/55 text-white',
 };
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onMoveSlot, onResetPositions, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onMoveSlot, onResetPositions, onSelectPlayer, selectionResetKey, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
+  const selectedOnPitch = sel?.kind === 'pitch' ? sel.playerId : null;
+  useEffect(() => { onSelectPlayer?.(selectedOnPitch); }, [selectedOnPitch]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setSel(null); }, [selectionResetKey]);
+  // from a small tablet up, the bench stands beside the pitch (the coach sees both at once)
+  const [beside, setBeside] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 640px)').matches);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 640px)');
+    const on = () => setBeside(mq.matches);
+    mq.addEventListener?.('change', on);
+    return () => mq.removeEventListener?.('change', on);
+  }, []);
   const drag = useRef<{ src: Src; x0: number; y0: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   // the shape of the match, with the positions the coach moved by hand
@@ -264,8 +280,10 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
         <p className="ml-auto text-xs text-muted-foreground text-right">{hint}</p>
       </div>
 
-      {/* width capped so the whole pitch + bench fit on the screen */}
-      <div className="mx-auto w-full select-none" style={{ maxWidth: setup ? 'min(34rem, 62vh)' : 'min(28rem, 40vh)' }}>
+      <div className={cn(beside && 'flex items-stretch justify-center gap-3')}>
+      <div className={cn('space-y-3', beside && 'min-w-0 flex-1')}>
+      {/* width capped so the whole pitch fits on the screen under the score bar */}
+      <div className="mx-auto w-full select-none" style={{ maxWidth: setup ? 'min(34rem, 62vh)' : 'min(28rem, 38vh)' }}>
         <div ref={pitchRef}>
         <PitchCanvas sportType={sportType}>
           {formation?.slots.map((slot) => {
@@ -363,19 +381,22 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
         </div>
       )}
 
-      {/* Bench */}
-      <div data-drop="bencharea" className={cn('rounded-md', setup && 'border border-dashed p-2')}>
+      </div>
+
+      {/* Bench: beside the pitch as a column (scrolls on its own), or under it on a phone */}
+      <div data-drop="bencharea" className={cn('rounded-md', setup && 'border border-dashed p-2', beside && 'relative w-[8.75rem] shrink-0')}>
+        <div className={cn(beside && 'absolute inset-0 flex flex-col', beside && setup && 'p-2')}>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Repeat className="h-3.5 w-3.5" /> {setup ? `Suplentes (${bench.length}) — arraste para o campo · ✕ = não veio` : 'Banco — menos minutos primeiro'}
+          <Repeat className="h-3.5 w-3.5 shrink-0" /> {beside ? `Banco (${bench.length})` : setup ? `Suplentes (${bench.length}) — arraste para o campo · ✕ = não veio` : 'Banco — menos minutos primeiro'}
         </p>
-        <div className={cn('flex gap-2', setup ? 'flex-wrap' : 'overflow-x-auto pb-1')}>
+        <div className={cn('flex gap-2', beside ? 'min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-2 pt-2' : setup ? 'flex-wrap' : 'overflow-x-auto pb-1')}>
           {bench.length === 0 && <span className="text-sm text-muted-foreground">Sem suplentes.</span>}
           {bench.map((id, i) => {
             const p = players.get(id);
             if (!p) return null;
             const isSel = sel?.kind === 'bench' && sel.playerId === id;
             return (
-              <div key={id} className="relative shrink-0">
+              <div key={id} className={cn('relative shrink-0', beside && 'w-full')}>
               {onAbsent && (setup || absentable?.has(id)) && (
                 <button type="button" onClick={() => onAbsent(id)} aria-label={`${p.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
                   className="absolute -right-1.5 -top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground">
@@ -387,9 +408,11 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                 data-drop={`bench:${id}`}
                 onClick={() => tapBench(id)}
                 {...dragProps({ kind: 'bench', playerId: id })}
-                style={{ touchAction: setup ? 'none' : 'pan-x' }}
+                // the list scrolls one way; a drag the other way (towards the pitch) is the substitution
+                style={{ touchAction: beside ? 'pan-y' : setup ? 'none' : 'pan-x' }}
                 className={cn(
                   'flex min-w-[6.5rem] shrink-0 select-none flex-col items-start rounded-md border bg-card px-2.5 py-1.5 text-left transition',
+                  beside && 'w-full',
                   isSel && 'border-accent ring-2 ring-accent/40',
                   sel?.kind === 'pitch' && 'border-dashed border-primary',
                 )}
@@ -419,6 +442,8 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             );
           })}
         </div>
+        </div>
+      </div>
       </div>
 
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground">

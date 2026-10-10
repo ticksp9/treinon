@@ -1375,6 +1375,20 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       : { match_type: 'championship', competition: 'Campeonato', tournament_locked: false, sport_type: null, live_tactics: null });
     toast.success(type === 'friendly' ? 'Jogo marcado como amigável.' : 'Jogo marcado como campeonato.');
   };
+  // Player tapped on the pitch: the buttons of the top bar record the goal/card for him at once
+  const [pitchSelected, setPitchSelected] = useState<string | null>(null);
+  const [selectionResetKey, setSelectionResetKey] = useState(0);
+  const recordFromBar = (type: 'goal' | 'yellow_card' | 'red_card') => {
+    const stillOnPitch = pitchSelected && lineups.some(l => l.player_id === pitchSelected && l.is_starter);
+    if (liveView === 'pitch' && stillOnPitch) {
+      handleEvent(type, pitchSelected);
+      setSelectionResetKey(k => k + 1);
+      setPitchSelected(null);
+      return;
+    }
+    setEventSheetDefaults({ type });
+    setEventSheetOpen(true);
+  };
   const [absentFor, setAbsentFor] = useState<string | null>(null);
   // after kick-off only someone who never set foot on the pitch can still be taken out
   const neverPlayed = new Set(
@@ -1587,10 +1601,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             if (window.confirm(last ? 'Terminar o jogo? Depois já não pode registar mais nada em direto.' : `${getEndPartLabel(currentPart, partsCount)}? O relógio pára e segue-se o intervalo.`)) handleEndPart();
           }}
           onStartNextPart={handleStartNextPart}
-          onGoal={() => { setEventSheetDefaults({ type: 'goal' }); setEventSheetOpen(true); }}
+          onGoal={() => recordFromBar('goal')}
+          selectedName={liveView === 'pitch' && pitchSelected ? (lineups.find(l => l.player_id === pitchSelected)?.player?.name ?? null) : null}
           onOpponentGoal={() => handleEvent('goal', null, true)}
-          onYellow={() => { setEventSheetDefaults({ type: 'yellow_card' }); setEventSheetOpen(true); }}
-          onRed={() => { setEventSheetDefaults({ type: 'red_card' }); setEventSheetOpen(true); }}
+          onYellow={() => recordFromBar('yellow_card')}
+          onRed={() => recordFromBar('red_card')}
           onSubstitution={() => setSubstitutionOpen(true)}
         />
       )}
@@ -1785,6 +1800,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
                     onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
                     onSubstitute={handlePitchSubstitute}
+                    onSelectPlayer={setPitchSelected}
+                    selectionResetKey={selectionResetKey}
                     onMoveSlot={(slotId, x, y) => saveTactics(moveSlot(pitchTactics, slotId, x, y))}
                     onResetPositions={() => saveTactics(resetSlotPositions(pitchTactics))}
                     teamTactics={teamTactics}

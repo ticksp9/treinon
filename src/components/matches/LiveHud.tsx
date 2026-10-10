@@ -34,6 +34,8 @@ interface Props {
   onYellow: () => void;
   onRed: () => void;
   onSubstitution: () => void;
+  /** a player is selected on the pitch: Golo / Amarelo / Vermelho are recorded for him at once */
+  selectedName?: string | null;
 }
 
 export function LiveHud(p: Props) {
@@ -107,10 +109,18 @@ export function LiveHud(p: Props) {
         </div>
       </div>
 
+      {/* always there (same height), so the pitch does not jump when a player is tapped */}
+      {p.phase === 'playing' && (
+        <p className={cn('mx-auto mt-1.5 max-w-6xl truncate text-xs', p.selectedName ? 'font-semibold text-accent' : 'text-muted-foreground')} aria-live="polite">
+          {p.selectedName
+            ? `${p.selectedName} selecionado: toque em Golo, Amarelo ou Vermelho para registar já.`
+            : 'Toque num jogador no campo e depois em Golo, Amarelo ou Vermelho. Sem jogador escolhido, pergunta quem foi.'}
+        </p>
+      )}
       {/* what gets recorded during play: one tap each */}
       {p.phase === 'playing' && (
         <div className="mt-2 flex gap-1.5 2xl:mt-0 2xl:min-w-0 2xl:flex-1">
-          <Button variant="outline" className={action} onClick={p.onGoal}><span className="text-base leading-none">⚽</span>Golo</Button>
+          <Button variant={p.selectedName ? 'default' : 'outline'} className={action} onClick={p.onGoal}><span className="text-base leading-none">⚽</span>Golo</Button>
           <Button variant="outline" className={cn(action, 'border-destructive/40')} onClick={p.onOpponentGoal}><span className="text-base leading-none">⚽</span><span className="truncate">Golo adversário</span></Button>
           <Button variant="outline" className={action} onClick={p.onYellow}><span className="h-4 w-3 rounded-sm border border-yellow-500 bg-yellow-400" />Amarelo</Button>
           <Button variant="outline" className={action} onClick={p.onRed}><span className="h-4 w-3 rounded-sm border border-red-700 bg-red-600" />Vermelho</Button>
