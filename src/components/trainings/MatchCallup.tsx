@@ -377,7 +377,12 @@ export function MatchCallup() {
   };
 
   /** Friendlies: the coach decides — age rules become a warning */
-  const isFriendlyMatch = matches.find(m => m.id === selectedMatch)?.match_type === 'friendly';
+  // (while a match is being created or edited, the type is the one chosen in the form —
+  //  before, a new friendly still blocked players by age because it looked at the match
+  //  that happened to be selected behind the dialog)
+  const isFriendlyMatch = dialogOpen || editDialogOpen
+    ? newMatch.matchType === 'friendly'
+    : matches.find(m => m.id === selectedMatch)?.match_type === 'friendly';
 
   const togglePlayer = (playerId: string) => {
     setSelectedPlayers(prev => {
@@ -387,7 +392,7 @@ export function MatchCallup() {
       } else {
         const tooOld = ageBlocked.get(playerId);
         if (tooOld && !isFriendlyMatch) {
-          toast.error(tooOld);
+          toast.error(`${tooOld} Num amigável pode convocar quem quiser: mude o tipo de jogo para Amigável.`);
           return prev;
         }
         const av = availabilityMap.get(playerId);

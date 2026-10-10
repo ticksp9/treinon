@@ -1318,10 +1318,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const setStarter = async (playerId: string, isStarter: boolean) => {
     const row = lineups.find(l => l.player_id === playerId);
     if (!row) return;
-    if (phase !== 'setup' && !neverPlayed.has(playerId)) {
-      toast.error('Este jogador já entrou no jogo: não pode ser retirado.');
-      return;
-    }
     const { error } = await supabase.from('match_lineups').update({ is_starter: isStarter }).eq('id', row.id);
     if (error) throw error;
   };
@@ -1349,6 +1345,16 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   };
   // A called-up player did not come (ill, injured…): out of this match before kick-off,
   // so the live game has no one on the bench who is not there.
+  const changeMatchType = async (type: 'championship' | 'friendly') => {
+    if (type === matchType) return;
+    setMatchType(type);
+    setIsLocked(type === 'championship');
+    // back to championship = back to the team's own format
+    await updateMatchRecord(type === 'friendly'
+      ? { match_type: 'friendly', competition: 'Amigável', tournament_locked: false }
+      : { match_type: 'championship', competition: 'Campeonato', tournament_locked: false, sport_type: null, live_tactics: null });
+    toast.success(type === 'friendly' ? 'Jogo marcado como amigável.' : 'Jogo marcado como campeonato.');
+  };
   const [absentFor, setAbsentFor] = useState<string | null>(null);
   // after kick-off only someone who never set foot on the pitch can still be taken out
   const neverPlayed = new Set(
@@ -1361,6 +1367,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     setAbsentFor(null);
     const row = lineups.find(l => l.player_id === playerId);
     if (!row) return;
+    if (phase !== 'setup' && !neverPlayed.has(playerId)) {
+      toast.error('Este jogador já entrou no jogo: não pode ser retirado.');
+      return;
+    }
     try {
       if (row.is_starter && pitchTactics) {
         const slots = { ...pitchTactics.slots };
@@ -1390,7 +1400,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   const handleSetupFill = async (slotId: string, playerId: string) => {
     if (starters.length >= sportRules.playersOnField) {
-      toast.error(`Já tem ${sportRules.playersOnField} titulares. Troque com um jogador em campo.`);
+      toast.error(`Já tem ${sportRules.playersOnField} titulares (${sportRules.label}). Troque com um jogador em campo${matchType === 'championship' ? '; se for um amigável com outro formato, mude o tipo de jogo em cima.' : ' ou escolha outra modalidade em cima.'}`);
       return;
     }
     try {
@@ -1656,6 +1666,29 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         )}
 
         {/* Friendlies / tournaments: the coach decides the modality of this match */}
+        {/* Created in a hurry as "Campeonato"? The type is changed here, before kick-off:
+            a friendly has no age limits in the call-up and the coach picks the format. */}
+        {phase === 'setup' && match?.status !== 'in_progress' && (
+          <Card>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-medium">Tipo de jogo</p>
+                <p className="text-xs text-muted-foreground">
+                  {matchType === 'friendly'
+                    ? 'Amigável: sem limites de idade na convocatória e com o formato que quiser.'
+                    : matchType === 'tournament' ? 'Torneio: conforme o regulamento do torneio.'
+                    : 'Campeonato: aplicam-se as regras do escalão. Se for um amigável, mude aqui.'}
+                </p>
+              </div>
+              <div className="flex gap-1">
+                {([['championship', 'Campeonato'], ['friendly', 'Amigável']] as const).map(([value, label]) => (
+                  <Button key={value} size="sm" variant={matchType === value ? 'default' : 'outline'} onClick={() => changeMatchType(value)}>{label}</Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {phase === 'setup' && matchType !== 'championship' && (
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
