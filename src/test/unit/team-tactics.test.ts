@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { defaultTacticCode, parseTeamTactics, removeTactic, setDefaultTactic, splitFormations, tacticsFor, upsertTactic } from '@/lib/team-tactics';
 import { listAvailableFormations } from '@/lib/tactical-formations';
-import { reconcileTactics } from '@/lib/live-tactics';
+import { moveSlot, reconcileTactics, resetSlotPositions, tacticsFormation } from '@/lib/live-tactics';
 
 describe('tactics of a team', () => {
   it('the first tactic added is the one matches start with; more can be added and named', () => {
@@ -60,5 +60,25 @@ describe('tactics of a team', () => {
     expect(reconcileTactics('football_9', { formation: '3-3-2', slots: {} }, players, '4-1-2-1')?.formation).toBe('3-3-2');
     // a default that does not fit the format of this match is ignored
     expect(reconcileTactics('football_7', null, players, '4-1-2-1')?.formation).toBe(listAvailableFormations('football_7')[0].code);
+  });
+
+  it('a position dragged in a match stays there, moves its role, and is forgotten when the shape changes', () => {
+    const players = [{ player_id: 'a', position: 'GK' }, { player_id: 'b', position: 'CM' }];
+    let tac = reconcileTactics('football_9', null, players, '4-3-1')!;
+    expect(tac.formation).toBe('4-3-1');
+    const before = tacticsFormation('football_9', tac)!.slots.find((s) => s.slot_id === 'L2P1')!;
+    expect(before.role).toBe('midfielder_left');
+    tac = moveSlot(tac, 'L2P1', 0.1, 0.82);
+    const after = tacticsFormation('football_9', tac)!.slots.find((s) => s.slot_id === 'L2P1')!;
+    expect([after.x, after.y]).toEqual([0.1, 0.82]);
+    expect(after.role).toBe('winger_left');
+    // survives a substitution / reload of the match
+    expect(reconcileTactics('football_9', tac, players)!.layout).toEqual({ L2P1: [0.1, 0.82] });
+    // dragged off the pitch is kept inside it
+    expect(moveSlot(tac, 'L2P1', 1.4, -0.2).layout!.L2P1).toEqual([0.97, 0.03]);
+    // another formation starts with its own positions
+    // (choosing a formation sends the new shape with the players, as the pitch does)
+    expect(reconcileTactics('football_9', { formation: '3-3-2', slots: tac.slots }, players)!.layout).toBeUndefined();
+    expect(resetSlotPositions(tac).layout).toBeUndefined();
   });
 });

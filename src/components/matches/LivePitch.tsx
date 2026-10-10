@@ -20,7 +20,7 @@ import { customFormationCodes, promptNewFormation, removeCustomFormation, useFor
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getFormation, listAvailableFormations, type FormationSlot } from '@/lib/tactical-formations';
-import { fitScore, type LiveTactics } from '@/lib/live-tactics';
+import { fitScore, type LiveTactics, tacticsFormation } from '@/lib/live-tactics';
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
 import { ratingBg } from '@/lib/player-card';
@@ -64,6 +64,10 @@ interface Props {
   onFillSlot?: (slotId: string, playerId: string) => void;
   /** starter dragged to the bench (setup) */
   onBench?: (playerId: string) => void;
+  /** a position dragged to a free spot of the pitch (x across, y from own goal) */
+  onMoveSlot?: (slotId: string, x: number, y: number) => void;
+  /** back to the positions of the formation */
+  onResetPositions?: () => void;
   /** the team's tactics for this sport: listed first, default on top */
   teamTactics?: SportTactics;
   /** keep the formation in use as one of the team's tactics / as the default one */
@@ -102,13 +106,15 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
   unknown: 'bg-black/55 text-white',
 };
 
-export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onMoveSlot, onResetPositions, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
   const drag = useRef<{ src: Src; x0: number; y0: number; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
-  const formation = useMemo(() => getFormation(sportType, tactics.formation), [sportType, tactics.formation]);
+  // the shape of the match, with the positions the coach moved by hand
+  const formation = useMemo(() => tacticsFormation(sportType, tactics), [sportType, tactics.formation, tactics.layout]); // eslint-disable-line react-hooks/exhaustive-deps
+  const pitchRef = useRef<HTMLDivElement>(null);
   useFormationsVersion(); // re-render when the coach adds a formation
   const formations = listAvailableFormations(sportType);
   const { mine: myTactics, others: otherFormations } = splitFormations(formations, teamTactics ?? { list: [], default: null });
@@ -187,13 +193,21 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
       suppressClick.current = true;
       setTimeout(() => { suppressClick.current = false; }, 50);
       const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-drop]');
-      drop(d.src, el?.getAttribute('data-drop') ?? null);
+      const target = el?.getAttribute('data-drop') ?? null;
+      // a starter dropped on a free spot of the pitch (or just nudged): the position moves there
+      const box = pitchRef.current?.getBoundingClientRect();
+      if (d.src.kind === 'pitch' && onMoveSlot && box && (!target || target === `slot:${d.src.slotId}`)
+          && e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom) {
+        onMoveSlot(d.src.slotId, (e.clientX - box.left) / box.width, 1 - (e.clientY - box.top) / box.height);
+        return;
+      }
+      drop(d.src, target);
     },
     onPointerCancel: () => { drag.current = null; setGhost(null); },
   });
 
   const hint = !sel
-    ? 'Arraste um jogador, ou toque para o selecionar.'
+    ? (onMoveSlot ? 'Arraste um jogador: para outro (troca), ou para um espaço livre (muda a posição).' : 'Arraste um jogador, ou toque para o selecionar.')
     : sel.kind === 'pitch'
       ? 'Toque noutra posição para trocar, ou num suplente para substituir.'
       : setup ? 'Toque no titular a trocar, ou numa posição livre.' : 'Toque no jogador em campo que vai sair.';
@@ -219,6 +233,17 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
           </SelectContent>
         </Select>
+        {setup && !disabled && teamTactics?.default && tactics.formation !== teamTactics.default && (
+          <button type="button" className="flex shrink-0 items-center gap-1 rounded border border-primary bg-primary/10 px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
+            onClick={() => onFormationChange(teamTactics.default!)} title="Mudar este jogo para a tática da equipa">
+            <Star className="h-3.5 w-3.5 fill-current" />Usar a nossa tática: {teamTactics.default}
+          </button>
+        )}
+        {onResetPositions && !disabled && tactics.layout && Object.keys(tactics.layout).length > 0 && (
+          <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted" onClick={onResetPositions} title="Voltar às posições da formação">
+            Repor posições
+          </button>
+        )}
         {onKeepTactic && !disabled && !isDefaultTactic && (
           <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted"
             onClick={() => onKeepTactic(tactics.formation, inMyTactics)}
@@ -241,6 +266,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
 
       {/* width capped so the whole pitch + bench fit on the screen */}
       <div className="mx-auto w-full select-none" style={{ maxWidth: setup ? 'min(34rem, 62vh)' : 'min(28rem, 40vh)' }}>
+        <div ref={pitchRef}>
         <PitchCanvas sportType={sportType}>
           {formation?.slots.map((slot) => {
             const pid = tactics.slots[slot.slot_id] ?? null;
@@ -305,6 +331,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             );
           })}
         </PitchCanvas>
+        </div>
       </div>
 
       {/* Quick actions for the selected player */}

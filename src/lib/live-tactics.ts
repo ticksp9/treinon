@@ -2,7 +2,7 @@
  * Live pitch ("Football Manager" style): which on-field player occupies each slot
  * of the chosen formation, plus an estimated freshness per player.
  */
-import { listAvailableFormations, getFormation, type Formation, type FormationSlot } from './tactical-formations';
+import { listAvailableFormations, getFormation, applyFormationLayout, type Formation, type FormationLayout, type FormationSlot } from './tactical-formations';
 
 /** Captain and set-piece takers (FM "Bolas paradas"). Player ids from the squad. */
 export interface SetPieceRoles {
@@ -17,6 +17,24 @@ export interface LiveTactics {
   /** slotId -> playerId */
   slots: Record<string, string | null>;
   roles?: SetPieceRoles;
+  /** positions the coach dragged in THIS match (slot → [x, y]); the rest follow the formation */
+  layout?: FormationLayout;
+}
+
+/** The formation of the match as it is on the pitch: the chosen shape with the positions moved by hand. */
+export function tacticsFormation(sportType: string | null | undefined, t: Pick<LiveTactics, 'formation' | 'layout'>): Formation | undefined {
+  const f = getFormation(sportType || '', t.formation);
+  return f ? applyFormationLayout(f, t.layout) : undefined;
+}
+
+/** The coach drags a position somewhere else on the pitch (the player on it goes along). */
+export function moveSlot(t: LiveTactics, slotId: string, x: number, y: number): LiveTactics {
+  const c = (v: number) => Math.min(0.97, Math.max(0.03, Math.round(v * 100) / 100));
+  return { ...t, layout: { ...(t.layout ?? {}), [slotId]: [c(x), c(y)] } };
+}
+export function resetSlotPositions(t: LiveTactics): LiveTactics {
+  const { layout: _drop, ...rest } = t;
+  return rest;
 }
 
 export interface PitchPlayer {
@@ -102,7 +120,9 @@ export function reconcileTactics(
     ? current.formation
     : preferred && formationCodeFits(sportType, preferred) ? preferred : defaultFormationCode(sportType);
   if (!code) return null;
-  const formation = getFormation(sportType || '', code)!;
+  // positions moved by hand belong to that shape: another formation starts clean
+  const layout = current?.layout && current.formation === code ? current.layout : undefined;
+  const formation = applyFormationLayout(getFormation(sportType || '', code)!, layout);
   const onIds = new Set(onField.map((p) => p.player_id));
   const slots: Record<string, string | null> = {};
   for (const s of formation.slots) {
@@ -111,6 +131,7 @@ export function reconcileTactics(
   }
   const out: LiveTactics = { formation: code, slots: fill(formation, slots, onField) };
   if (current?.roles) out.roles = current.roles;
+  if (layout && Object.keys(layout).length) out.layout = layout;
   return out;
 }
 

@@ -12,7 +12,7 @@ import {
   Clock, Pencil, AlertTriangle, Share2, PenTool, UserX } from 'lucide-react';
 import { shareText } from '@/lib/share';
 import { computePlayingSeconds, matchClockSeconds, formatClock, secondsToMinutes } from '@/lib/playing-time-seconds';
-import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics } from '@/lib/live-tactics';
+import { reconcileTactics, applySubstitution, swapSlots, estimateFreshness, type LiveTactics, moveSlot, resetSlotPositions } from '@/lib/live-tactics';
 import { LivePitch, type PitchPlayerInfo } from './LivePitch';
 import { MatchRatingsPanel } from './MatchRatingsPanel';
 import { useSquadProfiles } from '@/hooks/useSquadProfiles';
@@ -1751,6 +1751,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onSubstitute={handleSetupSubstitute}
                     onFillSlot={handleSetupFill}
                     onBench={handleSetupBench}
+                    onMoveSlot={(slotId, x, y) => saveTactics(moveSlot(pitchTactics, slotId, x, y))}
+                    onResetPositions={() => saveTactics(resetSlotPositions(pitchTactics))}
                     teamTactics={teamTactics}
                     onKeepTactic={keepTactic}
                     onAbsent={setAbsentFor}
@@ -1862,6 +1864,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     onFormationChange={(code) => saveTactics(reconcileTactics(matchSport, { formation: code, slots: pitchTactics.slots }, starters.map(l => ({ player_id: l.player_id, position: l.player?.position }))))}
                     onSwap={(a, b) => saveTactics(swapSlots(pitchTactics, a, b))}
                     onSubstitute={handlePitchSubstitute}
+                    onMoveSlot={(slotId, x, y) => saveTactics(moveSlot(pitchTactics, slotId, x, y))}
+                    onResetPositions={() => saveTactics(resetSlotPositions(pitchTactics))}
                     teamTactics={teamTactics}
                     onAbsent={setAbsentFor}
                     absentable={neverPlayed}
