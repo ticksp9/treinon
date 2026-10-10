@@ -10,12 +10,28 @@ import { buildFormationFromCode, formationCodeProblem, isBuiltInFormation, norma
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 
+/** mine: what I can change and delete */
 let codes: Record<string, CustomFormationEntry[]> = {};
+/** of the coaches I share a team with (read only): an assistant sees the head coach's drawings */
+let shared: Record<string, CustomFormationEntry[]> = {};
 let version = 0;
 const listeners = new Set<() => void>();
-const publish = (next: Record<string, CustomFormationEntry[]>) => {
+
+/** Mine first; a colleague's formation fills in what I do not have — including the drawing of a formation I have without one. */
+export function mergeFormationEntries(mine: CustomFormationEntry[], others: CustomFormationEntry[]): CustomFormationEntry[] {
+  const out = mine.map((e) => ({ ...e }));
+  for (const o of others) {
+    const own = out.find((e) => e.code === o.code);
+    if (!own) out.push({ ...o });
+    else if (!own.layout && o.layout) own.layout = o.layout;
+  }
+  return out;
+}
+const publish = (next: Record<string, CustomFormationEntry[]>, nextShared = shared) => {
   codes = next;
-  setCustomFormations(codes);
+  shared = nextShared;
+  const sports = new Set([...Object.keys(codes), ...Object.keys(shared)]);
+  setCustomFormations(Object.fromEntries([...sports].map((sp) => [sp, mergeFormationEntries(codes[sp] ?? [], shared[sp] ?? [])])));
   version += 1;
   listeners.forEach((l) => l());
 };
@@ -26,11 +42,15 @@ export function useFormationsVersion(): number {
 }
 
 export async function loadCustomFormations(userId: string): Promise<void> {
-  const { data, error } = await db.from('custom_formations').select('sport_type, code, layout').eq('owner_id', userId).order('created_at');
+  // the database returns mine and those of the coaches I share a team with
+  const { data, error } = await db.from('custom_formations').select('owner_id, sport_type, code, layout').order('created_at');
   if (error) return; // offline or table not there yet: the built-in ones still work
   const next: Record<string, CustomFormationEntry[]> = {};
-  for (const r of (data ?? []) as { sport_type: string; code: string; layout: FormationLayout | null }[]) (next[r.sport_type] ??= []).push({ code: r.code, layout: r.layout });
-  publish(next);
+  const others: Record<string, CustomFormationEntry[]> = {};
+  for (const r of (data ?? []) as { owner_id: string; sport_type: string; code: string; layout: FormationLayout | null }[]) {
+    ((r.owner_id === userId ? next : others)[r.sport_type] ??= []).push({ code: r.code, layout: r.layout });
+  }
+  publish(next, others);
 }
 
 /** the formations the coach created (not his drawings of the ones that come with the app) */

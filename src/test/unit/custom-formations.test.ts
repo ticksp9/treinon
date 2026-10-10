@@ -4,7 +4,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: () => ({ up
 import {
   buildFormationFromCode, formationCodeProblem, getFormation, listAvailableFormations, parseFormationCode, setCustomFormations,
 } from '@/lib/tactical-formations';
-import { addCustomFormation, customFormationCodes, hasFormationLayout, removeCustomFormation, saveFormationLayout } from '@/lib/custom-formations';
+import { addCustomFormation, customFormationCodes, hasFormationLayout, mergeFormationEntries, removeCustomFormation, saveFormationLayout } from '@/lib/custom-formations';
 import { emptyBoard, formationLines, layoutFromBoard, moveToken, placeFormation, positionsAt, removeToken } from '@/lib/tactic-board';
 
 describe('formations created by the coach', () => {
@@ -114,5 +114,20 @@ describe('formations created by the coach', () => {
     expect(again.tokens[0].x).toBeCloseTo(gk.x, 0);
     await saveFormationLayout('u1', 'football_9', '3-3-2', null);
     expect(placeFormation(emptyBoard('football_9'), 'home', '3-3-2').tokens[2].x).toBeCloseTo(b.tokens[2].x - 8, 0);
+  });
+
+  it('an assistant gets the head coach formations and drawings, without losing his own', () => {
+    const head = [{ code: '4-1-2-1', layout: { L4P1: [0.3, 0.9] as [number, number] } }, { code: '5-2-1', layout: null }];
+    // no formations of his own: everything comes from the head coach
+    expect(mergeFormationEntries([], head).map((e) => e.code)).toEqual(['4-1-2-1', '5-2-1']);
+    // he has the same formation without a drawing: he gets the head coach's drawing
+    expect(mergeFormationEntries([{ code: '4-1-2-1' }], head)[0].layout).toEqual({ L4P1: [0.3, 0.9] });
+    // he drew his own: his stays
+    const own = { L4P1: [0.7, 0.8] as [number, number] };
+    expect(mergeFormationEntries([{ code: '4-1-2-1', layout: own }], head)[0].layout).toEqual(own);
+    // and the result draws on the board
+    setCustomFormations({ football_9: mergeFormationEntries([], head) });
+    const striker = getFormation('football_9', '4-1-2-1')!.slots.find((sl) => sl.slot_id === 'L4P1')!;
+    expect([striker.x, striker.y]).toEqual([0.3, 0.9]);
   });
 });

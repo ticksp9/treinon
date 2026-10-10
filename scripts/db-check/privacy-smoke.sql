@@ -97,3 +97,26 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.guardian_consents) = 0, 'outsider sees no consents';
 END $$;
 RESET ROLE;
+
+-- ── Formations: the staff of a team see each other's formations, read only ──
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.custom_formations (sport_type, code, layout) VALUES ('football_9', '4-1-2-1', '{"L4P1": [0.3, 0.9]}');
+-- the assistant of the same team sees the head coach's formation and its drawing
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  ASSERT (SELECT layout->'L4P1'->>0 FROM public.custom_formations WHERE code = '4-1-2-1') = '0.3', 'assistant sees the head coach''s drawing';
+  UPDATE public.custom_formations SET layout = NULL WHERE code = '4-1-2-1';
+  ASSERT NOT FOUND, 'assistant cannot change it';
+  DELETE FROM public.custom_formations WHERE code = '4-1-2-1';
+  ASSERT NOT FOUND, 'nor delete it';
+  -- but he can keep his own version
+  INSERT INTO public.custom_formations (sport_type, code) VALUES ('football_9', '4-1-2-1');
+  ASSERT (SELECT count(*) FROM public.custom_formations WHERE code = '4-1-2-1') = 2, 'his own row next to the head coach''s';
+END $$;
+-- a coach of another team/club sees none of them
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.custom_formations) = 0, 'outsider sees no formations of this team';
+END $$;
+RESET ROLE;
