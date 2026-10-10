@@ -22,6 +22,7 @@ import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
 import { AbsenceDialog } from './AbsenceDialog';
+import { LiveHud } from './LiveHud';
 import { useTeamTactics } from '@/hooks/useTeamTactics';
 import { setDefaultTactic, tacticsFor, upsertTactic } from '@/lib/team-tactics';
 import { TacticBoard } from '@/components/board/TacticBoard';
@@ -1561,26 +1562,42 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   }
 
   return (
-    <div className={`${phase === 'playing' && isMobile ? 'pb-20' : ''}`}>
-      {/* Mobile context bar - sticky top */}
-      {phase !== 'setup' && phase !== 'finished' && (
-        <MatchContextBar
+    <div>
+      {/* Score, clock and the quick actions: always on screen while the rest scrolls */}
+      {(phase === 'playing' || phase === 'interval') && (
+        <LiveHud
+          teamName={team?.name || ''}
           opponentName={match?.opponent_name || ''}
           goalsFor={goalsFor}
           goalsAgainst={goalsAgainst}
-          currentPeriod={phase === 'playing' ? getPartLabel(currentPart, partsCount) : phase === 'interval' ? 'Intervalo' : undefined}
-          displayMinute={phase === 'playing' ? displayMinute : undefined}
-          modality={matchSport || undefined}
-          ageGroup={team?.category || undefined}
+          phase={phase}
+          partLabel={getPartLabel(currentPart, partsCount)}
+          clock={timer.formatTime(timer.elapsedSeconds)}
+          minute={displayMinute}
+          isRunning={timer.isRunning}
+          isOvertime={phase === 'playing' && isOvertime}
           isOnline={isOnline}
-          syncStatus={syncStatus}
-          compact={isMobile}
+          syncProblem={syncStatus === 'pending' || syncStatus === 'error'}
+          endPartLabel={getEndPartLabel(currentPart, partsCount)}
+          isLastPart={currentPart >= partsCount}
+          nextPartLabel={getStartPartLabel(currentPart + 1, partsCount)}
+          onPauseResume={() => (timer.isRunning ? timer.pauseTimer() : timer.startTimer())}
+          onEndPart={() => {
+            const last = currentPart >= partsCount;
+            if (window.confirm(last ? 'Terminar o jogo? Depois já não pode registar mais nada em direto.' : `${getEndPartLabel(currentPart, partsCount)}? O relógio pára e segue-se o intervalo.`)) handleEndPart();
+          }}
+          onStartNextPart={handleStartNextPart}
+          onGoal={() => { setEventSheetDefaults({ type: 'goal' }); setEventSheetOpen(true); }}
+          onOpponentGoal={() => handleEvent('goal', null, true)}
+          onYellow={() => { setEventSheetDefaults({ type: 'yellow_card' }); setEventSheetOpen(true); }}
+          onRed={() => { setEventSheetDefaults({ type: 'red_card' }); setEventSheetOpen(true); }}
+          onSubstitution={() => setSubstitutionOpen(true)}
         />
       )}
 
-      <div className="p-4 md:p-6 space-y-4">
-        {/* Header - only in setup or desktop */}
-        {(phase === 'setup' || !isMobile) && (
+      <div className={phase === 'setup' ? 'p-4 md:p-6 space-y-4' : 'space-y-3 pt-3'}>
+        {/* Header - only before kick-off (during the match the bar above has what matters) */}
+        {phase === 'setup' && (
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Button variant="outline" size={isMobile ? 'sm' : 'default'} onClick={onExit}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1596,92 +1613,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 </Badge>
               )}
               <Badge variant="outline" className="text-lg px-4 py-2">
-                {phase === 'setup' && 'Preparação'}
-                {phase === 'playing' && getPartLabel(currentPart, partsCount)}
-                {phase === 'interval' && 'Intervalo'}
+                Preparação
               </Badge>
             </div>
           </div>
-        )}
-
-        {/* Desktop Scoreboard - hidden on mobile playing (context bar shows it) */}
-        {phase !== 'setup' && !isMobile && (
-          <Card className={`border-primary/20 ${isOvertime ? 'bg-destructive/5 border-destructive/30' : 'bg-primary/5'}`}>
-            <CardContent className="py-6">
-              <div className="flex items-center justify-center gap-8">
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    {match?.is_home ? 'Casa' : 'Visitante'}
-                  </div>
-                  <div className="text-4xl font-bold">{goalsFor}</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-4xl font-mono font-bold ${isOvertime ? 'text-destructive' : 'text-primary'}`}>
-                    {displayMinute}'
-                  </div>
-                  <div className="text-lg text-muted-foreground">
-                    {timer.formatTime(timer.elapsedSeconds)}
-                  </div>
-                  {isOvertime && (
-                    <div className="text-xs text-destructive mt-1 flex items-center justify-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Tempo extra
-                    </div>
-                  )}
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    {match?.opponent_name}
-                  </div>
-                  <div className="text-4xl font-bold">{goalsAgainst}</div>
-                </div>
-              </div>
-
-              {/* Desktop Timer Controls */}
-              {phase === 'playing' && (
-                <div className="flex justify-center gap-2 mt-4 flex-wrap">
-                  {!timer.isRunning ? (
-                    <Button onClick={() => timer.startTimer()} size="sm">
-                      <Play className="w-4 h-4 mr-1" />
-                      Continuar
-                    </Button>
-                  ) : (
-                    <Button onClick={() => timer.pauseTimer()} variant="outline" size="sm">
-                      <Pause className="w-4 h-4 mr-1" />
-                      Pausar
-                    </Button>
-                  )}
-                  {!isLocked && (
-                    <Button onClick={() => timer.resetTimer()} variant="outline" size="sm">
-                      <RotateCcw className="w-4 h-4 mr-1" />
-                      Reiniciar
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleEndPart}
-                    variant={currentPart >= partsCount ? 'destructive' : 'secondary'}
-                    size="sm"
-                  >
-                    {currentPart >= partsCount ? (
-                      <Square className="w-4 h-4 mr-1" />
-                    ) : (
-                      <Clock className="w-4 h-4 mr-1" />
-                    )}
-                    {getEndPartLabel(currentPart, partsCount)}
-                  </Button>
-                </div>
-              )}
-
-              {phase === 'interval' && (
-                <div className="flex justify-center gap-2 mt-4">
-                  <Button onClick={handleStartNextPart} size="sm">
-                    <Play className="w-4 h-4 mr-1" />
-                    {getStartPartLabel(currentPart + 1, partsCount)}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         )}
 
         {/* Friendlies / tournaments: the coach decides the modality of this match */}
@@ -1810,14 +1745,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               <PenTool className="w-5 h-5 mr-2" />
               Quadro tático para a palestra
             </Button>
-            {isMobile && (
-              <div className="flex justify-center py-3">
-                <Button onClick={handleStartNextPart} size="lg" className="w-full max-w-sm h-14 text-lg">
-                  <Play className="w-5 h-5 mr-2" />
-                  {getStartPartLabel(currentPart + 1, partsCount)}
-                </Button>
-              </div>
-            )}
             <LineupSelector
               matchId={matchId}
               teamId={teamId}
@@ -1835,21 +1762,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         {/* Playing Phase - Mobile-first layout */}
         {phase === 'playing' && (
           <div className="space-y-3">
-            {/* Mobile: compact scoreboard with timer */}
-            {isMobile && (
-              <div className={`text-center py-2 rounded-lg ${isOvertime ? 'bg-destructive/10' : 'bg-primary/5'}`}>
-                <div className="text-lg text-muted-foreground font-mono">
-                  {timer.formatTime(timer.elapsedSeconds)}
-                </div>
-                {isOvertime && (
-                  <div className="text-xs text-destructive flex items-center justify-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    Tempo extra
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* View switch: pitch (Football Manager style) or list */}
             <div className="grid grid-cols-3 gap-1 rounded-md border bg-muted/40 p-1">
               {(['pitch', 'list'] as const).map(v => (
@@ -1861,29 +1773,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 <PenTool className="w-4 h-4 mr-1" />Quadro
               </Button>
             </div>
-
-            {/* Always in sight, in every view and screen size: before, on a tablet it only
-                existed at the bottom of "Lista" (and inside "Mais" on a phone). */}
-            <Button variant="outline" className="h-11 w-full border-destructive/40 text-base" onClick={() => handleEvent('goal', null, true)}>
-              <span className="mr-2 text-lg">⚽</span>
-              Golo do adversário{match?.opponent_name ? ` (${match.opponent_name})` : ''}
-            </Button>
-
-            {/* On a phone or an upright tablet the clock card (with this button) is hidden and
-                ending a part was only inside "Mais". Asks first: a wrong tap must not end the part. */}
-            {isMobile && (
-              <Button
-                variant={currentPart >= partsCount ? 'destructive' : 'secondary'}
-                className="h-11 w-full text-base"
-                onClick={() => {
-                  const last = currentPart >= partsCount;
-                  if (window.confirm(last ? 'Terminar o jogo? Depois já não pode registar mais nada em direto.' : `${getEndPartLabel(currentPart, partsCount)}? O relógio pára e segue-se o intervalo.`)) handleEndPart();
-                }}
-              >
-                {currentPart >= partsCount ? <Square className="mr-2 h-4 w-4" /> : <Clock className="mr-2 h-4 w-4" />}
-                {getEndPartLabel(currentPart, partsCount)}
-              </Button>
-            )}
 
             {liveView === 'pitch' && pitchTactics && matchSport && (
               <Card>
@@ -2069,31 +1958,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           <ConflictAlertsPanel matchId={matchId} localIssues={consistencyIssues} />
         )}
       </div>
-
-      {/* Mobile Bottom Action Bar */}
-      {phase === 'playing' && isMobile && (
-        <LiveActionBar
-          onGoal={() => {
-            setEventSheetDefaults({ type: 'goal' });
-            setEventSheetOpen(true);
-          }}
-          onOpponentGoal={() => handleEvent('goal', null, true)}
-          onSubstitution={() => setSubstitutionOpen(true)}
-          onYellowCard={() => {
-            setEventSheetDefaults({ type: 'yellow_card' });
-            setEventSheetOpen(true);
-          }}
-          onRedCard={() => {
-            setEventSheetDefaults({ type: 'red_card' });
-            setEventSheetOpen(true);
-          }}
-          onEndPart={handleEndPart}
-          onPauseResume={() => timer.isRunning ? timer.pauseTimer() : timer.startTimer()}
-          isTimerRunning={timer.isRunning}
-          isLastPart={currentPart >= partsCount}
-          endPartLabel={getEndPartLabel(currentPart, partsCount)}
-        />
-      )}
 
       {/* Substitution Batch Dialog (mobile + desktop) */}
       <SubstitutionBatchDialog
