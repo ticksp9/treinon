@@ -1869,6 +1869,22 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               Golo do adversário{match?.opponent_name ? ` (${match.opponent_name})` : ''}
             </Button>
 
+            {/* On a phone or an upright tablet the clock card (with this button) is hidden and
+                ending a part was only inside "Mais". Asks first: a wrong tap must not end the part. */}
+            {isMobile && (
+              <Button
+                variant={currentPart >= partsCount ? 'destructive' : 'secondary'}
+                className="h-11 w-full text-base"
+                onClick={() => {
+                  const last = currentPart >= partsCount;
+                  if (window.confirm(last ? 'Terminar o jogo? Depois já não pode registar mais nada em direto.' : `${getEndPartLabel(currentPart, partsCount)}? O relógio pára e segue-se o intervalo.`)) handleEndPart();
+                }}
+              >
+                {currentPart >= partsCount ? <Square className="mr-2 h-4 w-4" /> : <Clock className="mr-2 h-4 w-4" />}
+                {getEndPartLabel(currentPart, partsCount)}
+              </Button>
+            )}
+
             {liveView === 'pitch' && pitchTactics && matchSport && (
               <Card>
                 <CardContent className="p-3">
