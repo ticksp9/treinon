@@ -1853,6 +1853,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               </Button>
             </div>
 
+            {/* Always in sight, in every view and screen size: before, on a tablet it only
+                existed at the bottom of "Lista" (and inside "Mais" on a phone). */}
+            <Button variant="outline" className="h-11 w-full border-destructive/40 text-base" onClick={() => handleEvent('goal', null, true)}>
+              <span className="mr-2 text-lg">⚽</span>
+              Golo do adversário{match?.opponent_name ? ` (${match.opponent_name})` : ''}
+            </Button>
+
             {liveView === 'pitch' && pitchTactics && matchSport && (
               <Card>
                 <CardContent className="p-3">
@@ -1957,15 +1964,6 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                   );
                 })}
 
-                {!isMobile && (
-                  <>
-                    <Separator className="my-3" />
-                    <Button variant="outline" className="w-full" onClick={() => handleEvent('goal', null, true)}>
-                      <span className="text-lg mr-2">⚽</span>
-                      Golo do Adversário
-                    </Button>
-                  </>
-                )}
               </CardContent>
             </Card>
 
