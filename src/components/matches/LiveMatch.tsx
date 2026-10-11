@@ -1817,7 +1817,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                     teamTactics={teamTactics}
                     onAbsent={setAbsentFor}
                     absentable={neverPlayed}
-                    onEvent={(type, pid) => handleEvent(type, pid)}
+                    onEvent={(type, pid) => (type === 'goal' ? setAssistFor({ scorerId: pid, clock: getClockSeconds() }) : handleEvent(type, pid))}
                   />
                 </CardContent>
               </Card>
@@ -1878,7 +1878,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           <Button
                             size="sm" variant="ghost"
                             className="h-8 w-8 p-0 hover:bg-green-100"
-                            onClick={(e) => { e.stopPropagation(); handleEvent('goal', lineup.player_id); }}
+                            onClick={(e) => { e.stopPropagation(); setAssistFor({ scorerId: lineup.player_id, clock: getClockSeconds() }); }}
                             title="Golo"
                           >
                             <span className="text-lg">⚽</span>
