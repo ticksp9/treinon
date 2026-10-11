@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { BackupCard } from '@/components/settings/BackupCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -204,6 +205,9 @@ export default function Settings() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* the club's / coach's data is theirs: take a copy, or move it to another database */}
+        <BackupCard />
       </div>
     </AppLayout>
   );
