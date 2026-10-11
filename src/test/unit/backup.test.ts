@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { backupFileName, backupRowCount, describeBackup, isBackupFile, type BackupFile } from '@/lib/backup';
+import { backupFileName, backupRowCount, describeBackup, formatSize, isBackupFile, type BackupFile } from '@/lib/backup';
 
 const file: BackupFile = {
   format: 'treinon-backup', version: 1, created_at: '2026-10-11T09:30:00+00:00',
@@ -23,5 +23,11 @@ describe('backup file', () => {
     expect(isBackupFile(file)).toBe(true);
     expect(isBackupFile({ format: 'outra-coisa', tables: {} })).toBe(false);
     expect(isBackupFile(null)).toBe(false);
+  });
+
+  it('shows the size of a stored copy in words a coach reads', () => {
+    expect(formatSize(900)).toBe('900 B');
+    expect(formatSize(136_965)).toBe('134 KB');
+    expect(formatSize(12_400_000)).toBe('11,8 MB');
   });
 });

@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
-import { backupFileName, describeBackup, type BackupFile } from '@/lib/backup';
+import { backupFileName, describeBackup, formatSize, type AutoCopy, type BackupFile } from '@/lib/backup';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -33,7 +33,42 @@ export function BackupCard() {
     },
   });
 
+  // the copies the server makes on its own every night
+  const { data: auto } = useQuery({
+    queryKey: ['backup-auto', user?.id],
+    enabled: !!user && !loading && !isGuardian && !isPlayer,
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('club-backup', { body: { action: 'list' } });
+      if (error || !data || (data as { error?: string }).error) return { keep: 14, copies: [] as AutoCopy[] };
+      return data as { keep: number; copies: AutoCopy[] };
+    },
+  });
+  const [fetching, setFetching] = useState<string | null>(null);
+
   if (loading || isGuardian || isPlayer) return null;
+
+  const save = (file: BackupFile, name: string) => {
+    const blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  };
+  const downloadAuto = async (c: AutoCopy) => {
+    setFetching(c.name);
+    try {
+      const { data, error } = await supabase.functions.invoke('club-backup', { body: { action: 'download', name: c.name } });
+      const file = (typeof data === 'string' ? JSON.parse(data) : data) as BackupFile & { error?: string };
+      if (error || !file || file.error) throw new Error(file?.error || error?.message || 'sem resposta');
+      save(file, backupFileName(file));
+      setLast(describeBackup(file));
+    } catch (e) {
+      toast.error('Não foi possível descarregar a cópia: ' + (e as Error).message);
+    } finally {
+      setFetching(null);
+    }
+  };
 
   const download = async () => {
     setBusy(true);
@@ -41,12 +76,7 @@ export function BackupCard() {
       const { data, error } = await supabase.functions.invoke('club-backup', { body: {} });
       if (error || !data || (data as { error?: string }).error) throw new Error((data as { error?: string })?.error || error?.message || 'sem resposta');
       const file = data as BackupFile;
-      const blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = backupFileName(file);
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+      save(file, backupFileName(file));
       setLast(describeBackup(file));
       toast.success('Cópia de segurança descarregada. Guarde o ficheiro num sítio seguro.');
       qc.invalidateQueries({ queryKey: ['backup-log'] });
@@ -69,9 +99,33 @@ export function BackupCard() {
       <CardContent className="space-y-3">
         <Button onClick={download} disabled={busy}>
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-          Descarregar cópia de segurança
+          Fazer e descarregar uma cópia agora
         </Button>
         {last && <p className="text-sm font-medium">{last}</p>}
+
+        <div className="rounded-md border p-3">
+          <p className="text-sm font-medium">Cópias automáticas</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Todas as noites o servidor guarda uma cópia. Ficam as últimas {auto?.keep ?? 14}; pode descarregar qualquer uma.
+          </p>
+          {!auto ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : auto.copies.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ainda não há nenhuma: a primeira é feita esta noite.</p>
+          ) : (
+            <ul className="divide-y text-sm">
+              {auto.copies.map((c) => (
+                <li key={c.name} className="flex items-center gap-2 py-1.5">
+                  <span className="font-medium">{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  {c.size != null && <span className="text-xs text-muted-foreground">{formatSize(c.size)}</span>}
+                  <Button size="sm" variant="outline" className="ml-auto h-8" disabled={fetching === c.name} onClick={() => downloadAuto(c)}>
+                    {fetching === c.name ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}Descarregar
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           {lastLog ? `Última cópia: ${new Date(lastLog.created_at).toLocaleString('pt-PT', { dateStyle: 'long', timeStyle: 'short' })}.` : 'Ainda não foi feita nenhuma cópia.'}
           {' '}O ficheiro tem dados pessoais de menores e dos encarregados: guarde-o protegido e não o partilhe. Não inclui palavras-passe nem os ficheiros carregados (fotografias e documentos).

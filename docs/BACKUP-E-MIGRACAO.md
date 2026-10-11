@@ -9,7 +9,15 @@ Há um ficheiro único — a **cópia de segurança** — que serve para as duas
 
 ## 1. Fazer a cópia
 
-Na aplicação: **Definições → Cópia de segurança → Descarregar cópia de segurança**.
+Na aplicação, em **Definições → Cópia de segurança**:
+
+- **Cópias automáticas**: todas as noites (03:15 UTC) o servidor guarda uma cópia de cada
+  clube e de cada treinador sem clube. Ficam as **últimas 14**; qualquer uma pode ser
+  descarregada na lista.
+- **Fazer e descarregar uma cópia agora**: uma cópia do momento, direta para o aparelho.
+
+As cópias automáticas ficam num armazenamento privado da base de dados: ninguém lhes chega
+diretamente, só através da aplicação, que verifica quem está a pedir.
 
 - O **administrador do clube** recebe tudo o que é do clube.
 - Um **treinador sem clube** recebe tudo o que é dele (as suas equipas fora de clubes).
@@ -97,7 +105,10 @@ depois da cópia. Para recuperar de um erro:
 
 ## Limites conhecidos
 
-- A cópia é feita **à mão**, quando alguém carrega no botão. Ainda não há cópias automáticas.
+- As cópias automáticas ficam **na mesma conta** onde está a base de dados. Protegem de
+  asneiras e de dados apagados, mas não da perda da própria conta: convém descarregar uma
+  cópia de vez em quando e guardá-la noutro sítio.
+- Guardam-se 14 dias. Para recuar mais é preciso ter descarregado uma cópia antes.
 - A reposição num projeto Supabase real (criação de contas incluída) foi testada só numa
   base de dados de ensaio local; convém fazer um ensaio com um projeto de teste antes de uma
   mudança a sério.

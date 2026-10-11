@@ -36,3 +36,12 @@ export function describeBackup(b: BackupFile): string {
   const text = parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many}`).join(' · ');
   return `Cópia com ${text || 'os seus dados'} (${backupRowCount(b)} registos em ${Object.keys(b.tables).length} tabelas).`;
 }
+
+/** One of the copies the server makes on its own every night. */
+export interface AutoCopy { name: string; date: string; size: number | null; saved_at: string | null }
+
+export function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+}
