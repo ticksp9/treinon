@@ -21,6 +21,7 @@ import { isSportAllowed } from '@/lib/sport-scope';
 import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '@/lib/team-selection';
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
+import { MatchPlanCard } from '@/components/scouting/MatchPlanCard';
 import { AbsenceDialog } from './AbsenceDialog';
 import { AssistDialog } from './AssistDialog';
 import { LiveHud } from './LiveHud';
@@ -1644,6 +1645,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           </div>
         )}
 
+        {/* what was prepared about this opponent: key ideas, key players and schemes */}
+        {phase === 'setup' && match?.opponent_name && (
+          <MatchPlanCard matchId={matchId} opponentName={match.opponent_name} sportType={matchSport} />
+        )}
+
         {/* Friendlies / tournaments: the coach decides the modality of this match */}
         {/* Created in a hurry as "Campeonato"? The type is changed here, before kick-off:
             a friendly has no age limits in the call-up and the coach picks the format. */}
@@ -1766,6 +1772,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         {/* Interval Phase */}
         {phase === 'interval' && (
           <>
+            {match?.opponent_name && <MatchPlanCard matchId={matchId} opponentName={match.opponent_name} sportType={matchSport} hideWhenEmpty />}
             <Button variant="outline" size="lg" className="w-full h-12" onClick={() => setBoardOpen(true)}>
               <PenTool className="w-5 h-5 mr-2" />
               Quadro tático para a palestra

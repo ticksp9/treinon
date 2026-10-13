@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Eye, Pencil, Plus, Star, Trash2, Users } from 'lucide-react';
+import { ArrowLeft, Eye, FileText, Pencil, Plus, Star, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -23,9 +23,10 @@ import { cn } from '@/lib/utils';
 import { BoardPreview } from '@/components/board/BoardPreview';
 import { TacticBoard } from '@/components/board/TacticBoard';
 import { OpponentFormDialog, formToRow, type OpponentForm } from '@/components/scouting/OpponentFormDialog';
+import { MatchPlanCard } from '@/components/scouting/MatchPlanCard';
 import { clearBoardDraft, normalizeBoard, type BoardState } from '@/lib/tactic-board';
 import {
-  FOOT_LABEL, MOMENTS, headToHead, matchesAgainst, newSchemeBoard, schemesByMoment, sortSquad, sportLabel,
+  FOOT_LABEL, MOMENTS, headToHead, matchesAgainst, newSchemeBoard, nextMatchAgainst, schemesByMoment, sortSquad, sportLabel,
   type Opponent, type OpponentObservation, type OpponentPlayer, type OpponentScheme, type PlayedMatch, type SchemeMoment,
 } from '@/lib/opponent-scouting';
 
@@ -82,6 +83,7 @@ export default function ScoutingOpponent() {
   const squad = useMemo(() => sortSquad(players), [players]);
   const against = useMemo(() => (opponent ? matchesAgainst(ourMatches, opponent.name) : []), [ourMatches, opponent]);
   const h2h = useMemo(() => headToHead(against), [against]);
+  const nextMatch = useMemo(() => (opponent ? nextMatchAgainst(ourMatches, opponent.name) : null), [ourMatches, opponent]);
   const refresh = (what: string) => { qc.invalidateQueries({ queryKey: [what, id] }); qc.invalidateQueries({ queryKey: ['scout-opponents'] }); };
   const fail = (what: string, e: { message: string }) => toast.error(`${what}: ${e.message}`);
 
@@ -222,9 +224,15 @@ export default function ScoutingOpponent() {
               {opponent.coach_name && <span className="text-sm text-muted-foreground">· Treinador: {opponent.coach_name}</span>}
             </div>
           </div>
+          <Button variant="outline" size="sm" asChild><Link to={`/scouting/adversarios/${opponent.id}/relatorio${nextMatch ? `?jogo=${nextMatch.id}` : ''}`} target="_blank"><FileText className="mr-1.5 h-4 w-4" />Relatório</Link></Button>
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-1.5 h-4 w-4" />Editar</Button>
           <Button variant="ghost" size="sm" className="text-destructive" onClick={removeOpponent}><Trash2 className="mr-1.5 h-4 w-4" />Apagar</Button>
         </div>
+
+        {nextMatch && (
+          <MatchPlanCard matchId={nextMatch.id} opponentName={nextMatch.opponent_name} sportType={opponent.sport_type}
+            heading={`próximo jogo, ${day(nextMatch.match_date)}${nextMatch.team_name ? ` · ${nextMatch.team_name}` : ''}`} />
+        )}
 
         <Tabs defaultValue="schemes">
           <TabsList className="h-auto flex-wrap">

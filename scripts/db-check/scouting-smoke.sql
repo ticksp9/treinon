@@ -60,6 +60,31 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.scout_opponents) = 0 AND (SELECT count(*) FROM public.scout_opponent_schemes) = 0, 'a parent sees nothing of the scouting';
 END $$;
 
+-- the game plan of a match: the staff of that team, nobody else
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.match_plans (match_id, opponent_id, key_points, scheme_ids)
+VALUES ('e0000000-0000-0000-0000-000000000001', '5c000000-0000-0000-0000-000000000001', ARRAY['Pressionar o central esquerdo', 'Atacar o segundo poste'], ARRAY['5c000000-0000-0000-0000-0000000000a1']::uuid[]);
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  ASSERT (SELECT cardinality(key_points) FROM public.match_plans WHERE match_id = 'e0000000-0000-0000-0000-000000000001') = 2, 'assistant reads the plan';
+  UPDATE public.match_plans SET notes = 'Entrar forte' WHERE match_id = 'e0000000-0000-0000-0000-000000000001';
+  ASSERT FOUND, 'assistant can change the plan';
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.match_plans) = 0, 'outsider sees no plans';
+  BEGIN
+    INSERT INTO public.match_plans (match_id) VALUES ('e0000000-0000-0000-0000-000000000001');
+    RAISE EXCEPTION 'FAIL: outsider wrote a plan';
+  EXCEPTION WHEN insufficient_privilege OR unique_violation THEN
+    IF SQLSTATE = '23505' THEN RAISE EXCEPTION 'FAIL: outsider got past the policy'; END IF;
+  END;
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.match_plans) = 0, 'a parent does not see the game plan';
+END $$;
+
 -- the club's administrator sees the club's sheets (not the coaches' private ones of other people) and may delete
 SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
 DO $$ BEGIN
@@ -67,6 +92,7 @@ DO $$ BEGIN
   DELETE FROM public.scout_opponents WHERE id = '5c000000-0000-0000-0000-000000000001';
   ASSERT FOUND, 'club admin deletes a club sheet';
   ASSERT (SELECT count(*) FROM public.scout_opponent_schemes WHERE opponent_id = '5c000000-0000-0000-0000-000000000001') = 0, 'its schemes go with it';
+  ASSERT (SELECT opponent_id IS NULL AND cardinality(key_points) = 2 FROM public.match_plans WHERE match_id = 'e0000000-0000-0000-0000-000000000001'), 'the plan stays when the sheet is deleted';
 END $$;
 RESET ROLE;
 SELECT 'scouting smoke: OK' AS result;

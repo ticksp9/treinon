@@ -106,3 +106,41 @@ export function sheetSummary(counts: { schemes: number; players: number; observa
   return [part(counts.schemes, 'esquema', 'esquemas'), part(counts.players, 'jogador', 'jogadores'), part(counts.observations, 'observação', 'observações')]
     .filter(Boolean).join(' · ') || 'Ficha ainda vazia';
 }
+
+// ── the game plan of one match ──
+export interface MatchPlan {
+  id: string; match_id: string; opponent_id: string | null;
+  key_points: string[]; notes: string | null; scheme_ids: string[]; updated_at: string;
+}
+export const MAX_KEY_POINTS = 6;
+
+/** What is saved: trimmed, no empty lines, no repeats, at most six. */
+export function cleanKeyPoints(points: string[]): string[] {
+  const out: string[] = [];
+  for (const p of points) {
+    const t = p.replace(/\s+/g, ' ').trim().slice(0, 200);
+    if (t && !out.some((x) => x.toLowerCase() === t.toLowerCase())) out.push(t);
+  }
+  return out.slice(0, MAX_KEY_POINTS);
+}
+
+/** The sheet of the team a match is against: the one the plan points to, else the one with the same name. */
+export function sheetForMatch<T extends Pick<Opponent, 'id' | 'name' | 'sport_type'>>(sheets: T[], opponentName: string, planOpponentId?: string | null, sport?: string | null): T | null {
+  const linked = planOpponentId ? sheets.find((s) => s.id === planOpponentId) : null;
+  if (linked) return linked;
+  const same = sheets.filter((s) => sameTeam(s.name, opponentName));
+  return same.find((s) => sport && s.sport_type === sport) ?? same[0] ?? null;
+}
+
+/** The next match still to be played against this team (the earliest from today on). */
+export function nextMatchAgainst<T extends PlayedMatch>(matches: T[], opponentName: string, today = new Date()): T | null {
+  const from = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return matchesAgainst(matches, opponentName)
+    .filter((m) => m.status !== 'completed' && Date.parse(m.match_date) >= from)
+    .sort((a, b) => a.match_date.localeCompare(b.match_date))[0] ?? null;
+}
+
+/** The schemes the plan picked, in the plan's order; schemes deleted meanwhile are skipped. */
+export function plannedSchemes(schemes: OpponentScheme[], ids: string[]): OpponentScheme[] {
+  return ids.map((id) => schemes.find((s) => s.id === id)).filter((s): s is OpponentScheme => !!s);
+}

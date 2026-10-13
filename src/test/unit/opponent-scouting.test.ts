@@ -58,3 +58,42 @@ describe('opponent scouting', () => {
     expect(sheetSummary({ schemes: 0, players: 0, observations: 0 })).toBe('Ficha ainda vazia');
   });
 });
+
+import { cleanKeyPoints, nextMatchAgainst, plannedSchemes, sheetForMatch } from '@/lib/opponent-scouting';
+
+describe('game plan', () => {
+  it('keeps the key ideas short and clean', () => {
+    expect(cleanKeyPoints(['  Pressionar   alto ', '', 'pressionar alto', 'Segundo poste'])).toEqual(['Pressionar alto', 'Segundo poste']);
+    expect(cleanKeyPoints(Array.from({ length: 9 }, (_, i) => `Ideia ${i}`))).toHaveLength(6);
+  });
+
+  it('finds the sheet of the team a match is against', () => {
+    const sheets = [
+      { id: 'a', name: 'Rival FC', sport_type: 'football_11' },
+      { id: 'b', name: 'rival fc', sport_type: 'football_7' },
+      { id: 'c', name: 'Outro', sport_type: 'football_7' },
+    ];
+    expect(sheetForMatch(sheets, 'Rival FC', null, 'football_7')?.id).toBe('b');
+    expect(sheetForMatch(sheets, 'Rival FC')?.id).toBe('a');
+    // the plan's own link wins, even if the match was renamed
+    expect(sheetForMatch(sheets, 'Rival FC', 'c')?.id).toBe('c');
+    expect(sheetForMatch(sheets, 'Desconhecido')).toBeNull();
+  });
+
+  it('picks the next match still to play against a team', () => {
+    const today = new Date('2026-10-13T15:00:00');
+    const matches = [
+      { id: 'past', opponent_name: 'Rival FC', match_date: '2026-10-01T10:00:00', status: 'completed' },
+      { id: 'today', opponent_name: 'Rival FC', match_date: '2026-10-13T09:00:00', status: 'scheduled' },
+      { id: 'later', opponent_name: 'Rival FC', match_date: '2026-11-20T10:00:00', status: 'scheduled' },
+      { id: 'other', opponent_name: 'Outro', match_date: '2026-10-14T10:00:00', status: 'scheduled' },
+    ];
+    expect(nextMatchAgainst(matches, 'Rival FC', today)?.id).toBe('today');
+    expect(nextMatchAgainst(matches, 'Ninguem', today)).toBeNull();
+  });
+
+  it('shows the picked schemes in the order of the plan and skips deleted ones', () => {
+    const s = (id: string) => ({ id } as never);
+    expect(plannedSchemes([s('1'), s('2'), s('3')], ['3', 'x', '1']).map((x) => (x as { id: string }).id)).toEqual(['3', '1']);
+  });
+});
