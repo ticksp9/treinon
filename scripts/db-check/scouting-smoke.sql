@@ -1,0 +1,72 @@
+-- Opponent scouting: who works on an opponent's sheet (run after backup-smoke.sql; reuses the people of team-staff-smoke.sql).
+\set ON_ERROR_STOP 1
+RESET ROLE;
+SET ROLE authenticated;
+
+-- the head coach files an opponent in the club's archive, with a player, a scheme and an observation
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.scout_opponents (id, club_id, name, category, sport_type)
+VALUES ('5c000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Rival FC', 'Sub-13', 'football_9');
+INSERT INTO public.scout_opponent_players (opponent_id, shirt_number, name, position, is_key) VALUES ('5c000000-0000-0000-0000-000000000001', '10', 'Dez', 'CM', true);
+INSERT INTO public.scout_opponent_schemes (id, opponent_id, moment, title, board_data)
+VALUES ('5c000000-0000-0000-0000-0000000000a1', '5c000000-0000-0000-0000-000000000001', 'attack', 'Saida a tres', '{"sport":"football_9","tokens":[],"drawings":[],"steps":[]}');
+INSERT INTO public.scout_opponent_observations (opponent_id, against, result, notes) VALUES ('5c000000-0000-0000-0000-000000000001', 'Outro', '2-1', 'Pressionam alto');
+-- and one in his own archive (no club)
+INSERT INTO public.scout_opponents (id, name) VALUES ('5c000000-0000-0000-0000-000000000002', 'Pessoal do principal');
+DO $$ BEGIN
+  -- nobody files a sheet in a club he does not belong to, or in somebody else's name
+  BEGIN
+    INSERT INTO public.scout_opponents (name, owner_id) VALUES ('Falso', 'a0000000-0000-0000-0000-000000000001');
+    RAISE EXCEPTION 'FAIL: created a sheet in another person''s name';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+
+-- the assistant (same club, same team) works on both
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_opponents WHERE id IN ('5c000000-0000-0000-0000-000000000001', '5c000000-0000-0000-0000-000000000002')) = 2, 'assistant sees the club sheet and the head coach''s own';
+  ASSERT (SELECT count(*) FROM public.scout_opponent_schemes WHERE opponent_id = '5c000000-0000-0000-0000-000000000001') = 1, 'assistant sees the schemes';
+  UPDATE public.scout_opponents SET strengths = 'Bolas paradas' WHERE id = '5c000000-0000-0000-0000-000000000001';
+  ASSERT FOUND, 'assistant can add to the sheet';
+  INSERT INTO public.scout_opponent_schemes (opponent_id, moment, title, board_data) VALUES ('5c000000-0000-0000-0000-000000000001', 'defense', 'Bloco medio', '{}');
+  DELETE FROM public.scout_opponents WHERE id = '5c000000-0000-0000-0000-000000000001';
+  ASSERT NOT FOUND, 'assistant cannot delete a sheet he did not create';
+  BEGIN
+    UPDATE public.scout_opponents SET club_id = NULL WHERE id = '5c000000-0000-0000-0000-000000000001';
+    RAISE EXCEPTION 'FAIL: moved a sheet out of the club';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM LIKE 'FAIL:%' THEN RAISE; END IF;
+  END;
+END $$;
+
+-- an outsider and a parent see nothing and cannot write
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_opponents) = 0, 'outsider sees no sheets';
+  ASSERT (SELECT count(*) FROM public.scout_opponent_players) = 0 AND (SELECT count(*) FROM public.scout_opponent_schemes) = 0 AND (SELECT count(*) FROM public.scout_opponent_observations) = 0, 'outsider sees no details';
+  BEGIN
+    INSERT INTO public.scout_opponent_players (opponent_id, shirt_number) VALUES ('5c000000-0000-0000-0000-000000000001', '9');
+    RAISE EXCEPTION 'FAIL: outsider wrote on a sheet';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN
+    INSERT INTO public.scout_opponents (name, club_id) VALUES ('Intruso', 'c0000000-0000-0000-0000-000000000001');
+    RAISE EXCEPTION 'FAIL: outsider filed a sheet in the club';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  -- his own archive works
+  INSERT INTO public.scout_opponents (id, name) VALUES ('5c000000-0000-0000-0000-000000000003', 'Do estranho');
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_opponents) = 0 AND (SELECT count(*) FROM public.scout_opponent_schemes) = 0, 'a parent sees nothing of the scouting';
+END $$;
+
+-- the club's administrator sees the club's sheets (not the coaches' private ones of other people) and may delete
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_opponents WHERE id = '5c000000-0000-0000-0000-000000000003') = 0, 'the outsider''s archive stays his';
+  DELETE FROM public.scout_opponents WHERE id = '5c000000-0000-0000-0000-000000000001';
+  ASSERT FOUND, 'club admin deletes a club sheet';
+  ASSERT (SELECT count(*) FROM public.scout_opponent_schemes WHERE opponent_id = '5c000000-0000-0000-0000-000000000001') = 0, 'its schemes go with it';
+END $$;
+RESET ROLE;
+SELECT 'scouting smoke: OK' AS result;

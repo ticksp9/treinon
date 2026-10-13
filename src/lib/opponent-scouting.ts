@@ -1,0 +1,108 @@
+/**
+ * Scouting of opponents: one sheet per opposing team, kept from match to match.
+ * The sheet holds how they play (schemes drawn on the tactical board, filed by moment of
+ * the game), their squad and what was seen in each match watched.
+ */
+import { emptyBoard, formationCodes, placeFormation, type BoardState } from '@/lib/tactic-board';
+
+export interface Opponent {
+  id: string; owner_id: string; club_id: string | null;
+  name: string; category: string | null; sport_type: string; competition: string | null;
+  coach_name: string | null; usual_formation: string | null;
+  strengths: string | null; weaknesses: string | null; notes: string | null;
+  created_at: string; updated_at: string;
+}
+export interface OpponentPlayer {
+  id: string; opponent_id: string; shirt_number: string | null; name: string | null;
+  position: string | null; foot: 'right' | 'left' | 'both' | null; is_key: boolean; notes: string | null;
+}
+export type SchemeMoment = 'attack' | 'defense' | 'transition_attack' | 'transition_defense' | 'set_piece_for' | 'set_piece_against';
+export interface OpponentScheme {
+  id: string; opponent_id: string; moment: SchemeMoment; title: string; notes: string | null;
+  board_data: unknown; updated_at: string;
+}
+export interface OpponentObservation {
+  id: string; opponent_id: string; observed_on: string; against: string | null; result: string | null;
+  formation: string | null; notes: string | null;
+}
+
+/** The moments of the game, always from the opponent's point of view. */
+export const MOMENTS: { key: SchemeMoment; label: string; hint: string; half: boolean }[] = [
+  { key: 'attack', label: 'Como atacam', hint: 'Saída de bola, como chegam à frente e como finalizam.', half: false },
+  { key: 'defense', label: 'Como defendem', hint: 'Altura do bloco, pressão e espaços que deixam.', half: false },
+  { key: 'transition_attack', label: 'Quando ganham a bola', hint: 'Contra-ataque: quem lança e para onde.', half: false },
+  { key: 'transition_defense', label: 'Quando perdem a bola', hint: 'Reagem a pressionar ou recuam? Quem fica fora de posição?', half: false },
+  { key: 'set_piece_for', label: 'Bolas paradas a atacar', hint: 'Cantos, livres e lançamentos deles.', half: true },
+  { key: 'set_piece_against', label: 'Bolas paradas a defender', hint: 'Como marcam nos cantos e livres contra eles.', half: true },
+];
+export const momentLabel = (m: string) => MOMENTS.find((x) => x.key === m)?.label ?? m;
+
+export const SPORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'football_11', label: 'Futebol 11' },
+  { value: 'football_9', label: 'Futebol 9' },
+  { value: 'football_7', label: 'Futebol 7' },
+  { value: 'football_5', label: 'Futebol 5' },
+  { value: 'futsal', label: 'Futsal' },
+];
+export const sportLabel = (s: string) => SPORT_OPTIONS.find((o) => o.value === s)?.label ?? s;
+
+export const FOOT_LABEL: Record<string, string> = { right: 'Direito', left: 'Esquerdo', both: 'Ambos' };
+
+/** "G.D. São João " and "gd sao joao" are the same team. */
+export const normalizeTeamName = (name: string | null | undefined) =>
+  (name ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+export const sameTeam = (a: string | null | undefined, b: string | null | undefined) => {
+  const x = normalizeTeamName(a), y = normalizeTeamName(b);
+  return !!x && x === y;
+};
+
+export interface PlayedMatch { id: string; opponent_name: string; match_date: string; status?: string | null; is_home?: boolean | null; goals_for?: number | null; goals_against?: number | null; team_name?: string | null }
+
+/** Our own matches against this team, most recent first. */
+export function matchesAgainst<T extends PlayedMatch>(matches: T[], opponentName: string): T[] {
+  return matches.filter((m) => sameTeam(m.opponent_name, opponentName)).sort((a, b) => b.match_date.localeCompare(a.match_date));
+}
+
+export interface HeadToHead { played: number; won: number; drawn: number; lost: number; goalsFor: number; goalsAgainst: number }
+
+/** Only matches with a final score count. */
+export function headToHead(matches: PlayedMatch[]): HeadToHead {
+  const h: HeadToHead = { played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0 };
+  for (const m of matches) {
+    if (m.goals_for == null || m.goals_against == null || (m.status && m.status !== 'completed')) continue;
+    h.played++; h.goalsFor += m.goals_for; h.goalsAgainst += m.goals_against;
+    if (m.goals_for > m.goals_against) h.won++; else if (m.goals_for < m.goals_against) h.lost++; else h.drawn++;
+  }
+  return h;
+}
+
+/** Key players first, then by shirt number, then by name. */
+export function sortSquad<T extends Pick<OpponentPlayer, 'is_key' | 'shirt_number' | 'name'>>(players: T[]): T[] {
+  const num = (p: T) => { const n = parseInt(p.shirt_number ?? '', 10); return Number.isFinite(n) ? n : 999; };
+  return [...players].sort((a, b) => Number(b.is_key) - Number(a.is_key) || num(a) - num(b) || (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
+}
+
+/**
+ * The board a new scheme starts from: the opponent (red) already in his usual shape,
+ * with the squad's numbers when the formation is known. Set pieces open on half a pitch.
+ */
+export function newSchemeBoard(sport: string, moment: SchemeMoment, usualFormation?: string | null): BoardState {
+  const codes = formationCodes(sport);
+  const code = usualFormation && codes.some((c) => c.code === usualFormation) ? usualFormation : codes[0]?.code;
+  const base = { ...emptyBoard(sport), half: !!MOMENTS.find((m) => m.key === moment)?.half };
+  return code ? placeFormation(base, 'away', code) : base;
+}
+
+export function schemesByMoment(schemes: OpponentScheme[]): Record<SchemeMoment, OpponentScheme[]> {
+  const out = Object.fromEntries(MOMENTS.map((m) => [m.key, [] as OpponentScheme[]])) as Record<SchemeMoment, OpponentScheme[]>;
+  for (const s of schemes) (out[s.moment] ??= []).push(s);
+  return out;
+}
+
+/** One line for the list: "3 esquemas · 12 jogadores · 2 observações". */
+export function sheetSummary(counts: { schemes: number; players: number; observations: number }): string {
+  const part = (n: number, one: string, many: string) => (n > 0 ? `${n} ${n === 1 ? one : many}` : null);
+  return [part(counts.schemes, 'esquema', 'esquemas'), part(counts.players, 'jogador', 'jogadores'), part(counts.observations, 'observação', 'observações')]
+    .filter(Boolean).join(' · ') || 'Ficha ainda vazia';
+}

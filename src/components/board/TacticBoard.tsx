@@ -58,10 +58,13 @@ interface Props {
   /** start in full-screen talk mode (e.g. opened from the live match) */
   startFull?: boolean;
   onClose?: () => void;
+  /** the board belongs to something else (e.g. an opponent's scheme): "Guardar" hands the drawing over instead of saving a play */
+  onSaveExternal?: (state: BoardState) => unknown;
+  saveLabel?: string;
 }
 
 /** Pitch lines for each format, in board units. */
-function PitchLines({ sport }: { sport: string }) {
+export function PitchLines({ sport }: { sport: string }) {
   const futsal = sport === 'futsal' || sport === 'football_5';
   const big = sport === 'football_11' ? { d: 16.5, w: 40.3 } : sport === 'football_9' ? { d: 13, w: 36 } : { d: 11, w: 32 };
   const small = sport === 'football_11' ? { d: 5.5, w: 18.3 } : null;
@@ -95,7 +98,7 @@ function PitchLines({ sport }: { sport: string }) {
   );
 }
 
-export function TacticBoard({ initial, players, slotMap, teamId, persistKey, homeSig, startFull = false, onClose }: Props) {
+export function TacticBoard({ initial, players, slotMap, teamId, persistKey, homeSig, startFull = false, onClose, onSaveExternal, saveLabel }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
   // what the coach left here last time (leaving the screen must not wipe the board)
@@ -465,6 +468,9 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
         <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('ball')}>⚽ Bola</Button>
         <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('cone')}>▲ Cone</Button>
         <div className="ml-auto flex items-center gap-1.5">
+          {onSaveExternal ? (
+            <Button size="sm" className="h-9" onClick={() => onSaveExternal(JSON.parse(JSON.stringify(state)))}><Save className="mr-1.5 h-4 w-4" />{saveLabel ?? 'Guardar'}</Button>
+          ) : (<>
           <Button size="sm" variant="outline" className="h-9" onClick={() => setSavedOpen((o) => !o)}><FolderOpen className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Jogadas ({saved.length})</span></Button>
           {loaded && (
             <span className="flex max-w-[11rem] items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground">
@@ -473,6 +479,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
             </span>
           )}
           <Button size="sm" variant="outline" className="h-9" onClick={savePlay} title={loaded ? `Atualizar "${loaded.name}"` : 'Guardar como jogada nova'}><Save className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar</span></Button>
+          </>)}
           <Button size="icon" variant="outline" className="h-9 w-9" onClick={exportPng} aria-label="Exportar imagem"><Download className="h-4 w-4" /></Button>
         </div>
       </div>

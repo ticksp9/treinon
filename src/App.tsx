@@ -26,6 +26,8 @@ const PlayerDetail = lazy(() => import("./pages/PlayerDetail"));
 const Trainings = lazy(() => import("./pages/Trainings"));
 const Matches = lazy(() => import("./pages/Matches"));
 const TacticalBoard = lazy(() => import("./pages/TacticalBoard"));
+const Scouting = lazy(() => import("./pages/Scouting"));
+const ScoutingOpponent = lazy(() => import("./pages/ScoutingOpponent"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
 const ClubMap = lazy(() => import("./pages/ClubMap"));
@@ -137,6 +139,8 @@ function AppContent() {
           <Route path="/matches" element={<RoleProtectedRoute><Matches /></RoleProtectedRoute>} />
           <Route path="/training" element={<RoleProtectedRoute><Trainings /></RoleProtectedRoute>} />
           <Route path="/tactical-board" element={<RoleProtectedRoute><TacticalBoard /></RoleProtectedRoute>} />
+          <Route path="/scouting" element={<RoleProtectedRoute><Scouting /></RoleProtectedRoute>} />
+          <Route path="/scouting/adversarios/:id" element={<RoleProtectedRoute><ScoutingOpponent /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
           <Route path="/mapa" element={<RoleProtectedRoute><ClubMap /></RoleProtectedRoute>} />
