@@ -29,6 +29,8 @@ const TacticalBoard = lazy(() => import("./pages/TacticalBoard"));
 const Scouting = lazy(() => import("./pages/Scouting"));
 const ScoutingOpponent = lazy(() => import("./pages/ScoutingOpponent"));
 const ScoutingReport = lazy(() => import("./pages/ScoutingReport"));
+const ScoutingPlayer = lazy(() => import("./pages/ScoutingPlayer"));
+const ScoutingPlayerReport = lazy(() => import("./pages/ScoutingPlayerReport"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
 const ClubMap = lazy(() => import("./pages/ClubMap"));
@@ -143,6 +145,8 @@ function AppContent() {
           <Route path="/scouting" element={<RoleProtectedRoute><Scouting /></RoleProtectedRoute>} />
           <Route path="/scouting/adversarios/:id" element={<RoleProtectedRoute><ScoutingOpponent /></RoleProtectedRoute>} />
           <Route path="/scouting/adversarios/:id/relatorio" element={<RoleProtectedRoute><ScoutingReport /></RoleProtectedRoute>} />
+          <Route path="/scouting/jogadores/:id" element={<RoleProtectedRoute><ScoutingPlayer /></RoleProtectedRoute>} />
+          <Route path="/scouting/jogadores/:id/relatorio" element={<RoleProtectedRoute><ScoutingPlayerReport /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
           <Route path="/mapa" element={<RoleProtectedRoute><ClubMap /></RoleProtectedRoute>} />

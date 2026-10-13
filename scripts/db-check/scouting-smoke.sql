@@ -96,3 +96,64 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 SELECT 'scouting smoke: OK' AS result;
+
+-- ── watched players ──
+SET ROLE authenticated;
+-- the head coach files a player in the club's archive and watches him twice
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.scout_players (id, club_id, name, birth_year, current_club, position)
+VALUES ('5d000000-0000-0000-0000-000000000001', 'c0000000-0000-0000-0000-000000000001', 'Observado', 2014, 'Outro Clube', 'ST');
+INSERT INTO public.scout_player_observations (scout_player_id, technical, tactical, physical, mental, potential, recommendation)
+VALUES ('5d000000-0000-0000-0000-000000000001', 4, 3, 3, 4, 5, 'follow');
+DO $$ BEGIN
+  -- a contact is only kept with permission
+  BEGIN
+    INSERT INTO public.scout_player_contacts (scout_player_id, contact, permission_given) VALUES ('5d000000-0000-0000-0000-000000000001', '912000000', false);
+    RAISE EXCEPTION 'FAIL: contact kept without permission';
+  EXCEPTION WHEN check_violation THEN NULL; END;
+  INSERT INTO public.scout_player_contacts (scout_player_id, contact, permission_given, permission_note) VALUES ('5d000000-0000-0000-0000-000000000001', 'Pai: 912000000', true, 'Dado pelo pai no fim do jogo');
+END $$;
+
+-- the assistant works on the sheet but does not read the contact
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_players WHERE id = '5d000000-0000-0000-0000-000000000001') = 1, 'assistant sees the watched player';
+  ASSERT (SELECT count(*) FROM public.scout_player_observations WHERE scout_player_id = '5d000000-0000-0000-0000-000000000001') = 1, 'assistant sees the observations';
+  INSERT INTO public.scout_player_observations (scout_player_id, technical, recommendation) VALUES ('5d000000-0000-0000-0000-000000000001', 5, 'trial');
+  UPDATE public.scout_players SET status = 'following' WHERE id = '5d000000-0000-0000-0000-000000000001';
+  ASSERT FOUND, 'assistant can move the player along';
+  ASSERT (SELECT count(*) FROM public.scout_player_contacts) = 0, 'assistant does not read the contact';
+  DELETE FROM public.scout_players WHERE id = '5d000000-0000-0000-0000-000000000001';
+  ASSERT NOT FOUND, 'assistant cannot delete a sheet he did not create';
+END $$;
+
+-- outsider and parent: nothing
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_players) = 0 AND (SELECT count(*) FROM public.scout_player_observations) = 0 AND (SELECT count(*) FROM public.scout_player_contacts) = 0, 'outsider sees no watched players';
+  BEGIN
+    INSERT INTO public.scout_player_observations (scout_player_id, technical) VALUES ('5d000000-0000-0000-0000-000000000001', 1);
+    RAISE EXCEPTION 'FAIL: outsider wrote an observation';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN
+    INSERT INTO public.scout_players (name, club_id) VALUES ('Intruso', 'c0000000-0000-0000-0000-000000000001');
+    RAISE EXCEPTION 'FAIL: outsider filed a player in the club';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_players) = 0 AND (SELECT count(*) FROM public.scout_player_contacts) = 0, 'a parent sees nothing of the watched players';
+END $$;
+
+-- the club's administrator reads the contact and may delete the sheet (the contact goes with it)
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_player_contacts WHERE scout_player_id = '5d000000-0000-0000-0000-000000000001') = 1, 'club admin reads the contact';
+  DELETE FROM public.scout_players WHERE id = '5d000000-0000-0000-0000-000000000001';
+  ASSERT FOUND, 'club admin deletes the sheet';
+END $$;
+RESET ROLE;
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.scout_player_contacts) = 0 AND (SELECT count(*) FROM public.scout_player_observations) = 0, 'contact and observations are gone with the sheet';
+END $$;
+SELECT 'player scouting smoke: OK' AS result;

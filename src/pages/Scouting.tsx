@@ -4,9 +4,9 @@
  * matches already in the calendar are offered here, so a sheet starts with one tap.
  */
 import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Plus, Search, Shield } from 'lucide-react';
+import { ChevronRight, Plus, Search, Shield, UserSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { OpponentFormDialog, formToRow, type OpponentForm } from '@/components/scouting/OpponentFormDialog';
+import { ScoutPlayersTab } from '@/components/scouting/ScoutPlayersTab';
 import { normalizeTeamName, sheetSummary, sportLabel, type Opponent } from '@/lib/opponent-scouting';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +31,8 @@ export default function Scouting() {
   const { clubId } = useUserRole();
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'jogadores' ? 'jogadores' : 'adversarios';
   const [search, setSearch] = useState('');
   const [dialog, setDialog] = useState<{ defaults?: Partial<OpponentForm> } | null>(null);
 
@@ -86,6 +89,15 @@ export default function Scouting() {
   return (
     <AppLayout title="Scouting">
       <div className="mx-auto max-w-4xl space-y-4">
+        <div className="inline-flex rounded-md border bg-muted/40 p-1" role="tablist" aria-label="Scouting">
+          {([['adversarios', 'Adversários', Shield], ['jogadores', 'Jogadores', UserSearch]] as const).map(([key, label, Icon]) => (
+            <Button key={key} role="tab" aria-selected={tab === key} size="sm" variant={tab === key ? 'default' : 'ghost'} className="h-9" onClick={() => setParams(key === 'adversarios' ? {} : { tab: key }, { replace: true })}>
+              <Icon className="mr-1.5 h-4 w-4" />{label}
+            </Button>
+          ))}
+        </div>
+
+        {tab === 'jogadores' ? <ScoutPlayersTab /> : (<>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="flex items-center gap-2 text-xl font-semibold"><Shield className="h-5 w-5 text-primary" />Adversários</h1>
@@ -153,6 +165,7 @@ export default function Scouting() {
             {shown.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma equipa com esse nome.</p>}
           </div>
         )}
+        </>)}
       </div>
 
       <OpponentFormDialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)} defaults={dialog?.defaults} onSubmit={create} />
