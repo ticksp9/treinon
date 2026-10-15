@@ -29,7 +29,8 @@ import { MatchRulesPanel } from '@/components/matches/MatchRulesPanel';
 import { getOrCreateMatchReport, type ReportEntryMode } from '@/lib/match-report-service';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { computeAvailability, getClinicalStatusOption, type InjuryRecord } from '@/lib/player-availability';
-import { ShieldAlert, ShieldCheck, Share2 } from 'lucide-react';
+import { FileDown, ShieldAlert, ShieldCheck, Share2 } from 'lucide-react';
+import { buildCallupPdf, callupFileName, shareOrDownloadPdf } from '@/lib/callup-pdf';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 
@@ -735,78 +736,38 @@ export function MatchCallup() {
     shareText(text, 'Convocatória');
   };
 
-  const printCallup = () => {
+  /** the call-up as one A4 page (print, or send to the coordinator) */
+  const callupPdf = () => {
     const match = matches.find(m => m.id === selectedMatch);
-    if (!match) return;
-
-    const groupedPlayers = groupPlayersByPosition();
+    if (!match) return null;
     const team = teams.find(t => t.id === selectedTeam);
+    const grouped = groupPlayersByPosition();
+    const sheet = {
+      teamName: team?.name || 'Equipa', category: team?.category ?? null,
+      opponent: match.opponent_name, matchDate: match.match_date, isHome: match.is_home, location: match.location,
+      competition: match.competition, arrivalTime: arrivalTime || null,
+      parts: match.part_regulation_minutes?.length ? match.part_regulation_minutes : null,
+      groups: Object.entries(grouped).map(([category, list]) => ({
+        label: POSITION_CATEGORY_LABELS[category],
+        players: list.filter(p => selectedPlayers.has(p.id)).map(p => ({ name: p.name, number: p.number ?? null, position: p.position ?? null })),
+      })),
+    };
+    return { doc: buildCallupPdf(sheet), fileName: callupFileName(sheet), title: `Convocatória vs ${match.opponent_name}` };
+  };
 
-    const content = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Convocatória - ${match.opponent_name}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; }
-          h1 { text-align: center; margin-bottom: 10px; }
-          h2 { text-align: center; color: #666; margin-bottom: 30px; }
-          .info { margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; }
-          .info p { margin: 5px 0; }
-          .section { margin-top: 20px; }
-          .section-title { font-weight: bold; color: #333; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #eee; }
-          .player { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-          .number { width: 40px; font-weight: bold; }
-          .name { flex: 1; }
-          .position { color: #666; font-size: 14px; }
-          .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; }
-          .badge { display: inline-block; padding: 4px 8px; background: #e0e0e0; border-radius: 4px; font-size: 12px; margin-left: 8px; }
-        </style>
-      </head>
-      <body>
-        <h1>CONVOCATÓRIA</h1>
-        <h2>${team?.name || ''} ${team?.category ? `(${team.category})` : ''}</h2>
+  const printCallup = () => {
+    const pdf = callupPdf();
+    if (!pdf) return;
+    pdf.doc.autoPrint();
+    const win = window.open(pdf.doc.output('bloburl') as unknown as string, '_blank');
+    if (!win) pdf.doc.save(pdf.fileName);
+  };
 
-        <div class="info">
-          <p><strong>Adversário:</strong> ${match.opponent_name}</p>
-          <p><strong>Data:</strong> ${format(new Date(match.match_date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: pt })}</p>
-          <p><strong>Hora do Jogo:</strong> ${format(new Date(match.match_date), "HH:mm", { locale: pt })}</p>
-          ${arrivalTime ? `<p><strong>Hora de Chegada:</strong> ${arrivalTime}</p>` : ''}
-          ${match.location ? `<p><strong>Local:</strong> ${match.location}</p>` : ''}
-          <p><strong>Tipo:</strong> ${match.competition || 'Campeonato'} <span class="badge">${match.is_home ? 'CASA' : 'FORA'}</span></p>
-        </div>
-
-        ${Object.entries(groupedPlayers)
-          .filter(([_, categoryPlayers]) => categoryPlayers.some(p => selectedPlayers.has(p.id)))
-          .map(([category, categoryPlayers]) => `
-            <div class="section">
-              <div class="section-title">${POSITION_CATEGORY_LABELS[category]} (${categoryPlayers.filter(p => selectedPlayers.has(p.id)).length})</div>
-              ${categoryPlayers
-                .filter(p => selectedPlayers.has(p.id))
-                .map(p => `
-                  <div class="player">
-                    <div class="number">${p.number || '-'}</div>
-                    <div class="name">${p.name}</div>
-                    <div class="position">${p.position || ''}</div>
-                  </div>
-                `).join('')}
-            </div>
-          `).join('')}
-
-        <div class="footer">
-          <p>Total de Convocados: ${selectedPlayers.size}</p>
-          <p>Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: pt })}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(content);
-      printWindow.document.close();
-      printWindow.print();
-    }
+  const sendCallupPdf = async () => {
+    const pdf = callupPdf();
+    if (!pdf) return;
+    const how = await shareOrDownloadPdf(pdf.doc, pdf.fileName, pdf.title);
+    if (how === 'downloaded') toast.success('PDF descarregado. Anexe-o no email ou na mensagem ao coordenador.');
   };
 
   const selectedMatchData = matches.find(m => m.id === selectedMatch);
@@ -1298,6 +1259,21 @@ export function MatchCallup() {
                   </div>
                 </div>
 
+                {/* Parts: a wrong number of minutes is fixed here too, until kick-off */}
+                <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                  <Label>Partes e minutos</Label>
+                  {selectedMatchData?.status === 'in_progress' ? (
+                    <p className="text-sm text-muted-foreground">O jogo já começou: as partes mudam-se no próprio jogo em direto.</p>
+                  ) : (
+                    <PartMinutesEditor
+                      value={currentParts()}
+                      onChange={(partMinutes) => setNewMatch(prev => ({ ...prev, partMinutes, partsCount: partMinutes.length, partDurationMinutes: partMinutes[0] }))}
+                      teamFormat={teamFormatOf(teams.find(t => t.id === selectedTeam))}
+                      maxParts={newMatch.matchType === 'tournament' ? 4 : 6}
+                    />
+                  )}
+                </div>
+
                 {/* Opponent */}
                 <div className="space-y-2">
                   <Label>Adversário *</Label>
@@ -1407,6 +1383,10 @@ export function MatchCallup() {
                 <Button variant="outline" size="sm" onClick={printCallup} disabled={selectedPlayers.size === 0}>
                   <Printer className="w-4 h-4 mr-2" />
                   Imprimir
+                </Button>
+                <Button variant="outline" size="sm" onClick={sendCallupPdf} disabled={selectedPlayers.size === 0} title="Folha da convocatória em PDF, para enviar ao coordenador">
+                  <FileDown className="w-4 h-4 mr-2" />
+                  PDF
                 </Button>
                 <Button variant="outline" size="sm" onClick={shareCallup} disabled={selectedPlayers.size === 0}>
                   <Share2 className="w-4 h-4 mr-2" />
