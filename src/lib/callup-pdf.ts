@@ -57,7 +57,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
     ['Jogo', `${s.isHome ? s.teamName : s.opponent} vs ${s.isHome ? s.opponent : s.teamName}`],
     ['Data', format(when, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: pt })],
     ['Hora do jogo', format(when, 'HH:mm')],
-    ...(s.arrivalTime ? [['Hora de chegada', s.arrivalTime] as [string, string]] : []),
+    ...(s.arrivalTime ? [['No campo às', s.arrivalTime] as [string, string]] : []),
     ['Local', `${s.location || '—'} (${s.isHome ? 'casa' : 'fora'})`],
     ['Competição', s.competition || 'Campeonato'],
     ...(partsText(s.parts) ? [['Tempo de jogo', partsText(s.parts)!] as [string, string]] : []),

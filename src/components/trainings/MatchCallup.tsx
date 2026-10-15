@@ -69,6 +69,8 @@ interface Match {
   part_regulation_minutes?: number[] | null;
   is_test?: boolean;
   is_deleted?: boolean;
+  /** set by the coach or the coordinator: { meet_time: "09:45", meet_place, transport, kit, info } */
+  logistics?: { meet_time?: string; meet_place?: string; transport?: string; kit?: string; info?: string } | null;
 }
 
 const teamFormatOf = (t?: { match_format?: { parts?: number[] } | null } | null) =>
@@ -306,24 +308,26 @@ export function MatchCallup() {
     try {
       const { data, error } = await supabase
         .from('matches')
-        .select('id, match_date, opponent_name, is_home, location, competition, status, match_type, parts_count, part_duration_minutes, part_regulation_minutes, is_test, is_deleted')
+        .select('id, match_date, opponent_name, is_home, location, competition, status, match_type, parts_count, part_duration_minutes, part_regulation_minutes, is_test, is_deleted, logistics')
         .eq('team_id', selectedTeam)
         .eq('is_deleted', false)
         .order('match_date', { ascending: true });
 
       if (error) throw error;
-      setMatches(data || []);
+      // logistics is newer than the generated types
+      const rows = (data ?? []) as unknown as Match[];
+      setMatches(rows);
 
       // Prioritize in_progress match, then next upcoming
-      const inProgress = data?.find(m => m.status === 'in_progress');
+      const inProgress = rows.find(m => m.status === 'in_progress');
       if (inProgress) {
         setSelectedMatch(inProgress.id);
       } else {
-        const upcoming = data?.find(m => new Date(m.match_date) >= new Date());
+        const upcoming = rows.find(m => new Date(m.match_date) >= new Date());
         if (upcoming) {
           setSelectedMatch(upcoming.id);
-        } else if (data && data.length > 0) {
-          setSelectedMatch(data[data.length - 1].id);
+        } else if (rows.length > 0) {
+          setSelectedMatch(rows[rows.length - 1].id);
         }
       }
     } catch (error) {
@@ -452,6 +456,7 @@ export function MatchCallup() {
           is_home: newMatch.isHome,
           location: newMatch.location || null,
           competition: competitionName,
+          logistics: newMatch.arrivalTime ? { meet_time: newMatch.arrivalTime } : null,
           status: 'scheduled',
           match_type: newMatch.matchType,
           parts_count: parts.length,
@@ -638,12 +643,12 @@ export function MatchCallup() {
       location: selectedMatchData.location || '',
       matchType,
       competition: matchType === 'championship' ? (selectedMatchData.competition || '') : '',
-      arrivalTime: '',
       partsCount: selectedMatchData.parts_count || 2,
       partDurationMinutes: selectedMatchData.part_duration_minutes || 0,
       partMinutes: selectedMatchData.part_regulation_minutes?.length
         ? selectedMatchData.part_regulation_minutes
         : Array(selectedMatchData.parts_count || 2).fill(selectedMatchData.part_duration_minutes || 25),
+      arrivalTime: selectedMatchData.logistics?.meet_time ?? '',
       isTest: selectedMatchData.is_test || false,
       reportEntryMode: 'live' as ReportEntryMode,
     });
@@ -681,6 +686,7 @@ export function MatchCallup() {
         is_home: newMatch.isHome,
         location: newMatch.location || null,
         competition: competitionName,
+        logistics: { ...(selectedMatchData?.logistics ?? {}), meet_time: newMatch.arrivalTime || undefined },
         match_type: newMatch.matchType,
         is_test: newMatch.isTest,
       };
@@ -701,6 +707,7 @@ export function MatchCallup() {
 
       if (error) throw error;
 
+      setArrivalTime(newMatch.arrivalTime);
       toast.success('Jogo atualizado!');
       setEditDialogOpen(false);
       fetchMatches();
@@ -709,6 +716,20 @@ export function MatchCallup() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const savedMeetTime = matches.find(m => m.id === selectedMatch)?.logistics?.meet_time ?? '';
+  useEffect(() => { setArrivalTime(savedMeetTime); }, [selectedMatch, savedMeetTime]);
+
+  // the time to be at the ground lives on the match, so the e-mail, the PDF and the club map all show it
+  const saveArrivalTime = async (value: string) => {
+    const match = matches.find(m => m.id === selectedMatch);
+    if (!match || (match.logistics?.meet_time ?? '') === value) return;
+    const logistics = { ...(match.logistics ?? {}), meet_time: value || undefined };
+    const { error } = await supabase.from('matches').update({ logistics } as never).eq('id', match.id);
+    if (error) return toast.error('Não foi possível guardar a hora: ' + error.message);
+    setMatches(prev => prev.map(m => (m.id === match.id ? { ...m, logistics } : m)));
+    toast.success(value ? `Hora de estar no campo: ${value}` : 'Hora de estar no campo apagada.');
   };
 
   // Coaches send call-ups to the team's WhatsApp group
@@ -725,7 +746,7 @@ export function MatchCallup() {
       `⚽ *CONVOCATÓRIA* — ${team?.name ?? ''}`,
       `🆚 ${match.opponent_name} (${match.is_home ? 'casa' : 'fora'})`,
       `📅 ${format(date, "EEEE, dd/MM", { locale: pt })} às ${format(date, 'HH:mm')}`,
-      arrivalTime ? `⏰ Chegada: ${arrivalTime}` : '',
+      arrivalTime ? `⏰ No campo às ${arrivalTime}` : '',
       match.location ? `📍 ${match.location}` : '',
       '',
       `*Convocados (${called.length}):*`,
@@ -872,12 +893,15 @@ export function MatchCallup() {
             </div>
 
             <div className="space-y-2">
-              <Label>Hora de Chegada</Label>
+              <Label>Hora de estar no campo</Label>
               <Input
                 type="time"
                 value={arrivalTime}
                 onChange={e => setArrivalTime(e.target.value)}
+                onBlur={() => saveArrivalTime(arrivalTime)}
                 placeholder="HH:MM"
+                disabled={!selectedMatch}
+                aria-label="Hora de estar no campo"
               />
             </div>
 
@@ -1042,9 +1066,9 @@ export function MatchCallup() {
                       />
                     </div>
 
-                    {/* Arrival Time */}
+                    {/* when the players must be at the ground */}
                     <div className="space-y-2">
-                      <Label>Hora de Chegada ao Campo</Label>
+                      <Label>Hora de estar no campo</Label>
                       <Input
                         type="time"
                         value={newMatch.arrivalTime}
@@ -1257,6 +1281,15 @@ export function MatchCallup() {
                       onChange={e => setNewMatch(prev => ({ ...prev, time: e.target.value }))}
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Hora de estar no campo</Label>
+                  <Input
+                    type="time"
+                    value={newMatch.arrivalTime}
+                    onChange={e => setNewMatch(prev => ({ ...prev, arrivalTime: e.target.value }))}
+                  />
                 </div>
 
                 {/* Parts: a wrong number of minutes is fixed here too, until kick-off */}
