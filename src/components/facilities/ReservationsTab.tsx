@@ -46,7 +46,8 @@ export function ReservationsTab({ reservations, spaces, facilities, teams, onCre
 
   const handleCreate = () => {
     if (!form.facility_id || !form.facility_space_id || !form.starts_at || !form.ends_at) return;
-    onCreateReservation({ ...form, team_id: form.team_id || undefined });
+    // datetime-local has no time zone: send the instant, or the database reads it as UTC
+    onCreateReservation({ ...form, starts_at: new Date(form.starts_at).toISOString(), ends_at: new Date(form.ends_at).toISOString(), team_id: form.team_id || undefined });
     setOpen(false);
     setForm({ facility_id: '', facility_space_id: '', reservation_type: 'training', starts_at: '', ends_at: '', team_id: '', notes: '' });
   };

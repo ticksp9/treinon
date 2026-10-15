@@ -426,7 +426,8 @@ export function MatchCallup() {
 
     setCreating(true);
     try {
-      const matchDateTime = `${newMatch.date}T${newMatch.time}:00`;
+      // the time typed is Portugal's time: send it with the offset, or the database reads it as UTC (one hour out in summer)
+      const matchDateTime = new Date(`${newMatch.date}T${newMatch.time}:00`).toISOString();
       const parts = currentParts();
 
       // Determine competition name based on match type
@@ -660,7 +661,8 @@ export function MatchCallup() {
 
     setCreating(true);
     try {
-      const matchDateTime = `${newMatch.date}T${newMatch.time}:00`;
+      // the time typed is Portugal's time: send it with the offset, or the database reads it as UTC (one hour out in summer)
+      const matchDateTime = new Date(`${newMatch.date}T${newMatch.time}:00`).toISOString();
 
       // Determine competition name
       let competitionName = 'Campeonato';
