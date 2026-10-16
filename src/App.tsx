@@ -30,6 +30,7 @@ const Scouting = lazy(() => import("./pages/Scouting"));
 const ScoutingOpponent = lazy(() => import("./pages/ScoutingOpponent"));
 const ScoutingReport = lazy(() => import("./pages/ScoutingReport"));
 const ScoutingPlayer = lazy(() => import("./pages/ScoutingPlayer"));
+const MedicalDepartment = lazy(() => import("./pages/MedicalDepartment"));
 const ScoutingPlayerReport = lazy(() => import("./pages/ScoutingPlayerReport"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
@@ -147,6 +148,7 @@ function AppContent() {
           <Route path="/scouting/adversarios/:id/relatorio" element={<RoleProtectedRoute><ScoutingReport /></RoleProtectedRoute>} />
           <Route path="/scouting/jogadores/:id" element={<RoleProtectedRoute><ScoutingPlayer /></RoleProtectedRoute>} />
           <Route path="/scouting/jogadores/:id/relatorio" element={<RoleProtectedRoute><ScoutingPlayerReport /></RoleProtectedRoute>} />
+          <Route path="/departamento-medico" element={<RoleProtectedRoute><MedicalDepartment /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
           <Route path="/mapa" element={<RoleProtectedRoute><ClubMap /></RoleProtectedRoute>} />

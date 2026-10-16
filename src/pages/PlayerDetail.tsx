@@ -693,7 +693,7 @@ export default function PlayerDetail() {
             </CardContent>
           </Card>
         )}
-        <Tabs defaultValue="summary" className="space-y-4">
+        <Tabs defaultValue={new URLSearchParams(window.location.search).get('tab') || 'summary'} className="space-y-4">
           <TabsList className="flex flex-wrap h-auto justify-start">
             <TabsTrigger value="summary">Resumo</TabsTrigger>
             <TabsTrigger value="evaluations">Avaliações</TabsTrigger>

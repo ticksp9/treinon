@@ -32,7 +32,7 @@ import {
   UserCog,
   ArrowUpRight,
   User,
-  Heart,
+
   MessageSquare,
   Home,
   CalendarDays,
@@ -69,6 +69,7 @@ const staffMenuItems = [
   { title: 'Equipas', icon: Shirt, path: '/teams' },
   { title: 'Quadro Tático', icon: PenTool, path: '/tactical-board' },
   { title: 'Scouting', icon: Binoculars, path: '/scouting' },
+  { title: 'Departamento médico', icon: Stethoscope, path: '/departamento-medico' },
   { title: 'Comunicação', icon: MessageSquare, path: '/communication' },
   { title: 'Meu Perfil', icon: User, path: '/coach-profile' },
 ];
@@ -90,8 +91,7 @@ const clubMenuGroups = [
       { title: 'Formação & academia', icon: BookOpen, path: '/erp/academy' },
       { title: 'Scouting (adversários e jogadores)', icon: Binoculars, path: '/scouting' },
       { title: 'Regras de jogo', icon: ClipboardCheck, path: '/erp/match-rules' },
-      { title: 'Fisioterapia', icon: Heart, path: '/club/physio' },
-      { title: 'Saúde & medicina', icon: Stethoscope, path: '/erp/medical' },
+      { title: 'Departamento médico', icon: Stethoscope, path: '/departamento-medico' },
     ],
   },
   {

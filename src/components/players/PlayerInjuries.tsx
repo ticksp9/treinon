@@ -20,10 +20,15 @@ import {
   getClinicalStatusOption,
   type InjuryRecord,
 } from '@/lib/player-availability';
+import { MECHANISMS, daysOut, isEarlyRecurrence, mechanismLabel, severityByDays } from '@/lib/injury-care';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
 interface Props { playerId: string }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any; // newer than the generated types
+const CLINICAL_FIELDS = ['diagnosis', 'responsible_professional', 'treatment', 'treatment_plan', 'clinical_notes'] as const;
 
 const BODY_SIDES = [
   { value: 'left', label: 'Esquerdo' },
@@ -46,6 +51,7 @@ const emptyForm = () => ({
   body_part: '',
   body_side: 'n_a',
   context: 'training',
+  mechanism: '',
   severity: 'moderate',
   diagnosis: '',
   responsible_professional: '',
@@ -81,29 +87,58 @@ export function PlayerInjuries({ playerId }: Props) {
     },
   });
 
+  // the diagnosis is health data: only the club's doctor / physio (or a coach without a club) reads it
+  const { data: access } = useQuery({
+    queryKey: ['injury-access', playerId, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [{ data: clin }, { data: club }] = await Promise.all([
+        db.rpc('can_see_injury_clinical', { _user: user!.id, _player: playerId }),
+        db.rpc('player_club', { _player: playerId }),
+      ]);
+      const { data: med } = club ? await db.rpc('is_medical_staff', { _user: user!.id, _club: club }) : { data: false };
+      return { clinical: !!clin, medical: !!med, club: (club as string | null) ?? null };
+    },
+  });
+  const { data: clinical = {} } = useQuery({
+    queryKey: ['injury-clinical', playerId],
+    enabled: !!access?.clinical,
+    queryFn: async () => Object.fromEntries((((await db.from('player_injury_clinical').select('*').eq('player_id', playerId)).data ?? []) as { injury_id: string }[]).map((c) => [c.injury_id, c])) as Record<string, Record<string, string | null>>,
+  });
+
   const upsert = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Not authenticated');
+      const clin = Object.fromEntries(CLINICAL_FIELDS.map((k) => [k, (form[k] as string)?.trim() || null]));
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { diagnosis: _d, responsible_professional: _r, treatment: _t, treatment_plan: _tp, clinical_notes: _c, ...rest } = form;
       const payload: any = {
-        ...form,
+        ...rest,
+        mechanism: form.mechanism || null,
+        // the same place and type again within 2 months of coming back
+        is_recurrence: form.is_recurrence || (!editingId && isEarlyRecurrence({ injury_date: form.injury_date, body_part: form.body_part || null, injury_type: form.injury_type || null }, (injuries || []) as any[])),
+        ...(access?.medical ? { assessed_at: new Date().toISOString(), assessed_by: user.id } : {}),
+        // without access to the clinical record, what is written goes there (and is not read back)
+        ...(!access?.clinical && Object.values(clin).some(Boolean) ? clin : {}),
         player_id: playerId,
         owner_id: user.id,
         return_date: form.return_date || null,
         expected_return_date: form.expected_return_date || null,
-        diagnosis: form.diagnosis || null,
-        responsible_professional: form.responsible_professional || null,
         description: form.description || null,
-        treatment: form.treatment || null,
-        treatment_plan: form.treatment_plan || null,
-        clinical_notes: form.clinical_notes || null,
         restrictions: form.restrictions || null,
         body_part: form.body_part || null,
       };
+      let injuryId = editingId;
       if (editingId) {
         const { error } = await supabase.from('player_injuries').update(payload).eq('id', editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('player_injuries').insert(payload);
+        const { data, error } = await supabase.from('player_injuries').insert(payload).select('id').single();
+        if (error) throw error;
+        injuryId = (data as { id: string }).id;
+      }
+      if (access?.clinical && injuryId) {
+        const { error } = await db.from('player_injury_clinical').upsert({ injury_id: injuryId, player_id: playerId, ...clin, updated_by: user.id, updated_at: new Date().toISOString() }, { onConflict: 'injury_id' });
         if (error) throw error;
       }
     },
@@ -112,6 +147,8 @@ export function PlayerInjuries({ playerId }: Props) {
       qc.invalidateQueries({ queryKey: ['player-active-injuries', playerId] });
       qc.invalidateQueries({ queryKey: ['active-injuries'] });
       qc.invalidateQueries({ queryKey: ['callup-availability'] });
+      qc.invalidateQueries({ queryKey: ['injury-clinical', playerId] });
+      qc.invalidateQueries({ queryKey: ['medical-dept'] });
       toast.success(editingId ? 'Lesão atualizada' : 'Lesão registada');
       setOpen(false);
       setEditingId(null);
@@ -153,7 +190,8 @@ export function PlayerInjuries({ playerId }: Props) {
     },
   });
 
-  const startEdit = (inj: any) => {
+  const startEdit = (raw: any) => {
+    const inj = { ...raw, ...(clinical[raw.id] ?? {}) };
     setEditingId(inj.id);
     setForm({
       injury_date: inj.injury_date,
@@ -163,6 +201,7 @@ export function PlayerInjuries({ playerId }: Props) {
       body_part: inj.body_part || '',
       body_side: inj.body_side || 'n_a',
       context: inj.context || 'training',
+      mechanism: inj.mechanism || '',
       severity: inj.severity || 'moderate',
       diagnosis: inj.diagnosis || '',
       responsible_professional: inj.responsible_professional || '',
@@ -244,6 +283,15 @@ export function PlayerInjuries({ playerId }: Props) {
                   </Select>
                 </Field>
               </div>
+              <Field label="Como aconteceu">
+                <Select value={form.mechanism || undefined} onValueChange={(v) => setForm({ ...form, mechanism: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>{MECHANISMS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+                </Select>
+              </Field>
+              <Field label="O que aconteceu">
+                <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Ex.: caiu sobre o pé esquerdo depois de um salto; saiu a coxear" />
+              </Field>
 
               <div className="grid grid-cols-3 gap-4">
                 <Field label="Tipo *">
@@ -281,13 +329,23 @@ export function PlayerInjuries({ playerId }: Props) {
                 </Field>
               </div>
 
-              <Field label="Diagnóstico">
-                <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} placeholder="Ex: Rotura grau 1 isquiotibiais" />
-              </Field>
-
-              <Field label="Profissional Responsável">
-                <Input value={form.responsible_professional} onChange={(e) => setForm({ ...form, responsible_professional: e.target.value })} placeholder="Médico / Fisioterapeuta" />
-              </Field>
+              {access?.clinical ? (
+                <>
+                  <Field label="Diagnóstico">
+                    <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} placeholder="Ex: Rotura grau 1 isquiotibiais" />
+                  </Field>
+                  <Field label="Profissional Responsável">
+                    <Input value={form.responsible_professional} onChange={(e) => setForm({ ...form, responsible_professional: e.target.value })} placeholder="Médico / Fisioterapeuta" />
+                  </Field>
+                </>
+              ) : (
+                <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground space-y-2">
+                  <p>O diagnóstico e as notas clínicas são dados de saúde: só o médico e o fisioterapeuta do clube os veem.</p>
+                  <Field label="O que o médico disse (opcional, fica só para o departamento médico)">
+                    <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} />
+                  </Field>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Data Prevista de Regresso">
@@ -298,12 +356,16 @@ export function PlayerInjuries({ playerId }: Props) {
                 </Field>
               </div>
 
-              <Field label="Plano de Tratamento">
-                <Textarea rows={2} value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} />
-              </Field>
-              <Field label="Observações Clínicas">
-                <Textarea rows={2} value={form.clinical_notes} onChange={(e) => setForm({ ...form, clinical_notes: e.target.value })} />
-              </Field>
+              {access?.clinical && (
+                <>
+                  <Field label="Plano de Tratamento">
+                    <Textarea rows={2} value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} />
+                  </Field>
+                  <Field label="Observações Clínicas">
+                    <Textarea rows={2} value={form.clinical_notes} onChange={(e) => setForm({ ...form, clinical_notes: e.target.value })} />
+                  </Field>
+                </>
+              )}
 
               <div className="rounded-md border p-3 space-y-3 bg-muted/30">
                 <div className="flex items-center justify-between">
@@ -343,7 +405,9 @@ export function PlayerInjuries({ playerId }: Props) {
         <Card><CardContent className="h-20 animate-pulse" /></Card>
       ) : injuries && injuries.length > 0 ? (
         <div className="space-y-3">
-          {injuries.map((inj) => {
+          {injuries.map((raw) => {
+            const inj = { ...raw, ...(clinical[raw.id] ?? {}) };
+            const out = daysOut(inj.injury_date, inj.return_date);
             const active = !inj.return_date && inj.clinical_status !== 'apto';
             const typeLbl = INJURY_TYPES.find((t) => t.value === inj.injury_type)?.label || inj.injury_type;
             const partLbl = BODY_PARTS.find((b) => b.value === inj.body_part)?.label || inj.body_part;
@@ -364,6 +428,7 @@ export function PlayerInjuries({ playerId }: Props) {
                           {sevLbl && <Badge className={`${sevLbl.color} text-white`}>{sevLbl.label}</Badge>}
                           {statusLbl && <Badge variant="outline" className={statusLbl.tone}>{statusLbl.label}</Badge>}
                           {inj.is_recurrence && <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/30">Recaída</Badge>}
+                          {active && !inj.assessed_at && access?.club && <Badge variant="outline" className="border-accent text-accent">Por avaliar</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground mt-0.5">
                           {partLbl}{sideLbl && partLbl ? ` (${sideLbl})` : ''}
@@ -373,6 +438,8 @@ export function PlayerInjuries({ playerId }: Props) {
                           {format(new Date(inj.injury_date), "d MMM yyyy", { locale: pt })}
                           {inj.expected_return_date && <> · prev. {format(new Date(inj.expected_return_date), "d MMM yyyy", { locale: pt })}</>}
                           {inj.return_date && <> → alta {format(new Date(inj.return_date), "d MMM yyyy", { locale: pt })}</>}
+                          {' · '}{out} {out === 1 ? 'dia' : 'dias'} de paragem{inj.return_date ? ` (${severityByDays(out).label.toLowerCase()})` : ''}
+                          {mechanismLabel(inj.mechanism) && <> · {mechanismLabel(inj.mechanism)!.toLowerCase()}</>}
                         </p>
                         {inj.restrictions && (
                           <p className="text-xs mt-1"><span className="text-muted-foreground">Restrições:</span> {inj.restrictions}</p>
