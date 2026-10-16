@@ -22,6 +22,7 @@ import { pickStartingXI, assistantReport, type Candidate, type PickMode } from '
 import { PreMatchPanel } from './PreMatchPanel';
 import { PrepSquadPanel } from './PrepSquadPanel';
 import { MatchPlanCard } from '@/components/scouting/MatchPlanCard';
+import { useTeamBranding } from '@/hooks/useTeamBranding';
 import { AbsenceDialog } from './AbsenceDialog';
 import { AssistDialog } from './AssistDialog';
 import { LiveHud } from './LiveHud';
@@ -150,6 +151,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const { user } = useAuth();
   const { isOnline } = useOnlineStatus();
   const isMobile = useIsMobile();
+  const { crestUrl } = useTeamBranding(teamId);
   const [match, setMatch] = useState<Match | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   /** Modality actually used in this match: the match's own choice, else the team's */
@@ -1569,6 +1571,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         <MatchRatingsPanel matchId={matchId} />
 
         <MatchReport
+          crestUrl={crestUrl}
           match={match}
           lineups={lineups}
           events={events}
@@ -1592,6 +1595,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       {(phase === 'playing' || phase === 'interval') && (
         <LiveHud
           teamName={team?.name || ''}
+          crestUrl={crestUrl}
           opponentName={match?.opponent_name || ''}
           goalsFor={goalsFor}
           goalsAgainst={goalsAgainst}

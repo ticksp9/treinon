@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   teamName: string;
+  /** our crest, next to our name */
+  crestUrl?: string | null;
   opponentName: string;
   goalsFor: number;
   goalsAgainst: number;
@@ -69,8 +71,9 @@ export function LiveHud(p: Props) {
       <div className="flex items-center gap-2 sm:gap-4 2xl:flex-none">
         {/* score */}
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 2xl:flex-none">
-          <div className="min-w-0 text-right">
+          <div className="flex min-w-0 items-center justify-end gap-1.5 text-right">
             <div className="max-w-[5.5rem] truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:max-w-[9rem]">{p.teamName || 'Nós'}</div>
+            {p.crestUrl && <img src={p.crestUrl} alt="" className="h-8 w-8 shrink-0 object-contain sm:h-10 sm:w-10" />}
           </div>
           <div className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 font-mono text-3xl font-bold tabular-nums leading-none sm:text-4xl" aria-label={`Resultado ${p.goalsFor} a ${p.goalsAgainst}`}>
             <span>{p.goalsFor}</span><span className="text-muted-foreground">–</span><span>{p.goalsAgainst}</span>

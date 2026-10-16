@@ -14,6 +14,8 @@ export interface CallupSheet {
   opponent: string; matchDate: string; isHome: boolean; location?: string | null;
   competition?: string | null; arrivalTime?: string | null; parts?: number[] | null;
   groups: CallupGroup[];
+  /** the team's crest, read beforehand (PNG data URL) */
+  crest?: { dataUrl: string; ratio: number } | null;
 }
 
 /** "15' + 15' + 30' (60')" */
@@ -50,12 +52,18 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(12);
   doc.text(`${s.teamName}${s.category ? ` (${s.category})` : ''}`, M, 21);
   doc.setFillColor(249, 115, 22); doc.rect(0, 28, W, 1.5, 'F');
+  if (s.crest) {
+    // on a white tile, so any crest reads on the dark band
+    const h = 22, w = Math.min(h * s.crest.ratio, 30);
+    doc.setFillColor(255, 255, 255); doc.roundedRect(W - M - w - 2, 3, w + 4, h + 1, 2, 2, 'F');
+    doc.addImage(s.crest.dataUrl, 'PNG', W - M - w, 3.5, w, w / s.crest.ratio);
+  }
 
   // the match
   const when = new Date(s.matchDate);
   const facts: [string, string][] = [
     ['Jogo', `${s.isHome ? s.teamName : s.opponent} vs ${s.isHome ? s.opponent : s.teamName}`],
-    ['Data', format(when, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: pt })],
+    ['Data', format(when, "EEEE, dd/MM/yyyy", { locale: pt })],
     ['Hora do jogo', format(when, 'HH:mm')],
     ...(s.arrivalTime ? [['No campo às', s.arrivalTime] as [string, string]] : []),
     ['Local', `${s.location || '—'} (${s.isHome ? 'casa' : 'fora'})`],
@@ -64,12 +72,19 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   ];
   doc.setTextColor(15, 23, 42);
   let y = 39;
-  const half = Math.ceil(facts.length / 2);
-  facts.forEach(([k, v], i) => {
-    const x = i < half ? M : W / 2 + 2, yy = y + (i % half) * 7;
+  const fact = (k: string, v: string, x: number, yy: number, width: number) => {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(100, 116, 139); doc.text(k.toUpperCase(), x, yy);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(15, 23, 42);
-    doc.text(doc.splitTextToSize(v, W / 2 - M - 4)[0], x + 32, yy);
+    doc.text(doc.splitTextToSize(v, width)[0], x + 32, yy);
+  };
+  // the match itself across the page (team names can be long), the rest in two columns
+  const [first, ...rest] = facts;
+  fact(first[0], first[1], M, y, W - 2 * M - 32);
+  y += 7;
+  const half = Math.ceil(rest.length / 2);
+  rest.forEach(([k, v], i) => {
+    const left = i < half;
+    fact(k, v, left ? M : W / 2 + 2, y + (i % half) * 7, left ? W / 2 - 2 - M - 32 - 3 : W - M - (W / 2 + 2) - 32);
   });
   y += half * 7 + 2;
   doc.setDrawColor(30, 41, 59); doc.setLineWidth(0.6); doc.line(M, y, W - M, y);

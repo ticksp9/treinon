@@ -157,3 +157,26 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.scout_player_contacts) = 0 AND (SELECT count(*) FROM public.scout_player_observations) = 0, 'contact and observations are gone with the sheet';
 END $$;
 SELECT 'player scouting smoke: OK' AS result;
+
+-- ── team crests: who may write them ──
+DO $$ BEGIN
+  ASSERT public.can_write_crest('a0000000-0000-0000-0000-000000000002', 'teams/b0000000-0000-0000-0000-000000000001/crest.png'), 'head coach writes his team crest';
+  ASSERT NOT public.can_write_crest('a0000000-0000-0000-0000-000000000003', 'teams/b0000000-0000-0000-0000-000000000001/crest.png'), 'assistant does not change the crest';
+  ASSERT public.can_write_crest('a0000000-0000-0000-0000-000000000001', 'teams/b0000000-0000-0000-0000-000000000001/crest.png'), 'club admin writes a club team crest';
+  ASSERT public.can_write_crest('a0000000-0000-0000-0000-000000000001', 'clubs/c0000000-0000-0000-0000-000000000001/logo.png'), 'club admin writes the club logo';
+  ASSERT NOT public.can_write_crest('a0000000-0000-0000-0000-000000000002', 'clubs/c0000000-0000-0000-0000-000000000001/logo.png'), 'a coach does not change the club logo';
+  ASSERT NOT public.can_write_crest('a0000000-0000-0000-0000-000000000004', 'teams/b0000000-0000-0000-0000-000000000001/crest.png'), 'outsider writes nothing';
+  ASSERT NOT public.can_write_crest('a0000000-0000-0000-0000-000000000002', 'teams/not-a-uuid/x.png'), 'bad paths are refused';
+  ASSERT NOT public.can_write_crest('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001/x.png'), 'only the teams/ and clubs/ folders';
+END $$;
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.my_team_branding() WHERE team_id = 'b0000000-0000-0000-0000-000000000001') = 1, 'the assistant gets the team look';
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.my_team_branding() WHERE team_id = 'b0000000-0000-0000-0000-000000000001') = 0, 'an outsider does not get the club team';
+END $$;
+RESET ROLE;
+SELECT 'crest smoke: OK' AS result;

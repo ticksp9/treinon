@@ -23,6 +23,7 @@ import { useSeasonContext } from '@/hooks/useSeasonContext';
 import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
 import { SquadDepth } from '@/components/teams/SquadDepth';
 import { TeamTacticsCard } from '@/components/teams/TeamTacticsCard';
+import { TeamBrandingCard } from '@/components/teams/TeamBrandingCard';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TeamStaffPanel } from '@/components/teams/TeamStaffPanel';
@@ -442,6 +443,8 @@ export default function TeamDetail() {
               </Button>
             </DialogContent>
           </Dialog>
+
+          <TeamBrandingCard team={team as never} />
 
           <TeamTacticsCard teamId={team.id} sportType={team.sport_type} />
 

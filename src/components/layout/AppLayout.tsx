@@ -11,6 +11,7 @@ import { ConsentGate } from '@/components/family/ConsentGate';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { loadCustomFormations, watchCustomFormations } from '@/lib/custom-formations';
+import { TeamCrest, TeamThemeStyle, useTeamBranding } from '@/hooks/useTeamBranding';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,7 +21,17 @@ interface AppLayoutProps {
 /** Which team the coach is working with; tap to switch (only shown with 2+ teams). */
 function ActiveTeamChip() {
   const { myTeams, activeTeam, openChooser } = useActiveTeam();
-  if (myTeams.length < 2) return null;
+  const { crestUrl } = useTeamBranding();
+  // one team: nothing to switch, but its crest still belongs at the top
+  if (myTeams.length < 2) {
+    if (!crestUrl || !activeTeam) return null;
+    return (
+      <span className="flex max-w-[9.5rem] items-center gap-1.5 text-xs sm:max-w-[14rem]">
+        <TeamCrest url={crestUrl} name={activeTeam.name} className="h-7 w-7" />
+        <span className="hidden truncate font-semibold sm:block">{activeTeam.name}</span>
+      </span>
+    );
+  }
   return (
     <button
       type="button"
@@ -28,7 +39,7 @@ function ActiveTeamChip() {
       className="flex max-w-[9.5rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-left text-xs hover:border-primary sm:max-w-[14rem]"
       title="Trocar de equipa"
     >
-      <Shirt className="h-3.5 w-3.5 shrink-0 text-primary" />
+      {crestUrl ? <TeamCrest url={crestUrl} name={activeTeam?.name} className="h-6 w-6" /> : <Shirt className="h-3.5 w-3.5 shrink-0 text-primary" />}
       <span className="min-w-0">
         <span className="block truncate font-semibold leading-tight">{activeTeam?.name ?? 'Escolher equipa'}</span>
         {activeTeam?.club_name && <span className="block truncate text-[10px] leading-tight text-muted-foreground">{activeTeam.club_name}</span>}
@@ -49,6 +60,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   }, [user?.id]);
   return (
     <SidebarProvider>
+      <TeamThemeStyle />
       <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
         <main className="flex-1 flex flex-col min-h-screen min-w-0">

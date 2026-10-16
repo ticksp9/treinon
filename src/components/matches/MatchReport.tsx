@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { imageAsDataUrl } from '@/lib/team-branding';
 import jsPDF from 'jspdf';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { format } from 'date-fns';
@@ -64,6 +65,8 @@ interface Match {
 }
 
 interface MatchReportProps {
+  /** our crest, on top of the PDF */
+  crestUrl?: string | null;
   match: Match;
   lineups: Lineup[];
   events: MatchEvent[];
@@ -90,8 +93,11 @@ const MODALITY_LABELS: Record<string, string> = {
   futsal: 'Futsal',
 };
 
-export function MatchReport({ match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
+export function MatchReport({ crestUrl, match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
   const [generating, setGenerating] = useState(false);
+  // read ahead, so the PDF is made the moment the coach asks for it
+  const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
+  useEffect(() => { let on = true; imageAsDataUrl(crestUrl).then((c) => on && setCrest(c)); return () => { on = false; }; }, [crestUrl]);
 
   // Compute real part times from elapsed seconds
   const elapsed = partElapsedSeconds || [];
@@ -271,6 +277,7 @@ export function MatchReport({ match, lineups, events, teamName, partElapsedSecon
       };
 
       // ── Title ──
+      if (crest) { const h = 18; doc.addImage(crest.dataUrl, 'PNG', 14, 8, h * crest.ratio, h); }
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text('RELATORIO DE JOGO', pageWidth / 2, y, { align: 'center' });

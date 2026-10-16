@@ -31,6 +31,8 @@ import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { computeAvailability, getClinicalStatusOption, type InjuryRecord } from '@/lib/player-availability';
 import { FileDown, ShieldAlert, ShieldCheck, Share2 } from 'lucide-react';
 import { buildCallupPdf, callupFileName, shareOrDownloadPdf } from '@/lib/callup-pdf';
+import { useTeamBranding } from '@/hooks/useTeamBranding';
+import { imageAsDataUrl } from '@/lib/team-branding';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 
@@ -117,6 +119,10 @@ export function MatchCallup() {
   /** Players of the team who are too old for its age group (e.g. a Sub-13 in the Sub-12) */
   const [ageBlocked, setAgeBlocked] = useState<Map<string, string>>(new Map());
   const [arrivalTime, setArrivalTime] = useState<string>('');
+  // the crest goes on the PDF: read ahead so the sheet is made at once (iPad blocks late pop-ups)
+  const [crestImg, setCrestImg] = useState<{ dataUrl: string; ratio: number } | null>(null);
+  const { crestUrl: teamCrestUrl } = useTeamBranding(selectedTeam || null);
+  useEffect(() => { let on = true; imageAsDataUrl(teamCrestUrl).then((c) => on && setCrestImg(c)); return () => { on = false; }; }, [teamCrestUrl]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -768,6 +774,7 @@ export function MatchCallup() {
       opponent: match.opponent_name, matchDate: match.match_date, isHome: match.is_home, location: match.location,
       competition: match.competition, arrivalTime: arrivalTime || null,
       parts: match.part_regulation_minutes?.length ? match.part_regulation_minutes : null,
+      crest: crestImg,
       groups: Object.entries(grouped).map(([category, list]) => ({
         label: POSITION_CATEGORY_LABELS[category],
         players: list.filter(p => selectedPlayers.has(p.id)).map(p => ({ name: p.name, number: p.number ?? null, position: p.position ?? null })),

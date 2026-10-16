@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit, Save, X, Upload, Building2, History, Target, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { shrinkImage } from '@/lib/team-branding';
 
 interface ClubInfoProps {
   club: any;
@@ -57,16 +58,18 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
     },
   });
 
+  // the logo is a public picture (club page, PDFs): it goes to the public "crests" folder of the club
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error('Use uma imagem PNG, JPG ou WebP.'); return; }
 
-    const fileExt = file.name.split('.').pop();
-    const filePath = `${user.id}/club-logo.${fileExt}`;
-
+    let blob: Blob;
+    try { blob = await shrinkImage(file); } catch { toast.error('Não foi possível ler a imagem.'); return; }
+    const filePath = `clubs/${clubId}/logo-${Date.now()}.png`;
     const { error: uploadError } = await supabase.storage
-      .from('coach-documents')
-      .upload(filePath, file, { upsert: true });
+      .from('crests')
+      .upload(filePath, blob, { contentType: 'image/png' });
 
     if (uploadError) {
       toast.error('Erro ao carregar logo');
@@ -74,11 +77,11 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
     }
 
     const { data: urlData } = supabase.storage
-      .from('coach-documents')
+      .from('crests')
       .getPublicUrl(filePath);
 
     setFormData({ ...formData, logo_url: urlData.publicUrl });
-    toast.success('Logo carregado!');
+    toast.success('Logo carregado! Carregue em Guardar para ficar.');
   };
 
   if (isEditing) {
