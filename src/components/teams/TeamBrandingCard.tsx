@@ -4,7 +4,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ImageUp, Palette, RotateCcw, Trash2, Wand2 } from 'lucide-react';
+import { Copy, ImageUp, Palette, RotateCcw, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { BRANDING_KEY, TeamCrest } from '@/hooks/useTeamBranding';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { colorsOfImage, isHex, shrinkImage, textOn, usableShade, type TeamTheme } from '@/lib/team-branding';
 
 const DEFAULT = { primary: '#265a8f', accent: '#ef6c0c' };
@@ -31,6 +32,10 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
   const [primary, setPrimary] = useState(isHex(team.theme?.primary) ? team.theme!.primary! : '');
   const [accent, setAccent] = useState(isHex(team.theme?.accent) ? team.theme!.accent! : '');
   const [busy, setBusy] = useState(false);
+  const { myTeams, activeTeam, chooseTeamId } = useActiveTeam();
+  const isActive = activeTeam?.id === team.id;
+  // my other teams where I am in charge (an assistant does not change crests)
+  const others = myTeams.filter((t) => t.id !== team.id && t.my_role !== 'assistant_coach');
   useEffect(() => { setCrest(team.crest_url ?? null); }, [team.crest_url]);
 
   const refresh = () => { qc.invalidateQueries({ queryKey: [BRANDING_KEY] }); qc.invalidateQueries({ queryKey: ['team', team.id] }); };
@@ -72,7 +77,18 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
     if (!window.confirm('Tirar o símbolo desta equipa?')) return;
     if (await save({ crest_url: null }, 'Símbolo retirado.')) setCrest(null);
   };
-  const saveColors = () => save({ theme: { primary: isHex(primary) ? primary : null, accent: isHex(accent) ? accent : null } }, 'Cores guardadas. A app já está com as cores da equipa.');
+  const saveColors = () => save({ theme: { primary: isHex(primary) ? primary : null, accent: isHex(accent) ? accent : null } },
+    isActive ? 'Cores guardadas. A app já está com as cores da equipa.' : `Cores guardadas para ${team.name}. Aparecem quando trabalhar com esta equipa.`);
+
+  // the same club, the same crest: copy this look to my other teams in one go
+  const copyToOthers = async () => {
+    if (!others.length || !window.confirm(`Usar este símbolo e estas cores também em: ${others.map((t) => t.name).join(', ')}?`)) return;
+    const theme = { primary: isHex(primary) ? primary : null, accent: isHex(accent) ? accent : null };
+    const { data, error } = await supabase.from('teams').update({ crest_url: crest, theme } as never).in('id', others.map((t) => t.id)).select('id');
+    if (error) return toast.error('Não foi possível copiar: ' + error.message);
+    refresh();
+    toast.success(`Símbolo e cores aplicados em ${data?.length ?? 0} ${data?.length === 1 ? 'equipa' : 'equipas'}.`);
+  };
   const resetColors = async () => { if (await save({ theme: null }, 'Voltou às cores do TreinON.')) { setPrimary(''); setAccent(''); } };
 
   const p = isHex(primary) ? primary : DEFAULT.primary;
@@ -85,6 +101,13 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
           <p className="flex items-center gap-1.5 text-sm font-semibold"><Palette className="h-4 w-4 text-primary" />Símbolo e cores</p>
           <p className="text-xs text-muted-foreground">O símbolo aparece no topo da app, no jogo em direto e nas folhas em PDF. As cores mudam a app enquanto trabalha com esta equipa.</p>
         </div>
+
+        {!isActive && activeTeam && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-accent/50 bg-accent/10 p-2 text-sm">
+            <span className="min-w-0 flex-1">Está a trabalhar com <strong>{activeTeam.name}</strong>. As cores e o símbolo de {team.name} aparecem na app quando mudar para esta equipa.</span>
+            <Button size="sm" variant="outline" onClick={() => chooseTeamId(team.id)}>Trabalhar com {team.name}</Button>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex h-20 w-20 items-center justify-center rounded-lg border bg-muted/30 p-1.5">
@@ -119,6 +142,7 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
 
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={saveColors} disabled={(!!primary && !isHex(primary)) || (!!accent && !isHex(accent))}>Guardar cores</Button>
+          {others.length > 0 && (crest || isHex(primary)) && <Button size="sm" variant="outline" onClick={copyToOthers}><Copy className="mr-1.5 h-4 w-4" />Usar também nas outras equipas</Button>}
           {(team.theme?.primary || team.theme?.accent) && <Button size="sm" variant="ghost" onClick={resetColors}><RotateCcw className="mr-1.5 h-4 w-4" />Voltar às cores do TreinON</Button>}
         </div>
       </CardContent>

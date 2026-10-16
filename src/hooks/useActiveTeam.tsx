@@ -23,11 +23,13 @@ interface Ctx {
   /** the active team if it is in the list, else the first */
   defaultTeamId: <T extends { id: string }>(list: T[]) => string | null;
   openChooser: () => void;
+  /** start working with this team (e.g. from its own page) */
+  chooseTeamId: (id: string) => void;
 }
 
 const ActiveTeamContext = createContext<Ctx>({
   myTeams: [], activeTeam: null, activeTeamId: null,
-  scopeTeams: (l) => l, defaultTeamId: (l) => l[0]?.id ?? null, openChooser: () => {},
+  scopeTeams: (l) => l, defaultTeamId: (l) => l[0]?.id ?? null, openChooser: () => {}, chooseTeamId: () => {},
 });
 
 const teamKey = (uid: string) => `treinon_active_team_${uid}`;
@@ -85,7 +87,8 @@ export function ActiveTeamProvider({ children }: { children: ReactNode }) {
     (activeId && list.some((t) => t.id === activeId) ? activeId : list[0]?.id ?? null), [activeId]);
   const openChooser = useCallback(() => setOpen(true), []);
 
-  const value: Ctx = { myTeams, activeTeam, activeTeamId: activeId, scopeTeams, defaultTeamId, openChooser };
+  const chooseTeamId = (id: string) => { const t = myTeams.find((x) => x.id === id); if (t) choose(t); };
+  const value: Ctx = { myTeams, activeTeam, activeTeamId: activeId, scopeTeams, defaultTeamId, openChooser, chooseTeamId };
   const show = !!user && isSuccess && !isPublicPage && (open || mustAsk);
   const groups = groupTeams(myTeams);
 
