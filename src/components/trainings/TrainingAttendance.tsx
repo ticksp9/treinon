@@ -16,6 +16,8 @@ import { Calendar, Clock, Users, Save, Plus, Trash2, Settings } from 'lucide-rea
 import { format, addDays, startOfWeek, parse } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { AttendanceSheetPanel } from './AttendanceSheetPanel';
+import { cleanSchedule, plannedTrainings } from '@/lib/attendance-sheet';
 
 interface Team {
   id: string;
@@ -80,6 +82,8 @@ export function TrainingAttendance() {
   const [location, setLocation] = useState('');
   const [duration, setDuration] = useState(90);
   const [generating, setGenerating] = useState(false);
+  // trainings are created up to this day (four weeks ahead by default)
+  const [until, setUntil] = useState(format(addDays(new Date(), 28), 'yyyy-MM-dd'));
   const seasonId = useSelectedSeasonId();
 
   useEffect(() => {
@@ -205,6 +209,15 @@ export function TrainingAttendance() {
     }));
   };
 
+  // the team's week is kept on the team: it comes back every time
+  useEffect(() => {
+    if (!configDialogOpen || !selectedTeam) return;
+    (supabase as any).from('teams').select('training_schedule').eq('id', selectedTeam).maybeSingle().then(({ data }: { data: { training_schedule: unknown } | null }) => {
+      const saved = cleanSchedule(data?.training_schedule);
+      if (saved.length) setTrainingDays(saved);
+    });
+  }, [configDialogOpen, selectedTeam]);
+
   const addTrainingDay = () => {
     if (trainingDays.some(d => d.day === newTrainingDay.day)) {
       toast.error('Este dia já foi adicionado');
@@ -225,32 +238,29 @@ export function TrainingAttendance() {
 
     setGenerating(true);
     try {
-      const today = new Date();
-      const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday
-      const sessionsToCreate: any[] = [];
+      const schedule = cleanSchedule(trainingDays);
+      await (supabase as any).from('teams').update({ training_schedule: schedule }).eq('id', selectedTeam);
 
-      trainingDays.forEach(trainingDay => {
-        // Calculate the date for this weekday
-        let targetDate = addDays(weekStart, trainingDay.day === 0 ? 6 : trainingDay.day - 1);
+      const from = new Date();
+      const end = new Date(`${until}T23:59:00`);
+      const { data: existing } = await supabase.from('training_sessions').select('date').eq('team_id', selectedTeam)
+        .gte('date', new Date(from.getFullYear(), from.getMonth(), from.getDate()).toISOString()).lte('date', end.toISOString());
+      const dates = plannedTrainings(schedule, from, end, (existing ?? []).map((e) => e.date));
 
-        // If the date is in the past, move to next week
-        if (targetDate < today) {
-          targetDate = addDays(targetDate, 7);
-        }
-
-        const [hours, minutes] = trainingDay.time.split(':').map(Number);
-        targetDate.setHours(hours, minutes, 0, 0);
-
-        sessionsToCreate.push({
-          team_id: selectedTeam,
-          owner_id: user.id,
-          date: targetDate.toISOString(),
-          season_id: seasonId,
-          location: location || null,
-          duration_minutes: duration,
-          objectives: null,
-        });
-      });
+      if (dates.length === 0) {
+        toast.success('Dias de treino guardados. Os treinos até essa data já estavam criados.');
+        setConfigDialogOpen(false);
+        return;
+      }
+      const sessionsToCreate = dates.map((d) => ({
+        team_id: selectedTeam,
+        owner_id: user.id,
+        date: d.toISOString(),
+        season_id: seasonId,
+        location: location || null,
+        duration_minutes: duration,
+        objectives: null,
+      }));
 
       const { error } = await supabase
         .from('training_sessions')
@@ -258,9 +268,8 @@ export function TrainingAttendance() {
 
       if (error) throw error;
 
-      toast.success(`${sessionsToCreate.length} sessões de treino criadas!`);
+      toast.success(`Dias de treino guardados e ${sessionsToCreate.length} treinos criados até ${format(end, 'dd/MM')}.`);
       setConfigDialogOpen(false);
-      setTrainingDays([]);
       fetchSessions();
     } catch (error: any) {
       toast.error('Erro ao criar sessões: ' + error.message);
@@ -361,7 +370,7 @@ export function TrainingAttendance() {
             Folha de Presenças
           </CardTitle>
           <CardDescription>
-            Configure os dias de treino para gerar automaticamente a folha de presenças semanal
+            Defina os dias de treino da equipa; a app cria os treinos e a folha para os jogadores assinarem
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -497,12 +506,18 @@ export function TrainingAttendance() {
                       />
                     </div>
 
+                    <div className="space-y-2">
+                      <Label>Criar os treinos até</Label>
+                      <Input type="date" value={until} onChange={e => setUntil(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Os dias ficam guardados na equipa. Dias que já têm treino não são repetidos.</p>
+                    </div>
+
                     <Button
                       onClick={generateWeeklySessions}
                       className="w-full"
-                      disabled={trainingDays.length === 0 || generating}
+                      disabled={trainingDays.length === 0 || generating || !until}
                     >
-                      {generating ? 'A gerar...' : `Gerar ${trainingDays.length} Sessões Semanais`}
+                      {generating ? 'A criar...' : 'Guardar dias e criar treinos'}
                     </Button>
                   </div>
                 </DialogContent>
@@ -538,6 +553,16 @@ export function TrainingAttendance() {
           )}
         </CardContent>
       </Card>
+
+      {selectedTeam && (
+        <AttendanceSheetPanel
+          teamId={selectedTeam}
+          teamName={teams.find(t => t.id === selectedTeam)?.name ?? ''}
+          players={players}
+          sessions={sessions}
+          onSaved={() => { fetchAttendance(); }}
+        />
+      )}
 
       {/* Attendance List */}
       {selectedSession && players.length > 0 && (
