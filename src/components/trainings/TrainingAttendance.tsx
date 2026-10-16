@@ -83,6 +83,8 @@ export function TrainingAttendance() {
   const [duration, setDuration] = useState(90);
   const [generating, setGenerating] = useState(false);
   // trainings are created up to this day (four weeks ahead by default)
+  // other teams of the same training (they train together, play apart)
+  const [jointIds, setJointIds] = useState<string[]>([]);
   const [until, setUntil] = useState(format(addDays(new Date(), 28), 'yyyy-MM-dd'));
   const seasonId = useSelectedSeasonId();
 
@@ -211,10 +213,11 @@ export function TrainingAttendance() {
 
   // the team's week is kept on the team: it comes back every time
   useEffect(() => {
-    if (!configDialogOpen || !selectedTeam) return;
-    (supabase as any).from('teams').select('training_schedule').eq('id', selectedTeam).maybeSingle().then(({ data }: { data: { training_schedule: unknown } | null }) => {
+    if (!selectedTeam) return;
+    (supabase as any).from('teams').select('training_schedule, trains_with').eq('id', selectedTeam).maybeSingle().then(({ data }: { data: { training_schedule: unknown; trains_with: string[] | null } | null }) => {
       const saved = cleanSchedule(data?.training_schedule);
-      if (saved.length) setTrainingDays(saved);
+      setTrainingDays(saved);
+      setJointIds((data?.trains_with ?? []).filter((id) => id !== selectedTeam));
     });
   }, [configDialogOpen, selectedTeam]);
 
@@ -239,28 +242,40 @@ export function TrainingAttendance() {
     setGenerating(true);
     try {
       const schedule = cleanSchedule(trainingDays);
-      await (supabase as any).from('teams').update({ training_schedule: schedule }).eq('id', selectedTeam);
+      // the teams of this training keep the same week and know each other
+      const group = [selectedTeam, ...jointIds];
+      const { data: before } = await (supabase as any).from('teams').select('trains_with').eq('id', selectedTeam).maybeSingle();
+      const dropped = ((before?.trains_with ?? []) as string[]).filter((id) => !group.includes(id));
+      for (const id of group) {
+        await (supabase as any).from('teams').update({ training_schedule: schedule, trains_with: group.filter((x) => x !== id) }).eq('id', id);
+      }
+      for (const id of dropped) {
+        const { data: t } = await (supabase as any).from('teams').select('trains_with').eq('id', id).maybeSingle();
+        await (supabase as any).from('teams').update({ trains_with: ((t?.trains_with ?? []) as string[]).filter((x) => !group.includes(x)) }).eq('id', id);
+      }
 
       const from = new Date();
       const end = new Date(`${until}T23:59:00`);
-      const { data: existing } = await supabase.from('training_sessions').select('date').eq('team_id', selectedTeam)
-        .gte('date', new Date(from.getFullYear(), from.getMonth(), from.getDate()).toISOString()).lte('date', end.toISOString());
-      const dates = plannedTrainings(schedule, from, end, (existing ?? []).map((e) => e.date));
+      const sessionsToCreate: { team_id: string; owner_id: string; date: string; season_id: string | null; location: string | null; duration_minutes: number; objectives: null }[] = [];
+      for (const teamId of group) {
+        const { data: existing } = await supabase.from('training_sessions').select('date').eq('team_id', teamId)
+          .gte('date', new Date(from.getFullYear(), from.getMonth(), from.getDate()).toISOString()).lte('date', end.toISOString());
+        plannedTrainings(schedule, from, end, (existing ?? []).map((e) => e.date)).forEach((d) => sessionsToCreate.push({
+          team_id: teamId,
+          owner_id: user.id,
+          date: d.toISOString(),
+          season_id: seasonId,
+          location: location || null,
+          duration_minutes: duration,
+          objectives: null,
+        }));
+      }
 
-      if (dates.length === 0) {
+      if (sessionsToCreate.length === 0) {
         toast.success('Dias de treino guardados. Os treinos até essa data já estavam criados.');
         setConfigDialogOpen(false);
         return;
       }
-      const sessionsToCreate = dates.map((d) => ({
-        team_id: selectedTeam,
-        owner_id: user.id,
-        date: d.toISOString(),
-        season_id: seasonId,
-        location: location || null,
-        duration_minutes: duration,
-        objectives: null,
-      }));
 
       const { error } = await supabase
         .from('training_sessions')
@@ -268,7 +283,7 @@ export function TrainingAttendance() {
 
       if (error) throw error;
 
-      toast.success(`Dias de treino guardados e ${sessionsToCreate.length} treinos criados até ${format(end, 'dd/MM')}.`);
+      toast.success(`Dias de treino guardados e ${sessionsToCreate.length} treinos criados até ${format(end, 'dd/MM')}${jointIds.length ? ' (para as equipas que treinam juntas)' : ''}.`);
       setConfigDialogOpen(false);
       fetchSessions();
     } catch (error: any) {
@@ -488,6 +503,20 @@ export function TrainingAttendance() {
                       </div>
                     )}
 
+                    {/* teams of the same training */}
+                    {teams.filter(t => t.id !== selectedTeam).length > 0 && (
+                      <div className="space-y-2">
+                        <Label>Treina junto com</Label>
+                        <p className="text-xs text-muted-foreground">Equipas que treinam juntas e só se separam nos jogos: os treinos são criados para todas e a folha de presenças leva os jogadores de todas.</p>
+                        {teams.filter(t => t.id !== selectedTeam).map(t => (
+                          <label key={t.id} className="flex items-center gap-2 text-sm">
+                            <Checkbox checked={jointIds.includes(t.id)} onCheckedChange={(v) => setJointIds(prev => v ? [...prev, t.id] : prev.filter(x => x !== t.id))} />
+                            {t.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Location and Duration */}
                     <div className="space-y-2">
                       <Label>Local (opcional)</Label>
@@ -561,6 +590,7 @@ export function TrainingAttendance() {
           players={players}
           sessions={sessions}
           onSaved={() => { fetchAttendance(); }}
+          trainsWith={teams.filter(t => jointIds.includes(t.id)).map(t => ({ id: t.id, name: t.name }))}
         />
       )}
 

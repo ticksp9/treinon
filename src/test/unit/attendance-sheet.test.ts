@@ -131,3 +131,22 @@ describe('attendance sheet: reading a photo', () => {
     expect(m.ok).toBe(false);
   });
 });
+
+import { alignSessions, sessionFor } from '@/lib/attendance-sheet';
+
+describe('attendance sheet: teams that train together', () => {
+  it('finds the other team training of the same day', () => {
+    const cols = [{ date: '2026-10-19T17:30:00Z' }, { date: '2026-10-21T17:30:00Z' }, { date: '2026-10-22T17:30:00Z' }];
+    const other = [{ id: 'b', date: '2026-10-21T17:00:00Z' }, { id: 'a', date: '2026-10-19T17:30:00Z' }, { id: 'x', date: '2026-10-25T17:30:00Z' }];
+    expect(alignSessions(cols, other).map((s) => s?.id ?? null)).toEqual(['a', 'b', null]);
+  });
+
+  it('saves each signature in the player own team', () => {
+    const sheet = { team_id: 'T13', session_ids: ['s1', 's2'], session_map: { T13: ['s1', 's2'], T12: ['u1', 'u2'] } };
+    expect(sessionFor(sheet, 'T12', 1)).toBe('u2');
+    expect(sessionFor(sheet, 'T13', 0)).toBe('s1');
+    expect(sessionFor(sheet, 'T99', 0)).toBeNull();
+    // older sheets (one team only)
+    expect(sessionFor({ team_id: 'T13', session_ids: ['s1'] }, 'T13', 0)).toBe('s1');
+  });
+});

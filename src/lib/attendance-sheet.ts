@@ -268,3 +268,21 @@ export async function photoPixels(file: File, max = 1600): Promise<{ rgba: Uint8
   ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
   return { rgba: ctx.getImageData(0, 0, canvas.width, canvas.height).data, w: canvas.width, h: canvas.height, canvas };
 }
+
+// ── teams that train together ──────────────────────────────────────────────
+
+const dayKey = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; };
+
+/** For each training of the sheet, the other team's training on the same day (or nothing). */
+export function alignSessions<T extends { id: string; date: string }>(columns: { date: string }[], other: T[]): (T | null)[] {
+  const byDay = new Map<string, T>();
+  for (const s of [...other].sort((a, b) => a.date.localeCompare(b.date))) if (!byDay.has(dayKey(s.date))) byDay.set(dayKey(s.date), s);
+  return columns.map((c) => byDay.get(dayKey(c.date)) ?? null);
+}
+
+/** The training a signature goes to: the player's own team's training of that column. */
+export function sessionFor(sheet: { team_id: string; session_ids: string[]; session_map?: Record<string, string[]> | null }, playerTeam: string | null | undefined, column: number): string | null {
+  if (playerTeam && sheet.session_map?.[playerTeam]) return sheet.session_map[playerTeam][column] ?? null;
+  if (!playerTeam || playerTeam === sheet.team_id) return sheet.session_ids[column] ?? null;
+  return null;
+}

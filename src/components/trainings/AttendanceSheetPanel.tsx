@@ -20,22 +20,25 @@ import { sendNotice } from '@/lib/notice';
 import { cn } from '@/lib/utils';
 import { useTeamBranding } from '@/hooks/useTeamBranding';
 import { imageAsDataUrl } from '@/lib/team-branding';
-import { MAX_SHEET_COLUMNS, MAX_SHEET_ROWS, binarize, findMarks, makeSheetCode, photoPixels, project, readSheet, sessionsForSheet, sheetLayout, toGray } from '@/lib/attendance-sheet';
+import { MAX_SHEET_COLUMNS, MAX_SHEET_ROWS, alignSessions, sessionFor, binarize, findMarks, makeSheetCode, photoPixels, project, readSheet, sessionsForSheet, sheetLayout, toGray } from '@/lib/attendance-sheet';
 import { buildAttendanceSheetPdf } from '@/lib/attendance-sheet-pdf';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 
-interface Player { id: string; name: string; number: number | null }
+interface Player { id: string; name: string; number: number | null; team_id?: string | null }
 interface Session { id: string; date: string }
-interface Sheet { id: string; code: string; session_ids: string[]; player_ids: string[]; created_at: string }
+interface Sheet { id: string; team_id: string; code: string; session_ids: string[]; player_ids: string[]; session_map: Record<string, string[]> | null; created_at: string }
+export interface GroupTeam { id: string; name: string }
 
 /** "2026/2027" for a training in October 2026 (seasons start in July). */
 const seasonOf = (d: Date) => (d.getMonth() >= 6 ? `${d.getFullYear()}/${d.getFullYear() + 1}` : `${d.getFullYear() - 1}/${d.getFullYear()}`);
 const short = (d: string) => format(new Date(d), "EEE dd/MM", { locale: pt });
 
-export function AttendanceSheetPanel({ teamId, teamName, players, sessions, onSaved }: {
+export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, sessions, onSaved, trainsWith = [] }: {
   teamId: string; teamName: string; players: Player[]; sessions: Session[]; onSaved: () => void;
+  /** teams that train together with this one: one sheet for all, each signature saved in the player's own team */
+  trainsWith?: GroupTeam[];
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -50,6 +53,14 @@ export function AttendanceSheetPanel({ teamId, teamName, players, sessions, onSa
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
   useEffect(() => { let on = true; imageAsDataUrl(crestUrl).then((c) => on && setCrest(c)); return () => { on = false; }; }, [crestUrl]);
 
+  const group = useMemo(() => [{ id: teamId, name: teamName }, ...trainsWith.filter((t) => t.id !== teamId)], [teamId, teamName, trainsWith]);
+  const { data: groupPlayers = [] } = useQuery({
+    queryKey: ['sheet-group-players', group.map((t) => t.id).join(',')],
+    enabled: group.length > 1,
+    queryFn: async () => ((await supabase.from('players').select('id, name, number, team_id').in('team_id', group.map((t) => t.id)).eq('is_active', true)).data ?? []) as Player[],
+  });
+  const players = group.length > 1 ? groupPlayers : ownPlayers.map((p) => ({ ...p, team_id: teamId }));
+  const teamName_ = (id?: string | null) => group.find((t) => t.id === id)?.name ?? '';
   const roster = useMemo(() => [...players].sort((a, b) => a.name.localeCompare(b.name, 'pt')).slice(0, MAX_SHEET_ROWS), [players]);
   const chosen = useMemo(() => sessionsForSheet(sessions, new Date(`${from}T00:00:00`), count), [sessions, from, count]);
 
@@ -63,11 +74,35 @@ export function AttendanceSheetPanel({ teamId, teamName, players, sessions, onSa
     if (!user || !chosen.length || !roster.length) return;
     setBusy(true);
     const code = makeSheetCode();
-    const { error } = await db.from('attendance_sheets').insert({ team_id: teamId, owner_id: user.id, code, session_ids: chosen.map((s) => s.id), player_ids: roster.map((p) => p.id) });
+    let session_map: Record<string, string[]> | null = null;
+    if (group.length > 1) {
+      session_map = { [teamId]: chosen.map((s) => s.id) };
+      const first = new Date(chosen[0].date), last = new Date(chosen[chosen.length - 1].date);
+      const span = [new Date(first.getFullYear(), first.getMonth(), first.getDate()).toISOString(), new Date(last.getFullYear(), last.getMonth(), last.getDate(), 23, 59).toISOString()];
+      const { data: base } = await supabase.from('training_sessions').select('id, date, location, duration_minutes, season_id').in('id', chosen.map((s) => s.id));
+      for (const t of group.slice(1)) {
+        const { data: theirs } = await supabase.from('training_sessions').select('id, date').eq('team_id', t.id).gte('date', span[0]).lte('date', span[1]);
+        const aligned = alignSessions(chosen, (theirs ?? []) as Session[]);
+        // a training of the other team that was not created yet: same day, same hour
+        const missing = chosen.map((c, i) => (aligned[i] ? null : c)).filter((c): c is Session => !!c);
+        if (missing.length) {
+          const rows = missing.map((c) => { const b = base?.find((x) => x.id === c.id); return { team_id: t.id, owner_id: user.id, date: c.date, location: b?.location ?? null, duration_minutes: b?.duration_minutes ?? null, season_id: b?.season_id ?? null }; });
+          const { data: made, error: e2 } = await supabase.from('training_sessions').insert(rows).select('id, date');
+          if (e2) { setBusy(false); return toast.error(`Não foi possível criar os treinos de ${t.name}: ${e2.message}`); }
+          (made ?? []).forEach((m) => { const i = chosen.findIndex((c) => c.date === m.date && !aligned[chosen.indexOf(c)]); if (i >= 0) aligned[i] = m as Session; });
+        }
+        session_map[t.id] = aligned.map((x) => x?.id ?? '');
+      }
+    }
+    const { error } = await db.from('attendance_sheets').insert({ team_id: teamId, owner_id: user.id, code, session_ids: chosen.map((s) => s.id), player_ids: roster.map((p) => p.id), session_map });
     setBusy(false);
     if (error) return toast.error('Não foi possível criar a folha: ' + error.message);
     qc.invalidateQueries({ queryKey: ['attendance-sheets', teamId] });
-    const doc = buildAttendanceSheetPdf({ teamName, season: seasonOf(new Date(chosen[0].date)), code, players: roster, sessions: chosen, crest });
+    const doc = buildAttendanceSheetPdf({
+      teamName: group.map((t) => t.name).join(' + '), season: seasonOf(new Date(chosen[0].date)), code, sessions: chosen, crest,
+      // two teams on one sheet: the team next to each name
+      players: roster.map((p) => ({ ...p, name: group.length > 1 ? `${p.name} (${teamName_(p.team_id)})` : p.name })),
+    });
     const name = `folha-presencas-${code}.pdf`;
     if (mode === 'print') {
       doc.autoPrint();
@@ -110,7 +145,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players, sessions, onSa
               <p className="text-muted-foreground">Não há treinos marcados a partir desse dia. Crie-os em <strong>Configurar Treinos</strong>.</p>
             ) : (
               <>
-                <p className="text-muted-foreground">{chosen.length} {chosen.length === 1 ? 'treino' : 'treinos'} · {roster.length} jogadores (por ordem alfabética)</p>
+                <p className="text-muted-foreground">{chosen.length} {chosen.length === 1 ? 'treino' : 'treinos'} · {roster.length} jogadores (por ordem alfabética){group.length > 1 ? ` de ${group.map((t) => t.name).join(' e ')}` : ''}</p>
                 <div className="flex flex-wrap gap-1">{chosen.map((s) => <span key={s.id} className="rounded border px-1.5 py-0.5 font-mono text-xs">{short(s.date)}</span>)}</div>
                 {chosen.length < count && <p className="text-xs text-muted-foreground">Só há {chosen.length} treinos marcados. Para mais colunas, crie os treinos em Configurar Treinos.</p>}
               </>
@@ -124,7 +159,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players, sessions, onSa
         </DialogContent>
       </Dialog>
 
-      {readOpen && <ReadSheetDialog sheets={sheets} players={players} onClose={() => setReadOpen(false)} onSaved={() => { setReadOpen(false); onSaved(); }} teamId={teamId} />}
+      {readOpen && <ReadSheetDialog sheets={sheets} players={players.length ? players : ownPlayers.map((p) => ({ ...p, team_id: teamId }))} onClose={() => setReadOpen(false)} onSaved={() => { setReadOpen(false); onSaved(); }} teamId={teamId} />}
     </Card>
   );
 }
@@ -149,6 +184,7 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
   });
   const cols = useMemo(() => (sheet ? sheet.session_ids.map((id) => sheetSessions.find((s) => s.id === id) ?? null) : []), [sheet, sheetSessions]);
   const names = useMemo(() => new Map(players.map((p) => [p.id, p.name])), [players]);
+  const teamOf = useMemo(() => new Map(players.map((p) => [p.id, p.team_id ?? null])), [players]);
   const now = Date.now();
   const happened = (s: Session | null) => !!s && Date.parse(s.date) <= now;
 
@@ -188,7 +224,10 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
     const rows: { session_id: string; player_id: string; present: boolean; owner_id: string; recorded_at: string; recorded_by: string }[] = [];
     sheet.player_ids.forEach((pid, r) => {
       if (!names.has(pid)) return;
-      cols.forEach((s, c) => { if (s && happened(s)) rows.push({ session_id: s.id, player_id: pid, present: !!grid[r]?.[c], owner_id: user.id, recorded_at: new Date().toISOString(), recorded_by: user.id }); });
+      cols.forEach((s, c) => {
+        const sid = sessionFor(sheet, teamOf.get(pid), c);
+        if (s && sid && happened(s)) rows.push({ session_id: sid, player_id: pid, present: !!grid[r]?.[c], owner_id: user.id, recorded_at: new Date().toISOString(), recorded_by: user.id });
+      });
     });
     if (!rows.length) return toast.info('Nenhum dos treinos desta folha já aconteceu.');
     setSaving(true);
