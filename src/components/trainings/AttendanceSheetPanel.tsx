@@ -21,14 +21,14 @@ import { cn } from '@/lib/utils';
 import { useTeamBranding } from '@/hooks/useTeamBranding';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import { MAX_SHEET_COLUMNS, MAX_SHEET_ROWS, alignSessions, sessionFor, binarize, findMarks, makeSheetCode, photoPixels, project, readSheet, sessionsForSheet, sheetLayout, toGray } from '@/lib/attendance-sheet';
-import { buildAttendanceSheetPdf } from '@/lib/attendance-sheet-pdf';
+import { buildAttendanceSheetPdf, sheetGeometryFor } from '@/lib/attendance-sheet-pdf';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 
 interface Player { id: string; name: string; number: number | null; team_id?: string | null }
 interface Session { id: string; date: string }
-interface Sheet { id: string; team_id: string; code: string; session_ids: string[]; player_ids: string[]; session_map: Record<string, string[]> | null; created_at: string }
+interface Sheet { id: string; team_id: string; code: string; session_ids: string[]; player_ids: string[]; session_map: Record<string, string[]> | null; layout: { version?: 1 | 2; nameW?: number } | null; created_at: string }
 export interface GroupTeam { id: string; name: string }
 
 /** "2026/2027" for a training in October 2026 (seasons start in July). */
@@ -93,12 +93,14 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
         session_map[t.id] = aligned.map((x) => x?.id ?? '');
       }
     }
-    const { error } = await db.from('attendance_sheets').insert({ team_id: teamId, owner_id: user.id, code, session_ids: chosen.map((s) => s.id), player_ids: roster.map((p) => p.id), session_map });
+    // the geometry of this print is kept with the sheet: the photo is read with it
+    const geometry = sheetGeometryFor(roster);
+    const { error } = await db.from('attendance_sheets').insert({ team_id: teamId, owner_id: user.id, code, session_ids: chosen.map((s) => s.id), player_ids: roster.map((p) => p.id), session_map, layout: geometry });
     setBusy(false);
     if (error) return toast.error('Não foi possível criar a folha: ' + error.message);
     qc.invalidateQueries({ queryKey: ['attendance-sheets', teamId] });
     const doc = buildAttendanceSheetPdf({
-      teamName: group.map((t) => t.name).join(' + '), season: seasonOf(new Date(chosen[0].date)), code, sessions: chosen, crest,
+      teamName: group.map((t) => t.name).join(' + '), season: seasonOf(new Date(chosen[0].date)), code, sessions: chosen, crest, geometry,
       players: roster,
     });
     const name = `folha-presencas-${code}.pdf`;
@@ -196,7 +198,7 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
       const bin = binarize(toGray(rgba, w, h), w, h);
       const marks = findMarks(bin, w, h);
       if (!marks.ok) { setProblem(marks.reason); return; }
-      const layout = sheetLayout(sheet.player_ids.length, sheet.session_ids.length);
+      const layout = sheetLayout(sheet.player_ids.length, sheet.session_ids.length, sheet.layout ?? { version: 1 });
       const r = readSheet(bin, w, h, marks.marks, layout);
       setGrid(r.signed.map((row) => [...row])); setUnsure(r.unsure);
       // show what was read on the photo itself

@@ -150,3 +150,26 @@ describe('attendance sheet: teams that train together', () => {
     expect(sessionFor({ team_id: 'T13', session_ids: ['s1'] }, 'T13', 0)).toBe('s1');
   });
 });
+
+describe('attendance sheet: more room to sign (version 2)', () => {
+  it('gives the boxes the room the old name column took', () => {
+    const v1 = sheetLayout(29, 7);
+    const v2 = sheetLayout(29, 7, { version: 2, nameW: 34 });
+    expect(v2.colW).toBeGreaterThan(v1.colW + 3);
+    expect(v2.rowH).toBeGreaterThan(v1.rowH);
+    expect(v2.marks[2][1] + v2.markSize / 2).toBeLessThan(297 - 8);
+    expect(v2.marks[0][0] - v2.markSize / 2).toBeGreaterThanOrEqual(6);
+    // the name column never gets absurdly thin or wide
+    expect(sheetLayout(29, 7, { version: 2, nameW: 10 }).nameW).toBe(28);
+    expect(sheetLayout(29, 7, { version: 2, nameW: 90 }).nameW).toBe(46);
+    // a sheet printed before keeps its old boxes
+    expect(sheetLayout(29, 7, {}).nameW).toBe(50);
+  });
+
+  it('reads a version-2 sheet photographed at an angle', () => {
+    const l = sheetLayout(29, 7, { version: 2, nameW: 34 });
+    const signed = pattern(29, 7);
+    const r = read(l, photo(l, signed, [[70, 30], [860, 80], [890, 1170], [30, 1130]]));
+    expect(r.signed).toEqual(signed);
+  });
+});

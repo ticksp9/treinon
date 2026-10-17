@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { PAGE, sheetLayout } from '@/lib/attendance-sheet';
+import { NAME_COLUMN, PAGE, sheetLayout, type SheetGeometry } from '@/lib/attendance-sheet';
 
 export interface SheetPdfInput {
   teamName: string; season?: string | null; code: string;
@@ -11,20 +11,29 @@ export interface SheetPdfInput {
   crest?: { dataUrl: string; ratio: number } | null;
 }
 
-export function buildAttendanceSheetPdf(s: SheetPdfInput): jsPDF {
+/** The name column only as wide as the longest name: the rest of the width is for signing. */
+export function sheetGeometryFor(players: { name: string; number?: number | null }[]): Required<SheetGeometry> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const L = sheetLayout(s.players.length, s.sessions.length);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  const widest = Math.max(0, ...players.map((p) => doc.getTextWidth(`${p.number != null ? `${p.number}  ` : ''}${p.name}`)));
+  return { version: 2, nameW: Math.round(Math.min(NAME_COLUMN.max, Math.max(NAME_COLUMN.min, widest + 4)) * 10) / 10 };
+}
+
+export function buildAttendanceSheetPdf(s: SheetPdfInput & { geometry?: SheetGeometry }): jsPDF {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const L = sheetLayout(s.players.length, s.sessions.length, s.geometry ?? sheetGeometryFor(s.players));
   const t = L.table;
 
   // header, as on the club's own sheet
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
-  doc.text(s.season ? `Época ${s.season}` : 'Folha de Presenças', PAGE.w / 2, 18, { align: 'center' });
+  const top = L.table.y >= 50 ? 0 : -6;
+  doc.text(s.season ? `Época ${s.season}` : 'Folha de Presenças', PAGE.w / 2, 18 + top / 2, { align: 'center' });
   doc.setFontSize(13);
-  doc.text(s.season ? 'Folha de Presenças' : '', PAGE.w / 2, 26, { align: 'center' });
+  doc.text(s.season ? 'Folha de Presenças' : '', PAGE.w / 2, 25 + top / 2, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(71, 85, 105);
-  doc.text(s.teamName, PAGE.w / 2, 33, { align: 'center' });
-  if (s.crest) { const h = 20, w = Math.min(h * s.crest.ratio, 26); doc.addImage(s.crest.dataUrl, 'PNG', 14, 8, w, w / s.crest.ratio); }
+  doc.text(s.teamName, PAGE.w / 2, 31 + top / 2, { align: 'center' });
+  if (s.crest) { const h = 18, w = Math.min(h * s.crest.ratio, 24); doc.addImage(s.crest.dataUrl, 'PNG', 14, 6, w, w / s.crest.ratio); }
   doc.setFont('courier', 'bold'); doc.setFontSize(10); doc.setTextColor(15, 23, 42);
   doc.text(`Folha ${s.code}`, PAGE.w - 14, 14, { align: 'right' });
 
@@ -43,15 +52,15 @@ export function buildAttendanceSheetPdf(s: SheetPdfInput): jsPDF {
   s.sessions.slice(0, L.cols).forEach((ses, c) => {
     const x = t.x + L.nameW + c * L.colW + L.colW / 2, d = new Date(ses.date);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(71, 85, 105);
-    doc.text(format(d, 'EEE', { locale: pt }).replace('.', ''), x, t.y + 4, { align: 'center' });
+    doc.text(format(d, 'EEE', { locale: pt }).replace('.', ''), x, t.y + L.header.h * 0.3, { align: 'center' });
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(15, 23, 42);
-    doc.text(format(d, 'dd/MM'), x, t.y + 8.4, { align: 'center' });
+    doc.text(format(d, 'dd/MM'), x, t.y + L.header.h * 0.63, { align: 'center' });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(100, 116, 139);
-    doc.text(format(d, 'HH:mm'), x, t.y + 11.6, { align: 'center' });
+    doc.text(format(d, 'HH:mm'), x, t.y + L.header.h * 0.88, { align: 'center' });
   });
 
   // rows: uniform height, nothing printed inside the boxes
-  const nameSize = Math.min(11, Math.max(7.5, L.rowH * 1.45));
+  const nameSize = Math.min(10, Math.max(7.5, L.rowH * 1.35));
   s.players.slice(0, L.rows).forEach((p, r) => {
     const y = t.y + L.header.h + r * L.rowH;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(nameSize); doc.setTextColor(15, 23, 42);

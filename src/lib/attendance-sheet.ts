@@ -13,7 +13,18 @@
 // ── the sheet (millimetres, A4 portrait) ───────────────────────────────────
 
 export const PAGE = { w: 210, h: 297 };
-const X0 = 20, X1 = 190, Y0 = 52, BOTTOM_LIMIT = 266, NAME_W = 50, HEADER_H = 13, MARK = 7, MARK_GAP = 7;
+const MARK = 7, MARK_GAP = 7;
+/**
+ * Page geometry, by version (each printed sheet keeps its own, so older sheets are still read right):
+ *  1 — the first sheets: wide name column;
+ *  2 — more room to sign: name column as wide as the longest name, narrower margins, lower header.
+ */
+const GEOMETRY = {
+  1: { x0: 20, x1: 190, y0: 52, bottom: 266, header: 13, nameW: 50, maxRow: 11 },
+  2: { x0: 17, x1: 193, y0: 44, bottom: 276, header: 12, nameW: 36, maxRow: 12 },
+} as const;
+export interface SheetGeometry { version?: 1 | 2; nameW?: number }
+export const NAME_COLUMN = { min: 28, max: 46 };
 
 export interface Rect { x: number; y: number; w: number; h: number }
 export interface SheetLayout {
@@ -28,11 +39,14 @@ export interface SheetLayout {
 export const MAX_SHEET_COLUMNS = 10;
 export const MAX_SHEET_ROWS = 36;
 
-export function sheetLayout(players: number, sessions: number): SheetLayout {
+export function sheetLayout(players: number, sessions: number, geometry: SheetGeometry = {}): SheetLayout {
+  const g = GEOMETRY[geometry.version ?? 1];
+  const X0 = g.x0, X1 = g.x1, Y0 = g.y0, HEADER_H = g.header;
+  const NAME_W = geometry.version === 2 && geometry.nameW ? Math.min(NAME_COLUMN.max, Math.max(NAME_COLUMN.min, geometry.nameW)) : g.nameW;
   const rows = Math.max(1, Math.min(players, MAX_SHEET_ROWS));
   const cols = Math.max(1, Math.min(sessions, MAX_SHEET_COLUMNS));
   const colW = (X1 - X0 - NAME_W) / cols;
-  const rowH = Math.min(11, (BOTTOM_LIMIT - Y0 - HEADER_H) / rows);
+  const rowH = Math.min(g.maxRow, (g.bottom - Y0 - HEADER_H) / rows);
   const tableH = HEADER_H + rows * rowH;
   const y1 = Y0 + tableH;
   const marks: [number, number][] = [
