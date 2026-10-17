@@ -351,8 +351,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       // ── Part times ──
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
-      const regulamentarTotal = partMinutes.length * halfDuration;
-      const partTimesLines = partMinutes.map((m, i) => `${i + 1}a Parte: ${m}' (reg: ${halfDuration}')`).join(' | ');
+      // the minutes each part was meant to last (e.g. 15 + 15 + 30), not one value for all
+      const regulamentarTotal = regulationPartMinutes.reduce((a, b) => a + b, 0);
+      const partTimesLines = partMinutes.map((m, i) => `${i + 1}a Parte: ${m}' (reg: ${regulationPartMinutes[i] ?? halfDuration}')`).join(' | ');
       doc.text(partTimesLines, pageWidth / 2, y, { align: 'center' });
       y += 5;
       doc.text(`Total real: ${totalMinutes}' | Regulamentar: ${regulamentarTotal}'`, pageWidth / 2, y, { align: 'center' });
@@ -599,7 +600,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
                   )}
                 </span>
               )}
-              {partTimesDisplay} | Total: {totalMinutes}' (Regulamentar: {partMinutes.length}x{halfDuration}')
+              {partTimesDisplay} | Total: {totalMinutes}' (Regulamentar: {regulationPartMinutes.map(m => `${m}'`).join(' + ')} = {regulationPartMinutes.reduce((a, b) => a + b, 0)}')
             </div>
           </div>
         </CardContent>

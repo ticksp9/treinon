@@ -60,7 +60,6 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
     queryFn: async () => ((await supabase.from('players').select('id, name, number, team_id').in('team_id', group.map((t) => t.id)).eq('is_active', true)).data ?? []) as Player[],
   });
   const players = group.length > 1 ? groupPlayers : ownPlayers.map((p) => ({ ...p, team_id: teamId }));
-  const teamName_ = (id?: string | null) => group.find((t) => t.id === id)?.name ?? '';
   const roster = useMemo(() => [...players].sort((a, b) => a.name.localeCompare(b.name, 'pt')).slice(0, MAX_SHEET_ROWS), [players]);
   const chosen = useMemo(() => sessionsForSheet(sessions, new Date(`${from}T00:00:00`), count), [sessions, from, count]);
 
@@ -100,8 +99,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
     qc.invalidateQueries({ queryKey: ['attendance-sheets', teamId] });
     const doc = buildAttendanceSheetPdf({
       teamName: group.map((t) => t.name).join(' + '), season: seasonOf(new Date(chosen[0].date)), code, sessions: chosen, crest,
-      // two teams on one sheet: the team next to each name
-      players: roster.map((p) => ({ ...p, name: group.length > 1 ? `${p.name} (${teamName_(p.team_id)})` : p.name })),
+      players: roster,
     });
     const name = `folha-presencas-${code}.pdf`;
     if (mode === 'print') {

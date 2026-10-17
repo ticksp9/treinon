@@ -827,7 +827,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const newPartRealSeconds = [...(((match as any)?.part_real_seconds as number[] | null) ?? partElapsedSeconds)];
     newPartRealSeconds[currentPart - 1] = partSeconds;
     const newPartRegulationMinutes = buildRegulationPartMinutes(partsCount);
-    newPartRegulationMinutes[currentPart - 1] = partDurationMinutes;
+    // keep the length this part was meant to have (parts can differ: 15 + 15 + 30)
+    newPartRegulationMinutes[currentPart - 1] = currentPartRegulation;
     setPartElapsedSeconds(newPartElapsed);
 
     // Close all open presence intervals at current minute
