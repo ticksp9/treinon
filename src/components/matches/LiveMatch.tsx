@@ -728,6 +728,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           current_part: 1,
           part_elapsed_seconds: [0],
           part_starter_ids: initialPartStarters,
+          // the tactic the match started with (the report draws it)
+          ...(pitchTactics ? { part_tactics: { '1': pitchTactics } } : {}),
           part_real_seconds: [0],
           part_regulation_minutes: initialRegulationMinutes,
           last_timer_start: now,
@@ -889,6 +891,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         current_part: nextPart,
         part_elapsed_seconds: newPartElapsed,
           part_starter_ids: nextPartStarters,
+          ...(pitchTactics ? { part_tactics: { ...(((match as any)?.part_tactics ?? {}) as Record<string, unknown>), [String(nextPart)]: pitchTactics } } : {}),
           second_half_starter_ids: nextPart === 2 ? onFieldPlayerIds : ((match as any)?.second_half_starter_ids ?? null),
           second_half_starter_set_at: nextPart === 2 ? now : ((match as any)?.second_half_starter_set_at ?? null),
           second_half_starter_set_by: nextPart === 2 ? user?.id : ((match as any)?.second_half_starter_set_by ?? null),
@@ -1572,6 +1575,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
         <MatchReport
           crestUrl={crestUrl}
+          liveTactics={(match as any)?.live_tactics ?? null}
+          partTactics={(match as any)?.part_tactics ?? null}
           match={match}
           lineups={lineups}
           events={events}

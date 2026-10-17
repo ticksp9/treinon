@@ -88,6 +88,8 @@ function getInitialTab(reportStatus: string | undefined): string {
 export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }: MatchResultsViewProps) {
   // the team crest goes on the report PDF
   const { crestUrl } = useTeamBranding(teamId);
+  // the tactics of the match, for the drawing of the starting line-up
+  const [matchTactics, setMatchTactics] = useState<{ live: any; parts: any; sport: string | null }>({ live: null, parts: null, sport: null });
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [quickEntryId, setQuickEntryId] = useState<string | null>(null);
   const [lineups, setLineups] = useState<Lineup[]>([]);
@@ -120,7 +122,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
     try {
       const { data: matchData } = await supabase
         .from('matches')
-        .select('goals_for, goals_against, part_elapsed_seconds, part_duration_minutes, part_starter_ids, part_regulation_minutes, parts_count')
+        .select('*')
         .eq('id', matchId)
         .single();
 
@@ -132,6 +134,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
       setMatchPartStarters((((matchData as any)?.part_starter_ids as Record<string, string[]> | null) ?? {}));
       setMatchPartRegulation((((matchData as any)?.part_regulation_minutes as number[] | null) ?? []));
       setMatchPartsCount(((matchData as any)?.parts_count as number | null) ?? 2);
+      setMatchTactics({ live: (matchData as any)?.live_tactics ?? null, parts: (matchData as any)?.part_tactics ?? null, sport: (matchData as any)?.sport_type ?? null });
 
       // Update match goals from DB
       if (matchData && selectedMatch) {
@@ -313,6 +316,8 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
               <TabsContent value="report">
                 <MatchReport
                   crestUrl={crestUrl}
+                  liveTactics={matchTactics.live}
+                  partTactics={matchTactics.parts}
                   match={selectedMatch}
                   lineups={lineups}
                   events={events}
@@ -322,7 +327,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
                   partRegulationMinutes={matchPartRegulation}
                   partStartersByIndex={matchPartStarters}
                   partsCount={matchPartsCount}
-                  sportType={team?.sport_type}
+                  sportType={matchTactics.sport || team?.sport_type}
                   secondHalfStarterIds={(selectedMatch as any)?.second_half_starter_ids ?? null}
                 />
               </TabsContent>

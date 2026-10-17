@@ -22,6 +22,8 @@ import {
   type StarterInfo,
 } from '@/lib/match-playing-time';
 import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
+import { orderByPosition, partLineup, shortName, type PartLineup } from '@/lib/report-lineup';
+import type { LiveTactics } from '@/lib/live-tactics';
 
 interface Player {
   id: string;
@@ -67,6 +69,9 @@ interface Match {
 interface MatchReportProps {
   /** our crest, on top of the PDF */
   crestUrl?: string | null;
+  /** the tactic at the end of the match, and the one each part started with (when saved) */
+  liveTactics?: LiveTactics | null;
+  partTactics?: Record<string, LiveTactics> | null;
   match: Match;
   lineups: Lineup[];
   events: MatchEvent[];
@@ -93,7 +98,7 @@ const MODALITY_LABELS: Record<string, string> = {
   futsal: 'Futsal',
 };
 
-export function MatchReport({ crestUrl, match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
+export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
   const [generating, setGenerating] = useState(false);
   // read ahead, so the PDF is made the moment the coach asks for it
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
@@ -181,8 +186,13 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
     const t = partStartMinute[i];
     return enrichedPlayers.filter(p => p.intervals.some(iv => iv.start <= t && iv.end > t)).map(p => p.player.id);
   });
-  const playersOf = (ids: string[]) => ids.map(id => enrichedPlayers.find(p => p.player.id === id)).filter((p): p is (typeof enrichedPlayers)[number] => !!p)
-    .sort((a, b) => (a.player.number ?? 99) - (b.player.number ?? 99));
+  const positionOf = (id: string) => lineups.find(l => l.player_id === id)?.player?.position ?? null;
+  const numberOf = (id: string) => lineups.find(l => l.player_id === id)?.player?.number ?? null;
+  const lineupByPart: (PartLineup | null)[] = startersByPart.map((ids, i) => partLineup(sportType, i + 1, partTactics, liveTactics, ids, positionOf));
+  /** the starters of a part: goalkeeper, defenders, midfielders, forwards */
+  const playersOf = (ids: string[], part = -1) => orderByPosition(ids, lineupByPart[part] ?? null, positionOf, numberOf)
+    .map(id => enrichedPlayers.find(p => p.player.id === id)).filter((p): p is (typeof enrichedPlayers)[number] => !!p);
+  const nameOf = (id: string | null) => (id ? lineups.find(l => l.player_id === id)?.player : null);
   /** "TIT 1ªP/3ªP, S59' (3.ºP)": the parts a player started, then when he came on or off */
   const obsFor = (p: (typeof enrichedPlayers)[number]) => {
     const started = startersByPart.map((ids, i) => (ids.includes(p.player.id) ? i + 1 : 0)).filter(Boolean);
@@ -348,17 +358,53 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
       doc.text(`Total real: ${totalMinutes}' | Regulamentar: ${regulamentarTotal}'`, pageWidth / 2, y, { align: 'center' });
       y += 5;
 
+      // ── Tactic and starting line-up, drawn ──
+      const start = lineupByPart[0];
+      if (start) {
+        addSection('TATICA E ONZE INICIAL');
+        const pw = 78, ph = 100, px = 14, py = y;
+        ensureSpace(ph + 6);
+        // pitch (own goal at the bottom)
+        doc.setFillColor(42, 119, 71); doc.rect(px, py, pw, ph, 'F');
+        doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
+        doc.rect(px + 2, py + 2, pw - 4, ph - 4);
+        doc.line(px + 2, py + ph / 2, px + pw - 2, py + ph / 2);
+        doc.circle(px + pw / 2, py + ph / 2, 9);
+        doc.rect(px + pw / 2 - 18, py + 2, 36, 14); doc.rect(px + pw / 2 - 18, py + ph - 16, 36, 14);
+        start.spots.forEach(spot => {
+          const cx = px + 4 + spot.x * (pw - 8), cy = py + 4 + (1 - spot.y) * (ph - 12);
+          const pl = nameOf(spot.playerId);
+          doc.setFillColor(spot.role === 'goalkeeper' ? 234 : 30, spot.role === 'goalkeeper' ? 179 : 64, spot.role === 'goalkeeper' ? 8 : 175);
+          doc.setDrawColor(255, 255, 255); doc.circle(cx, cy, 3.2, 'FD');
+          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+          doc.text(pl?.number != null ? String(pl.number) : spot.label, cx, cy + 1, { align: 'center' });
+          doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+          doc.text(pl ? shortName(pl.name) : spot.label, cx, cy + 6.2, { align: 'center' });
+        });
+        doc.setTextColor(0, 0, 0);
+        // the tactic of every part, beside the pitch
+        let ty = py + 4;
+        const tx = px + pw + 8;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+        doc.text(`Tatica: ${start.formation}`, tx, ty); ty += 6;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        lineupByPart.forEach((l, i) => { doc.text(`${i + 1}a Parte: ${l?.formation ?? '-'}`, tx, ty); ty += 4.5; });
+        if (start.estimated) {
+          ty += 2; doc.setFontSize(8); doc.setTextColor(110, 110, 110);
+          const note = doc.splitTextToSize('Posicoes do onze inicial reconstituidas a partir da tatica do fim do jogo (os jogos novos guardam a tatica de cada parte).', pageWidth - tx - 14);
+          doc.text(note, tx, ty); ty += note.length * 3.6; doc.setTextColor(0, 0, 0);
+        }
+        y = py + ph + 4;
+      }
+
       // ── Titulares por Parte ──
       addSection('TITULARES POR PARTE');
       doc.setFontSize(10);
-      const part1End = partMinutes[0] || halfDuration;
-
-      void part1End;
       startersByPart.forEach((ids, i) => {
-        const list = playersOf(ids);
+        const list = playersOf(ids, i);
         ensureSpace(15);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${i + 1}a Parte (${list.length}):`, 14, y);
+        doc.text(`${i + 1}a Parte (${list.length})${lineupByPart[i] ? ` - ${lineupByPart[i]!.formation}` : ''}:`, 14, y);
         y += 5;
         doc.setFont('helvetica', 'normal');
         const names = list.map(p => `${p.player.number || '-'} ${p.player.name}`).join(', ');
@@ -568,11 +614,38 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {lineupByPart[0] && (
+            <div className="flex flex-wrap items-start gap-4">
+              <svg viewBox="0 0 78 100" className="w-48 shrink-0 rounded-md" role="img" aria-label={`Onze inicial em ${lineupByPart[0].formation}`}>
+                <rect width="78" height="100" fill="#2a7747" />
+                <g stroke="white" strokeWidth="0.4" fill="none">
+                  <rect x="2" y="2" width="74" height="96" /><line x1="2" y1="50" x2="76" y2="50" /><circle cx="39" cy="50" r="9" />
+                  <rect x="21" y="2" width="36" height="14" /><rect x="21" y="84" width="36" height="14" />
+                </g>
+                {lineupByPart[0].spots.map(spot => {
+                  const cx = 4 + spot.x * 70, cy = 4 + (1 - spot.y) * 88;
+                  const pl = nameOf(spot.playerId);
+                  return (
+                    <g key={spot.slotId}>
+                      <circle cx={cx} cy={cy} r="3.2" fill={spot.role === 'goalkeeper' ? '#eab308' : '#1e40af'} stroke="white" strokeWidth="0.4" />
+                      <text x={cx} y={cy + 1} textAnchor="middle" fontSize="3" fontWeight="700" fill="white">{pl?.number ?? spot.label}</text>
+                      <text x={cx} y={cy + 6.2} textAnchor="middle" fontSize="2.6" fill="white">{pl ? shortName(pl.name) : spot.label}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+              <div className="space-y-1 text-sm">
+                <p className="font-semibold">Tática: {lineupByPart[0].formation}</p>
+                {lineupByPart.map((l, i) => <p key={i} className="text-muted-foreground">{i + 1}ª Parte: {l?.formation ?? '—'}</p>)}
+                {lineupByPart[0].estimated && <p className="max-w-xs text-xs text-muted-foreground">Posições reconstituídas a partir da tática do fim do jogo. Os jogos novos guardam a tática de cada parte.</p>}
+              </div>
+            </div>
+          )}
           {startersByPart.map((ids, i) => {
-            const list = playersOf(ids);
+            const list = playersOf(ids, i);
             return (
               <div key={i}>
-                <div className="text-sm font-medium mb-2">{i + 1}ª Parte ({list.length})</div>
+                <div className="text-sm font-medium mb-2">{i + 1}ª Parte ({list.length}){lineupByPart[i] ? ` · ${lineupByPart[i]!.formation}` : ''}</div>
                 <div className="flex flex-wrap gap-1">
                   {list.map(p => (
                     <Badge key={p.player.id} variant={i === 0 ? 'secondary' : 'outline'}>
