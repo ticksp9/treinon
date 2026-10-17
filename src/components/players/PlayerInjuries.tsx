@@ -20,6 +20,7 @@ import {
   getClinicalStatusOption,
   type InjuryRecord,
 } from '@/lib/player-availability';
+import { InjuryRehabPanel } from './InjuryRehabPanel';
 import { MECHANISMS, daysOut, isEarlyRecurrence, mechanismLabel, severityByDays } from '@/lib/injury-care';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -468,6 +469,9 @@ export function PlayerInjuries({ playerId }: Props) {
                       </Button>
                     </div>
                   </div>
+                  {(active || inj.rehab_phase) && (
+                    <InjuryRehabPanel injury={inj as any} canClinical={!!access?.clinical} onChanged={() => { qc.invalidateQueries({ queryKey: ['player-injuries', playerId] }); qc.invalidateQueries({ queryKey: ['medical-dept'] }); qc.invalidateQueries({ queryKey: ['callup-availability'] }); }} />
+                  )}
                 </CardContent>
               </Card>
             );

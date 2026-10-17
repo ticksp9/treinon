@@ -27,6 +27,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
 import { BODY_PARTS, INJURY_TYPES } from '@/lib/player-constants';
 import { getClinicalStatusOption, CLINICAL_STATUS_OPTIONS } from '@/lib/player-availability';
+import { phaseOf } from '@/lib/rehab';
 import { MECHANISMS, careGroups, daysOut, mechanismLabel, seasonSummary, type CareGroup, type CareInjury } from '@/lib/injury-care';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +39,7 @@ const typeLabel = (v?: string | null) => INJURY_TYPES.find((t) => t.value === v)
 
 interface Row extends CareInjury {
   player_id: string; mechanism: string | null; is_recurrence: boolean | null; description: string | null; context: string | null;
+  rehab_protocol: string | null; rehab_phase: number | null;
   player: { id: string; name: string; number: number | null; team: { id: string; name: string } | null } | null;
 }
 interface PlayerOpt { id: string; name: string; number: number | null; team: { id: string; name: string } | null }
@@ -63,7 +65,7 @@ export default function MedicalDepartment() {
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await db.from('player_injuries')
-        .select('id, player_id, injury_date, return_date, expected_return_date, body_part, injury_type, clinical_status, can_play, restrictions, assessed_at, mechanism, is_recurrence, description, context, player:players(id, name, number, team:teams(id, name))')
+        .select('id, player_id, injury_date, return_date, expected_return_date, body_part, injury_type, clinical_status, can_play, restrictions, assessed_at, mechanism, is_recurrence, description, context, rehab_protocol, rehab_phase, player:players(id, name, number, team:teams(id, name))')
         .order('injury_date', { ascending: false }).limit(1000);
       if (error) throw error;
       return (data ?? []) as Row[];
@@ -156,6 +158,7 @@ export default function MedicalDepartment() {
                             {r.player?.team && <span className="text-xs text-muted-foreground">{r.player.team.name}</span>}
                             {st && <Badge variant="outline" className={st.tone}>{st.label}</Badge>}
                             {r.is_recurrence && <Badge variant="outline" className="border-orange-500/40 text-orange-600">Recaída</Badge>}
+                            {r.rehab_phase && !r.return_date && <Badge variant="secondary">{r.rehab_protocol === 'concussion' ? 'Concussão · ' : ''}Fase {r.rehab_phase}/6 · {phaseOf(r.rehab_protocol, r.rehab_phase)?.name}</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {partLabel(r.body_part)}{r.injury_type ? ` · ${typeLabel(r.injury_type).toLowerCase()}` : ''} · desde {day(r.injury_date)} ({out} {out === 1 ? 'dia' : 'dias'})

@@ -29,6 +29,7 @@ import {
 import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { ConsentDialog, useChildrenConsents } from '@/components/family/ConsentGate';
 import { cn } from '@/lib/utils';
+import { FamilyRehab } from '@/components/family/FamilyRehab';
 
 interface FamilyRow { team_id: string; team_name: string; club_id: string | null; player_id: string; player_name: string }
 interface RsvpDetail { user_id: string; name: string; players: string | null; status: 'yes' | 'no'; people: number; note: string | null }
@@ -268,6 +269,8 @@ export default function Agenda() {
             <Button variant="outline" size="sm" className="ml-auto" onClick={() => setPrivacyOpen(true)}><ShieldCheck className="mr-1.5 h-4 w-4" />Privacidade</Button>
           )}
         </div>
+
+        {isFamily && <FamilyRehab />}
 
         <div className="flex flex-wrap items-center gap-1.5">
           {(Object.keys(KIND_META) as AgendaKind[]).map((k) => {

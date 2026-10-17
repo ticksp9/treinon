@@ -75,6 +75,47 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM public.player_injuries WHERE id = '1e000000-0000-0000-0000-000000000001') = 0, 'a parent of another child sees nothing';
 END $$;
 
+-- rehab: the physio sets phases and exercises; the parent sees the exercises and ticks them
+RESET ROLE;
+INSERT INTO public.player_guardians (player_id, guardian_id) VALUES ('d0000000-0000-0000-0000-000000000060', 'f0000000-0000-0000-0000-000000000012');
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000051', false);
+UPDATE public.player_injuries SET rehab_protocol = 'standard', rehab_phase = 2, rehab_phase_since = CURRENT_DATE WHERE id = '1e000000-0000-0000-0000-000000000001';
+INSERT INTO public.injury_home_exercises (id, injury_id, player_id, title, dose) VALUES ('1f000000-0000-0000-0000-000000000001', '1e000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000060', 'Ponte de gluteos', '3x10');
+INSERT INTO public.injury_sessions (injury_id, player_id, pain, notes) VALUES ('1e000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000060', 4, 'Melhorou');
+-- the parent (pai, linked now)
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000012', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.injury_home_exercises WHERE player_id = 'd0000000-0000-0000-0000-000000000060') = 1, 'parent sees the exercise';
+  INSERT INTO public.injury_exercise_logs (exercise_id, player_id, pain) VALUES ('1f000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000060', 2);
+  ASSERT (SELECT count(*) FROM public.injury_sessions) = 0, 'parent does not read the physio sessions';
+  ASSERT (SELECT rehab_phase FROM public.player_injuries WHERE id = '1e000000-0000-0000-0000-000000000001') = 2, 'parent sees the phase';
+  BEGIN
+    INSERT INTO public.injury_home_exercises (injury_id, player_id, title) VALUES ('1e000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000060', 'Inventado');
+    RAISE EXCEPTION 'FAIL: parent wrote an exercise';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+-- the head coach (club) sees phase, exercises and the ticks, not the sessions
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.injury_exercise_logs) = 1, 'coach sees the exercise was done';
+  ASSERT (SELECT count(*) FROM public.injury_sessions) = 0, 'coach does not read the sessions';
+END $$;
+-- concussion: no clearance before the last phase
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000051', false);
+INSERT INTO public.player_injuries (id, player_id, owner_id, injury_date, body_part, injury_type, clinical_status, can_play, rehab_protocol, rehab_phase)
+VALUES ('1e000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000060', 'a0000000-0000-0000-0000-000000000051', CURRENT_DATE, 'head', 'other', 'inapto', false, 'concussion', 1);
+DO $$ BEGIN
+  BEGIN
+    UPDATE public.player_injuries SET clinical_status = 'apto', can_play = true WHERE id = '1e000000-0000-0000-0000-000000000002';
+    RAISE EXCEPTION 'FAIL: concussed player cleared at phase 1';
+  EXCEPTION WHEN check_violation THEN NULL; END;
+  UPDATE public.player_injuries SET rehab_phase = 6, clinical_status = 'apto', can_play = true, return_date = CURRENT_DATE WHERE id = '1e000000-0000-0000-0000-000000000002';
+  ASSERT FOUND, 'cleared after the last phase';
+END $$;
+RESET ROLE;
+SET ROLE authenticated;
+
 -- the physio is removed: access ends
 SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
 SELECT public.set_medical_staff('c0000000-0000-0000-0000-000000000001', 'fisio@clube.pt', 'none');
