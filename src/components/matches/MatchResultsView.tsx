@@ -14,6 +14,7 @@ import { QuickMatchEntry } from './QuickMatchEntry';
 import { ReportReviewScreen } from './ReportReviewScreen';
 import { getHalfDurationForCategory } from '@/lib/constants';
 import { isEditableReportStatus, REPORT_STATUS_LABELS, type ReportStatus } from '@/lib/match-report-service';
+import { useTeamBranding } from '@/hooks/useTeamBranding';
 
 interface Player {
   id: string;
@@ -85,6 +86,8 @@ function getInitialTab(reportStatus: string | undefined): string {
 }
 
 export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }: MatchResultsViewProps) {
+  // the team crest goes on the report PDF
+  const { crestUrl } = useTeamBranding(teamId);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [quickEntryId, setQuickEntryId] = useState<string | null>(null);
   const [lineups, setLineups] = useState<Lineup[]>([]);
@@ -309,6 +312,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
               </TabsList>
               <TabsContent value="report">
                 <MatchReport
+                  crestUrl={crestUrl}
                   match={selectedMatch}
                   lineups={lineups}
                   events={events}

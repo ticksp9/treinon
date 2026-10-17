@@ -172,6 +172,24 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
     };
   }).sort((a, b) => b.minutesPlayed - a.minutesPlayed);
 
+  // who started each part: the saved starting players of the part, else whoever was on the pitch when it began
+  const partStartMinute = partMinutes.map((_, i) => partMinutes.slice(0, i).reduce((a, b) => a + b, 0));
+  const startersByPart: string[][] = partMinutes.map((_, i) => {
+    if (i === 0) return enrichedPlayers.filter(p => p.isStarter).map(p => p.player.id);
+    const saved = partStartersByIndex?.[String(i + 1)] ?? (i === 1 ? secondHalfStarterIds : null);
+    if (saved?.length) return saved.filter(id => enrichedPlayers.some(p => p.player.id === id));
+    const t = partStartMinute[i];
+    return enrichedPlayers.filter(p => p.intervals.some(iv => iv.start <= t && iv.end > t)).map(p => p.player.id);
+  });
+  const playersOf = (ids: string[]) => ids.map(id => enrichedPlayers.find(p => p.player.id === id)).filter((p): p is (typeof enrichedPlayers)[number] => !!p)
+    .sort((a, b) => (a.player.number ?? 99) - (b.player.number ?? 99));
+  /** "TIT 1ªP/3ªP, S59' (3.ºP)": the parts a player started, then when he came on or off */
+  const obsFor = (p: (typeof enrichedPlayers)[number]) => {
+    const started = startersByPart.map((ids, i) => (ids.includes(p.player.id) ? i + 1 : 0)).filter(Boolean);
+    const rest = p.annotations.filter(a => !/^TIT\b/.test(a));
+    return [started.length ? `TIT ${started.map(n => `${n}ªP`).join('/')}` : '', ...rest].filter(Boolean).join(', ');
+  };
+
   // Get events grouped by type
   const goals = events.filter(e => e.event_type === 'goal' || e.event_type === 'own_goal');
   const cards = events.filter(e => e.event_type === 'yellow_card' || e.event_type === 'red_card');
@@ -335,30 +353,19 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
       doc.setFontSize(10);
       const part1End = partMinutes[0] || halfDuration;
 
-      const part1Starters = enrichedPlayers.filter(p => p.isStarter);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`1a Parte (${part1Starters.length}):`, 14, y);
-      y += 5;
-      doc.setFont('helvetica', 'normal');
-      const p1Names = part1Starters.map(p => `${p.player.number || '-'} ${p.player.name}`).join(', ');
-      const p1Lines = doc.splitTextToSize(p1Names || '-', pageWidth - 28);
-      doc.text(p1Lines, 14, y);
-      y += p1Lines.length * 4 + 3;
-
-      if (partMinutes.length > 1) {
-        const part2Starters = enrichedPlayers.filter(p =>
-          p.intervals.some(iv => iv.start <= part1End && iv.end > part1End)
-        );
+      void part1End;
+      startersByPart.forEach((ids, i) => {
+        const list = playersOf(ids);
         ensureSpace(15);
         doc.setFont('helvetica', 'bold');
-        doc.text(`2a Parte (${part2Starters.length}):`, 14, y);
+        doc.text(`${i + 1}a Parte (${list.length}):`, 14, y);
         y += 5;
         doc.setFont('helvetica', 'normal');
-        const p2Names = part2Starters.map(p => `${p.player.number || '-'} ${p.player.name}`).join(', ');
-        const p2Lines = doc.splitTextToSize(p2Names || '-', pageWidth - 28);
-        doc.text(p2Lines, 14, y);
-        y += p2Lines.length * 4 + 3;
-      }
+        const names = list.map(p => `${p.player.number || '-'} ${p.player.name}`).join(', ');
+        const lines = doc.splitTextToSize(names || '-', pageWidth - 28);
+        doc.text(lines, 14, y);
+        y += lines.length * 4 + 3;
+      });
 
       // ── Goals ──
       if (goals.length > 0) {
@@ -462,8 +469,8 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
         doc.text(stat.yellowCards > 0 ? stat.yellowCards.toString() : '-', colCA, y);
         doc.text(stat.redCards > 0 ? stat.redCards.toString() : '-', colCV, y);
 
-        // Obs: truncate to fit
-        const obsText = stat.annotations.join(', ');
+        // Obs: which parts he started, then entries and exits
+        const obsText = obsFor(stat);
         const maxObsWidth = pageWidth - 14 - colObs;
         const truncatedObs = doc.splitTextToSize(obsText, maxObsWidth)[0] || '-';
         doc.text(truncatedObs, colObs, y);
@@ -561,39 +568,21 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(() => {
-            const part1End = partMinutes[0] || halfDuration;
-            const part1Starters = enrichedPlayers.filter(p => p.isStarter);
-            const part2Starters = enrichedPlayers.filter(p =>
-              p.intervals.some(iv => iv.start <= part1End && iv.end > part1End)
-            );
+          {startersByPart.map((ids, i) => {
+            const list = playersOf(ids);
             return (
-              <>
-                <div>
-                  <div className="text-sm font-medium mb-2">1ª Parte ({part1Starters.length})</div>
-                  <div className="flex flex-wrap gap-1">
-                    {part1Starters.map(p => (
-                      <Badge key={p.player.id} variant="secondary">
-                        {p.player.number || '-'} {p.player.name}
-                      </Badge>
-                    ))}
-                  </div>
+              <div key={i}>
+                <div className="text-sm font-medium mb-2">{i + 1}ª Parte ({list.length})</div>
+                <div className="flex flex-wrap gap-1">
+                  {list.map(p => (
+                    <Badge key={p.player.id} variant={i === 0 ? 'secondary' : 'outline'}>
+                      {p.player.number || '-'} {p.player.name}
+                    </Badge>
+                  ))}
                 </div>
-                {partMinutes.length > 1 && (
-                  <div>
-                    <div className="text-sm font-medium mb-2">2ª Parte ({part2Starters.length})</div>
-                    <div className="flex flex-wrap gap-1">
-                      {part2Starters.map(p => (
-                        <Badge key={p.player.id} variant="outline">
-                          {p.player.number || '-'} {p.player.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              </div>
             );
-          })()}
+          })}
         </CardContent>
       </Card>
 
@@ -736,7 +725,7 @@ export function MatchReport({ crestUrl, match, lineups, events, teamName, partEl
                       <td className="text-center py-2 px-2">{stat.redCards > 0 ? stat.redCards : '-'}</td>
                       <td className="py-2 px-2">
                         <div className="flex flex-wrap gap-1">
-                          {stat.annotations.map((ann, i) => (
+                          {obsFor(stat).split(', ').filter(Boolean).map((ann, i) => (
                             <Badge key={i} variant="outline" className={`text-xs ${
                               ann.startsWith('E') ? 'text-green-600' :
                               ann.startsWith('S') ? 'text-orange-600' : ''
