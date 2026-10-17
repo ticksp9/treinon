@@ -116,6 +116,31 @@ END $$;
 RESET ROLE;
 SET ROLE authenticated;
 
+-- prevention: growth, exam, insurance — the team's staff works on them, parents read their child's
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+INSERT INTO public.player_growth (player_id, measured_on, height_cm) VALUES ('d0000000-0000-0000-0000-000000000060', CURRENT_DATE - 120, 148.0), ('d0000000-0000-0000-0000-000000000060', CURRENT_DATE, 151.5);
+INSERT INTO public.player_medical_exams (player_id, exam_date, valid_until) VALUES ('d0000000-0000-0000-0000-000000000060', CURRENT_DATE - 300, CURRENT_DATE + 65);
+INSERT INTO public.injury_insurance_claims (injury_id, player_id, deadline) VALUES ('1e000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000060', CURRENT_DATE + 5);
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000012', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.player_growth) = 2, 'parent reads the growth of the child';
+  ASSERT (SELECT count(*) FROM public.player_medical_exams) = 1, 'parent reads the exam';
+  ASSERT (SELECT count(*) FROM public.injury_insurance_claims) = 0, 'parent does not see the insurance file';
+  BEGIN
+    INSERT INTO public.player_growth (player_id, measured_on, height_cm) VALUES ('d0000000-0000-0000-0000-000000000060', CURRENT_DATE - 1, 150);
+    RAISE EXCEPTION 'FAIL: parent wrote a measurement';
+  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.injury_insurance_claims) = 1, 'club admin sees the insurance claim';
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM public.player_growth) + (SELECT count(*) FROM public.player_medical_exams) + (SELECT count(*) FROM public.injury_insurance_claims) = 0, 'outsider sees none';
+END $$;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000051', false);
+
 -- the physio is removed: access ends
 SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', false);
 SELECT public.set_medical_staff('c0000000-0000-0000-0000-000000000001', 'fisio@clube.pt', 'none');

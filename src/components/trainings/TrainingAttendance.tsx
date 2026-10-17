@@ -39,6 +39,7 @@ interface TrainingSession {
   location: string | null;
   duration_minutes: number | null;
   objectives: string | null;
+  prevention_warmup?: boolean;
 }
 
 interface Attendance {
@@ -148,15 +149,17 @@ export function TrainingAttendance() {
     try {
       let q = supabase
         .from('training_sessions')
-        .select('id, date, location, duration_minutes, objectives')
+        .select('id, date, location, duration_minutes, objectives, prevention_warmup')
         .eq('team_id', selectedTeam);
       if (seasonId) q = q.eq('season_id', seasonId);
       const { data, error } = await q.order('date', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
-      if (data && data.length > 0) {
-        setSelectedSession(data[0].id);
+      // prevention_warmup is newer than the generated types
+      const list = (data ?? []) as unknown as TrainingSession[];
+      setSessions(list);
+      if (list.length > 0) {
+        setSelectedSession(list[0].id);
       } else {
         setSelectedSession('');
       }
@@ -565,6 +568,17 @@ export function TrainingAttendance() {
             </div>
           </div>
 
+          {selectedSessionData && Date.parse(selectedSessionData.date) <= Date.now() && (
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox checked={!!(selectedSessionData as { prevention_warmup?: boolean }).prevention_warmup}
+                onCheckedChange={async (v) => {
+                  const { error } = await (supabase as any).from('training_sessions').update({ prevention_warmup: !!v }).eq('id', selectedSessionData.id);
+                  if (error) { toast.error(error.message); return; }
+                  setSessions(prev => prev.map(x => x.id === selectedSessionData.id ? { ...x, prevention_warmup: !!v } as TrainingSession : x));
+                }} />
+              Fizemos o aquecimento de prevenção (FIFA 11+ Kids)
+            </label>
+          )}
           {selectedSessionData && (
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">

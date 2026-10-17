@@ -21,6 +21,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExamsInsurancePanel, GrowthPanel, PreventionPanel, SeasonPanel, useCarePlayers } from '@/components/medical/PreventionPanels';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -72,11 +74,15 @@ export default function MedicalDepartment() {
     },
   });
 
+  const allCare = useCarePlayers(null);
   const teams = useMemo(() => {
     const m = new Map<string, string>();
     rows.forEach((r) => r.player?.team && m.set(r.player.team.id, r.player.team.name));
+    allCare.forEach((p) => p.team && m.set(p.team.id, p.team.name));
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt'));
-  }, [rows]);
+  }, [rows, allCare]);
+  const carePlayers = useCarePlayers(team === ALL ? null : team);
+  const careTeams = useMemo(() => { const m = new Map<string, string>(); carePlayers.forEach((p) => p.team && m.set(p.team.id, p.team.name)); return [...m.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, 'pt')); }, [carePlayers]);
   const shown = useMemo(() => (team === ALL ? rows : rows.filter((r) => r.player?.team?.id === team)), [rows, team]);
   const grouped = useMemo(() => {
     const g = Object.fromEntries(GROUPS.map((x) => [x.key, [] as Row[]])) as Record<CareGroup, Row[]>;
@@ -123,6 +129,15 @@ export default function MedicalDepartment() {
 
         {clubId && <MedicalStaffCard clubId={clubId} canManage={isClubAdmin} />}
 
+        <Tabs defaultValue="injuries">
+          <TabsList className="h-auto flex-wrap">
+            <TabsTrigger value="injuries">Lesões</TabsTrigger>
+            <TabsTrigger value="growth">Crescimento</TabsTrigger>
+            <TabsTrigger value="exams">Exames e seguro</TabsTrigger>
+            <TabsTrigger value="prevention">Prevenção</TabsTrigger>
+            <TabsTrigger value="season">Época</TabsTrigger>
+          </TabsList>
+          <TabsContent value="injuries" className="space-y-4">
         {/* the season, at a glance */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {([['Lesões esta época', summary.injuries], ['Ainda em aberto', summary.open], ['Dias de paragem', summary.daysLost], ['Recaídas', summary.recurrences]] as const).map(([k, v]) => (
@@ -177,6 +192,12 @@ export default function MedicalDepartment() {
             </section>
           );
         })}
+          </TabsContent>
+          <TabsContent value="growth"><GrowthPanel players={carePlayers} /></TabsContent>
+          <TabsContent value="exams"><ExamsInsurancePanel players={carePlayers} /></TabsContent>
+          <TabsContent value="prevention"><PreventionPanel teams={careTeams} /></TabsContent>
+          <TabsContent value="season"><SeasonPanel injuries={rows as never} players={carePlayers} /></TabsContent>
+        </Tabs>
       </div>
 
       {report && <ReportInjuryDialog onClose={() => setReport(false)} onSaved={() => { setReport(false); qc.invalidateQueries({ queryKey: ['medical-dept'] }); }} isMedical={isMedical} />}
