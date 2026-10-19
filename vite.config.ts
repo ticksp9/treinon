@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => ({
       includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
         id: '/',
-        name: 'TreinON — O treinador ligado ao jogo',
+        name: 'TreinON',
         short_name: 'TreinON',
         description: 'Jogo ao vivo, treinos, plantéis e gestão do clube — para treinadores de formação e seniores.',
         lang: 'pt-PT',
@@ -43,17 +43,17 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/pwa-192x192.png?v=2',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/pwa-512x512.png?v=2',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/pwa-maskable-512x512.png',
+            src: '/pwa-maskable-512x512.png?v=2',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
