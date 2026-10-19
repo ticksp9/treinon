@@ -24,6 +24,7 @@ import { fetchSeasonTeamIds, teamSeasonLabel } from '@/lib/team-season-service';
 import { SquadDepth } from '@/components/teams/SquadDepth';
 import { TeamTacticsCard } from '@/components/teams/TeamTacticsCard';
 import { TeamBrandingCard } from '@/components/teams/TeamBrandingCard';
+import { TeamKindTable } from '@/components/teams/TeamKindTable';
 import { StaffInviteDialog, PendingStaffInvites, type StaffInviteType } from '@/components/invites/StaffInviteDialog';
 import { useUserRole } from '@/hooks/useUserRole';
 import { TeamStaffPanel } from '@/components/teams/TeamStaffPanel';
@@ -449,6 +450,8 @@ export default function TeamDetail() {
           <TeamTacticsCard teamId={team.id} sportType={team.sport_type} />
 
           {players.length > 0 && <SquadDepth players={players} />}
+
+          <TeamKindTable teamId={team.id} />
 
           {players.length === 0 ? (
             <Card className="border-dashed border-2 border-primary/30 bg-primary/5">

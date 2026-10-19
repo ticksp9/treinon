@@ -139,6 +139,7 @@ export function KindSplit({ totals }: { totals: KindTotals[] }) {
                 <p className="font-mono text-xl font-bold tabular-nums">{t.minutes}'</p>
               </div>
               <p className="text-xs text-muted-foreground">{t.played} {t.played === 1 ? 'jogo' : 'jogos'} com minutos de {t.matches} {t.matches === 1 ? 'convocatória' : 'convocatórias'} · {t.starts} titular</p>
+              <p className="text-xs"><span className="font-semibold">{t.goals}</span> {t.goals === 1 ? 'golo' : 'golos'} · <span className="font-semibold">{t.yellow}</span> {t.yellow === 1 ? 'amarelo' : 'amarelos'} · <span className="font-semibold">{t.red}</span> {t.red === 1 ? 'vermelho' : 'vermelhos'}</p>
               {all > 0 && <Progress value={(t.minutes / all) * 100} className="h-1.5" aria-label={`${label}: ${Math.round((t.minutes / all) * 100)}% dos minutos`} />}
             </CardContent>
           </Card>
@@ -414,6 +415,15 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
     },
   });
 
+  const { data: kindEvents = [] } = useQuery({
+    queryKey: ['player-kind-events', playerId, seasonId],
+    queryFn: async () => {
+      let q = supabase.from('match_events').select('event_type, is_opponent, match:matches!inner(season_id, is_deleted, is_test, match_type, competition)')
+        .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false).in('event_type', ['goal', 'yellow_card', 'red_card']);
+      if (seasonId) q = q.eq('match.season_id', seasonId);
+      return ((await q).data ?? []) as unknown[];
+    },
+  });
   const totalMinutes = (data || []).reduce((s: number, r: any) => s + (r.minutes_played || 0), 0);
   const starts = (data || []).filter((r: any) => r.is_starter).length;
   const subs = (data || []).filter((r: any) => !r.is_starter && (r.minutes_played || 0) > 0).length;
@@ -438,7 +448,7 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
         <StatCard icon={<Target className="w-5 h-5 text-amber-500" />} label="Suplente" value={subs} />
         <StatCard icon={<Star className="w-5 h-5 text-zinc-500" />} label="Não jogou" value={dnp} />
       </div>
-      <KindSplit totals={minutesByKind((data || []) as never)} />
+      <KindSplit totals={minutesByKind((data || []) as never, kindEvents as never)} />
       {utilizationPct != null && (
         <Card>
           <CardContent className="p-4">

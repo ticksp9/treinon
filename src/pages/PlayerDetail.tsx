@@ -183,7 +183,7 @@ export default function PlayerDetail() {
 
       let eventsQuery = supabase
         .from('match_events')
-        .select('event_type, match:matches!inner(season_id, is_deleted, is_test)')
+        .select('event_type, is_opponent, match:matches!inner(season_id, is_deleted, is_test, match_type, competition)')
         .eq('player_id', id!)
         .eq('match.is_deleted', false).eq('match.is_test', false);
       if (selectedSeasonId) eventsQuery = eventsQuery.eq('match.season_id', selectedSeasonId);
@@ -240,7 +240,7 @@ export default function PlayerDetail() {
         matchesPlayed: lineups?.length || 0,
         matchesStarted: lineups?.filter(l => l.is_starter).length || 0,
         // championship, friendlies and tournaments apart
-        byKind: minutesByKind((lineups ?? []) as never),
+        byKind: minutesByKind((lineups ?? []) as never, (events ?? []) as never),
         trainingSessions: attendance?.length || 0,
         trainingAttendance: attendance?.filter(a => a.present).length || 0,
         yellowCards,
