@@ -7,6 +7,8 @@ nova versão na App Store. Só é preciso nova versão se mudar o ícone, as per
 Como não tens Mac, a app é compilada na nuvem pelo **Codemagic** (500 minutos grátis por mês;
 cada compilação demora ~10 min).
 
+Ver também: [Google Play](GOOGLE-PLAY.md) · [Microsoft Store](MICROSOFT-STORE.md).
+
 O que já está feito:
 - Projeto iOS (Capacitor), identificador `pt.treinon.app`, nome **TreinON**.
 - Ícone 1024×1024 e ecrã de abertura.
@@ -48,9 +50,7 @@ O que já está feito:
    - *iOS certificates* → **Generate certificate** (tipo *Apple Distribution*) — o Codemagic cria-o por ti.
    - *iOS provisioning profiles* → **Fetch profiles** → escolhe o perfil *App Store* de `pt.treinon.app`
      (se não existir, cria-o em developer.apple.com → Profiles → **+** → *App Store Connect*).
-4. No ficheiro `codemagic.yaml` troca `APP_STORE_APPLE_ID: 0` pelo ID Apple do passo 1.3
-   (ou diz-me o número e eu faço isso).
-5. No Codemagic abre a app **treinon** → **Start new build** → workflow **iOS → TestFlight** → ramo `main`.
+4. No Codemagic abre a app **treinon** → **Start new build** → workflow **iOS → TestFlight** → ramo `main`.
 
 Ao fim de ~15 min a app aparece no **TestFlight**. Instala a app *TestFlight* no teu iPhone e testa.
 

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TreinON</string>
+    <string name="title_activity_main">TreinON</string>
+    <string name="package_name">pt.treinon.app</string>
+    <string name="custom_url_scheme">pt.treinon.app</string>
+</resources>

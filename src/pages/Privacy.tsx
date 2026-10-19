@@ -5,14 +5,15 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SUPPORT_EMAIL } from '@/lib/app-config';
 
-/** Email for privacy requests. While empty, the page points to the contact on the App Store page. */
-const PRIVACY_CONTACT = '';
+/** Email for privacy requests (the build can override it with VITE_SUPPORT_EMAIL). */
+const PRIVACY_CONTACT = SUPPORT_EMAIL || 'treinon.apoio@gmail.com';
 const UPDATED = '19 de outubro de 2026';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-2">
+    <section id={id} className="scroll-mt-4 space-y-2">
       <h2 className="text-base font-semibold">{title}</h2>
       <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">{children}</div>
     </section>
@@ -67,6 +68,11 @@ export default function Privacy() {
 
         <Section title="Durante quanto tempo">
           <p>Enquanto a conta ou o clube estiverem ativos. O clube pode exportar ou apagar os seus dados. Quando apaga a sua conta, os dados que tem fora de clubes são apagados; o que pertence a um clube fica no clube.</p>
+        </Section>
+
+        <Section id="apagar-conta" title="Apagar a sua conta">
+          <p>Na aplicação (iPhone, Android ou navegador) entre na sua conta e abra <strong>Definições → Apagar a minha conta</strong>. No computador também pode fazê-lo em <a className="text-primary underline" href="/settings">treinon.vercel.app/settings</a>. A conta é apagada logo, com os dados que tem fora de clubes; o que pertence a um clube (equipas, jogadores, jogos) fica no clube.</p>
+          <p>Se já não consegue entrar, peça a eliminação por email para {contact}, a partir do endereço da conta. Tratamos o pedido em até 30 dias.</p>
         </Section>
 
         <Section title="Os seus direitos">

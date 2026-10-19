@@ -7,6 +7,7 @@ import { DrillDiagram } from '@/components/library/DrillDiagram';
 import { DRILLS, SESSION_PLANS } from '@/lib/drill-library';
 import { SUPPORT_EMAIL } from '@/lib/app-config';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { isNativeApp } from '@/lib/native-files';
 
 const FEATURES = [
   { icon: Timer, title: 'Jogo ao vivo', text: 'Cronómetro, golos, cartões e substituições. Os minutos de cada jogador calculados sozinhos — justos para todos na formação.' },
@@ -38,7 +39,7 @@ export default function Index() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => navigate('/biblioteca')} className="hidden sm:inline-flex">Biblioteca</Button>
-            <Button variant="ghost" onClick={() => navigate('/instalar')}>Instalar</Button>
+            {!isNativeApp() && <Button variant="ghost" onClick={() => navigate('/instalar')}>Instalar</Button>}
             <ThemeToggle />
             <Button variant="ghost" onClick={() => navigate('/auth')}>Entrar</Button>
             <Button onClick={() => navigate('/auth?tab=signup')} className="hidden sm:inline-flex">Criar conta</Button>

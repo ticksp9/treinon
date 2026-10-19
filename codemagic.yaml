@@ -1,4 +1,4 @@
-# Builds the iPhone/iPad app in the cloud (no Mac needed) and sends it to TestFlight.
+# Builds the apps in the cloud: iPhone/iPad (→ TestFlight, no Mac needed) and Android (→ .aab for Google Play).
 # Set-up (once): see docs/APP-STORE.md — App Store Connect API key added in Codemagic
 # (Team settings → Integrations → Developer Portal) with the name "TreinON App Store".
 workflows:
@@ -47,3 +47,32 @@ workflows:
         # internal testers (TestFlight → Testes internos, automatic distribution) get every build;
         # submitting to external beta review needs the TestFlight test information first
         submit_to_testflight: false
+
+  # Android: builds the signed .aab for Google Play (the first upload to Play is done by hand).
+  # Set-up (once): upload android key in Codemagic (Code signing identities → Android keystores)
+  # with the reference name "treinon_upload" — see docs/GOOGLE-PLAY.md.
+  android-play:
+    name: Android → Google Play (.aab)
+    max_build_duration: 45
+    instance_type: linux_x2
+    environment:
+      node: 22
+      java: 21
+      android_signing:
+        - treinon_upload
+    triggering:
+      events: []
+    scripts:
+      - name: Install
+        script: npm ci
+      - name: Build the web app
+        script: npm run build
+      - name: Copy it into the Android project
+        script: npx cap sync android
+      - name: Build the .aab
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+          cd android && ./gradlew bundleRelease assembleRelease
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+      - android/app/build/outputs/apk/release/*.apk
