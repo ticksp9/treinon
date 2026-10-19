@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { MATCH_KINDS, kindOf, minutesByKind, type KindTotals, type MatchKind } from '@/lib/match-kind';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,6 +70,7 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
           value={latestEval?.overall_rating ? `${latestEval.overall_rating}/10` : '—'}
         />
       </div>
+      {seasonStats?.byKind && <KindSplit totals={seasonStats.byKind} />}
 
       {Object.keys(scores).length > 0 && (
         <Card>
@@ -117,6 +120,30 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Minutes and matches in the championship, friendlies and tournaments. */
+export function KindSplit({ totals }: { totals: KindTotals[] }) {
+  const all = totals.reduce((n, t) => n + t.minutes, 0);
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {totals.map((t) => {
+        const label = MATCH_KINDS.find((k) => k.key === t.kind)!.label;
+        return (
+          <Card key={t.kind}>
+            <CardContent className="space-y-1 p-3">
+              <div className="flex items-baseline justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+                <p className="font-mono text-xl font-bold tabular-nums">{t.minutes}'</p>
+              </div>
+              <p className="text-xs text-muted-foreground">{t.played} {t.played === 1 ? 'jogo' : 'jogos'} com minutos de {t.matches} {t.matches === 1 ? 'convocatória' : 'convocatórias'} · {t.starts} titular</p>
+              {all > 0 && <Progress value={(t.minutes / all) * 100} className="h-1.5" aria-label={`${label}: ${Math.round((t.minutes / all) * 100)}% dos minutos`} />}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -284,13 +311,14 @@ export function PlayerTrainingsTab({ playerId }: { playerId: string }) {
 
 export function PlayerMatchesTab({ playerId }: { playerId: string }) {
   const seasonId = useSelectedSeasonId();
+  const [kind, setKind] = useState<MatchKind | 'all'>('all');
   const { data, isLoading } = useQuery({
     queryKey: ['player-matches', playerId, seasonId],
     queryFn: async () => {
       let q = supabase
         .from('match_lineups')
         .select(
-          'id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, match_date, opponent_name, is_home, goals_for, goals_against, season_id, is_deleted, is_test)'
+          'id, is_starter, minutes_played, position_played, rating, match:matches!inner(id, match_date, opponent_name, is_home, goals_for, goals_against, season_id, is_deleted, is_test, match_type, competition)'
         )
         .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false);
       if (seasonId) q = q.eq('match.season_id', seasonId);
@@ -315,10 +343,23 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
     );
   }
 
+  const shown = kind === 'all' ? data : data.filter((r: any) => kindOf(r.match) === kind);
   return (
+    <div className="space-y-2">
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Tipo de jogo">
+      {([{ key: 'all', label: 'Todos' }, ...MATCH_KINDS] as { key: MatchKind | 'all'; label: string }[]).map((k) => {
+        const n = k.key === 'all' ? data.length : data.filter((r: any) => kindOf(r.match) === k.key).length;
+        return (
+          <button key={k.key} type="button" onClick={() => setKind(k.key)} aria-pressed={kind === k.key}
+            className={`rounded-md border px-2.5 py-1 text-sm ${kind === k.key ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'}`}>
+            {k.label} <span className="font-mono text-xs opacity-70">{n}</span>
+          </button>
+        );
+      })}
+    </div>
     <Card>
       <CardContent className="p-0 divide-y">
-        {data.map((row: any) => (
+        {shown.map((row: any) => (
           <div key={row.id} className="p-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">
@@ -337,6 +378,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-[11px]">{MATCH_KINDS.find((k) => k.key === kindOf(row.match))!.short}</Badge>
               {row.is_starter && <Badge variant="outline">Titular</Badge>}
               <Badge>{row.minutes_played ?? 0}'</Badge>
               {row.rating != null && (
@@ -350,6 +392,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
         ))}
       </CardContent>
     </Card>
+    </div>
   );
 }
 
@@ -362,7 +405,7 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
     queryFn: async () => {
       let q = supabase
         .from('match_lineups')
-        .select('minutes_played, is_starter, match:matches!inner(match_date, season_id, is_deleted, is_test)')
+        .select('minutes_played, is_starter, match:matches!inner(match_date, season_id, is_deleted, is_test, match_type, competition)')
         .eq('player_id', playerId).eq('match.is_deleted', false).eq('match.is_test', false);
       if (seasonId) q = q.eq('match.season_id', seasonId);
       const { data, error } = await q;
@@ -395,6 +438,7 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
         <StatCard icon={<Target className="w-5 h-5 text-amber-500" />} label="Suplente" value={subs} />
         <StatCard icon={<Star className="w-5 h-5 text-zinc-500" />} label="Não jogou" value={dnp} />
       </div>
+      <KindSplit totals={minutesByKind((data || []) as never)} />
       {utilizationPct != null && (
         <Card>
           <CardContent className="p-4">

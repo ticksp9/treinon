@@ -45,6 +45,7 @@ import { PinDialog } from '@/components/security/PinDialog';
 import { useState, useMemo } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
+import { minutesByKind } from '@/lib/match-kind';
 
 export default function PlayerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -173,7 +174,7 @@ export default function PlayerDetail() {
       let lineupQuery = supabase
         .from('match_lineups')
         // only counted matches: not deleted, not test (filtered on the parent match row)
-        .select('minutes_played, is_starter, match_id, match:matches!inner(season_id, is_deleted, is_test)')
+        .select('minutes_played, is_starter, match_id, match:matches!inner(season_id, is_deleted, is_test, match_type, competition)')
         .eq('player_id', id!)
         .eq('match.is_deleted', false).eq('match.is_test', false);
       if (selectedSeasonId) lineupQuery = lineupQuery.eq('match.season_id', selectedSeasonId);
@@ -238,6 +239,8 @@ export default function PlayerDetail() {
         goalsConceded,
         matchesPlayed: lineups?.length || 0,
         matchesStarted: lineups?.filter(l => l.is_starter).length || 0,
+        // championship, friendlies and tournaments apart
+        byKind: minutesByKind((lineups ?? []) as never),
         trainingSessions: attendance?.length || 0,
         trainingAttendance: attendance?.filter(a => a.present).length || 0,
         yellowCards,
