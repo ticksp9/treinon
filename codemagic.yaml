@@ -32,7 +32,7 @@ workflows:
       - name: Build number
         script: |
           LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
-          cd ios/App && agvtool new-version -all $((LATEST + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $((LATEST + 1));/g" ios/App/App.xcodeproj/project.pbxproj
       - name: Build the .ipa
         script: |
           xcode-project build-ipa \
