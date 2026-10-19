@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { format, differenceInYears } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { deliverPdf } from '@/lib/native-files';
 
 interface PlayerData {
   name: string;
@@ -226,5 +227,5 @@ export function generatePlayerPdf(player: PlayerData): void {
 
   // Save the PDF
   const fileName = `ficha_jogador_${player.name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-  doc.save(fileName);
+  void deliverPdf(doc, fileName);
 }

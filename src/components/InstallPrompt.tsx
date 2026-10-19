@@ -3,6 +3,7 @@ import { Download, Share, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
 import { currentInstallEnv } from '@/lib/install-env';
+import { isNativeApp } from '@/lib/native-files';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -41,7 +42,7 @@ export function InstallPrompt() {
   const { pathname } = useLocation();
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOS, setShowIOS] = useState(false);
-  const [hidden, setHidden] = useState(() => isStandalone() || recentlyDismissed());
+  const [hidden, setHidden] = useState(() => isNativeApp() || isStandalone() || recentlyDismissed());
 
   useEffect(() => {
     if (hidden) return;

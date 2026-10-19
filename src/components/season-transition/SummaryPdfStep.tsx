@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AGE_CATEGORIES } from '@/lib/constants';
 import jsPDF from 'jspdf';
 import { Database } from '@/integrations/supabase/types';
+import { deliverPdf } from '@/lib/native-files';
 
 type SeasonPlayerStatus = Database['public']['Enums']['season_player_status'];
 
@@ -327,7 +328,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
 
     // Save
     const filename = `mapeamento-equipas-${seasonName.replace('/', '-')}.pdf`;
-    doc.save(filename);
+    void deliverPdf(doc, filename);
     toast.success('PDF gerado com sucesso');
   };
 

@@ -1,5 +1,6 @@
 // Lightweight season report PDF using jsPDF (already present in repo deps via generatePlayerPdf).
 import { supabase } from '@/integrations/supabase/client';
+import { deliverPdf } from '@/lib/native-files';
 
 export async function generateSeasonReportPdf(seasonId: string, seasonName: string): Promise<void> {
   const [{ data: matches }, { data: trainings }, { data: attendance }, { data: evaluations }, { data: enrollments }] = await Promise.all([
@@ -37,5 +38,5 @@ export async function generateSeasonReportPdf(seasonId: string, seasonName: stri
     doc.text(txt, 14, y); y += 5;
   });
 
-  doc.save(`epoca-${seasonName.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
+  void deliverPdf(doc, `epoca-${seasonName.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
 }

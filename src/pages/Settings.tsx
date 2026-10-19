@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BackupCard } from '@/components/settings/BackupCard';
+import { DeleteAccountCard } from '@/components/settings/DeleteAccountCard';
+import { isNativeApp } from '@/lib/native-files';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -152,7 +154,7 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            <Card className="mt-4 border-border/50">
+            {!isNativeApp() && <Card className="mt-4 border-border/50">
               <CardContent className="flex items-center justify-between gap-3 p-4">
                 <div>
                   <p className="text-sm font-medium">Instalar a app</p>
@@ -160,7 +162,7 @@ export default function Settings() {
                 </div>
                 <Button size="sm" variant="outline" onClick={() => navigate('/instalar')}>Como instalar</Button>
               </CardContent>
-            </Card>
+            </Card>}
 
             <Card className="mt-4 border-border/50">
               <CardHeader>
@@ -208,6 +210,8 @@ export default function Settings() {
 
         {/* the club's / coach's data is theirs: take a copy, or move it to another database */}
         <BackupCard />
+        <DeleteAccountCard />
+        <p className="text-center text-xs text-muted-foreground"><a href="/privacidade" className="hover:underline">Política de privacidade</a></p>
       </div>
     </AppLayout>
   );

@@ -35,6 +35,7 @@ import { useTeamBranding } from '@/hooks/useTeamBranding';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
+import { deliverPdf } from '@/lib/native-files';
 
 interface Team {
   id: string;
@@ -786,9 +787,7 @@ export function MatchCallup() {
   const printCallup = () => {
     const pdf = callupPdf();
     if (!pdf) return;
-    pdf.doc.autoPrint();
-    const win = window.open(pdf.doc.output('bloburl') as unknown as string, '_blank');
-    if (!win) pdf.doc.save(pdf.fileName);
+    void deliverPdf(pdf.doc, pdf.fileName, { print: true, title: pdf.title });
   };
 
   const sendCallupPdf = async () => {

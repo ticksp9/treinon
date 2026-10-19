@@ -791,6 +791,7 @@ export default function Auth() {
             <p className="text-xs text-muted-foreground">Estatísticas</p>
           </div>
         </div>
+        <p className="mt-6 text-center text-xs text-muted-foreground"><a href="/privacidade" className="hover:underline">Política de privacidade</a></p>
       </div>
     </div>
   );

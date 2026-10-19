@@ -1,0 +1,47 @@
+# Builds the iPhone/iPad app in the cloud (no Mac needed) and sends it to TestFlight.
+# Set-up (once): see docs/APP-STORE.md — App Store Connect API key added in Codemagic
+# (Team settings → Integrations → Developer Portal) with the name "TreinON App Store".
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: TreinON App Store
+    environment:
+      node: 22
+      xcode: latest
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: pt.treinon.app
+      vars:
+        XCODE_PROJECT: ios/App/App.xcodeproj
+        XCODE_SCHEME: App
+        APP_STORE_APPLE_ID: 0 # replace with the Apple ID of the app (App Store Connect → App Information)
+    triggering:
+      events: []
+    scripts:
+      - name: Install
+        script: npm ci
+      - name: Build the web app
+        script: npm run build
+      - name: Copy it into the iOS project
+        script: npx cap sync ios
+      - name: Signing
+        script: xcode-project use-profiles
+      - name: Build number
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" || echo 0)
+          cd ios/App && agvtool new-version -all $((LATEST + 1))
+      - name: Build the .ipa
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

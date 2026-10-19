@@ -40,7 +40,7 @@ const read = (k: string) => { try { return localStorage.getItem(k); } catch { re
 const write = (k: string, v: string | null) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch { /* ignore */ } };
 
 // pages where nobody is "working with a team" yet
-const PUBLIC_PREFIXES = ['/auth', '/instalar', '/biblioteca', '/accept-invite', '/c', '/guardian', '/player', '/oauth'];
+const PUBLIC_PREFIXES = ['/auth', '/instalar', '/privacidade', '/biblioteca', '/accept-invite', '/c', '/guardian', '/player', '/oauth'];
 
 export function ActiveTeamProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();

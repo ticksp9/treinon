@@ -6,6 +6,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { deliverPdf, isNativeApp } from '@/lib/native-files';
 
 export interface CallupPlayer { name: string; number: number | null; position: string | null }
 export interface CallupGroup { label: string; players: CallupPlayer[] }
@@ -126,6 +127,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
 
 /** Share the PDF where the device can (iPad/phone: WhatsApp, email…), else download it. */
 export async function shareOrDownloadPdf(doc: jsPDF, fileName: string, title: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
+  if (isNativeApp()) { await deliverPdf(doc, fileName, { title }); return 'shared'; }
   const blob = doc.output('blob');
   const file = new File([blob], fileName, { type: 'application/pdf' });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };

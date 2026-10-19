@@ -102,6 +102,14 @@ try {
     exit 1
   }
   Write-Host "OK: departamento medico" -ForegroundColor Green
+
+  $out = & $psql[0] $psql[1..($psql.Length-1)] -d treinon_test -f (Join-Path $PSScriptRoot "account-smoke.sql") 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "FALHOU: apagar conta" -ForegroundColor Red
+    $out | Select-Object -Last 12 | ForEach-Object { Write-Host "  $_" }
+    exit 1
+  }
+  Write-Host "OK: apagar conta" -ForegroundColor Green
 }
 finally {
   Start-Process -FilePath "$PgBin\pg_ctl.exe" -ArgumentList @("-D", "`"$data`"", "stop", "-m", "fast") -NoNewWindow -Wait

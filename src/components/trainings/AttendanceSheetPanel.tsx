@@ -22,6 +22,7 @@ import { useTeamBranding } from '@/hooks/useTeamBranding';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import { MAX_SHEET_COLUMNS, MAX_SHEET_ROWS, alignSessions, sessionFor, binarize, findMarks, makeSheetCode, photoPixels, project, readSheet, sessionsForSheet, sheetLayout, toGray } from '@/lib/attendance-sheet';
 import { buildAttendanceSheetPdf, sheetGeometryFor } from '@/lib/attendance-sheet-pdf';
+import { deliverPdf } from '@/lib/native-files';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -104,11 +105,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
       players: roster,
     });
     const name = `folha-presencas-${code}.pdf`;
-    if (mode === 'print') {
-      doc.autoPrint();
-      const win = window.open(doc.output('bloburl') as unknown as string, '_blank');
-      if (!win) doc.save(name);
-    } else doc.save(name);
+    void deliverPdf(doc, name, { print: mode === 'print', title: `Folha de presenças ${code}` });
     setPrintOpen(false);
     toast.success(`Folha ${code} criada. Depois de assinada, use "Ler folha assinada".`);
   };

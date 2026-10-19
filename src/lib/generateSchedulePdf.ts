@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { deliverPdf } from '@/lib/native-files';
 
 interface Schedule {
   id: string;
@@ -156,5 +157,5 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
   });
 
   // Save
-  doc.save(`quadro-treinos-${today.replace(/\//g, '-')}.pdf`);
+  void deliverPdf(doc, `quadro-treinos-${today.replace(/\//g, '-')}.pdf`);
 }

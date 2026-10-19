@@ -24,6 +24,7 @@ import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 import { BODY_PARTS } from '@/lib/player-constants';
 import { daysOut, mechanismLabel, seasonSummary } from '@/lib/injury-care';
+import { deliverPdf } from '@/lib/native-files';
 import {
   EXAM_LABEL, FAST_GROWTH_CM_YEAR, addWorkingDays, daysLeft, examState, growthVelocity, measureDue, oneYearFrom, warmupByWeek,
   type ExamState, type Measure,
@@ -389,7 +390,7 @@ export function SeasonPanel({ injuries, players }: { injuries: SeasonInjury[]; p
     doc.setFont('helvetica', 'bold'); doc.text('Como acontecem', 14, y); y += 5; doc.setFont('helvetica', 'normal');
     doc.text(total.byMechanism.map((m) => `${mechanismLabel(m.mechanism) ?? m.mechanism} (${m.n})`).join(', ') || '-', 14, y);
     doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text(`Gerado no TreinON em ${format(now, 'dd/MM/yyyy HH:mm')}. Sem diagnosticos (dados de saude ficam no departamento medico).`, 14, 285);
-    doc.save(`departamento-medico-epoca-${format(now, 'yyyy-MM-dd')}.pdf`);
+    void deliverPdf(doc, `departamento-medico-epoca-${format(now, 'yyyy-MM-dd')}.pdf`);
   };
 
   return (

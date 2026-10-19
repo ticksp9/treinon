@@ -34,6 +34,7 @@ const MedicalDepartment = lazy(() => import("./pages/MedicalDepartment"));
 const ScoutingPlayerReport = lazy(() => import("./pages/ScoutingPlayerReport"));
 const Library = lazy(() => import("./pages/Library"));
 const Install = lazy(() => import("./pages/Install"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 const ClubMap = lazy(() => import("./pages/ClubMap"));
 const PublicClub = lazy(() => import("./pages/PublicClub"));
 const SeasonTransition = lazy(() => import("./pages/SeasonTransition"));
@@ -151,6 +152,7 @@ function AppContent() {
           <Route path="/departamento-medico" element={<RoleProtectedRoute><MedicalDepartment /></RoleProtectedRoute>} />
           <Route path="/biblioteca" element={<Library />} />
           <Route path="/instalar" element={<Install />} />
+          <Route path="/privacidade" element={<Privacy />} />
           <Route path="/mapa" element={<RoleProtectedRoute><ClubMap /></RoleProtectedRoute>} />
           <Route path="/c/:slug" element={<PublicClub />} />
           <Route path="/season-transition" element={<RoleProtectedRoute><SeasonTransition /></RoleProtectedRoute>} />

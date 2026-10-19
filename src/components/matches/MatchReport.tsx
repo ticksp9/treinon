@@ -24,6 +24,7 @@ import {
 import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { orderByPosition, partLineup, shortName, type PartLineup } from '@/lib/report-lineup';
 import type { LiveTactics } from '@/lib/live-tactics';
+import { deliverPdf } from '@/lib/native-files';
 
 interface Player {
   id: string;
@@ -551,7 +552,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       }
 
       const fileName = `relatorio_jogo_${match.opponent_name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-      doc.save(fileName);
+      void deliverPdf(doc, fileName, { title: 'Relatório de jogo' });
     } finally {
       setGenerating(false);
     }
