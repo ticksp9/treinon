@@ -44,4 +44,6 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        # internal testers (TestFlight → Testes internos, automatic distribution) get every build;
+        # submitting to external beta review needs the TestFlight test information first
+        submit_to_testflight: false
