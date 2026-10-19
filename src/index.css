@@ -124,6 +124,12 @@
     @apply border-border;
   }
 
+  /* iPhone: never enlarge text on its own (it pushes words out of labels and buttons) */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "tnum" 1; /* aligned numbers in tables and scores */
