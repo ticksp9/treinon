@@ -37,8 +37,8 @@ export function SeasonPicker() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <CalendarRange className="w-4 h-4 text-muted-foreground" />
+        <Button variant="outline" size="sm" className="shrink-0 gap-2 px-2 sm:px-3">
+          <CalendarRange className="hidden w-4 h-4 text-muted-foreground sm:block" />
           <span className="text-xs text-muted-foreground hidden sm:inline">Época</span>
           <span className="font-medium">{selectedSeason?.name ?? '—'}</span>
         </Button>

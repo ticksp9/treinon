@@ -236,7 +236,7 @@ export default function TeamDetail() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -248,7 +248,7 @@ export default function TeamDetail() {
   if (!team) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">Equipa não encontrada</p>
@@ -276,7 +276,7 @@ export default function TeamDetail() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/teams')}>

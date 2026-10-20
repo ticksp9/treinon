@@ -113,7 +113,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
   return (
     <Card>
       <CardContent className="flex flex-wrap items-center gap-2 p-4">
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
           <p className="text-sm font-semibold">Folha para os jogadores assinarem</p>
           <p className="text-xs text-muted-foreground">Imprima a folha dos próximos treinos. Depois de assinada, tire-lhe uma fotografia e a app marca as presenças.</p>
         </div>

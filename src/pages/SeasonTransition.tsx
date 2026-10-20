@@ -223,7 +223,7 @@ export default function SeasonTransition() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -234,7 +234,7 @@ export default function SeasonTransition() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-display font-bold">Transição de Época</h1>

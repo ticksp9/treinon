@@ -326,7 +326,7 @@ export default function Matches() {
   if (authLoading || loading) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <div className="animate-pulse space-y-4">
             <div className="h-8 w-48 bg-muted rounded" />
             <div className="h-64 bg-muted rounded" />
@@ -339,7 +339,7 @@ export default function Matches() {
   if (!user) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -356,7 +356,7 @@ export default function Matches() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Gestão de Jogos</h1>
           <p className="text-muted-foreground">
@@ -479,10 +479,10 @@ export default function Matches() {
                       {inProgressMatches.map(match => (
                         <div
                           key={match.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-green-100/50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg bg-green-100/50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="text-center min-w-[60px]">
+                          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                            <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
                                 {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
                               </div>
@@ -490,8 +490,8 @@ export default function Matches() {
                                 {format(new Date(match.match_date), 'HH:mm')}
                               </div>
                             </div>
-                            <div>
-                              <div className="font-medium flex items-center gap-2">
+                            <div className="min-w-0">
+                              <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
@@ -536,14 +536,14 @@ export default function Matches() {
                       {upcomingMatches.map(match => (
                         <div
                           key={match.id}
-                          className={`flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
+                          className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
                             match.is_test
                               ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
                               : 'bg-secondary/30'
                           }`}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="text-center min-w-[60px]">
+                          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                            <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
                                 {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
                               </div>
@@ -551,8 +551,8 @@ export default function Matches() {
                                 {format(new Date(match.match_date), 'HH:mm')}
                               </div>
                             </div>
-                            <div>
-                              <div className="font-medium flex items-center gap-2">
+                            <div className="min-w-0">
+                              <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
@@ -575,7 +575,7 @@ export default function Matches() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             {getStatusBadge(match.status)}
                             {match.status === 'in_progress' ? (
                               <>
@@ -639,14 +639,14 @@ export default function Matches() {
                       {pastMatches.map(match => (
                         <div
                           key={match.id}
-                          className={`flex items-center justify-between p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
+                          className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg hover:bg-secondary/50 transition-colors ${
                             match.is_test
                               ? 'bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
                               : 'bg-secondary/30'
                           }`}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="text-center min-w-[60px]">
+                          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                            <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
                                 {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
                               </div>
@@ -654,8 +654,8 @@ export default function Matches() {
                                 {format(new Date(match.match_date), 'yyyy')}
                               </div>
                             </div>
-                            <div>
-                              <div className="font-medium flex items-center gap-2">
+                            <div className="min-w-0">
+                              <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
@@ -674,7 +674,7 @@ export default function Matches() {
                               )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             {getStatusBadge(match.status)}
                             {match.status === 'in_progress' ? (
                               <Button size="sm" onClick={() => handleContinueMatch(match)}>
@@ -749,14 +749,14 @@ export default function Matches() {
                           key={match.id}
                           className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="text-center min-w-[50px]">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="text-center min-w-[50px] shrink-0">
                               <div className="text-xs font-medium">
                                 {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
                               </div>
                             </div>
-                            <div>
-                              <div className="text-sm font-medium flex items-center gap-2">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500 text-amber-600">TESTE</Badge>
                                 )}
@@ -767,8 +767,8 @@ export default function Matches() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <div className="font-bold text-sm">
+                          <div className="flex shrink-0 items-center gap-2">
+                            <div className="whitespace-nowrap font-bold text-sm">
                               {match.goals_for ?? 0} - {match.goals_against ?? 0}
                             </div>
                             {canDeleteAnytime(match) && (
@@ -871,10 +871,10 @@ export default function Matches() {
                   deletedMatches.map(match => (
                     <div
                       key={match.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
+                      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-muted/50 rounded-lg"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="text-center min-w-[60px]">
+                      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                        <div className="text-center min-w-[52px] shrink-0">
                           <div className="text-sm font-medium">
                             {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
                           </div>
@@ -882,8 +882,8 @@ export default function Matches() {
                             {format(new Date(match.match_date), 'HH:mm')}
                           </div>
                         </div>
-                        <div>
-                          <div className="font-medium flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                             {match.is_test && (
                               <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                 <FlaskConical className="w-3 h-3 mr-0.5" />

@@ -99,7 +99,7 @@ export default function Accounting() {
   if (roleLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -110,7 +110,7 @@ export default function Accounting() {
   if (!isClubAdmin || !clubId) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -137,7 +137,7 @@ export default function Accounting() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-display font-bold">Contabilidade</h1>

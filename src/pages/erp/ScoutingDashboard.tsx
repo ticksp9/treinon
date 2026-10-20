@@ -12,7 +12,7 @@ import { RecruitmentNeedsTab } from '@/components/scouting/RecruitmentNeedsTab';
 export default function ScoutingDashboard() {
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Scouting & Recrutamento</h1>
           <p className="text-muted-foreground">Gestão de talento, observação e pipeline de recrutamento</p>

@@ -195,7 +195,7 @@ export function LibraryBrowser() {
       <div className="mx-auto max-w-7xl space-y-6 pb-28">
         {/* Hero */}
         <div className="relative overflow-hidden rounded-lg border border-l-4 border-l-primary bg-card p-5 sm:p-6">
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
             <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
               <BookOpen className="h-6 w-6" />
             </div>
@@ -207,7 +207,7 @@ export function LibraryBrowser() {
               </p>
             </div>
             {user && (
-              <Button className="ml-auto shrink-0" onClick={() => setEditing(emptyDrill())}>
+              <Button className="shrink-0 self-start sm:ml-auto" onClick={() => setEditing(emptyDrill())}>
                 <PenTool className="mr-1.5 h-4 w-4" />Novo exercício
               </Button>
             )}

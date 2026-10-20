@@ -350,8 +350,8 @@ export function TrainingLoadView() {
           ) : (
             <div className="space-y-2">
               {summaries.map(s => (
-                <div key={s.player.id} className="flex items-center justify-between p-2 rounded-lg border">
-                  <div className="flex items-center gap-2">
+                <div key={s.player.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 p-2 rounded-lg border">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                     {s.player.number && (
                       <Badge variant="outline" className="font-mono text-xs">{s.player.number}</Badge>
                     )}
@@ -360,7 +360,7 @@ export function TrainingLoadView() {
                       <Badge variant="destructive" className="text-xs">{s.warning}</Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap text-xs text-muted-foreground">
                     <span>{s.sessionCount} sessões</span>
                     {s.avgRpe > 0 && <span>RPE {s.avgRpe}</span>}
                     <Badge variant="outline">

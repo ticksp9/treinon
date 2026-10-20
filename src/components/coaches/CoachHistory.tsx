@@ -168,7 +168,7 @@ export function CoachHistory() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
           <h3 className="text-lg font-semibold">Histórico Profissional</h3>
           <p className="text-sm text-muted-foreground">A sua experiência como treinador</p>

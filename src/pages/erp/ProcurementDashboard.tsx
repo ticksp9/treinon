@@ -28,7 +28,7 @@ export default function ProcurementDashboard() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <PageHeader
           title="Compras & Despesas"
           description="Gestão de fornecedores, compras, despesas e contas a pagar"

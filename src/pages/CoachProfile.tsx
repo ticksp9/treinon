@@ -15,7 +15,7 @@ export default function CoachProfile() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <div className="animate-pulse space-y-4">
             <div className="h-8 w-48 bg-muted rounded" />
             <div className="h-64 bg-muted rounded" />
@@ -28,7 +28,7 @@ export default function CoachProfile() {
   if (!user) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -45,7 +45,7 @@ export default function CoachProfile() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Perfil do Treinador</h1>
           <p className="text-muted-foreground">

@@ -262,7 +262,7 @@ export default function PlayerDetail() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -275,7 +275,7 @@ export default function PlayerDetail() {
     if (import.meta.env.DEV) console.error('[PlayerDetail] erro na query principal:', playerError);
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center space-y-3">
               <p className="text-muted-foreground">
@@ -302,7 +302,7 @@ export default function PlayerDetail() {
   if (!player) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">Jogador não encontrado ou sem acesso</p>
@@ -333,15 +333,18 @@ export default function PlayerDetail() {
   return (
     <AppLayout>
       <ErrorBoundary label="página do jogador" showBack>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4 flex-wrap">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/players')}>
+        {/* phone: name and badges on top, actions below; computer: one row */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="flex min-w-0 flex-1 items-start gap-2">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/players')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-display font-bold truncate">{player.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-display font-bold break-words">{player.name}</h1>
+            <p className="text-sm text-muted-foreground">{player.team?.name}</p>
+            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
               {consent && (
                 <Badge variant="outline" title="Resposta dos encarregados de educação sobre fotografias e vídeos"
                   className={consent.image === 'yes' ? 'border-primary text-primary' : consent.image === 'no' ? 'border-destructive text-destructive' : 'text-muted-foreground'}>
@@ -358,8 +361,9 @@ export default function PlayerDetail() {
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground">{player.team?.name}</p>
           </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2 pl-12 sm:pl-0">
           <Select
             value={(player as any).status || 'active'}
             onValueChange={(v) => updateStatus.mutate(v)}
@@ -387,6 +391,7 @@ export default function PlayerDetail() {
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Exportar PDF</span>
           </Button>
+          </div>
         </div>
 
         {/* Player Info Card */}

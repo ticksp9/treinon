@@ -19,7 +19,7 @@ export default function WorkforceDashboard() {
   if (roleLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
@@ -32,7 +32,7 @@ export default function WorkforceDashboard() {
   if (!isClubAdmin) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -47,7 +47,7 @@ export default function WorkforceDashboard() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Contratos & Staff</h1>
           <p className="text-muted-foreground">Gestão de pessoal, contratos, salários, honorários e obrigações</p>

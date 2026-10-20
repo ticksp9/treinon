@@ -301,7 +301,7 @@ export default function RehabPlanForm() {
   if (accessLoading || (isEditing && planLoading)) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -312,7 +312,7 @@ export default function RehabPlanForm() {
   if (!hasPhysioAccess) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -326,7 +326,7 @@ export default function RehabPlanForm() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/club/physio/rehab')}>

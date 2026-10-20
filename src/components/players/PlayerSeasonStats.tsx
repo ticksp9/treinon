@@ -37,7 +37,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
+              <div className="hidden sm:block p-2 rounded-lg bg-blue-500/10">
                 <Clock className="w-5 h-5 text-blue-500" />
               </div>
               <div>
@@ -51,7 +51,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
+              <div className="hidden sm:block p-2 rounded-lg bg-green-500/10">
                 <Target className="w-5 h-5 text-green-500" />
               </div>
               <div>
@@ -66,7 +66,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-red-500/10">
+                <div className="hidden sm:block p-2 rounded-lg bg-red-500/10">
                   <Shield className="w-5 h-5 text-red-500" />
                 </div>
                 <div>
@@ -80,7 +80,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
+                <div className="hidden sm:block p-2 rounded-lg bg-purple-500/10">
                   <Users className="w-5 h-5 text-purple-500" />
                 </div>
                 <div>
@@ -95,7 +95,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-orange-500/10">
+              <div className="hidden sm:block p-2 rounded-lg bg-orange-500/10">
                 <Calendar className="w-5 h-5 text-orange-500" />
               </div>
               <div>
@@ -122,21 +122,21 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold">{stats.matchesStarted}</p>
             <p className="text-xs text-muted-foreground">Titular</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold text-yellow-500">{stats.yellowCards}</p>
             <p className="text-xs text-muted-foreground">Amarelos</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
+          <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold text-red-500">{stats.redCards}</p>
             <p className="text-xs text-muted-foreground">Vermelhos</p>
           </CardContent>

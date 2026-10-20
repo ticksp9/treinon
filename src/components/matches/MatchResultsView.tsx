@@ -235,17 +235,17 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
             return (
               <div
                 key={match.id}
-                className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
+                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer"
                 onClick={() => handleViewReport(match)}
               >
-                <div className="flex items-center gap-4">
-                  <div className="text-center min-w-[60px]">
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                  <div className="text-center min-w-[52px] shrink-0">
                     <div className="text-sm font-medium">{format(new Date(match.match_date), 'dd MMM', { locale: pt })}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(match.match_date), 'yyyy')}</div>
                   </div>
                   {getResultBadge(match)}
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
                         {match.is_home ? 'CASA' : 'FORA'}
                       </Badge>
@@ -253,7 +253,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
                         ? `${team?.name || 'Equipa'} vs ${match.opponent_name}`
                         : `${match.opponent_name} vs ${team?.name || 'Equipa'}`}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-1">
                       {match.competition && <span>{match.competition}</span>}
                       {match.location && (
                         <span className="flex items-center gap-1">
@@ -263,8 +263,8 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-2xl font-bold">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 pl-[64px] sm:pl-0">
+                  <div className="whitespace-nowrap text-2xl font-bold">
                     {match.is_home ? `${goalsFor} - ${goalsAgainst}` : `${goalsAgainst} - ${goalsFor}`}
                   </div>
                   <Button variant="ghost" size="sm"><Eye className="w-4 h-4 mr-1" />Ver</Button>

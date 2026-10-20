@@ -171,3 +171,9 @@
   from { opacity: 0.92; }
   to { opacity: 1; }
 }
+
+@layer utilities {
+  /* rows that slide sideways on a phone (tabs) without a scrollbar */
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+}

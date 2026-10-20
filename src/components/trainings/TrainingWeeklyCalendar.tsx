@@ -183,8 +183,8 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
         )}
       </div>
 
-      {/* Weekly Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      {/* Weekly Grid — on a phone one day per row, on a computer the 7 columns */}
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-7 sm:gap-2">
         {weekDays.map(day => {
           const daySessions = getSessionsForDay(day);
           const dayMatches = getMatchesForDay(day);
@@ -194,14 +194,15 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-[120px] rounded-lg border p-2 ${
+              className={`flex gap-3 rounded-lg border p-2 sm:block sm:min-h-[120px] ${
                 today ? 'border-primary bg-primary/5' : past ? 'opacity-60' : 'border-border'
               }`}
             >
-              <div className={`text-xs font-medium mb-1 ${today ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className={`w-14 shrink-0 text-xs font-medium sm:mb-1 sm:w-auto ${today ? 'text-primary' : 'text-muted-foreground'}`}>
                 {format(day, 'EEE', { locale: pt })}
                 <span className="ml-1 font-bold">{format(day, 'd')}</span>
               </div>
+              <div className="min-w-0 flex-1">
 
               {/* Matches */}
               {dayMatches.map(m => (
@@ -237,8 +238,9 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
               ))}
 
               {daySessions.length === 0 && dayMatches.length === 0 && (
-                <div className="text-xs text-muted-foreground/50 text-center mt-4">—</div>
+                <div className="text-xs text-muted-foreground/50 sm:mt-4 sm:text-center">—</div>
               )}
+              </div>
             </div>
           );
         })}

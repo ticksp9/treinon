@@ -109,7 +109,7 @@ export default function ERPDashboard() {
   if (roleLoading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
@@ -124,7 +124,7 @@ export default function ERPDashboard() {
   if (!isClubAdmin) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -145,7 +145,7 @@ export default function ERPDashboard() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">ERP do Clube</h1>
           <p className="text-muted-foreground">

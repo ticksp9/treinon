@@ -78,12 +78,12 @@ export function GrowthPanel({ players }: { players: CarePlayer[] }) {
         <p className="flex items-start gap-2 rounded-md border border-accent/60 bg-accent/10 p-2 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{fast.length === 1 ? '1 jogador a crescer depressa' : `${fast.length} jogadores a crescer depressa`}: {fast.map((r) => r.p.name).join(', ')}.</p>
       )}
       <div className="overflow-x-auto rounded-md border bg-card">
-        <table className="w-full text-sm">
+        <table className="w-full whitespace-nowrap text-sm">
           <thead><tr className="border-b text-left text-xs uppercase text-muted-foreground"><th className="p-2">Jogador</th><th className="p-2">Idade</th><th className="p-2">Altura</th><th className="p-2">Crescimento</th><th className="p-2" /></tr></thead>
           <tbody>
             {rows.map(({ p, last, v, age, due, fast: isFast }) => (
               <tr key={p.id} className="border-b last:border-0">
-                <td className="p-2"><span className="font-medium">{p.name}</span>{p.team && <span className="ml-1 text-xs text-muted-foreground">{p.team.name}</span>}</td>
+                <td className="p-2"><span className="font-medium">{p.name}</span>{p.team && <span className="block text-xs text-muted-foreground">{p.team.name}</span>}</td>
                 <td className="p-2 tabular-nums">{age ?? '—'}</td>
                 <td className="p-2 tabular-nums">{last ? <>{String(last.height_cm).replace('.', ',')} cm <span className="text-xs text-muted-foreground">({format(new Date(last.measured_on), 'dd/MM')})</span></> : '—'}</td>
                 <td className="p-2 tabular-nums">{v ? <span className={cn(isFast && 'font-semibold text-accent')}>{String(v.cmYear).replace('.', ',')} cm/ano</span> : <span className="text-xs text-muted-foreground">falta outra medição</span>}</td>
@@ -400,7 +400,7 @@ export function SeasonPanel({ injuries, players }: { injuries: SeasonInjury[]; p
         <Button size="sm" variant="outline" onClick={pdf}><FileDown className="mr-1.5 h-4 w-4" />PDF da época</Button>
       </div>
       <div className="overflow-x-auto rounded-md border bg-card">
-        <table className="w-full text-sm">
+        <table className="w-full whitespace-nowrap text-sm">
           <thead><tr className="border-b text-left text-xs uppercase text-muted-foreground"><th className="p-2">Equipa</th><th className="p-2">Jogadores</th><th className="p-2">Lesões</th><th className="p-2">Abertas</th><th className="p-2">Dias perdidos</th><th className="p-2">Recaídas</th><th className="p-2">Em jogo</th></tr></thead>
           <tbody>
             {byTeam.map((t) => (

@@ -17,16 +17,16 @@ export default function InventoryDashboard() {
   const { assets, stock, movements, locations, allocations, kitAssignments, maintenance, alerts, teams, isLoading, createAsset, createStockItem } = useInventory();
 
   if (roleLoading || isLoading) {
-    return <AppLayout><div className="p-6 space-y-4"><Skeleton className="h-8 w-48" /><div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}</div></div></AppLayout>;
+    return <AppLayout><div className="space-y-4"><Skeleton className="h-8 w-48" /><div className="grid grid-cols-4 gap-4">{[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}</div></div></AppLayout>;
   }
 
   if (!isClubAdmin) {
-    return <AppLayout><div className="p-6"><Card><CardContent className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3><p className="text-muted-foreground">Apenas administradores de clubes.</p></CardContent></Card></div></AppLayout>;
+    return <AppLayout><div><Card><CardContent className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3><p className="text-muted-foreground">Apenas administradores de clubes.</p></CardContent></Card></div></AppLayout>;
   }
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Ativos & Inventário</h1>
           <p className="text-muted-foreground">Gestão de ativos, stock, equipamentos e consumos por equipa</p>

@@ -155,7 +155,7 @@ export default function Settings() {
             </Card>
 
             {!isNativeApp() && <Card className="mt-4 border-border/50">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div>
                   <p className="text-sm font-medium">Instalar a app</p>
                   <p className="text-xs text-muted-foreground">iPhone, Android ou computador — passo a passo.</p>
@@ -172,7 +172,7 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {(['football', 'futsal', 'both'] as SportScope[]).map((v) => (
                     <Button key={v} variant={sportScope === v ? 'default' : 'outline'} onClick={() => changeSportScope(v)}>
                       {SPORT_SCOPE_LABELS[v]}

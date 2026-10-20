@@ -26,7 +26,7 @@ function ActiveTeamChip() {
   if (myTeams.length < 2) {
     if (!crestUrl || !activeTeam) return null;
     return (
-      <span className="flex max-w-[9.5rem] items-center gap-1.5 text-xs sm:max-w-[14rem]">
+      <span className="flex min-w-0 max-w-[9.5rem] items-center gap-1.5 text-xs sm:max-w-[14rem]">
         <TeamCrest url={crestUrl} name={activeTeam.name} className="h-7 w-7" />
         <span className="hidden truncate font-semibold sm:block">{activeTeam.name}</span>
       </span>
@@ -36,7 +36,7 @@ function ActiveTeamChip() {
     <button
       type="button"
       onClick={openChooser}
-      className="flex max-w-[9.5rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-left text-xs hover:border-primary sm:max-w-[14rem]"
+      className="flex min-w-0 max-w-[9.5rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-left text-xs hover:border-primary sm:max-w-[14rem]"
       title="Trocar de equipa"
     >
       {crestUrl ? <TeamCrest url={crestUrl} name={activeTeam?.name} className="h-6 w-6" /> : <Shirt className="h-3.5 w-3.5 shrink-0 text-primary" />}
@@ -66,13 +66,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         <main className="flex-1 flex flex-col min-h-screen min-w-0">
           <header className="h-14 border-b border-border/60 flex items-center px-3 sm:px-4 gap-3 bg-card/70 backdrop-blur-md sticky top-0 z-20">
             <SidebarTrigger className="hidden md:inline-flex" />
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex shrink-0 items-center gap-2 md:hidden">
               <img src="/pwa-192x192.png" alt="" className="h-7 w-7 rounded-lg" />
             </div>
             {title && (
-              <h1 className="font-display font-semibold text-base text-foreground/90 truncate">{title}</h1>
+              <h1 className="hidden truncate font-display text-base font-semibold text-foreground/90 sm:block">{title}</h1>
             )}
-            <div className="ml-auto flex items-center gap-1 sm:gap-2">
+            <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
               <ActiveTeamChip />
               <SeasonPicker />
               <ThemeToggle />

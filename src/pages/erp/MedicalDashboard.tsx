@@ -18,7 +18,7 @@ export default function MedicalDashboard() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="p-6 space-y-6">
+        <div className="space-y-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-64" />
         </div>
@@ -29,7 +29,7 @@ export default function MedicalDashboard() {
   if (!hasPhysioAccess) {
     return (
       <AppLayout>
-        <div className="p-6">
+        <div>
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -46,7 +46,7 @@ export default function MedicalDashboard() {
 
   return (
     <AppLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold flex items-center gap-2">
             <Heart className="w-6 h-6 text-primary" />

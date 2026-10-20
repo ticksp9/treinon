@@ -116,9 +116,9 @@ export function BackupCard() {
             <ul className="divide-y text-sm">
               {auto.copies.map((c) => (
                 <li key={c.name} className="flex items-center gap-2 py-1.5">
-                  <span className="font-medium">{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-                  {c.size != null && <span className="text-xs text-muted-foreground">{formatSize(c.size)}</span>}
-                  <Button size="sm" variant="outline" className="ml-auto h-8" disabled={fetching === c.name} onClick={() => downloadAuto(c)}>
+                  <span className="min-w-0"><span className="block font-medium first-letter:uppercase">{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  {c.size != null && <span className="block text-xs text-muted-foreground">{formatSize(c.size)}</span>}</span>
+                  <Button size="sm" variant="outline" className="ml-auto h-8 shrink-0" disabled={fetching === c.name} onClick={() => downloadAuto(c)}>
                     {fetching === c.name ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}Descarregar
                   </Button>
                 </li>
