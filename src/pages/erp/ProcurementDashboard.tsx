@@ -39,27 +39,27 @@ export default function ProcurementDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Visão Geral</span>
+              <span>Visão Geral</span>
             </TabsTrigger>
             <TabsTrigger value="vendors" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Fornecedores</span>
+              <span>Fornecedores</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Requisições</span>
+              <span>Requisições</span>
             </TabsTrigger>
             <TabsTrigger value="invoices" className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />
-              <span className="hidden sm:inline">Faturas</span>
+              <span>Faturas</span>
             </TabsTrigger>
             <TabsTrigger value="expenses" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              <span className="hidden sm:inline">Despesas</span>
+              <span>Despesas</span>
             </TabsTrigger>
             <TabsTrigger value="payables" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Contas a Pagar</span>
+              <span>Contas a Pagar</span>
             </TabsTrigger>
           </TabsList>
 

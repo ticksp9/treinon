@@ -33,3 +33,6 @@ supabase/.temp/
 
 .vercel
 .env*
+
+# App Store / Play screenshots (generated, uploaded by hand)
+loja/

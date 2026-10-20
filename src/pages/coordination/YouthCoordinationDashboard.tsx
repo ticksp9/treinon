@@ -171,39 +171,39 @@ export default function YouthCoordinationDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Equipas</span>
+              <span>Equipas</span>
             </TabsTrigger>
             <TabsTrigger value="age-groups" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Escalões</span>
+              <span>Escalões</span>
             </TabsTrigger>
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Horários</span>
+              <span>Horários</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Documentos</span>
+              <span>Documentos</span>
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              <span className="hidden sm:inline">Pagamentos</span>
+              <span>Pagamentos</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              <span className="hidden sm:inline">Alertas</span>
+              <span>Alertas</span>
             </TabsTrigger>
             <TabsTrigger value="transition" className="flex items-center gap-2">
               <ArrowRightLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Transição</span>
+              <span>Transição</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Relatórios</span>
+              <span>Relatórios</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
-              <span className="hidden sm:inline">Histórico</span>
+              <span>Histórico</span>
             </TabsTrigger>
           </TabsList>
 

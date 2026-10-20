@@ -68,15 +68,15 @@ export default function Club() {
           <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Informação</span>
+              <span>Informação</span>
             </TabsTrigger>
             <TabsTrigger value="finances" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Finanças</span>
+              <span>Finanças</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Definições</span>
+              <span>Definições</span>
             </TabsTrigger>
           </TabsList>
 

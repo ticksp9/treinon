@@ -32,23 +32,23 @@ export default function BudgetDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              <span className="hidden sm:inline">Visão Geral</span>
+              <span>Visão Geral</span>
             </TabsTrigger>
             <TabsTrigger value="cycles" className="flex items-center gap-2">
               <Settings2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Ciclos</span>
+              <span>Ciclos</span>
             </TabsTrigger>
             <TabsTrigger value="lines" className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4" />
-              <span className="hidden sm:inline">Linhas</span>
+              <span>Linhas</span>
             </TabsTrigger>
             <TabsTrigger value="variance" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Real vs Budget</span>
+              <span>Real vs Budget</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Alertas</span>
+              <span>Alertas</span>
             </TabsTrigger>
           </TabsList>
 

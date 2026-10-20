@@ -44,31 +44,31 @@ export default function Trainings() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dashboard" className="flex items-center gap-1.5">
               <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden sm:inline">Painel</span>
+              <span>Painel</span>
             </TabsTrigger>
             <TabsTrigger value="calendar" className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Calendário</span>
+              <span>Calendário</span>
             </TabsTrigger>
             <TabsTrigger value="exercicios" className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Exercícios</span>
+              <span>Exercícios</span>
             </TabsTrigger>
             <TabsTrigger value="builder" className="flex items-center gap-1.5">
               <ClipboardList className="w-4 h-4" />
-              <span className="hidden sm:inline">Criar Treinos</span>
+              <span>Criar Treinos</span>
             </TabsTrigger>
             <TabsTrigger value="attendance" className="flex items-center gap-1.5">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Presenças</span>
+              <span>Presenças</span>
             </TabsTrigger>
             <TabsTrigger value="load" className="flex items-center gap-1.5">
               <Activity className="w-4 h-4" />
-              <span className="hidden sm:inline">Carga</span>
+              <span>Carga</span>
             </TabsTrigger>
             <TabsTrigger value="callup" className="flex items-center gap-1.5">
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">Convocatória</span>
+              <span>Convocatória</span>
             </TabsTrigger>
           </TabsList>
 

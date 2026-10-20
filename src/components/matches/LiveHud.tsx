@@ -40,33 +40,40 @@ interface Props {
   selectedName?: string | null;
 }
 
+/** Just under the app top bar (3.75rem). */
+const PIN_TOP = 60;
+
 export function LiveHud(p: Props) {
   const action = 'h-12 flex-1 min-w-0 flex-col gap-0.5 px-1 text-[11px] font-semibold leading-none sm:flex-row sm:gap-1.5 sm:text-sm';
   // The page content scrolls inside the app layout, where "sticky" has nothing to stick to.
   // So the bar is fixed to the screen, exactly over a spacer that keeps its place in the page
-  // (same left edge and width, whatever the side menu or the rotation of the tablet).
+  // (same left edge and width, whatever the side menu or the rotation of the tablet). It sits in
+  // its place in the page and only stays pinned under the top bar once the page scrolls past it.
   const spacer = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<{ left: number; width: number; height: number } | null>(null);
+  const [box, setBox] = useState<{ left: number; width: number; height: number; top: number } | null>(null);
   useLayoutEffect(() => {
     const measure = () => {
       const r = spacer.current?.getBoundingClientRect();
       const h = bar.current?.offsetHeight ?? 0;
-      if (r) setBox((b) => (b && b.left === r.left && b.width === r.width && b.height === h ? b : { left: r.left, width: r.width, height: h }));
+      const top = r ? Math.max(PIN_TOP, Math.round(r.top)) : PIN_TOP;
+      if (r) setBox((b) => (b && b.left === r.left && b.width === r.width && b.height === h && b.top === top ? b : { left: r.left, width: r.width, height: h, top }));
     };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
     if (ro && spacer.current) ro.observe(spacer.current);
     if (ro && bar.current) ro.observe(bar.current);
     window.addEventListener('resize', measure);
+    // the page scrolls inside the layout, not the window: listen to every scroll
+    document.addEventListener('scroll', measure, { capture: true, passive: true });
     window.addEventListener('orientationchange', measure);
-    return () => { ro?.disconnect(); window.removeEventListener('resize', measure); window.removeEventListener('orientationchange', measure); };
+    return () => { ro?.disconnect(); document.removeEventListener('scroll', measure, { capture: true }); window.removeEventListener('resize', measure); window.removeEventListener('orientationchange', measure); };
   }, [p.phase, p.isOnline, p.syncProblem]);
 
   return (
     <div ref={spacer} style={{ height: box?.height || 132 }}>
-    <div ref={bar} style={box ? { left: box.left, width: box.width } : undefined}
-      className={cn('z-20 rounded-lg border bg-background/95 px-2.5 py-2 shadow-md backdrop-blur sm:px-4', box ? 'fixed top-[3.75rem]' : 'relative')} role="region" aria-label="Marcador e relógio">
+    <div ref={bar} style={box ? { left: box.left, width: box.width, top: box.top } : undefined}
+      className={cn('z-20 rounded-lg border bg-background/95 px-2.5 py-2 shadow-md backdrop-blur sm:px-4', box ? 'fixed' : 'relative')} role="region" aria-label="Marcador e relógio">
       <div className="mx-auto max-w-6xl 2xl:flex 2xl:items-center 2xl:gap-3">
       <div className="flex items-center gap-2 sm:gap-4 2xl:flex-none">
         {/* score */}

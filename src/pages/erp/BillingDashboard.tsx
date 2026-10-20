@@ -30,22 +30,22 @@ export default function BillingDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" /><span className="hidden sm:inline">Dashboard</span>
+              <BarChart3 className="w-4 h-4" /><span>Dashboard</span>
             </TabsTrigger>
             <TabsTrigger value="plans" className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4" /><span className="hidden sm:inline">Planos</span>
+              <Settings2 className="w-4 h-4" /><span>Planos</span>
             </TabsTrigger>
             <TabsTrigger value="assignments" className="flex items-center gap-2">
-              <Users className="w-4 h-4" /><span className="hidden sm:inline">Atribuições</span>
+              <Users className="w-4 h-4" /><span>Atribuições</span>
             </TabsTrigger>
             <TabsTrigger value="charges" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" /><span className="hidden sm:inline">Cobranças</span>
+              <FileText className="w-4 h-4" /><span>Cobranças</span>
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /><span className="hidden sm:inline">Pagamentos</span>
+              <CreditCard className="w-4 h-4" /><span>Pagamentos</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /><span className="hidden sm:inline">Alertas</span>
+              <AlertTriangle className="w-4 h-4" /><span>Alertas</span>
             </TabsTrigger>
           </TabsList>
 

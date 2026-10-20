@@ -57,15 +57,15 @@ export default function CoachProfile() {
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Perfil</span>
+              <span>Perfil</span>
             </TabsTrigger>
             <TabsTrigger value="diplomas" className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4" />
-              <span className="hidden sm:inline">Diplomas</span>
+              <span>Diplomas</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
-              <span className="hidden sm:inline">Histórico</span>
+              <span>Histórico</span>
             </TabsTrigger>
           </TabsList>
 

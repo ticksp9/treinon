@@ -282,19 +282,19 @@ export default function PlayerPortal() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Início</span></TabsTrigger>
-            <TabsTrigger value="jogos"><Trophy className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Jogos</span></TabsTrigger>
-            <TabsTrigger value="treinos"><Calendar className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Treinos</span></TabsTrigger>
+            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>Início</span></TabsTrigger>
+            <TabsTrigger value="jogos"><Trophy className="h-4 w-4 mr-1" /><span>Jogos</span></TabsTrigger>
+            <TabsTrigger value="treinos"><Calendar className="h-4 w-4 mr-1" /><span>Treinos</span></TabsTrigger>
             <TabsTrigger value="comunicacao" className="flex items-center gap-1">
               <Megaphone className="h-4 w-4" />
-              <span className="hidden sm:inline">Comunicação</span>
+              <span>Comunicação</span>
               {notifCount > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {notifCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="conteudo"><BookOpen className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Conteúdo Técnico</span></TabsTrigger>
+            <TabsTrigger value="conteudo"><BookOpen className="h-4 w-4 mr-1" /><span>Conteúdo Técnico</span></TabsTrigger>
           </TabsList>
 
           {/* HOME */}

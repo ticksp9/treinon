@@ -261,7 +261,7 @@ export default function Communication() {
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="chat" className="flex items-center gap-1.5">
               <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Conversas</span>
+              <span>Conversas</span>
               {summary.totalMessages > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {summary.totalMessages > 99 ? '99+' : summary.totalMessages}
@@ -270,40 +270,40 @@ export default function Communication() {
             </TabsTrigger>
             <TabsTrigger value="announcements" className="flex items-center gap-1.5">
               <Megaphone className="h-4 w-4" />
-              <span className="hidden sm:inline">Anúncios</span>
+              <span>Anúncios</span>
             </TabsTrigger>
             <TabsTrigger value="attendance" className="flex items-center gap-1.5">
               <ClipboardCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Presenças</span>
+              <span>Presenças</span>
             </TabsTrigger>
             {SHOW_UNSENT_FEATURES && (
               <TabsTrigger value="reminders" className="flex items-center gap-1.5">
                 <Bell className="h-4 w-4" />
-                <span className="hidden sm:inline">Lembretes</span>
+                <span>Lembretes</span>
               </TabsTrigger>
             )}
             {showInvites && (
               <TabsTrigger value="invites" className="flex items-center gap-1.5">
                 <Send className="h-4 w-4" />
-                <span className="hidden sm:inline">Convites</span>
+                <span>Convites</span>
               </TabsTrigger>
             )}
             {showTemplates && (
               <TabsTrigger value="templates" className="flex items-center gap-1.5">
                 <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Modelos</span>
+                <span>Modelos</span>
               </TabsTrigger>
             )}
             {SHOW_UNSENT_FEATURES && showAutomations && (
               <TabsTrigger value="automations" className="flex items-center gap-1.5">
                 <Zap className="h-4 w-4" />
-                <span className="hidden sm:inline">Automações</span>
+                <span>Automações</span>
               </TabsTrigger>
             )}
             {showAnalytics && (
               <TabsTrigger value="analytics" className="flex items-center gap-1.5">
                 <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Analytics</span>
+                <span>Analytics</span>
               </TabsTrigger>
             )}
           </TabsList>

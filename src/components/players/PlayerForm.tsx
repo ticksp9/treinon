@@ -135,15 +135,15 @@ export function PlayerForm({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Dados</span>
+            <span>Dados</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Documentos</span>
+            <span>Documentos</span>
           </TabsTrigger>
           <TabsTrigger value="parents" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span className="hidden sm:inline">Encarregados</span>
+            <span>Encarregados</span>
           </TabsTrigger>
         </TabsList>
 

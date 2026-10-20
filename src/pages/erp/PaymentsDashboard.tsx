@@ -34,25 +34,25 @@ export default function PaymentsDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" /><span className="hidden sm:inline">Dashboard</span>
+              <BarChart3 className="w-4 h-4" /><span>Dashboard</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /><span className="hidden sm:inline">Links</span>
+              <CreditCard className="w-4 h-4" /><span>Links</span>
             </TabsTrigger>
             <TabsTrigger value="manual" className="flex items-center gap-2">
-              <HandCoins className="w-4 h-4" /><span className="hidden sm:inline">Manual</span>
+              <HandCoins className="w-4 h-4" /><span>Manual</span>
             </TabsTrigger>
             <TabsTrigger value="transactions" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" /><span className="hidden sm:inline">Transações</span>
+              <FileText className="w-4 h-4" /><span>Transações</span>
             </TabsTrigger>
             <TabsTrigger value="reconciliation" className="flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4" /><span className="hidden sm:inline">Reconciliação</span>
+              <ArrowLeftRight className="w-4 h-4" /><span>Reconciliação</span>
             </TabsTrigger>
             <TabsTrigger value="events" className="flex items-center gap-2">
-              <Shield className="w-4 h-4" /><span className="hidden sm:inline">Auditoria</span>
+              <Shield className="w-4 h-4" /><span>Auditoria</span>
             </TabsTrigger>
             <TabsTrigger value="config" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" /><span className="hidden sm:inline">Configuração</span>
+              <Settings className="w-4 h-4" /><span>Configuração</span>
             </TabsTrigger>
           </TabsList>
 

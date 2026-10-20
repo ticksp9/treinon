@@ -47,27 +47,27 @@ export default function Finances() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="player-fees" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Mensalidades</span>
+              <span>Mensalidades</span>
             </TabsTrigger>
             <TabsTrigger value="overdue" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span className="hidden sm:inline">Em Atraso</span>
+              <span>Em Atraso</span>
             </TabsTrigger>
             <TabsTrigger value="members" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Sócios</span>
+              <span>Sócios</span>
             </TabsTrigger>
             <TabsTrigger value="tickets" className="flex items-center gap-2">
               <Ticket className="w-4 h-4" />
-              <span className="hidden sm:inline">Bilheteira</span>
+              <span>Bilheteira</span>
             </TabsTrigger>
             <TabsTrigger value="sponsors" className="flex items-center gap-2">
               <Handshake className="w-4 h-4" />
-              <span className="hidden sm:inline">Patrocínios</span>
+              <span>Patrocínios</span>
             </TabsTrigger>
             <TabsTrigger value="transactions" className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />
-              <span className="hidden sm:inline">Transações</span>
+              <span>Transações</span>
             </TabsTrigger>
           </TabsList>
 

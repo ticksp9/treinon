@@ -144,11 +144,11 @@ export default function GuardianPortal() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Início</span></TabsTrigger>
-            <TabsTrigger value="convocatorias"><Trophy className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Convocatórias</span></TabsTrigger>
+            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>Início</span></TabsTrigger>
+            <TabsTrigger value="convocatorias"><Trophy className="h-4 w-4 mr-1" /><span>Convocatórias</span></TabsTrigger>
             <TabsTrigger value="confirmacoes" className="flex items-center gap-1">
               <ClipboardCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Confirmações</span>
+              <span>Confirmações</span>
               {totalPending > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold">
                   {totalPending}
@@ -157,7 +157,7 @@ export default function GuardianPortal() {
             </TabsTrigger>
             <TabsTrigger value="anuncios" className="flex items-center gap-1">
               <Megaphone className="h-4 w-4" />
-              <span className="hidden sm:inline">Anúncios</span>
+              <span>Anúncios</span>
               {unreadAnnouncements > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {unreadAnnouncements}
@@ -166,16 +166,16 @@ export default function GuardianPortal() {
             </TabsTrigger>
             <TabsTrigger value="notificacoes" className="flex items-center gap-1">
               <BellRing className="h-4 w-4" />
-              <span className="hidden sm:inline">Notificações</span>
+              <span>Notificações</span>
               {notifCount > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {notifCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="financeiro"><Euro className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Financeiro</span></TabsTrigger>
-            <TabsTrigger value="agenda"><Calendar className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Agenda</span></TabsTrigger>
-            <TabsTrigger value="preferencias"><Bell className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Preferências</span></TabsTrigger>
+            <TabsTrigger value="financeiro"><Euro className="h-4 w-4 mr-1" /><span>Financeiro</span></TabsTrigger>
+            <TabsTrigger value="agenda"><Calendar className="h-4 w-4 mr-1" /><span>Agenda</span></TabsTrigger>
+            <TabsTrigger value="preferencias"><Bell className="h-4 w-4 mr-1" /><span>Preferências</span></TabsTrigger>
           </TabsList>
 
           {/* HOME TAB */}

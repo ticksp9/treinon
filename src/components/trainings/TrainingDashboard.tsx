@@ -221,7 +221,7 @@ export function TrainingDashboard({ onNavigate }: TrainingDashboardProps) {
                       </Badge>
                       <span className="text-sm font-medium">{s.title || 'Treino'}</span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {format(new Date(s.date), 'HH:mm')}
