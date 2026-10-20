@@ -75,19 +75,23 @@ export function LiveHud(p: Props) {
     <div ref={bar} style={box ? { left: box.left, width: box.width, top: box.top } : undefined}
       className={cn('z-20 rounded-lg border bg-background/95 px-2.5 py-2 shadow-md backdrop-blur sm:px-4', box ? 'fixed' : 'relative')} role="region" aria-label="Marcador e relógio">
       <div className="mx-auto max-w-6xl 2xl:flex 2xl:items-center 2xl:gap-3">
+      {/* phone: no room beside the score, so both names go on one line above it */}
+      <div className="mb-1.5 truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:hidden">{p.teamName || 'Nós'} <span className="normal-case">vs</span> {p.opponentName || 'Adversário'}</div>
       <div className="flex items-center gap-2 sm:gap-4 2xl:flex-none">
         {/* score */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 2xl:flex-none">
+        <div className="min-w-0 flex-1 2xl:flex-none">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="flex min-w-0 items-center justify-end gap-1.5 text-right">
-            <div className="max-w-[5.5rem] truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:max-w-[9rem]">{p.teamName || 'Nós'}</div>
+            <div className="hidden max-w-[5.5rem] truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:block sm:max-w-[9rem]">{p.teamName || 'Nós'}</div>
             {p.crestUrl && <img src={p.crestUrl} alt="" className="h-8 w-8 shrink-0 object-contain sm:h-10 sm:w-10" />}
           </div>
           <div className="flex shrink-0 items-baseline gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 font-mono text-3xl font-bold tabular-nums leading-none sm:text-4xl" aria-label={`Resultado ${p.goalsFor} a ${p.goalsAgainst}`}>
             <span>{p.goalsFor}</span><span className="text-muted-foreground">–</span><span>{p.goalsAgainst}</span>
           </div>
-          <div className="min-w-0">
+          <div className="hidden min-w-0 sm:block">
             <div className="max-w-[5.5rem] truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:max-w-[9rem]">{p.opponentName || 'Adversário'}</div>
           </div>
+        </div>
         </div>
 
         {/* clock */}
@@ -131,10 +135,10 @@ export function LiveHud(p: Props) {
       {p.phase === 'playing' && (
         <div className="mt-2 flex gap-1.5 2xl:mt-0 2xl:min-w-0 2xl:flex-1">
           <Button variant={p.selectedName ? 'default' : 'outline'} className={action} onClick={p.onGoal}><span className="text-base leading-none">⚽</span>Golo</Button>
-          <Button variant="outline" className={cn(action, 'border-destructive/40')} onClick={p.onOpponentGoal}><span className="text-base leading-none">⚽</span><span className="truncate">Golo adversário</span></Button>
+          <Button variant="outline" className={cn(action, 'border-destructive/40')} onClick={p.onOpponentGoal}><span className="text-base leading-none">⚽</span><span className="truncate"><span className="sm:hidden">Golo adv.</span><span className="hidden sm:inline">Golo adversário</span></span></Button>
           <Button variant="outline" className={action} onClick={p.onYellow}><span className="h-4 w-3 rounded-sm border border-yellow-500 bg-yellow-400" />Amarelo</Button>
           <Button variant="outline" className={action} onClick={p.onRed}><span className="h-4 w-3 rounded-sm border border-red-700 bg-red-600" />Vermelho</Button>
-          <Button variant="outline" className={action} onClick={p.onSubstitution}><ArrowLeftRight className="h-4 w-4" />Substituição</Button>
+          <Button variant="outline" className={action} onClick={p.onSubstitution}><ArrowLeftRight className="h-4 w-4" /><span className="truncate"><span className="sm:hidden">Substituir</span><span className="hidden sm:inline">Substituição</span></span></Button>
         </div>
       )}
       </div>
