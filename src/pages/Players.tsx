@@ -419,7 +419,10 @@ export default function Players() {
                 />
               </DialogContent>
             </Dialog>
-            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)} disabled={scopedYearTeams.length === 0} title={scopedYearTeams.length === 0 ? 'Crie primeiro uma equipa' : 'Importar jogadores de um Excel'}>
+            {/* without a team there is nowhere to put the players: say so instead of a dead button */}
+            <Button size="sm" variant="outline" title="Importar jogadores de um Excel"
+              onClick={() => scopedYearTeams.length > 0 ? setImportOpen(true)
+                : toast.info('Primeiro crie uma equipa: os jogadores importados ficam nela.', { action: { label: 'Criar equipa', onClick: () => navigate('/teams') } })}>
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               Importar Excel
             </Button>
