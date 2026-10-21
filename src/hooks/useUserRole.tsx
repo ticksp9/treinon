@@ -36,9 +36,16 @@ export function useUserRole(): UserRoleData {
     loading: true,
   });
 
+  // Which user the data above was read for: until it matches the signed-in user we are still loading,
+  // so route guards never act on the previous (signed-out) state
+  const [readFor, setReadFor] = useState<string | null | undefined>(undefined);
+
   useEffect(() => {
+    const uid = user?.id ?? null;
+    const done: typeof setData = (v) => { setData(v); setReadFor(uid); };
+
     if (!user) {
-      setData({
+      done({
         accountType: null,
         isClubAdmin: false,
         isCoach: false,
@@ -55,6 +62,7 @@ export function useUserRole(): UserRoleData {
       });
       return;
     }
+
 
     const fetchUserRole = async () => {
       try {
@@ -73,7 +81,7 @@ export function useUserRole(): UserRoleData {
             .select('id')
             .eq('user_id', user.id)
             .maybeSingle();
-          setData({
+          done({
             accountType: 'guardian',
             isClubAdmin: false, isCoach: false, isGuardian: true, isPlayer: false, isIndividualCoach: false,
             isCoordinator: false, isStaff: false, staffRole: null,
@@ -89,7 +97,7 @@ export function useUserRole(): UserRoleData {
             .select('player_id')
             .eq('user_id', user.id)
             .maybeSingle();
-          setData({
+          done({
             accountType: 'player',
             isClubAdmin: false, isCoach: false, isGuardian: false, isPlayer: true, isIndividualCoach: false,
             isCoordinator: false, isStaff: false, staffRole: null,
@@ -132,7 +140,7 @@ export function useUserRole(): UserRoleData {
         const isCoordinator = staffRoleValue === 'coordenador' || isClubAdmin;
         const isStaffMember = isClubStaff && !isClubAdmin;
 
-        setData({
+        done({
           accountType,
           // Only the owner or staff with role 'admin' administer the club (other staff are not admins)
           isClubAdmin,
@@ -150,12 +158,13 @@ export function useUserRole(): UserRoleData {
         });
       } catch (error) {
         console.error('Error fetching user role:', error);
-        setData(prev => ({ ...prev, loading: false }));
+        done(prev => ({ ...prev, loading: false }));
       }
     };
 
     fetchUserRole();
   }, [user]);
 
-  return data;
+  const stale = readFor !== (user?.id ?? null);
+  return stale && !data.loading ? { ...data, loading: true } : data;
 }
