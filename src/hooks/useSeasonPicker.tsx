@@ -14,7 +14,7 @@ export function useSeasonPicker(initial?: string | null) {
 export function SeasonPicker({
   value,
   onChange,
-  label = 'Época',
+  label = tx('Época'),
 }: {
   value: string | null;
   onChange: (id: string) => void;

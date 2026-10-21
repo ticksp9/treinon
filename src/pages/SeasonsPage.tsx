@@ -309,8 +309,8 @@ export default function SeasonsPage() {
                   {tx('Período:')}{' '}{closing ? formatSeasonPeriod(closing.start_date, closing.end_date) : ''}
                 </p>
                 <ul className="list-disc pl-5">
-                  <li>{closingCounts?.matches ?? '—'} jogos</li>
-                  <li>{closingCounts?.trainings ?? '—'} treinos</li>
+                  <li>{tx('{{n}} jogos', { n: closingCounts?.matches ?? '—' })}</li>
+                  <li>{tx('{{n}} treinos', { n: closingCounts?.trainings ?? '—' })}</li>
                   <li>{closingCounts?.evaluations ?? '—'} {tx('avaliações')}</li>
                   <li>{closingCounts?.players ?? '—'} {tx('jogadores inscritos')}</li>
                 </ul>

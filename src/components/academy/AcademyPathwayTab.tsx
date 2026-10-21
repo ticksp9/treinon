@@ -9,8 +9,8 @@ const DECISION_LABELS: Record<string, string> = {
   promote: 'Promover',
   retain: 'Reter',
   release: 'Desligar',
-  loan_internal: 'Empréstimo Interno',
-  under_review: 'Em Revisão',
+  get loan_internal() { return tx('Empréstimo Interno'); },
+  get under_review() { return tx('Em Revisão'); },
   defer: 'Adiar',
 };
 

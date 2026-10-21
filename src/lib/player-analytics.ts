@@ -10,6 +10,7 @@ import {
   type AttributeCategory,
   type AttributeScores,
 } from './player-attributes';
+import { tx } from '@/lib/i18n/ui';
 
 // ─────────────────────────────────────────────────────────── Types
 
@@ -282,9 +283,9 @@ export function categoryEvolutionSummary(evals: EvaluationRow[]): CategoryEvolut
   const prev = series[series.length - 2];
   return ATTRIBUTE_CATALOG.map((cat) => {
     const labelKey =
-      cat.key === 'technical' ? 'Técnica'
-      : cat.key === 'tactical' ? 'Tática'
-      : cat.key === 'physical' ? 'Física'
+      cat.key === 'technical' ? tx('Técnica')
+      : cat.key === 'tactical' ? tx('Tática')
+      : cat.key === 'physical' ? tx('Física')
       : 'Mental';
     const current = (last?.[labelKey as keyof EvolutionPoint] as number | null) ?? null;
     const previous = (prev?.[labelKey as keyof EvolutionPoint] as number | null) ?? null;

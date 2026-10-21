@@ -5,6 +5,7 @@
 import type { ValidationResult, DeliveryChannel, ProfileType } from './types';
 import { parseTemplate } from './parser';
 import { VARIABLE_MAP, getRequiredVariables } from './catalog';
+import { tx } from '@/lib/i18n/ui';
 
 export interface ValidateOptions {
   channel?: DeliveryChannel;
@@ -28,7 +29,7 @@ export function validateTemplate(
   if (!template || !template.trim()) {
     return {
       isValid: false,
-      errors: ['Template está vazio'],
+      errors: [tx('Template está vazio')],
       warnings: [],
       variablesFound: [],
       unknownVariables: [],
@@ -52,7 +53,7 @@ export function validateTemplate(
   for (const token of parsed.invalidTokens) {
     if (!token.isSafe) continue; // already handled above
     unknownVariables.push(token.variableKey);
-    errors.push(token.errorMessage || `Variável desconhecida: {{${token.variableKey}}}`);
+    errors.push(token.errorMessage || tx('Variável desconhecida: {{v0}}', { v0: `{{${token.variableKey}}}` }));
   }
 
   // Check channel compatibility
@@ -60,7 +61,7 @@ export function validateTemplate(
     for (const varKey of parsed.variablesFound) {
       const def = VARIABLE_MAP.get(varKey);
       if (def && !def.supportedChannels.includes(channel)) {
-        warnings.push(`{{${varKey}}} não é suportada no canal ${channel.toUpperCase()}`);
+        warnings.push(tx('{{v0}} não é suportada no canal {{v1}}', { v0: `{{${varKey}}}`, v1: channel.toUpperCase() }));
       }
     }
   }
@@ -70,7 +71,7 @@ export function validateTemplate(
     for (const varKey of parsed.variablesFound) {
       const def = VARIABLE_MAP.get(varKey);
       if (def && !def.supportedProfiles.includes(profileType)) {
-        warnings.push(`{{${varKey}}} não é suportada para o perfil ${profileType}`);
+        warnings.push(tx('{{v0}} não é suportada para o perfil {{v1}}', { v0: `{{${varKey}}}`, v1: profileType }));
       }
     }
   }
@@ -85,9 +86,9 @@ export function validateTemplate(
       if (req === 'invite_link' && parsed.variablesFound.includes('invite_code')) continue;
       missingRequiredVariables.push(req);
       if (req === 'recipient_name') {
-        warnings.push('Variável recomendada ausente: {{recipient_name}}');
+        warnings.push(tx('Variável recomendada ausente: {{recipient_name}}'));
       } else {
-        warnings.push(`Variável importante ausente: {{${req}}}`);
+        warnings.push(tx('Variável importante ausente: {{v0}}', { v0: `{{${req}}}` }));
       }
     }
   }
@@ -105,7 +106,7 @@ export function validateTemplate(
 
   // SMS length warning
   if (channel === 'sms' && template.length > 320) {
-    warnings.push('Template SMS parece longo — pode resultar em múltiplos segmentos');
+    warnings.push(tx('Template SMS parece longo — pode resultar em múltiplos segmentos'));
   }
 
   // Subject check for email

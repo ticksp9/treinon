@@ -46,8 +46,8 @@ type TabFilter = 'today' | 'upcoming' | 'finished' | 'drafts';
 
 const MODE_LABELS_SHORT: Record<string, string> = {
   live: 'Ao Vivo',
-  post_game: 'Pós-Jogo',
-  hybrid: 'Híbrido',
+  get post_game() { return tx('Pós-Jogo'); },
+  get hybrid() { return tx('Híbrido'); },
 };
 
 export function MatchListMobile({

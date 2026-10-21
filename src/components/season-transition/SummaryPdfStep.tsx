@@ -67,8 +67,8 @@ interface CoachProfile {
 const COACH_ROLE_LABELS: Record<string, string> = {
   head_coach: 'Treinador Principal',
   assistant: 'Treinador Adjunto',
-  goalkeeper_coach: 'Treinador de GR',
-  fitness_coach: 'Preparador Físico',
+  get goalkeeper_coach() { return tx('Treinador de GR'); },
+  get fitness_coach() { return tx('Preparador Físico'); },
 };
 
 export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: SummaryPdfStepProps) {

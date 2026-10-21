@@ -211,7 +211,7 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
       cv.className = 'w-full rounded-md border';
       if (canvas.current) { canvas.current.innerHTML = ''; canvas.current.appendChild(cv); }
     } catch (e) {
-      setProblem('Não foi possível ler a fotografia: ' + (e as Error).message);
+      setProblem(tx('Não foi possível ler a fotografia: ') + (e as Error).message);
     } finally { setReading(false); if (file.current) file.current.value = ''; }
   };
 
@@ -249,7 +249,7 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
             <Label>{tx('Folha')}</Label>
             <Select value={sheetId} onValueChange={setSheetId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{sheets.map((s) => <SelectItem key={s.id} value={s.id}>{tx('Folha')}{' '}{s.code} {tx('· criada')}{' '}{format(new Date(s.created_at), 'dd/MM')} · {s.session_ids.length} treinos</SelectItem>)}</SelectContent>
+              <SelectContent>{sheets.map((s) => <SelectItem key={s.id} value={s.id}>{tx('Folha')}{' '}{s.code} {tx('· criada')}{' '}{format(new Date(s.created_at), 'dd/MM')} · {tx('{{n}} treinos', { n: s.session_ids.length })}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <input ref={file} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && readPhoto(e.target.files[0])} />
@@ -277,7 +277,7 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
                         return (
                           <td key={c} className="p-0.5 text-center">
                             <button type="button" disabled={off} onClick={() => toggle(r, c)} aria-pressed={on}
-                              aria-label={`${names.get(pid) ?? 'Jogador'}, ${s ? short(s.date) : ''}: ${on ? 'presente' : 'faltou'}`}
+                              aria-label={`${names.get(pid) ?? tx('Jogador')}, ${s ? short(s.date) : ''}: ${on ? 'presente' : 'faltou'}`}
                               className={cn('inline-flex h-8 w-9 items-center justify-center rounded border', off ? 'opacity-30' : on ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-input', doubt && !off && 'ring-2 ring-accent')}>
                               {on ? <Check className="h-4 w-4" /> : <X className="h-3.5 w-3.5 text-muted-foreground" />}
                             </button>

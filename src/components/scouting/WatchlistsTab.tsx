@@ -97,7 +97,7 @@ export function WatchlistsTab() {
                     <p className="font-medium text-sm">{w.name}</p>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {w.scouting_watchlist_entries?.[0]?.count || 0} prospects
+                    {tx('{{n}} prospects', { n: w.scouting_watchlist_entries?.[0]?.count || 0 })}
                   </Badge>
                 </div>
                 {w.description && <p className="text-xs text-muted-foreground">{w.description}</p>}

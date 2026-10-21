@@ -8,6 +8,7 @@ import {
   categoryAverage,
   overallAverage,
 } from './player-attributes';
+import { tx } from '@/lib/i18n/ui';
 
 export type EvaluationType = 'training' | 'match' | 'period' | 'assessment' | 'other';
 
@@ -105,5 +106,5 @@ function rankAttributes(scores: AttributeScores, dir: 'asc' | 'desc') {
 }
 
 export function evaluatorLabel(row: EvaluationRow, fallback = 'Avaliador'): string {
-  return row.evaluator_id ? fallback : 'Sem avaliador';
+  return row.evaluator_id ? fallback : tx('Sem avaliador');
 }

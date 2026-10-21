@@ -120,7 +120,7 @@ export function ShortlistsTab() {
                     <p className="font-medium text-sm">{s.name}</p>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {s.scouting_shortlist_entries?.[0]?.count || 0} prospects
+                    {tx('{{n}} prospects', { n: s.scouting_shortlist_entries?.[0]?.count || 0 })}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 mt-1">

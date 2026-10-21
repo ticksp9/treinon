@@ -305,7 +305,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
               ))}
               {playersNeedingPromotion.length > 20 && (
                 <p className="text-sm text-muted-foreground text-center pt-2">
-                  {tx('E mais')}{' '}{playersNeedingPromotion.length - 20} jogadores...
+                  {tx('E mais')}{' '}{playersNeedingPromotion.length - 20} {tx('jogadores...')}
                 </p>
               )}
             </div>

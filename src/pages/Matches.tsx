@@ -449,7 +449,7 @@ export default function Matches() {
                       <FlaskConical className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                       <div>
                         <p className="font-medium text-amber-800 dark:text-amber-200">
-                          {testMatchesCount} jogo{testMatchesCount === 1 ? '' : 's'} {tx('de teste')}
+                          {testMatchesCount === 1 ? tx('1 jogo de teste') : tx('{{n}} jogos de teste', { n: testMatchesCount })}
                         </p>
                         <p className="text-xs text-amber-600 dark:text-amber-300">
                           {t('Jogos de teste não contam para estatísticas')}

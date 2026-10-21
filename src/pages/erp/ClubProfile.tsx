@@ -243,7 +243,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nif">NIF</Label>
+              <Label htmlFor="nif">{tx('NIF')}</Label>
               <Input 
                 id="nif" 
                 value={formData.nif} 

@@ -4,6 +4,7 @@
  */
 import type { ParsedToken, ParseResult } from './types';
 import { ALLOWED_VARIABLE_KEYS } from './catalog';
+import { tx } from '@/lib/i18n/ui';
 
 // Dangerous patterns that must never be allowed
 const UNSAFE_PATTERNS = [
@@ -56,7 +57,7 @@ export function parseTemplate(template: string): ParseResult {
       token.errorMessage = `Placeholder inseguro: ${raw}`;
       unsafeTokens.push(token);
     } else if (!valid) {
-      token.errorMessage = `Variável desconhecida: {{${innerContent}}}`;
+      token.errorMessage = tx('Variável desconhecida: {{v0}}', { v0: `{{${innerContent}}}` });
       invalidTokens.push(token);
     } else {
       if (!variablesFound.includes(innerContent)) {
@@ -78,7 +79,7 @@ export function parseTemplate(template: string): ParseResult {
       endIndex: brokenMatch.index + brokenMatch[0].length,
       isValid: false,
       isSafe: false,
-      errorMessage: 'Placeholder com sintaxe quebrada ({{ sem fecho }})',
+      errorMessage: tx('Placeholder com sintaxe quebrada ({{ sem fecho }})'),
     };
     invalidTokens.push(broken);
     tokens.push(broken);

@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { tx } from '@/lib/i18n/ui';
 import type { PlayerMinutesSummary } from '@/lib/match-playing-time-engine';
 
 interface Props {
@@ -35,7 +36,7 @@ export function PlayerMinutesTimeline({ summary, showRegulation = true, classNam
         {showRegulation &&
           summary.totalRegulationMinutes !== summary.totalRealMinutes && (
             <Badge variant="outline" className="ml-1 text-[10px]">
-              reg {summary.totalRegulationMinutes}'
+              {tx('reg.')} {summary.totalRegulationMinutes}'
             </Badge>
           )}
       </div>

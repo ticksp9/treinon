@@ -17,7 +17,7 @@ import { describeTransition } from '@/lib/age-group-rules';
 import { matchTeamForAgeGroup } from '@/lib/season-roster-service';
 import { tx } from '@/lib/i18n/ui';
 
-const CLASS_LABEL = { stays: 'Mantém', promotes: 'Sobe', leaves: 'Sai', unknown: 'Verificar' } as const;
+const CLASS_LABEL = { get stays() { return tx('Mantém'); }, promotes: 'Sobe', leaves: 'Sai', unknown: 'Verificar' } as const;
 const CLASS_STYLE = {
   stays: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   promotes: 'bg-blue-500/15 text-blue-600 border-blue-500/30',

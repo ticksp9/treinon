@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, Inbox, Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tx } from '@/lib/i18n/ui';
 
 interface PageLoadingProps {
   message?: string;
@@ -105,7 +106,7 @@ interface AccessDeniedProps {
 
 export function AccessDenied({
   title = 'Acesso Restrito',
-  message = 'Não tem permissões para aceder a esta funcionalidade.',
+  message = tx('Não tem permissões para aceder a esta funcionalidade.'),
   icon
 }: AccessDeniedProps) {
   return (

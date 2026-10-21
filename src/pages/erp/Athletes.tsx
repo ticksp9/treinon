@@ -33,12 +33,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
-import { tx, intlLocale } from '@/lib/i18n/ui';
+import { tx, intlLocale, monthNames } from '@/lib/i18n/ui';
 
-const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
+
 
 export default function Athletes() {
   const { user } = useAuth();
@@ -275,7 +272,7 @@ export default function Athletes() {
                       <TableRow>
                         <TableHead className="sticky left-0 bg-background">{tx('Atleta')}</TableHead>
                         <TableHead>{tx('Equipa')}</TableHead>
-                        {MONTHS.map((month, idx) => (
+                        {monthNames().map((month, idx) => (
                           <TableHead key={idx} className="text-center min-w-[80px]">
                             {month.substring(0, 3)}
                           </TableHead>
@@ -289,7 +286,7 @@ export default function Athletes() {
                             {player.name}
                           </TableCell>
                           <TableCell>{player.teams?.name}</TableCell>
-                          {MONTHS.map((_, monthIdx) => {
+                          {monthNames().map((_, monthIdx) => {
                             const isPaid = getPaymentStatus(player.id, monthIdx + 1);
                             return (
                               <TableCell key={monthIdx} className="text-center">

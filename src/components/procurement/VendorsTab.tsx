@@ -67,7 +67,7 @@ export function VendorsTab({ clubId }: { clubId: string }) {
             <DialogHeader><DialogTitle>{tx('Novo Fornecedor')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div><Label>{tx('Nome Legal *')}</Label><Input value={form.legal_name} onChange={e => setForm(f => ({ ...f, legal_name: e.target.value }))} /></div>
-              <div><Label>NIF</Label><Input value={form.tax_id} onChange={e => setForm(f => ({ ...f, tax_id: e.target.value }))} /></div>
+              <div><Label>{tx('NIF')}</Label><Input value={form.tax_id} onChange={e => setForm(f => ({ ...f, tax_id: e.target.value }))} /></div>
               <div>
                 <Label>{tx('Categoria')}</Label>
                 <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
@@ -104,7 +104,7 @@ export function VendorsTab({ clubId }: { clubId: string }) {
             <TableHeader>
               <TableRow>
                 <TableHead>{tx('Nome')}</TableHead>
-                <TableHead>NIF</TableHead>
+                <TableHead>{tx('NIF')}</TableHead>
                 <TableHead>{tx('Categoria')}</TableHead>
                 <TableHead>{tx('Condições')}</TableHead>
                 <TableHead>{tx('Estado')}</TableHead>

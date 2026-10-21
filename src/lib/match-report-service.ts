@@ -82,36 +82,36 @@ export function getReportEditLockReason(status: string | null | undefined): stri
   if (!status || isEditableReportStatus(status)) return null;
 
   if (status === 'locked') {
-    return 'Este relatório está bloqueado e não pode ser editado.';
+    return tx('Este relatório está bloqueado e não pode ser editado.');
   }
 
   if (status === 'finalized') {
-    return 'Este relatório está finalizado. Reabra para corrigir.';
+    return tx('Este relatório está finalizado. Reabra para corrigir.');
   }
 
-  return 'A edição só é permitida após criar uma nova versão.';
+  return tx('A edição só é permitida após criar uma nova versão.');
 }
 
 export function getReportMutationErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
 
   if (message.includes('row-level security') || message.includes('permission denied')) {
-    return 'Você não tem permissão para editar este relatório.';
+    return tx('Você não tem permissão para editar este relatório.');
   }
 
   if (message.includes('REPORT_LOCKED')) {
-    return 'Este relatório está bloqueado e não pode ser editado.';
+    return tx('Este relatório está bloqueado e não pode ser editado.');
   }
 
   if (message.includes('REPORT_FINALIZED')) {
-    return 'Este relatório está finalizado. Reabra para corrigir.';
+    return tx('Este relatório está finalizado. Reabra para corrigir.');
   }
 
   if (message.includes('REPORT_REOPEN_REASON_REQUIRED')) {
-    return 'Informe o motivo da reabertura.';
+    return tx('Informe o motivo da reabertura.');
   }
 
-  return 'Erro ao guardar alterações.';
+  return tx('Erro ao guardar alterações.');
 }
 
 async function ensureMatchReportRecord(
@@ -363,12 +363,12 @@ export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
 
 export const ENTRY_MODE_LABELS: Record<ReportEntryMode, string> = {
   live: 'Ao Vivo',
-  post_game: 'Pós-Jogo',
-  hybrid: 'Híbrido',
+  get post_game() { return tx('Pós-Jogo'); },
+  get hybrid() { return tx('Híbrido'); },
 };
 
 export const ENTRY_MODE_DESCRIPTIONS: Record<ReportEntryMode, string> = {
-  live: 'Regista eventos durante o jogo em tempo real.',
-  post_game: 'Preenche todos os dados apenas no final do jogo.',
-  hybrid: 'Regista alguns eventos durante o jogo e completa/corrige depois.',
+  get live() { return tx('Regista eventos durante o jogo em tempo real.'); },
+  get post_game() { return tx('Preenche todos os dados apenas no final do jogo.'); },
+  get hybrid() { return tx('Regista alguns eventos durante o jogo e completa/corrige depois.'); },
 };

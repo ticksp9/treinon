@@ -25,14 +25,14 @@ interface TemplatesTabProps {
 }
 
 const categoryLabels: Record<string, string> = {
-  announcement: 'Anúncio',
+  get announcement() { return tx('Anúncio'); },
   reminder: 'Lembrete',
-  attendance: 'Presença',
+  get attendance() { return tx('Presença'); },
 };
 
 const scopeLabels: Record<string, string> = {
   personal: 'Pessoal',
-  team: 'Equipa',
+  get team() { return tx('Equipa'); },
   club: 'Clube',
 };
 
@@ -148,7 +148,7 @@ function CreateTemplateDialog({
   };
 
   const placeholderHints = [
-    '{equipa}', '{escalao}', '{data}', '{hora}', '{local}', '{treinador}',
+    tx('{equipa}'), '{escalao}', '{data}', '{hora}', '{local}', '{treinador}',
   ];
 
   return (

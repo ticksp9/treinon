@@ -178,7 +178,7 @@ export function MatchConfigModal({
 
           <div className="rounded-md border bg-muted/50 p-3 text-center">
             <div className="font-mono text-xl font-semibold">{parts.map((m) => `${m}'`).join(' + ')}</div>
-            <div className="text-sm text-muted-foreground">{tx('Total:')}{' '}{total} minutos</div>
+            <div className="text-sm text-muted-foreground">{tx('Total: {{n}} minutos', { n: total })}</div>
           </div>
 
           {!teamMode && changedFromTeam && (

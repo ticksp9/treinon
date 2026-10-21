@@ -107,13 +107,13 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
       }
       for (let i = 0; i < plan.length; i += 50) {
         const chunk = plan.slice(i, i + 50);
-        setProgress(`A importar ${Math.min(i + 50, plan.length)} de ${plan.length}…`);
+        setProgress(tx('A importar {{v0}} de {{v1}}…', { v0: Math.min(i + 50, plan.length), v1: plan.length }));
         const { data, error } = await supabase.from('players').insert(chunk.map(({ p, dest }) => ({
           owner_id: user.id, team_id: dest[0], name: p.name, birth_date: p.birth_date, number: p.number,
           position: p.position, foot: p.foot, gender: p.gender ?? 'male', phone: p.phone, email: p.email,
           parent_name: p.parent_name, parent_phone: p.parent_phone, parent_email: p.parent_email,
           federation_id: p.federation_id, nationality: p.nationality,
-          notes: p.birth_year_only ? 'Data de nascimento importada só com o ano.' : null,
+          notes: p.birth_year_only ? tx('Data de nascimento importada só com o ano.') : null,
         })) as never).select('id');
         if (error) throw error;
         const ids = (data ?? []) as { id: string }[];
@@ -233,7 +233,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
               </button>
               <button type="button" onClick={() => setMode('years')} className={cn('rounded-md border p-3 text-left text-sm', mode === 'years' && 'border-primary bg-primary/5')}>
                 <b>{tx('Por ano de nascimento')}</b>
-                <span className="block text-xs text-muted-foreground">{withYear} de {toImport.length} {tx('têm ano. Ex.: 2013 e 2014 → Sub-13.')}</span>
+                <span className="block text-xs text-muted-foreground">{tx('{{a}} de {{b}} têm ano. Ex.: 2013 e 2014 → Sub-13.', { a: withYear, b: toImport.length })}</span>
               </button>
             </div>
 

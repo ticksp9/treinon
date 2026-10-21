@@ -74,7 +74,7 @@ export function PlayerPositionsTab({ playerId, declaredPosition, secondaryPositi
     declared && predominantAllTime && declared !== predominantAllTime
       ? `Declarada: ${declared} · Real: ${roleLabel(predominantAllTime)}`
       : declared && predominantAllTime
-        ? `Declarada e estatística coincidem (${roleLabel(predominantAllTime)})`
+        ? tx('Declarada e estatística coincidem ({{v0}})', { v0: roleLabel(predominantAllTime) })
         : null;
 
   return (

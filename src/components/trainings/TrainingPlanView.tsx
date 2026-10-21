@@ -43,7 +43,7 @@ export function printTraining(t: PlanTraining) {
   const blocks = t.exercises.map((e, i) => `
     <section class="block">
       ${e.diagram?.length ? `<div class="diagram">${renderToStaticMarkup(<DrillDiagram elements={still(e)} />)}</div>` : e.image_url ? `<div class="diagram"><img src="${esc(e.image_url)}"/></div>` : ''}
-      <div class="text"><h2>${i + 1}. ${esc(e.name || 'Exercício')} <span>${e.duration} min</span></h2>
+      <div class="text"><h2>${i + 1}. ${esc(e.name || tx('Exercício'))} <span>${e.duration} min</span></h2>
       <p>${esc(e.description || '').replace(/\n/g, '<br/>')}</p></div>
     </section>`).join('');
   w.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${esc(t.name)}</title>
@@ -74,7 +74,7 @@ export function trainingText(t: PlanTraining) {
     '',
     ...t.exercises.map((e, i) => `${i + 1}. ${e.name} — ${e.duration}'`),
     '',
-    'Feito com TreinON',
+    tx('Feito com TreinON'),
   ].join('\n');
 }
 

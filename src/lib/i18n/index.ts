@@ -12,19 +12,20 @@ import zh from './locales/zh.json';
 // screens translated with the Portuguese text as key (see ./ui.ts): only the other languages need a file
 import enUi from './locales/ui.en.json';
 import esUi from './locales/ui.es.json';
+import frUi from './locales/ui.fr.json';
 import deUi from './locales/ui.de.json';
 import zhUi from './locales/ui.zh.json';
 
-/** Languages the person can choose. The others have files from the old project but the app is not translated into them yet. */
-export const READY_LANGUAGES = ['pt', 'en', 'es', 'de', 'zh'] as const;
+/** Languages the person can choose. German and Chinese are hidden for now (their files stay, but newer screens are not translated into them); the rest have files from the old project only. */
+export const READY_LANGUAGES = ['pt', 'en', 'es', 'fr'] as const;
 
 export const languages: { code: string; name: string; flag: string; rtl?: boolean }[] = [
   { code: 'pt', name: 'Português', flag: '🇵🇹' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'ar', name: 'العربية', flag: '🇸🇦', rtl: true },
 ];
 
@@ -51,7 +52,7 @@ i18n
     resources: {
       pt: { translation: pt },
       en: { translation: en, ui: enUi },
-      fr: { translation: fr },
+      fr: { translation: fr, ui: frUi },
       es: { translation: es, ui: esUi },
       de: { translation: de, ui: deUi },
       ar: { translation: ar },

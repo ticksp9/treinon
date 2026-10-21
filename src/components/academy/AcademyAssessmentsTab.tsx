@@ -9,7 +9,7 @@ const CYCLE_STATUS_LABELS: Record<string, string> = {
   draft: 'Rascunho',
   open: 'Aberto',
   in_progress: 'Em Curso',
-  review: 'Revisão',
+  get review() { return tx('Revisão'); },
   published: 'Publicado',
   archived: 'Arquivado',
 };
@@ -20,7 +20,7 @@ const CYCLE_TYPE_LABELS: Record<string, string> = {
   quarterly: 'Trimestral',
   semester: 'Semestral',
   annual: 'Anual',
-  extraordinary: 'Extraordinário',
+  get extraordinary() { return tx('Extraordinário'); },
 };
 
 export function AcademyAssessmentsTab() {

@@ -134,7 +134,7 @@ export default function TeamDetail() {
       return data || [];
     },
   });
-  const teamName = (tid: string) => seasonTeams.find((t) => t.id === tid)?.name ?? 'Outra equipa';
+  const teamName = (tid: string) => seasonTeams.find((t) => t.id === tid)?.name ?? tx('Outra equipa');
 
   // Active enrollments of the season → shared-player badge.
   const { data: seasonEnrollments = [] } = useQuery({
@@ -508,7 +508,7 @@ export default function TeamDetail() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             {player.position && <span>{player.position}</span>}
-                            {age !== null && <span>• {age} anos</span>}
+                            {age !== null && <span>• {tx('{{n}} anos', { n: age })}</span>}
                           </div>
                         </div>
                         {playerTeams(player.id).length > 1 && (

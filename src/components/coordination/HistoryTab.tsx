@@ -45,17 +45,17 @@ const ACTION_LABELS: Record<string, string> = {
   created: 'Criado',
   updated: 'Atualizado',
   deleted: 'Eliminado',
-  player_added: 'Jogador adicionado',
-  player_removed: 'Jogador removido',
+  get player_added() { return tx('Jogador adicionado'); },
+  get player_removed() { return tx('Jogador removido'); },
   coach_added: 'Treinador adicionado',
   coach_removed: 'Treinador removido',
 };
 
 const ENTITY_LABELS: Record<string, string> = {
-  team: 'Equipa',
-  player_assignment: 'Atribuição de Jogador',
-  coach_assignment: 'Atribuição de Treinador',
-  age_group: 'Escalão',
+  get team() { return tx('Equipa'); },
+  get player_assignment() { return tx('Atribuição de Jogador'); },
+  get coach_assignment() { return tx('Atribuição de Treinador'); },
+  get age_group() { return tx('Escalão'); },
 };
 
 export function HistoryTab({ clubId }: HistoryTabProps) {
@@ -93,7 +93,7 @@ export function HistoryTab({ clubId }: HistoryTabProps) {
       parts.push(`Função: ${changes.role}`);
     }
     if (changes.from && changes.to) {
-      parts.push(`De "${changes.from}" para "${changes.to}"`);
+      parts.push(tx('De "{{v0}}" para "{{v1}}"', { v0: changes.from, v1: changes.to }));
     }
     
     return parts.join(' • ');

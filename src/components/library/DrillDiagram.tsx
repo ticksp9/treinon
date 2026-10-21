@@ -121,8 +121,8 @@ export function DiagramLegend() {
   );
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      {item('hsl(217 85% 50%)', 'Equipa A')}
-      {item('hsl(14 90% 52%)', 'Equipa B')}
+      {item('hsl(217 85% 50%)', tx('Equipa A'))}
+      {item('hsl(14 90% 52%)', tx('Equipa B'))}
       {item('hsl(45 95% 48%)', 'Joker')}
       <span>{tx('— passe')}</span>
       <span>{tx('- - - movimento')}</span>

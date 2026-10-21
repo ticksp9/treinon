@@ -32,7 +32,7 @@ interface Team { id: string; name: string; category: string | null }
 
 const TEAM_TONES = ['bg-blue-500/15 border-blue-500/40', 'bg-emerald-500/15 border-emerald-500/40', 'bg-amber-500/15 border-amber-500/40', 'bg-purple-500/15 border-purple-500/40',
   'bg-rose-500/15 border-rose-500/40', 'bg-cyan-500/15 border-cyan-500/40', 'bg-orange-500/15 border-orange-500/40', 'bg-lime-500/15 border-lime-500/40'];
-const MATCH_TYPES: Record<string, string> = { championship: 'Campeonato', friendly: 'Amigável', tournament: 'Torneio' };
+const MATCH_TYPES: Record<string, string> = { championship: 'Campeonato', get friendly() { return tx('Amigável'); }, tournament: 'Torneio' };
 const two = (n: number) => String(n).padStart(2, '0');
 const dayKey = (d: Date) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
 
@@ -185,7 +185,7 @@ export default function ClubMap() {
                 <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, 7))} aria-label={tx('Semana seguinte')}><ChevronRight className="h-4 w-4" /></Button>
                 {!isThisWeek && <Button size="sm" variant="ghost" onClick={() => setWeek(weekStart(new Date()))}>{tx('Esta semana')}</Button>}
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => shareText(fixturesText(clubName, week, matches), 'Jogos da semana')}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => shareText(fixturesText(clubName, week, matches), tx('Jogos da semana'))}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
                   {canEdit && <Button size="sm" onClick={() => setMatchForm(newMatchDraft((editableTeams[0] ?? teams[0]).id, addDays(week, 5)))}><Plus className="mr-1.5 h-4 w-4" />{tx('Marcar jogo')}</Button>}
                 </div>
               </div>
@@ -239,7 +239,7 @@ export default function ClubMap() {
                   </span>
                 )}
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => shareText(timetableText(clubName, slots, teamName), 'Mapa de treinos')}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => shareText(timetableText(clubName, slots, teamName), tx('Mapa de treinos'))}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
                   {canEdit && <Button size="sm" onClick={() => setSlotForm({ team_id: (editableTeams[0] ?? teams[0]).id, days: [], start_time: '18:30', end_time: '20:00', location: '' })}><Plus className="mr-1.5 h-4 w-4" />{tx('Horário de treino')}</Button>}
                 </div>
               </div>

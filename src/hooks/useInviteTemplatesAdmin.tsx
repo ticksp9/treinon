@@ -266,7 +266,7 @@ export function useDuplicateTemplate() {
           profile_type: src.profile_type,
           delivery_channel: src.delivery_channel,
           language: src.language,
-          name: `${src.name || src.template_key} (cópia)`,
+          name: tx('{{v0}} (cópia)', { v0: src.name || src.template_key }),
           description: src.description,
           subject_template: src.subject_template,
           body_template: src.body_template,

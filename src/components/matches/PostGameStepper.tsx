@@ -509,7 +509,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           notes: newEvent.notes || null,
         }).eq('id', editingEventId);
         await logReportAudit(matchId, null, user.id, 'event_edited', { id: editingEventId }, { event_type: newEvent.event_type, minute: newEvent.minute });
-        const eventTypeLabel = newEvent.event_type.includes('goal') ? 'Golo atualizado' : newEvent.event_type.includes('card') ? 'Cartão atualizado' : 'Evento editado';
+        const eventTypeLabel = newEvent.event_type.includes('goal') ? tx('Golo atualizado') : newEvent.event_type.includes('card') ? tx('Cartão atualizado') : 'Evento editado';
         toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
       } else {
         await supabase.from('match_events').insert([{
@@ -519,7 +519,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           is_opponent: newEvent.is_opponent, notes: newEvent.notes || null, owner_id: user.id,
         }]);
         await logReportAudit(matchId, null, user.id, 'event_added', null, { event_type: newEvent.event_type, minute: newEvent.minute });
-        const eventTypeLabel = newEvent.event_type.includes('goal') ? 'Golo adicionado' : newEvent.event_type.includes('card') ? 'Cartão adicionado' : 'Evento adicionado';
+        const eventTypeLabel = newEvent.event_type.includes('goal') ? tx('Golo adicionado') : newEvent.event_type.includes('card') ? tx('Cartão adicionado') : 'Evento adicionado';
         toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
       }
 
@@ -551,7 +551,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     await supabase.from('match_events').delete().eq('id', eventId);
     await logReportAudit(matchId, null, user.id, 'event_deleted', { event_type: ev?.event_type, minute: ev?.minute }, null);
 
-    const eventTypeLabel = ev?.event_type?.includes('goal') ? 'Golo removido' : ev?.event_type?.includes('card') ? 'Cartão removido' : 'Evento removido';
+    const eventTypeLabel = ev?.event_type?.includes('goal') ? tx('Golo removido') : ev?.event_type?.includes('card') ? tx('Cartão removido') : 'Evento removido';
     toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
 
     // Re-count goals if goal was deleted
@@ -741,7 +741,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
 
   const eventLabel = (type: string) => {
     const labels: Record<string, string> = {
-      goal: '⚽ Golo', own_goal: '⚽ Auto-golo', yellow_card: '🟨 Amarelo', red_card: '🟥 Vermelho',
+      goal: tx('⚽ Golo'), own_goal: tx('⚽ Auto-golo'), yellow_card: '🟨 Amarelo', red_card: '🟥 Vermelho',
       substitution_in: '↗ Entrou', substitution_out: '↘ Saiu',
     };
     return labels[type] || type;
@@ -798,7 +798,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       {/* Stepper progress */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{tx('Passo')}{' '}{currentStep + 1} de {STEPS.length}: {STEPS[currentStep].label}</span>
+          <span>{tx('Passo {{a}} de {{b}}', { a: currentStep + 1, b: STEPS.length })}: {STEPS[currentStep].label}</span>
         </div>
         <Progress value={((currentStep + 1) / STEPS.length) * 100} className="h-2" />
         <div className="flex justify-between">

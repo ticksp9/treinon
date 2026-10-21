@@ -1,4 +1,4 @@
-import { intlLocale } from '@/lib/i18n/ui';
+import { intlLocale, tx, weekdayNames } from '@/lib/i18n/ui';
 /** Club map helpers: weekly training timetable and weekend fixtures (pure, testable). */
 
 export interface TrainingSlot {
@@ -11,7 +11,8 @@ export interface TrainingSlot {
   notes: string | null;
 }
 
-export const WEEKDAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+/** Monday…Sunday in the chosen language (read when shown). */
+export const WEEKDAYS = { map: <T,>(fn: (label: string, i: number) => T) => weekdayNames().map(fn), forEach: (fn: (label: string, i: number) => void) => weekdayNames().forEach(fn) };
 export const hhmm = (t: string) => t.slice(0, 5);
 const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const place = (s: string | null) => (s ?? '').trim().toLowerCase();
@@ -55,7 +56,7 @@ const time = (iso: string) => { const d = new Date(iso); return `${two(d.getHour
 
 /** WhatsApp text of the week's fixtures, grouped by day. */
 export function fixturesText(clubName: string, from: Date, matches: MapMatch[]): string {
-  const lines = [`📅 *Jogos da semana — ${clubName}*`, `${from.toLocaleDateString(intlLocale())} a ${addDays(from, 6).toLocaleDateString(intlLocale())}`];
+  const lines = [tx('📅 *Jogos da semana — {{v0}}*', { v0: clubName }), tx('{{v0}} a {{v1}}', { v0: from.toLocaleDateString(intlLocale()), v1: addDays(from, 6).toLocaleDateString(intlLocale()) })];
   let day = '';
   for (const m of matches) {
     const d = new Date(m.match_date);
@@ -66,12 +67,12 @@ export function fixturesText(clubName: string, from: Date, matches: MapMatch[]):
     const extra = [l.meet_time ? `concentração ${l.meet_time}${l.meet_place ? ` (${l.meet_place})` : ''}` : '', l.transport ?? '', l.kit ?? ''].filter(Boolean);
     if (extra.length) lines.push(`   ↳ ${extra.join(' · ')}`);
   }
-  if (matches.length === 0) lines.push('', 'Sem jogos marcados.');
+  if (matches.length === 0) lines.push('', tx('Sem jogos marcados.'));
   return lines.join('\n');
 }
 
 export function timetableText(clubName: string, slots: TrainingSlot[], teamName: (id: string) => string): string {
-  const lines = [`🗓️ *Mapa de treinos — ${clubName}*`];
+  const lines = [`🗓️ *${tx('Mapa de treinos')} — ${clubName}*`];
   WEEKDAYS.forEach((label, i) => {
     const day = slots.filter((s) => s.weekday === i + 1).sort((a, b) => a.start_time.localeCompare(b.start_time));
     if (day.length === 0) return;

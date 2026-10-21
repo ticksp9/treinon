@@ -42,7 +42,7 @@ import { tx } from '@/lib/i18n/ui';
 const INACTIVE_SOURCE = ['left', 'loaned_out'];
 
 
-const ACTION_LABEL: Record<string, string> = { stays: 'mantém', promotes: 'sobe', leaves: 'sai', unknown: 'verificar' };
+const ACTION_LABEL: Record<string, string> = { get stays() { return tx('mantém'); }, promotes: 'sobe', leaves: 'sai', unknown: 'verificar' };
 const ACTION_CLASS: Record<string, string> = {
   stays: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30',
   promotes: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
@@ -350,7 +350,7 @@ export default function SeasonCreateWizard() {
                       <div key={r.player_id} className="flex items-center gap-2 p-2 text-sm">
                         <span className="flex-1">{r.name}</span>
                         <span className="text-xs text-muted-foreground">{r.birth_date ?? '—'}</span>
-                        {r.manual && <Badge variant="outline" className="text-[10px]">adicionado</Badge>}
+                        {r.manual && <Badge variant="outline" className="text-[10px]">{tx('adicionado')}</Badge>}
                       </div>
                     ))}
                     {coachSplit.continuing.length === 0 && (
@@ -424,7 +424,7 @@ export default function SeasonCreateWizard() {
                     <div key={b.ageGroupId ?? 'none'} className="border rounded p-2 text-xs">
                       <p className="text-sm font-medium">{b.ageGroupName}</p>
                       <p className="text-muted-foreground">
-                        entram {b.incoming.length} {tx('· mantêm')}{' '}{b.staying.length} {tx('· saem')}{' '}{b.leaving.length}
+                        {tx('entram {{a}} · mantêm {{s}} · saem {{c}}', { a: b.incoming.length, s: b.staying.length, c: b.leaving.length })}
                       </p>
                     </div>
                   ))}

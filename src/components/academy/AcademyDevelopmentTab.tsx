@@ -11,8 +11,8 @@ import { tx } from '@/lib/i18n/ui';
 const PLAN_STATUS: Record<string, string> = {
   draft: 'Rascunho',
   active: 'Ativo',
-  under_review: 'Em Revisão',
-  completed: 'Concluído',
+  get under_review() { return tx('Em Revisão'); },
+  get completed() { return tx('Concluído'); },
   archived: 'Arquivado',
 };
 

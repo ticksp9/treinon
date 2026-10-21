@@ -5,9 +5,9 @@ import { format } from 'date-fns';
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const TYPE_LABELS: Record<string, string> = {
-  inbound: 'Entrada', outbound: 'Saída', transfer: 'Transferência', adjustment: 'Ajuste',
-  issue_to_team: 'Emissão Equipa', return_from_team: 'Devolução', consumption: 'Consumo',
-  loss: 'Perda', writeoff: 'Abate', count_correction: 'Correção Contagem',
+  inbound: 'Entrada', get outbound() { return tx('Saída'); }, get transfer() { return tx('Transferência'); }, adjustment: 'Ajuste',
+  get issue_to_team() { return tx('Emissão Equipa'); }, get return_from_team() { return tx('Devolução'); }, consumption: 'Consumo',
+  loss: 'Perda', writeoff: 'Abate', get count_correction() { return tx('Correção Contagem'); },
 };
 
 interface Props {

@@ -121,7 +121,7 @@ export function ScoutPlayersTab() {
                         {p.position && <Badge variant="outline">{p.position}</Badge>}
                       </div>
                       <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                        {[p.current_club, p.category, age != null ? `${age} anos` : null, `${p.observations.length} ${p.observations.length === 1 ? 'observação' : 'observações'}`].filter(Boolean).join(' · ')}
+                        {[p.current_club, p.category, age != null ? `${age} anos` : null, `${p.observations.length} ${p.observations.length === 1 ? tx('observação') : tx('observações')}`].filter(Boolean).join(' · ')}
                       </p>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

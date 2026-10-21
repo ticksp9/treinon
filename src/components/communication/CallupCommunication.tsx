@@ -126,7 +126,7 @@ export function CallupCommunication({
               {/* Progress bar */}
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{confirmed.length} confirmados</span>
+                  <span>{tx('{{n}} confirmados', { n: confirmed.length })}</span>
                   <span>{confirmRate}%</span>
                 </div>
                 <Progress value={confirmRate} className="h-2" />

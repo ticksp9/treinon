@@ -26,7 +26,7 @@ export default function OAuthConsent() {
     let active = true;
     (async () => {
       if (!authorizationId) {
-        setError("Pedido de autorização inválido (falta authorization_id).");
+        setError(tx('Pedido de autorização inválido (falta authorization_id).'));
         return;
       }
       const { data: sess } = await supabase.auth.getSession();
@@ -72,7 +72,7 @@ export default function OAuthConsent() {
       const target = data?.redirect_url ?? data?.redirect_to;
       if (!target) {
         setBusy(false);
-        setError("O servidor de autorização não devolveu um destino de redirecionamento.");
+        setError(tx('O servidor de autorização não devolveu um destino de redirecionamento.'));
         return;
       }
       window.location.href = target;

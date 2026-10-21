@@ -271,7 +271,7 @@ export default function PlayerPortal() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{tx('Portal do Jogador')}</h1>
               {notifCount > 0 && (
-                <Badge className="text-xs">{notifCount} nova{notifCount > 1 ? 's' : ''}</Badge>
+                <Badge className="text-xs">{notifCount > 1 ? tx('{{n}} novas', { n: notifCount }) : tx('1 nova')}</Badge>
               )}
             </div>
             <p className="text-muted-foreground text-sm">

@@ -7,16 +7,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { tx, intlLocale } from '@/lib/i18n/ui';
+import { tx, intlLocale, monthNames } from '@/lib/i18n/ui';
 
 interface ClubFinanceChartProps {
   clubId: string;
 }
 
-const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
+
 
 export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
   const currentYear = new Date().getFullYear();
@@ -42,7 +39,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
   const processData = () => {
     if (!transactions) return [];
 
-    return MONTHS.map((month, index) => {
+    return monthNames().map((month, index) => {
       const monthNum = index + 1;
 
       const currentYearTransactions = transactions.filter(t => {

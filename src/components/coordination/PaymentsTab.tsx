@@ -76,8 +76,8 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
           playerMap.set(key, {
             player_id: fee.player_id,
             player_name: fee.players?.name || 'Desconhecido',
-            team_name: fee.players?.teams?.name || 'Sem equipa',
-            age_group: fee.players?.teams?.category || 'Sem escalão',
+            team_name: fee.players?.teams?.name || tx('Sem equipa'),
+            age_group: fee.players?.teams?.category || tx('Sem escalão'),
             months: []
           });
         }
@@ -146,7 +146,7 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
       const summary: Record<string, { paid: number; pending: number; total: number }> = {};
       
       data?.forEach((fee: any) => {
-        const category = fee.players?.teams?.category || 'Sem escalão';
+        const category = fee.players?.teams?.category || tx('Sem escalão');
         if (!summary[category]) {
           summary[category] = { paid: 0, pending: 0, total: 0 };
         }
@@ -212,7 +212,7 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
                             <TableCell>{player.team_name}</TableCell>
                             <TableCell>
                               <Badge variant="destructive">
-                                {player.months_overdue} meses
+                                {tx('{{n}} meses', { n: player.months_overdue })}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium text-destructive">

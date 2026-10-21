@@ -8,8 +8,7 @@ import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import en from '@/lib/i18n/locales/ui.en.json';
 import es from '@/lib/i18n/locales/ui.es.json';
-import de from '@/lib/i18n/locales/ui.de.json';
-import zh from '@/lib/i18n/locales/ui.zh.json';
+import fr from '@/lib/i18n/locales/ui.fr.json';
 
 const ROOT = join(__dirname, '..', '..');
 function files(dir: string): string[] {
@@ -33,7 +32,7 @@ function used(): Map<string, string> {
   return out;
 }
 
-const LANGS: Record<string, Record<string, string>> = { en, es, de, zh };
+const LANGS: Record<string, Record<string, string>> = { en, es, fr };
 
 describe('translation of the screens', () => {
   const texts = used();

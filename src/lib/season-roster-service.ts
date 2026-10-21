@@ -8,6 +8,7 @@ import {
   type AgeGroupRule,
   type TransitionClassification,
 } from '@/lib/age-group-rules';
+import { tx } from '@/lib/i18n/ui';
 
 export interface RosterPlayer {
   player_id: string;
@@ -168,7 +169,7 @@ export function buildClubProposals(src: TransitionSource, referenceDate: string)
       selected: (action === 'unknown' || !!targetId) && action !== 'leaves' && !inactive,
       manual: false,
       warning: action === 'unknown'
-        ? 'sem data de nascimento — confirmar elegibilidade'
+        ? tx('sem data de nascimento — confirmar elegibilidade')
         : res.warning,
     };
   });
@@ -220,7 +221,7 @@ export function buildCoachProposals(
       action: computedAction,
       selected: canTransit && !inactive,
       manual: false,
-      warning: unknown ? 'sem data de nascimento — confirmar elegibilidade' : resolved.warning,
+      warning: unknown ? tx('sem data de nascimento — confirmar elegibilidade') : resolved.warning,
     };
     if (import.meta.env.DEV) {
       console.debug('[transition-preview]', {
@@ -260,7 +261,7 @@ export function groupProposalsByAgeGroup(rows: ProposalRow[], ageGroups: AgeGrou
     staying: [],
     leaving: [],
   }));
-  const outside: AgeGroupBucket = { ageGroupId: null, ageGroupName: 'Sem escalão elegível', incoming: [], staying: [], leaving: [] };
+  const outside: AgeGroupBucket = { ageGroupId: null, ageGroupName: tx('Sem escalão elegível'), incoming: [], staying: [], leaving: [] };
 
   for (const r of rows) {
     const bucket = buckets.find((b) => b.ageGroupId === r.target_age_group_id);
@@ -401,7 +402,7 @@ export async function importRosterFromPreviousSeason(targetSeasonId: string): Pr
       shirt_number: row.shirt_number,
       status: 'active',
       joined_at: referenceDate,
-      notes: eligibility === null ? 'Importado sem data de nascimento — requer atenção' : null,
+      notes: eligibility === null ? tx('Importado sem data de nascimento — requer atenção') : null,
     });
   }
 

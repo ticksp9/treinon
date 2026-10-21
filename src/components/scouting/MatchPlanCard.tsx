@@ -169,7 +169,7 @@ export function MatchPlanCard({ matchId, opponentName, sportType, heading, hideW
               {shownBoard.steps.length > 0 && (
                 <div className="flex items-center justify-center gap-2">
                   <Button size="sm" variant="outline" disabled={shown.step === 0} onClick={() => setShown({ ...shown, step: shown.step - 1 })} aria-label={tx('Passo anterior')}><ChevronLeft className="h-4 w-4" /></Button>
-                  <span className="font-mono text-sm tabular-nums">{tx('Passo')}{' '}{shown.step + 1} de {shownBoard.steps.length + 1}</span>
+                  <span className="font-mono text-sm tabular-nums">{tx('Passo {{a}} de {{b}}', { a: shown.step + 1, b: shownBoard.steps.length + 1 })}</span>
                   <Button size="sm" variant="outline" disabled={shown.step >= shownBoard.steps.length} onClick={() => setShown({ ...shown, step: shown.step + 1 })} aria-label={tx('Passo seguinte')}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
               )}

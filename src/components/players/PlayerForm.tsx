@@ -10,10 +10,10 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { POSITIONS, FOOT_OPTIONS, ID_DOCUMENT_TYPES } from '@/lib/player-constants';
 import { Loader2, User, Users, FileText } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 const playerSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  name: z.string().min(2, tr('Nome deve ter pelo menos 2 caracteres')),
   number: z.preprocess(
     (v) => (typeof v === 'number' && Number.isNaN(v) ? null : v),
     z.number().min(1).max(99).optional().nullable(),
@@ -35,7 +35,7 @@ const playerSchema = z.object({
   notes: z.string().optional(),
   team_id: z.string().optional(),
   // Contact info
-  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  email: z.string().email(tr('Email inválido')).optional().or(z.literal('')),
   phone: z.string().optional(),
   address: z.string().optional(),
   // ID Document
@@ -48,11 +48,11 @@ const playerSchema = z.object({
   medical_certificate_expiry: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
   // Parent 1
   parent_name: z.string().optional(),
-  parent_email: z.string().email('Email inválido').optional().or(z.literal('')),
+  parent_email: z.string().email(tr('Email inválido')).optional().or(z.literal('')),
   parent_phone: z.string().optional(),
   // Parent 2
   parent_name_2: z.string().optional(),
-  parent_email_2: z.string().email('Email inválido').optional().or(z.literal('')),
+  parent_email_2: z.string().email(tr('Email inválido')).optional().or(z.literal('')),
   parent_phone_2: z.string().optional(),
 });
 

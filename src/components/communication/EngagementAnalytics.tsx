@@ -63,7 +63,7 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
               <div>
                 <p className="text-xs text-muted-foreground font-medium">{tx('Taxa de Confirmação')}</p>
                 <p className="text-2xl font-bold">{confirmRate}%</p>
-                <p className="text-xs text-muted-foreground">{attStats.confirmed} {tx('confirmados ·')}{' '}{attStats.total} total</p>
+                <p className="text-xs text-muted-foreground">{tx('{{a}} confirmados · {{b}} no total', { a: attStats.confirmed, b: attStats.total })}</p>
               </div>
               <ClipboardCheck className="h-8 w-8 text-primary/20" />
             </div>
@@ -91,7 +91,7 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
               <div>
                 <p className="text-xs text-muted-foreground font-medium">{tx('Atividade de Grupos')}</p>
                 <p className="text-2xl font-bold">{activeChannels}/{totalChannels}</p>
-                <p className="text-xs text-muted-foreground">{totalMessages} mensagens</p>
+                <p className="text-xs text-muted-foreground">{tx('{{n}} mensagens', { n: totalMessages })}</p>
               </div>
               <MessageSquare className="h-8 w-8 text-primary/20" />
             </div>

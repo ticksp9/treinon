@@ -72,7 +72,7 @@ export function ManualPaymentsTab({ clubId }: Props) {
                   <div className="text-right">
                     <span className="font-bold">{fmt(Number(c.balance_due))}</span>
                     {Number(c.balance_due) < Number(c.final_amount) && (
-                      <p className="text-xs text-muted-foreground">de {fmt(Number(c.final_amount))}</p>
+                      <p className="text-xs text-muted-foreground">{tx('de {{v}}', { v: fmt(Number(c.final_amount)) })}</p>
                     )}
                   </div>
                   <Button

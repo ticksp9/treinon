@@ -1,4 +1,4 @@
-import { tr } from '@/lib/i18n/ui';
+import { tr, tx } from '@/lib/i18n/ui';
 /**
  * Parents' consent (RGPD), per child: data processing (required to use the app for that
  * child) and use of image (free choice). The notice below is a plain-language summary;
@@ -43,8 +43,8 @@ export function controllerName(c: Pick<ChildConsent, 'club_name' | 'team_name'>)
 }
 
 export const NOTICE_POINTS: { title: string; text: string }[] = [
-  { title: 'Que dados', text: 'Nome, data de nascimento, posição e dados desportivos do seu educando (presenças, jogos, minutos, avaliações, lesões). Se o clube os registar: morada, documento de identificação, NIF e os seus contactos.' },
-  { title: 'Para quê', text: 'Organizar treinos e jogos, convocatórias, comunicação consigo e acompanhamento desportivo. Não são usados para publicidade nem vendidos a terceiros.' },
-  { title: 'Quem vê', text: 'Os treinadores veem apenas o nome, a data de nascimento e os dados desportivos. Os dados pessoais e os seus contactos só são vistos pela administração e coordenação do clube. Numa emergência, o treinador pode consultar o seu telefone, e essa consulta fica registada.' },
-  { title: 'Os seus direitos', text: 'Pode consultar, corrigir ou pedir a eliminação dos dados e retirar este consentimento a qualquer momento, contactando o clube. Sem este consentimento não é possível usar a aplicação para este educando.' },
+  { get title() { return tx('Que dados'); }, get text() { return tx('Nome, data de nascimento, posição e dados desportivos do seu educando (presenças, jogos, minutos, avaliações, lesões). Se o clube os registar: morada, documento de identificação, NIF e os seus contactos.'); } },
+  { get title() { return tx('Para quê'); }, get text() { return tx('Organizar treinos e jogos, convocatórias, comunicação consigo e acompanhamento desportivo. Não são usados para publicidade nem vendidos a terceiros.'); } },
+  { get title() { return tx('Quem vê'); }, get text() { return tx('Os treinadores veem apenas o nome, a data de nascimento e os dados desportivos. Os dados pessoais e os seus contactos só são vistos pela administração e coordenação do clube. Numa emergência, o treinador pode consultar o seu telefone, e essa consulta fica registada.'); } },
+  { get title() { return tx('Os seus direitos'); }, get text() { return tx('Pode consultar, corrigir ou pedir a eliminação dos dados e retirar este consentimento a qualquer momento, contactando o clube. Sem este consentimento não é possível usar a aplicação para este educando.'); } },
 ];

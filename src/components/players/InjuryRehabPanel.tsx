@@ -70,7 +70,7 @@ export function InjuryRehabPanel({ injury, canClinical, onChanged }: { injury: R
   };
   const start = (p: RehabProtocol) => save({ rehab_protocol: p, ...moveTo({ rehab_phase: null, rehab_history: [] }, 1, user?.id ?? null), rehab_checks: {} }, `${PROTOCOL_LABEL[p]}: fase 1.`);
   const go = (target: number) => save(moveTo({ rehab_phase: phase, rehab_history: injury.rehab_history }, target, user?.id ?? null), `Fase ${target}: ${phases![target - 1].name}.`);
-  const clear = () => save({ clinical_status: 'apto', can_play: true, return_date: new Date().toISOString().slice(0, 10) }, 'Alta dada. O jogador volta a estar disponível.');
+  const clear = () => save({ clinical_status: 'apto', can_play: true, return_date: new Date().toISOString().slice(0, 10) }, tx('Alta dada. O jogador volta a estar disponível.'));
 
   const addExercise = async () => {
     if (!newEx?.title.trim()) return;
@@ -115,7 +115,7 @@ export function InjuryRehabPanel({ injury, canClinical, onChanged }: { injury: R
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-sm font-semibold">{PROTOCOL_LABEL[protocol]}</p>
         <Badge variant="outline">{tx('Fase')}{' '}{phase}/6 · {current?.name}</Badge>
-        {injury.rehab_phase_since && <span className="text-xs text-muted-foreground">desde {format(new Date(injury.rehab_phase_since), 'dd/MM')}</span>}
+        {injury.rehab_phase_since && <span className="text-xs text-muted-foreground">{tx('desde {{d}}', { d: format(new Date(injury.rehab_phase_since), 'dd/MM') })}</span>}
       </div>
       {/* the six phases */}
       <ol className="grid grid-cols-6 gap-1" aria-label={tx('Fases da reabilitação')}>
@@ -183,7 +183,7 @@ export function InjuryRehabPanel({ injury, canClinical, onChanged }: { injury: R
               {e.dose && <span className="text-xs text-muted-foreground">{e.dose}</span>}
               {e.frequency && <span className="text-xs text-muted-foreground">· {e.frequency}</span>}
               {e.video_url && <a href={e.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-xs text-primary"><ExternalLink className="h-3 w-3" />{tx('vídeo')}</a>}
-              <Badge variant="outline" className="ml-auto font-mono text-[11px]"><Check className="mr-0.5 h-3 w-3" />{done.get(e.id) ?? 0}/7 dias</Badge>
+              <Badge variant="outline" className="ml-auto font-mono text-[11px]"><Check className="mr-0.5 h-3 w-3" />{tx('{{n}}/7 dias', { n: done.get(e.id) ?? 0 })}</Badge>
               {canClinical && <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => stopExercise(e)} aria-label={e.active ? tx('Parar exercício') : tx('Retomar exercício')} title={e.active ? tx('Parar') : tx('Retomar')}><Trash2 className="h-3.5 w-3.5" /></Button>}
             </div>
           ))}

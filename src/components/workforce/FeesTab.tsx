@@ -6,7 +6,7 @@ import type { ContractorFeeBatch, PersonRegistry } from '@/hooks/useWorkforce';
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
-  draft: 'Rascunho', under_review: 'Em Revisão', approved: 'Aprovado', paid: 'Pago', closed: 'Fechado',
+  draft: 'Rascunho', get under_review() { return tx('Em Revisão'); }, approved: 'Aprovado', paid: 'Pago', closed: 'Fechado',
 };
 
 interface Props {

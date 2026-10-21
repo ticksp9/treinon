@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { longDate } from '@/lib/i18n/ui';
+import { longDate, tx } from '@/lib/i18n/ui';
 
 export interface NoticeResult { configured?: boolean; total?: number; sent?: number; failed?: number; skipped?: number; note?: string; error?: string; groups?: Record<string, number>; alerts?: number }
 /** who a call-up email goes to; in a club team the coordinator always gets it, whatever is chosen here */
@@ -33,11 +33,11 @@ export async function sendNotice(body: NoticeRequest): Promise<NoticeResult> {
 export function noticeSummary(r: NoticeResult): { level: 'success' | 'info' | 'error'; text: string } {
   if (r.error && !r.sent) return { level: 'error', text: `O email não foi enviado: ${r.error}` };
   if (r.note) return { level: 'info', text: r.note };
-  if (r.configured === false) return { level: 'info', text: 'O envio por email ainda não está configurado. Use o botão WhatsApp para partilhar.' };
-  if (!r.total) return { level: 'info', text: 'Ninguém com email para avisar: os pais ainda não têm conta nem email na ficha do jogador. Use o botão WhatsApp.' };
+  if (r.configured === false) return { level: 'info', text: tx('O envio por email ainda não está configurado. Use o botão WhatsApp para partilhar.') };
+  if (!r.total) return { level: 'info', text: tx('Ninguém com email para avisar: os pais ainda não têm conta nem email na ficha do jogador. Use o botão WhatsApp.') };
   const parts = [`Email enviado a ${r.sent} ${r.sent === 1 ? 'pessoa' : 'pessoas'}`];
   if (r.failed) parts.push(`${r.failed} falharam`);
-  if (r.skipped) parts.push(`${r.skipped} ficaram de fora (limite diário)`);
+  if (r.skipped) parts.push(tx('{{v0}} ficaram de fora (limite diário)', { v0: r.skipped }));
   return { level: r.failed ? 'info' : 'success', text: parts.join(' · ') + '.' };
 }
 
@@ -53,9 +53,9 @@ export function callupSummary(r: NoticeResult): { level: 'success' | 'info' | 'e
   const groups = r.groups ?? {};
   const keys = Object.keys(groups);
   if (keys.length === 0) return null; // nothing was asked for and there is no coordinator: stay quiet
-  if (r.configured === false) return { level: 'info', text: 'O envio por email ainda não está configurado.' };
-  const parts = keys.map((k) => `${GROUP_LABELS[k] ?? k}: ${groups[k] > 0 ? groups[k] : 'sem email'}`);
-  return { level: keys.some((k) => groups[k] === 0) ? 'info' : 'success', text: `Convocatória enviada por email — ${parts.join(' · ')}` };
+  if (r.configured === false) return { level: 'info', text: tx('O envio por email ainda não está configurado.') };
+  const parts = keys.map((k) => `${GROUP_LABELS[k] ?? k}: ${groups[k] > 0 ? groups[k] : tx('sem email')}`);
+  return { level: keys.some((k) => groups[k] === 0) ? 'info' : 'success', text: tx('Convocatória enviada por email — {{v0}}', { v0: parts.join(' · ') }) };
 }
 
 /** Opens WhatsApp with the text written; the coach picks the parents' group. */
@@ -69,7 +69,7 @@ export function announcementText(a: { title: string; content: string; priority?:
 export function callupText(p: { team?: string; opponent: string; date: string | Date; location?: string | null; players: string[]; message?: string }): string {
   const when = longDate(new Date(p.date), 'weekdayTime');
   return [
-    `*Convocatória${p.team ? ` ${p.team}` : ''} vs ${p.opponent}*`,
+    tx('*Convocatória{{v0}} vs {{v1}}*', { v0: p.team ? ` ${p.team}` : '', v1: p.opponent }),
     `📅 ${when}`,
     p.location ? `📍 ${p.location}` : null,
     p.message?.trim() ? `\n${p.message.trim()}` : null,

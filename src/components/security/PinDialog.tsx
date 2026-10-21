@@ -39,7 +39,7 @@ export function PinDialog({
     try {
       if (mode === 'create') {
         if (pin !== confirmPin) {
-          setError('Os PINs não coincidem');
+          setError(tx('Os PINs não coincidem'));
           setLoading(false);
           return;
         }
@@ -62,7 +62,7 @@ export function PinDialog({
         }
       } else if (mode === 'change') {
         if (newPin !== confirmPin) {
-          setError('Os novos PINs não coincidem');
+          setError(tx('Os novos PINs não coincidem'));
           setLoading(false);
           return;
         }
@@ -92,19 +92,19 @@ export function PinDialog({
   const getTitle = () => {
     if (title) return title;
     switch (mode) {
-      case 'create': return 'Criar PIN de Segurança';
+      case 'create': return tx('Criar PIN de Segurança');
       case 'verify': return 'Introduza o PIN';
       case 'change': return 'Alterar PIN';
-      default: return 'PIN de Segurança';
+      default: return tx('PIN de Segurança');
     }
   };
 
   const getDescription = () => {
     if (description) return description;
     switch (mode) {
-      case 'create': return 'Crie um PIN de 4-6 dígitos para proteger os dados pessoais dos jogadores (morada, contactos, documentos).';
-      case 'verify': return 'Introduza o seu PIN para aceder aos dados protegidos.';
-      case 'change': return 'Introduza o PIN atual e o novo PIN.';
+      case 'create': return tx('Crie um PIN de 4-6 dígitos para proteger os dados pessoais dos jogadores (morada, contactos, documentos).');
+      case 'verify': return tx('Introduza o seu PIN para aceder aos dados protegidos.');
+      case 'change': return tx('Introduza o PIN atual e o novo PIN.');
       default: return '';
     }
   };

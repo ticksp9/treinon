@@ -448,7 +448,7 @@ export function PlayerInjuries({ playerId }: Props) {
                         )}
                         {(inj.trainings_missed > 0 || inj.matches_missed > 0) && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            {tx('Perdidos:')}{' '}{inj.trainings_missed} {tx('treinos ·')}{' '}{inj.matches_missed} jogos
+                            {tx('Perdidos: {{a}} treinos · {{b}} jogos', { a: inj.trainings_missed, b: inj.matches_missed })}
                           </p>
                         )}
                         {inj.responsible_professional && (

@@ -10,16 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, X, FileDown } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, monthNames } from '@/lib/i18n/ui';
 
 interface PlayerFeesProps {
   clubId: string;
 }
 
-const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
+
 
 export function PlayerFees({ clubId }: PlayerFeesProps) {
   const { user } = useAuth();
@@ -150,9 +147,9 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
     
     playersWithFees?.forEach(player => {
       content += `${player.name} (${(player.teams as any)?.name || 'N/A'}):\n`;
-      MONTHS.forEach((month, idx) => {
+      monthNames().forEach((month, idx) => {
         const isPaid = player.fees[idx + 1];
-        content += `  ${month}: ${isPaid ? '✓ Pago' : '✗ Não pago'}\n`;
+        content += `  ${month}: ${isPaid ? '✓ Pago' : tx('✗ Não pago')}\n`;
       });
       content += '\n';
     });
@@ -214,7 +211,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
               <tr className="border-b">
                 <th className="text-left p-2 font-medium">{tx('Jogador')}</th>
                 <th className="text-left p-2 font-medium">{tx('Equipa')}</th>
-                {MONTHS.map((month, idx) => (
+                {monthNames().map((month, idx) => (
                   <th key={month} className="text-center p-2 font-medium text-xs">
                     {month.substring(0, 3)}
                   </th>
@@ -228,7 +225,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
                   <td className="p-2 text-muted-foreground text-xs">
                     {(player.teams as any)?.name}
                   </td>
-                  {MONTHS.map((_, idx) => {
+                  {monthNames().map((_, idx) => {
                     const month = idx + 1;
                     const isPaid = player.fees[month];
                     return (

@@ -14,7 +14,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondar
 };
 
 const METHOD_MAP: Record<string, string> = {
-  card: 'Cartão', mb_way: 'MB WAY', sepa_debit: 'SEPA DD', bank_transfer: 'Transferência', cash: 'Numerário',
+  get card() { return tx('Cartão'); }, mb_way: 'MB WAY', sepa_debit: 'SEPA DD', get bank_transfer() { return tx('Transferência'); }, get cash() { return tx('Numerário'); },
 };
 
 export function TransactionsTab({ clubId }: Props) {

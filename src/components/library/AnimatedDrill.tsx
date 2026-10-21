@@ -73,7 +73,7 @@ export function AnimatedDrill({ elements: given, anim, title, className, autoPla
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
           <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => go(current + 1)} aria-label={tx('Passo seguinte')}><SkipForward className="h-4 w-4" /></Button>
-          <span className="ml-1 font-mono text-xs text-muted-foreground">passo {current + 1}/{steps}</span>
+          <span className="ml-1 font-mono text-xs text-muted-foreground">{tx('passo {{a}}/{{b}}', { a: current + 1, b: steps })}</span>
           {!compact && (
             <div className="ml-auto flex items-center gap-1">
               {[0.5, 1, 2].map((s) => (

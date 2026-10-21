@@ -29,7 +29,7 @@ export function InventoryOverviewTab({ assets, stock, movements, maintenance, al
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><Package className="h-4 w-4" /> {tx('Ativos')}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{assets.length}</div><p className="text-xs text-muted-foreground">{fmt(totalAssetValue)} total</p></CardContent>
+          <CardContent><div className="text-2xl font-bold">{assets.length}</div><p className="text-xs text-muted-foreground">{tx('{{v}} no total', { v: fmt(totalAssetValue) })}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><Warehouse className="h-4 w-4" /> {tx('Stock')}</CardTitle></CardHeader>
@@ -37,7 +37,7 @@ export function InventoryOverviewTab({ assets, stock, movements, maintenance, al
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><TrendingDown className="h-4 w-4" /> {tx('Stock Crítico')}</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold text-destructive">{health.critical + health.low}</div><p className="text-xs text-muted-foreground">{health.critical} {tx('esgotado,')}{' '}{health.low} baixo</p></CardContent>
+          <CardContent><div className="text-2xl font-bold text-destructive">{health.critical + health.low}</div><p className="text-xs text-muted-foreground">{tx('{{a}} esgotado(s), {{b}} em baixo', { a: health.critical, b: health.low })}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-1"><Wrench className="h-4 w-4" /> {tx('Manutenção')}</CardTitle></CardHeader>

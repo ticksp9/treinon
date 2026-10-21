@@ -174,7 +174,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
     
     const grouped = new Map<string, Player[]>();
     players.forEach(player => {
-      const category = player.team?.category || 'Sem escalão';
+      const category = player.team?.category || tx('Sem escalão');
       if (!grouped.has(category)) {
         grouped.set(category, []);
       }
@@ -320,15 +320,15 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <CardTitle className="text-base">{category}</CardTitle>
-                          <Badge variant="secondary">{categoryPlayers.length} jogadores</Badge>
+                          <Badge variant="secondary">{tx('{{n}} jogadores', { n: categoryPlayers.length })}</Badge>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-2 text-sm">
-                            <span className="text-primary">{statusCounts.promotes} sobem</span>
+                            <span className="text-primary">{tx('{{n}} sobem', { n: statusCounts.promotes })}</span>
                             <span className="text-muted-foreground">•</span>
                             <span className="text-green-600">{statusCounts.stays} {tx('mantêm')}</span>
                             <span className="text-muted-foreground">•</span>
-                            <span className="text-destructive">{statusCounts.leaves} saem</span>
+                            <span className="text-destructive">{tx('{{n}} saem', { n: statusCounts.leaves })}</span>
                           </div>
                           {isExpanded ? (
                             <ChevronUp className="w-5 h-5 text-muted-foreground" />

@@ -29,7 +29,7 @@ import {
   recommendationLabel, relativeAgeNote, statusLabel, yearOfBirth,
   type AreaKey, type Recommendation, type ScoutObservation, type ScoutPlayer, type ScoutStatus,
 } from '@/lib/player-scouting';
-import { tx, intlLocale } from '@/lib/i18n/ui';
+import { tx, intlLocale, tr } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -78,19 +78,19 @@ export default function ScoutingPlayer() {
 
   const saveHeader = async (form: ScoutPlayerForm) => {
     const { error } = await db.from('scout_players').update(playerFormToRow(form)).eq('id', id);
-    if (error) { fail('Não foi possível guardar', error); throw error; }
+    if (error) { fail(tx('Não foi possível guardar'), error); throw error; }
     refresh('scout-player'); toast.success(tx('Ficha atualizada.'));
   };
   const setStatus = async (status: ScoutStatus) => {
     const { error } = await db.from('scout_players').update({ status }).eq('id', id);
-    if (error) return fail('Não foi possível mudar o estado', error);
+    if (error) return fail(tx('Não foi possível mudar o estado'), error);
     refresh('scout-player');
     toast.success(status === 'signed' ? tx('Marcado como inscrito. Crie-o em Jogadores para entrar no plantel.') : tx('Estado: {{v0}}.', { v0: statusLabel(status) }));
   };
   const remove = async () => {
     if (!player || !window.confirm(tx('Apagar a ficha de "{{v0}}"? As observações e o contacto são apagados.', { v0: player.name }))) return;
     const { data, error } = await db.from('scout_players').delete().eq('id', id).select('id');
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     if (!data?.length) return toast.error(tx('Só quem criou a ficha (ou o administrador do clube) a pode apagar.'));
     qc.invalidateQueries({ queryKey: ['scout-players-list'] });
     toast.success(tx('Ficha apagada.'));
@@ -99,7 +99,7 @@ export default function ScoutingPlayer() {
   const saveNotes = async () => {
     if (!notes) return;
     const { error } = await db.from('scout_players').update({ summary: notes.summary.trim() || null, video_links: cleanLinks(notes.links) }).eq('id', id);
-    if (error) return fail('Não foi possível guardar', error);
+    if (error) return fail(tx('Não foi possível guardar'), error);
     setNotes(null); refresh('scout-player');
   };
 
@@ -123,13 +123,13 @@ export default function ScoutingPlayer() {
       recommendation: obs.recommendation === NO_REC ? null : (obs.recommendation as Recommendation),
     };
     const { error } = obs.id ? await db.from('scout_player_observations').update(row).eq('id', obs.id) : await db.from('scout_player_observations').insert({ ...row, scout_player_id: id });
-    if (error) return fail('Não foi possível guardar a observação', error);
+    if (error) return fail(tx('Não foi possível guardar a observação'), error);
     setObs(null); refresh('scout-player-observations'); toast.success(tx('Observação guardada.'));
   };
   const removeObs = async (o: ScoutObservation) => {
     if (!window.confirm(tx('Apagar a observação de {{v0}}?', { v0: day(o.observed_on) }))) return;
     const { error } = await db.from('scout_player_observations').delete().eq('id', o.id);
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     refresh('scout-player-observations');
   };
 
@@ -146,7 +146,7 @@ export default function ScoutingPlayer() {
   const removeContact = async () => {
     if (!window.confirm(tx('Apagar o contacto guardado?'))) return;
     const { error } = await db.from('scout_player_contacts').delete().eq('scout_player_id', id);
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     refresh('scout-player-contact');
   };
 
@@ -167,10 +167,10 @@ export default function ScoutingPlayer() {
   const minor = isMinor(player);
   const ageNote = relativeAgeNote(player);
   const facts: [string, string | null][] = [
-    ['Nascimento', player.birth_date ? `${day(player.birth_date)}${age != null ? ` (${age} anos)` : ''}` : yearOfBirth(player) ? `${yearOfBirth(player)}${age != null ? ` (${age} anos este ano)` : ''}` : null],
-    ['Clube atual', player.current_club], ['Escalão', player.category], ['Modalidade', sportLabel(player.sport_type)],
-    ['Posição', [player.position, player.other_positions].filter(Boolean).join(' · ') || null],
-    ['Pé', player.foot ? FOOT_LABEL[player.foot] : null], ['Altura', player.height_cm ? `${player.height_cm} cm` : null], ['Onde foi visto', player.found_at],
+    ['Nascimento', player.birth_date ? `${day(player.birth_date)}${age != null ? ` (${tx('{{n}} anos', { n: age })})` : ''}` : yearOfBirth(player) ? `${yearOfBirth(player)}${age != null ? ` (${tx('{{n}} anos este ano', { n: age })})` : ''}` : null],
+    [tr('Clube atual'), player.current_club], [tx('Escalão'), player.category], [tr('Modalidade'), sportLabel(player.sport_type)],
+    [tx('Posição'), [player.position, player.other_positions].filter(Boolean).join(' · ') || null],
+    [tr('Pé'), player.foot ? FOOT_LABEL[player.foot] : null], [tr('Altura'), player.height_cm ? `${player.height_cm} cm` : null], [tr('Onde foi visto'), player.found_at],
   ];
 
   return (
@@ -209,7 +209,7 @@ export default function ScoutingPlayer() {
             <CardContent className="space-y-3 p-4">
               <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
                 {facts.filter(([, v]) => v).map(([k, v]) => (
-                  <div key={k} className="min-w-0"><dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{k}</dt><dd className="text-sm">{v}</dd></div>
+                  <div key={k} className="min-w-0"><dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{tx(k)}</dt><dd className="text-sm">{v}</dd></div>
                 ))}
               </dl>
               {ageNote && <p className="flex gap-2 rounded-md border border-accent/50 bg-accent/10 p-2 text-sm"><Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />{ageNote}</p>}

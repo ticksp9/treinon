@@ -69,7 +69,7 @@ export function StaffTab({ people, isLoading, onAddPerson }: Props) {
                   <SelectContent>{PERSON_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>NIF</Label><Input value={form.tax_id} onChange={e => setForm(f => ({ ...f, tax_id: e.target.value }))} /></div>
+              <div><Label>{tx('NIF')}</Label><Input value={form.tax_id} onChange={e => setForm(f => ({ ...f, tax_id: e.target.value }))} /></div>
               <div><Label>{tx('Email')}</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
               <div><Label>{tx('Telefone')}</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
               <Button onClick={handleAdd} className="w-full">{tx('Guardar')}</Button>
@@ -96,7 +96,7 @@ export function StaffTab({ people, isLoading, onAddPerson }: Props) {
             <TableRow>
               <TableHead>{tx('Nome')}</TableHead>
               <TableHead>{tx('Tipo')}</TableHead>
-              <TableHead>NIF</TableHead>
+              <TableHead>{tx('NIF')}</TableHead>
               <TableHead>{tx('Email')}</TableHead>
               <TableHead>{tx('Estado')}</TableHead>
             </TableRow>

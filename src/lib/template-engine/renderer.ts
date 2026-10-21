@@ -6,6 +6,7 @@
 import type { RenderResult } from './types';
 import { parseTemplate } from './parser';
 import { VARIABLE_MAP, ALLOWED_VARIABLE_KEYS } from './catalog';
+import { tx } from '@/lib/i18n/ui';
 
 export interface RenderOptions {
   /** If true, leave unknown placeholders as-is instead of removing them */
@@ -57,7 +58,7 @@ export function renderTemplate(
     // Required but missing
     if (def?.required) {
       missingRequired.push(key);
-      warnings.push(`Variável obrigatória sem valor: {{${key}}}`);
+      warnings.push(tx('Variável obrigatória sem valor: {{v0}}', { v0: `{{${key}}}` }));
       return match; // Keep placeholder visible
     }
 

@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
-  draft: 'Rascunho', submitted: 'Submetido', under_review: 'Em Revisão',
+  draft: 'Rascunho', submitted: 'Submetido', get under_review() { return tx('Em Revisão'); },
   approved: 'Aprovado', rejected: 'Rejeitado', converted: 'Convertido', cancelled: 'Cancelado',
 };
 const statusColors: Record<string, string> = {

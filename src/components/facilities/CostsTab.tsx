@@ -4,9 +4,9 @@ import { computeCostsByFacility, computeCostsByTeam } from '@/hooks/useFacilitie
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const COST_TYPES: Record<string, string> = {
-  utilities: 'Utilidades', cleaning: 'Limpeza', maintenance: 'Manutenção', rental: 'Aluguer',
-  security: 'Segurança', staffing: 'Staff', lighting: 'Iluminação', water: 'Água',
-  insurance: 'Seguros', certification: 'Certificação', repairs: 'Reparações', other: 'Outros',
+  utilities: 'Utilidades', cleaning: 'Limpeza', get maintenance() { return tx('Manutenção'); }, rental: 'Aluguer',
+  get security() { return tx('Segurança'); }, get staffing() { return tx('Staff'); }, get lighting() { return tx('Iluminação'); }, get water() { return tx('Água'); },
+  insurance: 'Seguros', get certification() { return tx('Certificação'); }, get repairs() { return tx('Reparações'); }, other: 'Outros',
 };
 
 interface Props {
@@ -21,7 +21,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
   const total = operationalCosts.reduce((s: number, c: any) => s + Number(c.amount), 0);
 
   const getFacName = (id: string) => facilities.find(f => f.id === id)?.name || id;
-  const getTeamName = (id: string) => id === 'unassigned' ? 'Sem equipa' : (teams.find(t => t.id === id)?.name || id);
+  const getTeamName = (id: string) => id === 'unassigned' ? tx('Sem equipa') : (teams.find(t => t.id === id)?.name || id);
 
   return (
     <div className="space-y-6">

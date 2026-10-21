@@ -201,7 +201,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
           )}
           {evaluations && evaluations.length > 0 && (
             <span className="text-xs text-muted-foreground">
-              {evaluations.length} registo{evaluations.length === 1 ? '' : 's'}
+              {evaluations.length === 1 ? tx('1 registo') : tx('{{n}} registos', { n: evaluations.length })}
             </span>
           )}
         </div>

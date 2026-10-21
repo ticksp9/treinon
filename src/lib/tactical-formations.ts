@@ -44,7 +44,7 @@ export interface Formation {
 }
 
 /** Helper de construção. */
-// the short label on the pitch in the chosen language (GR, DC, PL… / GK, CB, ST… / POR, DFC, DC… / TW, IV, ST…), read when shown
+// the short label on the pitch in the chosen language (GR, DC, PL… / GK, CB, ST… / POR, DFC, DC… / G, DC, BU… / TW, IV, ST…), read when shown
 const EN_SHORT: Record<string, string> = {
   GR: 'GK', DC: 'CB', DCE: 'LCB', DCD: 'RCB', DE: 'LB', DD: 'RB', LE: 'LB', LD: 'RB', ALE: 'LWB', ALD: 'RWB',
   MDC: 'DM', MDE: 'LDM', MDD: 'RDM', MC: 'CM', MCE: 'LCM', MCD: 'RCM', MOC: 'AM', MOE: 'LAM', MOD: 'RAM',
@@ -60,8 +60,13 @@ const DE_SHORT: Record<string, string> = {
   MDC: 'ZDM', MDE: 'ZDM', MDD: 'ZDM', MC: 'ZM', MCE: 'ZM', MCD: 'ZM', MOC: 'ZOM', MOE: 'ZOM', MOD: 'ZOM',
   ME: 'LM', MD: 'RM', EE: 'LA', ED: 'RA', PL: 'ST', PLE: 'ST', PLD: 'ST', 'Ala E': 'Flügel L', 'Ala D': 'Flügel R', 'Pivô': 'Pivot',
 };
+const FR_SHORT: Record<string, string> = {
+  GR: 'G', DC: 'DC', DCE: 'DC', DCD: 'DC', DE: 'DG', DD: 'DD', LE: 'DG', LD: 'DD', ALE: 'DLG', ALD: 'DLD',
+  MDC: 'MDC', MDE: 'MDC', MDD: 'MDC', MC: 'MC', MCE: 'MC', MCD: 'MC', MOC: 'MOC', MOE: 'MOC', MOD: 'MOC',
+  ME: 'MG', MD: 'MD', EE: 'AG', ED: 'AD', PL: 'BU', PLE: 'BU', PLD: 'BU', 'Ala E': 'Ailier G', 'Ala D': 'Ailier D', 'Pivô': 'Pivot',
+};
 // Chinese football apps use the English abbreviations
-const SHORT: Record<string, Record<string, string>> = { en: EN_SHORT, es: ES_SHORT, de: DE_SHORT, zh: EN_SHORT };
+const SHORT: Record<string, Record<string, string>> = { en: EN_SHORT, es: ES_SHORT, fr: FR_SHORT, de: DE_SHORT, zh: EN_SHORT };
 export const shortPositionLabel = (pt: string) => SHORT[lang()]?.[pt] ?? pt;
 /** a slot whose short label follows the chosen language */
 function withLabel<T extends object>(o: T, pt: string): T & { label: string } {
@@ -373,7 +378,7 @@ export function formationCodeProblem(sportType: SportType | string, input: strin
   if (!lines) return 'Escreva as linhas da defesa para o ataque, separadas por hífen (ex.: 4-1-2-1).';
   const outfield = expectedPlayersForSport(sportType) - 1;
   const sum = lines.reduce((a, b) => a + b, 0);
-  if (sum !== outfield) return `As linhas têm de somar ${outfield} jogadores de campo (o guarda-redes não conta); ${normalizeFormationCode(lines)} soma ${sum}.`;
+  if (sum !== outfield) return tx('As linhas têm de somar {{v0}} jogadores de campo (o guarda-redes não conta); {{v1}} soma {{v2}}.', { v0: outfield, v1: normalizeFormationCode(lines), v2: sum });
   return null;
 }
 

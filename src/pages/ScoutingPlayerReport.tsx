@@ -14,7 +14,7 @@ import {
   AREAS, ageOf, areaAverages, markHistory, observationMark, overallMark, recommendationLabel, relativeAgeNote, statusLabel, yearOfBirth,
   type ScoutObservation, type ScoutPlayer,
 } from '@/lib/player-scouting';
-import { tx, intlLocale } from '@/lib/i18n/ui';
+import { tx, intlLocale, tr } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -52,12 +52,12 @@ export default function ScoutingPlayerReport() {
   const ageNote = relativeAgeNote(player);
   const last = observations[0];
   const facts: [string, string | null][] = [
-    ['Nascimento', player.birth_date ? `${day(player.birth_date)}${age != null ? ` (${age} anos)` : ''}` : yearOfBirth(player) ? String(yearOfBirth(player)) : null],
-    ['Clube atual', player.current_club], ['Escalão', player.category], ['Modalidade', sportLabel(player.sport_type)],
-    ['Posição', [player.position, player.other_positions].filter(Boolean).join(' · ') || null],
-    ['Pé', player.foot ? FOOT_LABEL[player.foot] : null], ['Altura', player.height_cm ? `${player.height_cm} cm` : null],
-    ['Onde foi visto', player.found_at], ['Estado', statusLabel(player.status)],
-    ['Última recomendação', recommendationLabel(last?.recommendation)],
+    ['Nascimento', player.birth_date ? `${day(player.birth_date)}${age != null ? ` (${tx('{{n}} anos', { n: age })})` : ''}` : yearOfBirth(player) ? String(yearOfBirth(player)) : null],
+    [tr('Clube atual'), player.current_club], [tx('Escalão'), player.category], [tr('Modalidade'), sportLabel(player.sport_type)],
+    [tx('Posição'), [player.position, player.other_positions].filter(Boolean).join(' · ') || null],
+    [tr('Pé'), player.foot ? FOOT_LABEL[player.foot] : null], [tr('Altura'), player.height_cm ? `${player.height_cm} cm` : null],
+    [tr('Onde foi visto'), player.found_at], [tr('Estado'), statusLabel(player.status)],
+    [tx('Última recomendação'), recommendationLabel(last?.recommendation)],
   ];
 
   return (
@@ -82,7 +82,7 @@ export default function ScoutingPlayerReport() {
           <div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
               {facts.filter(([, v]) => v).map(([k, v]) => (
-                <div key={k}><dt className="text-[11px] font-bold uppercase text-slate-500">{k}</dt><dd className="text-sm">{v}</dd></div>
+                <div key={k}><dt className="text-[11px] font-bold uppercase text-slate-500">{tx(k)}</dt><dd className="text-sm">{v}</dd></div>
               ))}
             </dl>
             {ageNote && <p className="mt-3 border-l-4 border-orange-500 bg-orange-50 p-2 text-sm">{ageNote}</p>}

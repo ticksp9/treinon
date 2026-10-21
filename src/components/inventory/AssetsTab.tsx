@@ -11,7 +11,7 @@ import { Plus, Search } from 'lucide-react';
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
-  in_stock: 'Em Stock', assigned: 'Atribuído', in_use: 'Em Uso', maintenance: 'Manutenção',
+  in_stock: 'Em Stock', get assigned() { return tx('Atribuído'); }, in_use: 'Em Uso', get maintenance() { return tx('Manutenção'); },
   damaged: 'Danificado', lost: 'Perdido', retired: 'Retirado', disposed: 'Abatido', reserved: 'Reservado',
 };
 

@@ -287,7 +287,7 @@ export function TrainingAttendance() {
 
       if (error) throw error;
 
-      toast.success(tx('Dias de treino guardados e {{v0}} treinos criados até {{v1}}{{v2}}.', { v0: sessionsToCreate.length, v1: format(end, 'dd/MM'), v2: jointIds.length ? ' (para as equipas que treinam juntas)' : '' }));
+      toast.success(tx('Dias de treino guardados e {{v0}} treinos criados até {{v1}}{{v2}}.', { v0: sessionsToCreate.length, v1: format(end, 'dd/MM'), v2: jointIds.length ? tx(' (para as equipas que treinam juntas)') : '' }));
       setConfigDialogOpen(false);
       fetchSessions();
     } catch (error: any) {
@@ -617,7 +617,7 @@ export function TrainingAttendance() {
               <div>
                 <CardTitle>{tx('Lista de Jogadores')}</CardTitle>
                 <CardDescription>
-                  {presentCount} de {totalPlayers} presentes
+                  {tx('{{a}} de {{b}} presentes', { a: presentCount, b: totalPlayers })}
                 </CardDescription>
               </div>
               <Button onClick={saveAttendance} disabled={saving}>

@@ -25,20 +25,20 @@ interface AutomationsTabProps {
 }
 
 const triggerLabels: Record<string, string> = {
-  time_before_training: 'Antes do treino',
-  time_before_match: 'Antes do jogo',
-  training_created: 'Treino criado',
-  match_created: 'Jogo criado',
+  get time_before_training() { return tx('Antes do treino'); },
+  get time_before_match() { return tx('Antes do jogo'); },
+  get training_created() { return tx('Treino criado'); },
+  get match_created() { return tx('Jogo criado'); },
   event_changed: 'Evento alterado',
   event_cancelled: 'Evento cancelado',
-  attendance_followup: 'Seguimento de presenças',
+  get attendance_followup() { return tx('Seguimento de presenças'); },
 };
 
 const audienceLabels: Record<string, string> = {
-  full_team: 'Toda a equipa',
+  get full_team() { return tx('Toda a equipa'); },
   parents: 'Pais',
   athletes: 'Atletas',
-  staff: 'Staff técnico',
+  get staff() { return tx('Staff técnico'); },
   custom: 'Personalizado',
 };
 

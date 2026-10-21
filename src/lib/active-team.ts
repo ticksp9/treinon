@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * "Which team am I working with?" — a coach can have teams in a club, in another
  * club, and teams of their own. Working inside one context keeps players and
@@ -47,4 +48,4 @@ export function scopeToContext<T extends { id: string }>(list: T[], ctx: Set<str
   return scoped.length > 0 ? scoped : list;
 }
 
-export const ROLE_LABEL: Record<string, string> = { owner: 'Minha equipa', head_coach: 'Treinador principal', assistant_coach: 'Adjunto' };
+export const ROLE_LABEL: Record<string, string> = { get owner() { return tx('Minha equipa'); }, head_coach: 'Treinador principal', assistant_coach: 'Adjunto' };

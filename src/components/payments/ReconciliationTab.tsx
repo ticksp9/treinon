@@ -132,8 +132,8 @@ export function ReconciliationTab({ clubId }: Props) {
                 <Badge variant={imp.import_status === 'completed' ? 'default' : 'secondary'}>{imp.import_status}</Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {imp.row_count} {tx('linhas ·')}{' '}{imp.matched_count || 0} reconciliadas
-                {imp.period_start && ` · ${imp.period_start} a ${imp.period_end}`}
+                {tx('{{a}} linhas · {{b}} reconciliadas', { a: imp.row_count, b: imp.matched_count || 0 })}
+                {imp.period_start && ` · ${imp.period_start} – ${imp.period_end}`}
               </p>
             </CardContent>
           </Card>

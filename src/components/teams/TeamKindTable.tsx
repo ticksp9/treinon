@@ -44,7 +44,7 @@ export function TeamKindTable({ teamId }: { teamId: string }) {
     const names = new Map(data.players.map((p) => [p.id, p]));
     return [...table.entries()].map(([id, kinds]) => {
       const pick = view === 'all' ? sumKinds(kinds) : kinds.find((k) => k.kind === view)!;
-      return { id, player: names.get(id) ?? { id, name: 'Jogador (já não está na equipa)', number: null }, kinds, pick };
+      return { id, player: names.get(id) ?? { id, name: tx('Jogador (já não está na equipa)'), number: null }, kinds, pick };
     }).filter((r) => r.pick.matches > 0 || r.pick.goals > 0 || r.pick.yellow > 0 || r.pick.red > 0)
       .sort((a, b) => sort === 'name' ? a.player.name.localeCompare(b.player.name, 'pt') : sort === 'goals' ? b.pick.goals - a.pick.goals || b.pick.minutes - a.pick.minutes : b.pick.minutes - a.pick.minutes);
   }, [data, view, sort]);

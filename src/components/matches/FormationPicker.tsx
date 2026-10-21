@@ -73,7 +73,7 @@ export function FormationPicker({
   onConfirm,
   onCancel,
   readonly,
-  title = 'Formação tática',
+  title = tx('Formação tática'),
 }: Props) {
   const available = useMemo(() => listAvailableFormations(sportType as SportType), [sportType]);
   const expected = useMemo(() => expectedPlayersForSport(sportType), [sportType]);
@@ -146,7 +146,7 @@ export function FormationPicker({
       <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <div className="flex items-center gap-2">
-          <Badge variant="outline">{expected} jog.</Badge>
+          <Badge variant="outline">{tx('{{n}} jog.', { n: expected })}</Badge>
           {!readonly && (
             <Select value={code} onValueChange={handleFormationChange}>
               <SelectTrigger className="h-8 w-32"><SelectValue /></SelectTrigger>

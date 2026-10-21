@@ -24,6 +24,7 @@
  */
 
 import type { SubstitutionMode } from './match-substitution-rules';
+import { tx } from '@/lib/i18n/ui';
 
 export type MatchPart = '1H' | '2H' | 'ET1' | 'ET2' | `P${number}`;
 
@@ -219,7 +220,7 @@ export function buildInitialStateFromFirstHalfStarters(
   if (starters.length > mode.playersOnField) {
     state.inconsistencies.push({
       type: 'too_many_on_field',
-      message: `Escalação inicial com ${starters.length} jogadores (máx ${mode.playersOnField}).`,
+      message: tx('Escalação inicial com {{v0}} jogadores (máx {{v1}}).', { v0: starters.length, v1: mode.playersOnField }),
     });
   }
   return state;
@@ -278,7 +279,7 @@ export function reconcilePartStarters(
         type: 'snapshot_conflict',
         playerId: pid,
         minute: partStartMinute,
-        message: `Snapshot ${partIndex}.ª parte coloca em campo um jogador já substituído definitivamente.`,
+        message: tx('Snapshot {{v0}}.ª parte coloca em campo um jogador já substituído definitivamente.', { v0: partIndex }),
       });
       continue;
     }
@@ -298,7 +299,7 @@ export function reconcilePartStarters(
     state.inconsistencies.push({
       type: 'too_many_on_field',
       minute: partStartMinute,
-      message: `Snapshot ${partIndex}.ª parte com ${uniqueStarters.length} jogadores (máx ${state.mode.playersOnField}).`,
+      message: tx('Snapshot {{v0}}.ª parte com {{v1}} jogadores (máx {{v2}}).', { v0: partIndex, v1: uniqueStarters.length, v2: state.mode.playersOnField }),
     });
   }
   return state;
@@ -320,7 +321,7 @@ export function validateSubstitutionEvent(
           type: 'leave_not_on_field',
           playerId: evt.playerId,
           minute: evt.minute,
-          message: `Jogador não está em campo aos ${evt.minute}'.`,
+          message: tx('Jogador não está em campo aos {{v0}}\'.', { v0: evt.minute }),
         },
       };
     }
@@ -335,7 +336,7 @@ export function validateSubstitutionEvent(
         type: 'enter_already_on_field',
         playerId: evt.playerId,
         minute: evt.minute,
-        message: `Jogador já está em campo aos ${evt.minute}'.`,
+        message: tx('Jogador já está em campo aos {{v0}}\'.', { v0: evt.minute }),
       },
     };
   }
@@ -349,7 +350,7 @@ export function validateSubstitutionEvent(
         type: 'reentry_blocked',
         playerId: evt.playerId,
         minute: evt.minute,
-        message: `Reentrada não permitida (NO_REENTRY) aos ${evt.minute}'.`,
+        message: tx('Reentrada não permitida (NO_REENTRY) aos {{v0}}\'.', { v0: evt.minute }),
       },
     };
   }
@@ -359,7 +360,7 @@ export function validateSubstitutionEvent(
       reason: {
         type: 'too_many_on_field',
         minute: evt.minute,
-        message: `Já existem ${state.onFieldNow.size} jogadores em campo (máx ${state.mode.playersOnField}).`,
+        message: tx('Já existem {{v0}} jogadores em campo (máx {{v1}}).', { v0: state.onFieldNow.size, v1: state.mode.playersOnField }),
       },
     };
   }
@@ -433,7 +434,7 @@ export function validateSubstitutionBatch(
         type: 'leave_not_on_field',
         playerId: e.playerId,
         minute: e.minute,
-        message: `Jogador aparece duas vezes a sair no mesmo minuto (${e.minute}').`,
+        message: tx('Jogador aparece duas vezes a sair no mesmo minuto ({{v0}}\').', { v0: e.minute }),
       });
     }
     seenOut.add(e.playerId);
@@ -442,7 +443,7 @@ export function validateSubstitutionBatch(
         type: 'leave_not_on_field',
         playerId: e.playerId,
         minute: e.minute,
-        message: `Jogador não está em campo aos ${e.minute}'.`,
+        message: tx('Jogador não está em campo aos {{v0}}\'.', { v0: e.minute }),
       });
     }
   }
@@ -457,7 +458,7 @@ export function validateSubstitutionBatch(
         type: 'enter_already_on_field',
         playerId: e.playerId,
         minute: e.minute,
-        message: `Jogador aparece duas vezes a entrar no mesmo minuto (${e.minute}').`,
+        message: tx('Jogador aparece duas vezes a entrar no mesmo minuto ({{v0}}\').', { v0: e.minute }),
       });
     }
     seenIn.add(e.playerId);
@@ -466,7 +467,7 @@ export function validateSubstitutionBatch(
         type: 'enter_already_on_field',
         playerId: e.playerId,
         minute: e.minute,
-        message: `Jogador já estará em campo após o batch aos ${e.minute}'.`,
+        message: tx('Jogador já estará em campo após o batch aos {{v0}}\'.', { v0: e.minute }),
       });
     }
     if (
@@ -477,7 +478,7 @@ export function validateSubstitutionBatch(
         type: 'reentry_blocked',
         playerId: e.playerId,
         minute: e.minute,
-        message: `Reentrada não permitida (NO_REENTRY) aos ${e.minute}'.`,
+        message: tx('Reentrada não permitida (NO_REENTRY) aos {{v0}}\'.', { v0: e.minute }),
       });
     }
   }
@@ -487,7 +488,7 @@ export function validateSubstitutionBatch(
     reasons.push({
       type: 'too_many_on_field',
       minute: batch[0]?.minute,
-      message: `Batch deixaria ${projected} jogadores em campo (máx ${state.mode.playersOnField}).`,
+      message: tx('Batch deixaria {{v0}} jogadores em campo (máx {{v1}}).', { v0: projected, v1: state.mode.playersOnField }),
     });
   }
 

@@ -78,13 +78,13 @@ export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictA
         {blockingCount > 0 && (
           <Badge variant="destructive" className="text-[10px] gap-0.5">
             <ShieldAlert className="w-3 h-3" />
-            {blockingCount} bloqueante{blockingCount > 1 ? 's' : ''}
+            {blockingCount > 1 ? tx('{{n}} bloqueantes', { n: blockingCount }) : tx('1 bloqueante')}
           </Badge>
         )}
         {warningCount > 0 && (
           <Badge variant="secondary" className="text-[10px] gap-0.5">
             <AlertTriangle className="w-3 h-3" />
-            {warningCount} aviso{warningCount > 1 ? 's' : ''}
+            {warningCount > 1 ? tx('{{n}} avisos', { n: warningCount }) : tx('1 aviso')}
           </Badge>
         )}
       </div>
@@ -103,10 +103,10 @@ export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictA
           </span>
           <div className="flex items-center gap-1">
             {blockingCount > 0 && (
-              <Badge variant="destructive" className="text-[10px]">{blockingCount} bloqueante{blockingCount > 1 ? 's' : ''}</Badge>
+              <Badge variant="destructive" className="text-[10px]">{blockingCount > 1 ? tx('{{n}} bloqueantes', { n: blockingCount }) : tx('1 bloqueante')}</Badge>
             )}
             {warningCount > 0 && (
-              <Badge variant="secondary" className="text-[10px]">{warningCount} aviso{warningCount > 1 ? 's' : ''}</Badge>
+              <Badge variant="secondary" className="text-[10px]">{warningCount > 1 ? tx('{{n}} avisos', { n: warningCount }) : tx('1 aviso')}</Badge>
             )}
           </div>
         </CardTitle>

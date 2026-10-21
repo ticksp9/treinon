@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * Championship, friendly or tournament: minutes, goals and cards of a player are told apart by
  * the kind of match (a coach rotates more in friendlies; the championship numbers are the ones
@@ -6,9 +7,9 @@
 export type MatchKind = 'championship' | 'friendly' | 'tournament';
 
 export const MATCH_KINDS: { key: MatchKind; label: string; short: string }[] = [
-  { key: 'championship', label: 'Campeonato', short: 'Camp.' },
-  { key: 'friendly', label: 'Amigáveis', short: 'Amig.' },
-  { key: 'tournament', label: 'Torneios', short: 'Torn.' },
+  { key: 'championship', get label() { return tx('Campeonato'); }, get short() { return tx('Camp.'); } },
+  { key: 'friendly', get label() { return tx('Amigáveis'); }, get short() { return tx('Amig.'); } },
+  { key: 'tournament', get label() { return tx('Torneios'); }, get short() { return tx('Torn.'); } },
 ];
 export const kindLabel = (k: MatchKind) => MATCH_KINDS.find((x) => x.key === k)!.label;
 

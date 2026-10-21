@@ -6,14 +6,14 @@ import { tx } from '@/lib/i18n/ui';
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo',
-  under_observation: 'Observação',
+  get under_observation() { return tx('Observação'); },
   high_potential: 'Alto Potencial',
   accelerated: 'Acelerado',
-  eligible_promotion: 'Elegível',
+  get eligible_promotion() { return tx('Elegível'); },
   promoted: 'Promovido',
   retained: 'Retido',
-  in_transition: 'Transição',
-  unavailable: 'Indisponível',
+  get in_transition() { return tx('Transição'); },
+  get unavailable() { return tx('Indisponível'); },
   released: 'Desligado',
   archived: 'Arquivado',
 };

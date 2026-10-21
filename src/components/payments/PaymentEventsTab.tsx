@@ -16,9 +16,9 @@ const TYPE_LABELS: Record<string, string> = {
   dispute_created: 'Disputa aberta',
   mbway_payment_created: 'MB WAY criado',
   statement_import_created: 'Extrato importado',
-  auto_match_completed: 'Auto-match concluído',
+  get auto_match_completed() { return tx('Auto-match concluído'); },
   manual_match_created: 'Match manual',
-  reconciliation_reversed: 'Reconciliação revertida',
+  get reconciliation_reversed() { return tx('Reconciliação revertida'); },
 };
 
 export function PaymentEventsTab({ clubId }: Props) {

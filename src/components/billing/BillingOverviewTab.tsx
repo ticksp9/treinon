@@ -5,11 +5,11 @@ import { useChargesSummary, useGenerateCharges, useMarkOverdue } from '@/hooks/u
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, RefreshCw, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { tx, intlLocale } from '@/lib/i18n/ui';
+import { tx, intlLocale, monthNames } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
-const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
 
 export function BillingOverviewTab({ clubId }: Props) {
   const { data: summary, isLoading } = useChargesSummary(clubId);
@@ -53,7 +53,7 @@ export function BillingOverviewTab({ clubId }: Props) {
               <label className="text-xs text-muted-foreground mb-1 block">{tx('Mês')}</label>
               <Select value={genMonth} onValueChange={setGenMonth}>
                 <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                <SelectContent>{MONTHS.map((m, i) => <SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
+                <SelectContent>{monthNames().map((m, i) => <SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>

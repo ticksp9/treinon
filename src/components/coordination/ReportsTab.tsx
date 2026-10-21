@@ -163,7 +163,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totals.players}</div>
             <p className="text-xs text-muted-foreground">
-              {tx('Em')}{' '}{metrics.totals.teams} equipas
+              {tx('Em {{n}} equipas', { n: metrics.totals.teams })}
             </p>
           </CardContent>
         </Card>
@@ -176,7 +176,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totals.coaches}</div>
             <p className="text-xs text-muted-foreground">
-              {tx('Rácio: 1:')}{metrics.totals.avgRatio} jogadores
+              {tx('Rácio: 1:{{n}} jogadores', { n: metrics.totals.avgRatio })}
             </p>
           </CardContent>
         </Card>
@@ -225,8 +225,8 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
                       <Badge variant="outline">{ag.teamCount} {tx('equipa(s)')}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{ag.totalPlayers} jogadores</span>
-                      <span>{ag.totalCoaches} treinadores</span>
+                      <span>{tx('{{n}} jogadores', { n: ag.totalPlayers })}</span>
+                      <span>{tx('{{n}} treinadores', { n: ag.totalCoaches })}</span>
                       <span className="font-medium">{ag.avgOccupancy}%</span>
                     </div>
                   </div>

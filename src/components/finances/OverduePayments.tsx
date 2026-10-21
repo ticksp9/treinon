@@ -10,16 +10,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Bell, Mail, Phone } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, monthNames } from '@/lib/i18n/ui';
 
 interface OverduePaymentsProps {
   clubId: string;
 }
 
-const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
+
 
 export function OverduePayments({ clubId }: OverduePaymentsProps) {
   const currentYear = new Date().getFullYear();
@@ -191,7 +188,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
                     <div className="flex gap-1 mt-1">
                       {player.overdueMonths.map((month: number) => (
                         <Badge key={month} variant="destructive" className="text-xs">
-                          {MONTHS[month - 1].substring(0, 3)}
+                          {monthNames()[month - 1].substring(0, 3)}
                         </Badge>
                       ))}
                     </div>
@@ -240,7 +237,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
                     <p className="font-medium">{player.name}</p>
                     <p className="text-sm text-muted-foreground">{(player.teams as any)?.name}</p>
                     <Badge variant="outline" className="mt-1 text-amber-600 border-amber-300">
-                      {MONTHS[player.overdueMonths[0] - 1]}
+                      {monthNames()[player.overdueMonths[0] - 1]}
                     </Badge>
                   </div>
                   <div className="flex flex-col gap-1 text-right">

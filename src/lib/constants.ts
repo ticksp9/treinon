@@ -1,26 +1,27 @@
+import { tx } from '@/lib/i18n/ui';
 export const SPORT_TYPES = {
   football_5: {
-    label: 'Futebol 5',
+    get label() { return tx('Futebol 5'); },
     players: 5,
     formations: ['2-1-1', '1-2-1', '2-2', '1-1-2'],
   },
   football_7: {
-    label: 'Futebol 7',
+    get label() { return tx('Futebol 7'); },
     players: 7,
     formations: ['3-2-1', '2-3-1', '3-1-2', '2-2-2'],
   },
   football_9: {
-    label: 'Futebol 9',
+    get label() { return tx('Futebol 9'); },
     players: 9,
     formations: ['3-3-2', '3-2-3', '4-2-2', '4-3-1'],
   },
   football_11: {
-    label: 'Futebol 11',
+    get label() { return tx('Futebol 11'); },
     players: 11,
     formations: ['4-4-2', '4-3-3', '3-5-2', '4-2-3-1', '3-4-3', '5-3-2', '4-1-4-1'],
   },
   futsal: {
-    label: 'Futsal',
+    get label() { return tx('Futsal'); },
     players: 5,
     formations: ['2-2', '1-2-1', '3-1', '1-1-2', '4-0'],
   },
@@ -31,8 +32,8 @@ export type SportType = keyof typeof SPORT_TYPES;
 export const POSITIONS = {
   GK: 'Guarda-Redes',
   DEF: 'Defesa',
-  MID: 'Médio',
-  FWD: 'Avançado',
+  get MID() { return tx('Médio'); },
+  get FWD() { return tx('Avançado'); },
   PIV: 'Pivot',
   ALA: 'Ala',
   FIX: 'Fixo',
@@ -41,23 +42,23 @@ export const POSITIONS = {
 // Escalões com idades máximas (ano de nascimento baseado na época)
 // halfDurationMinutes = duração de cada parte em minutos
 export const AGE_CATEGORIES = [
-  { value: 'Sub-7', label: 'Sub-7 (Petizes)', maxAge: 6, minAge: 4, halfDurationMinutes: 15 },
-  { value: 'Sub-8', label: 'Sub-8 (Traquinas B)', maxAge: 7, minAge: 5, halfDurationMinutes: 20 },
-  { value: 'Sub-9', label: 'Sub-9 (Traquinas A)', maxAge: 8, minAge: 6, halfDurationMinutes: 20 },
-  { value: 'Sub-10', label: 'Sub-10 (Benjamins B)', maxAge: 9, minAge: 7, halfDurationMinutes: 25 },
-  { value: 'Sub-11', label: 'Sub-11 (Benjamins A)', maxAge: 10, minAge: 8, halfDurationMinutes: 25 },
-  { value: 'Sub-12', label: 'Sub-12 (Infantis B)', maxAge: 11, minAge: 9, halfDurationMinutes: 30 },
-  { value: 'Sub-13', label: 'Sub-13 (Infantis A)', maxAge: 12, minAge: 10, halfDurationMinutes: 30 },
-  { value: 'Sub-14', label: 'Sub-14 (Iniciados B)', maxAge: 13, minAge: 11, halfDurationMinutes: 35 },
-  { value: 'Sub-15', label: 'Sub-15 (Iniciados A)', maxAge: 14, minAge: 12, halfDurationMinutes: 35 },
-  { value: 'Sub-16', label: 'Sub-16 (Juvenis B)', maxAge: 15, minAge: 13, halfDurationMinutes: 40 },
-  { value: 'Sub-17', label: 'Sub-17 (Juvenis A)', maxAge: 16, minAge: 14, halfDurationMinutes: 40 },
-  { value: 'Sub-18', label: 'Sub-18 (Juniores C)', maxAge: 17, minAge: 15, halfDurationMinutes: 45 },
-  { value: 'Sub-19', label: 'Sub-19 (Juniores B)', maxAge: 18, minAge: 16, halfDurationMinutes: 45 },
-  { value: 'Sub-21', label: 'Sub-21 (Juniores A)', maxAge: 20, minAge: 18, halfDurationMinutes: 45 },
-  { value: 'Sub-23', label: 'Sub-23', maxAge: 22, minAge: 19, halfDurationMinutes: 45 },
-  { value: 'Seniores', label: 'Seniores', maxAge: 99, minAge: 17, halfDurationMinutes: 45 },
-  { value: 'Veteranos', label: 'Veteranos (+35)', maxAge: 99, minAge: 35, halfDurationMinutes: 45 },
+  { value: 'Sub-7', get label() { return tx('Sub-7 (Petizes)'); }, maxAge: 6, minAge: 4, halfDurationMinutes: 15 },
+  { value: 'Sub-8', get label() { return tx('Sub-8 (Traquinas B)'); }, maxAge: 7, minAge: 5, halfDurationMinutes: 20 },
+  { value: 'Sub-9', get label() { return tx('Sub-9 (Traquinas A)'); }, maxAge: 8, minAge: 6, halfDurationMinutes: 20 },
+  { value: 'Sub-10', get label() { return tx('Sub-10 (Benjamins B)'); }, maxAge: 9, minAge: 7, halfDurationMinutes: 25 },
+  { value: 'Sub-11', get label() { return tx('Sub-11 (Benjamins A)'); }, maxAge: 10, minAge: 8, halfDurationMinutes: 25 },
+  { value: 'Sub-12', get label() { return tx('Sub-12 (Infantis B)'); }, maxAge: 11, minAge: 9, halfDurationMinutes: 30 },
+  { value: 'Sub-13', get label() { return tx('Sub-13 (Infantis A)'); }, maxAge: 12, minAge: 10, halfDurationMinutes: 30 },
+  { value: 'Sub-14', get label() { return tx('Sub-14 (Iniciados B)'); }, maxAge: 13, minAge: 11, halfDurationMinutes: 35 },
+  { value: 'Sub-15', get label() { return tx('Sub-15 (Iniciados A)'); }, maxAge: 14, minAge: 12, halfDurationMinutes: 35 },
+  { value: 'Sub-16', get label() { return tx('Sub-16 (Juvenis B)'); }, maxAge: 15, minAge: 13, halfDurationMinutes: 40 },
+  { value: 'Sub-17', get label() { return tx('Sub-17 (Juvenis A)'); }, maxAge: 16, minAge: 14, halfDurationMinutes: 40 },
+  { value: 'Sub-18', get label() { return tx('Sub-18 (Juniores C)'); }, maxAge: 17, minAge: 15, halfDurationMinutes: 45 },
+  { value: 'Sub-19', get label() { return tx('Sub-19 (Juniores B)'); }, maxAge: 18, minAge: 16, halfDurationMinutes: 45 },
+  { value: 'Sub-21', get label() { return tx('Sub-21 (Juniores A)'); }, maxAge: 20, minAge: 18, halfDurationMinutes: 45 },
+  { value: 'Sub-23', get label() { return tx('Sub-23'); }, maxAge: 22, minAge: 19, halfDurationMinutes: 45 },
+  { value: 'Seniores', get label() { return tx('Seniores'); }, maxAge: 99, minAge: 17, halfDurationMinutes: 45 },
+  { value: 'Veteranos', get label() { return tx('Veteranos (+35)'); }, maxAge: 99, minAge: 35, halfDurationMinutes: 45 },
 ] as const;
 
 /**
@@ -72,8 +73,8 @@ export function getHalfDurationForCategory(category: string | null | undefined):
 export const CATEGORIES = AGE_CATEGORIES.map(c => c.value);
 
 export const GENDERS = [
-  { value: 'male', label: 'Masculino' },
-  { value: 'female', label: 'Feminino' },
+  { value: 'male', get label() { return tx('Masculino'); } },
+  { value: 'female', get label() { return tx('Feminino'); } },
 ] as const;
 
 export type Gender = 'male' | 'female';
@@ -169,7 +170,7 @@ export function canPlayerPlayInCategory(
 ): { eligible: boolean; reason?: string } {
   const ageCategory = AGE_CATEGORIES.find(c => c.value === category);
   if (!ageCategory) {
-    return { eligible: false, reason: 'Escalão não encontrado' };
+    return { eligible: false, reason: tx('Escalão não encontrado') };
   }
 
   // Idade desportiva: ano da época − ano de nascimento (regra das federações).
@@ -178,12 +179,12 @@ export function canPlayerPlayInCategory(
   const seasonStartYear = getSeasonStartYear(seasonStartDate ?? new Date());
   const playerAge = getSportingAge(playerBirthDate, seasonStartYear);
   if (playerAge == null) {
-    return { eligible: true, reason: 'Sem data de nascimento' };
+    return { eligible: true, reason: tx('Sem data de nascimento') };
   }
 
   // Jogadores mais novos podem sempre jogar em escalões superiores
   if (playerAge < ageCategory.minAge) {
-    return { eligible: true, reason: 'Jogador mais novo que o escalão' };
+    return { eligible: true, reason: tx('Jogador mais novo que o escalão') };
   }
 
   // Verificar idade máxima
@@ -196,7 +197,7 @@ export function canPlayerPlayInCategory(
 
   if (playerAge > maxAgeAllowed) {
     const reason = teamGender === 'male' && playerIsFemale
-      ? `Idade ${playerAge} anos excede o limite de ${maxAgeAllowed} anos (${ageCategory.maxAge} + 2 para feminino)`
+      ? tx('Idade {{v0}} anos excede o limite de {{v1}} anos ({{v2}} + 2 para feminino)', { v0: playerAge, v1: maxAgeAllowed, v2: ageCategory.maxAge })
       : `Idade ${playerAge} anos excede o limite de ${maxAgeAllowed} anos`;
     return { eligible: false, reason };
   }

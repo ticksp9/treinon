@@ -36,7 +36,7 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
   const criticalAlerts = alerts.filter(a => a.severity === 'critical' || a.severity === 'high').length;
 
   const agingData = [
-    { name: 'Corrente', value: aging.current },
+    { name: tx('Corrente'), value: aging.current },
     { name: '1-30d', value: aging.days_1_30 },
     { name: '31-60d', value: aging.days_31_60 },
     { name: '61-90d', value: aging.days_61_90 },
@@ -54,7 +54,7 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeStaff}</div>
-            <p className="text-xs text-muted-foreground mt-1">{activeContractors} prestadores</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('{{n}} prestadores', { n: activeContractors })}</p>
           </CardContent>
         </Card>
 

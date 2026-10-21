@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * Getting back to play, by phases passed on criteria (not on days):
  *  - standard: the usual path from pain control to the match (control → chaos);
@@ -10,23 +11,23 @@ export interface RehabPhase { n: number; name: string; goal: string; criteria: s
 
 export const PHASES: Record<RehabProtocol, RehabPhase[]> = {
   standard: [
-    { n: 1, name: 'Proteção e dor', goal: 'Acalmar a lesão e recuperar o movimento.', criteria: ['Dor em repouso até 2/10', 'Marcha normal, sem coxear', 'Movimento quase completo'] },
-    { n: 2, name: 'Força e mobilidade', goal: 'Recuperar força e controlo.', criteria: ['Exercícios de força sem dor', 'Força perto do outro lado (≈80%)', 'Equilíbrio num só apoio'] },
-    { n: 3, name: 'Corrida', goal: 'Voltar a correr, em linha reta e depois mais depressa.', criteria: ['Corrida contínua sem dor', 'Acelerações e travagens sem dor', 'Sem reação no dia seguinte'] },
-    { n: 4, name: 'Treino individual com bola', goal: 'Gestos do futebol, sem adversário.', criteria: ['Mudanças de direção sem dor', 'Passe e remate sem dor', 'Sem reação no dia seguinte'] },
-    { n: 5, name: 'Treino com a equipa', goal: 'Parte do treino da equipa, primeiro sem contacto.', criteria: ['Exercícios com a equipa sem contacto', 'Sessões completas sem dor', 'Confiança do jogador'] },
-    { n: 6, name: 'Treino completo e regresso ao jogo', goal: 'Treinar sem limites e voltar a jogar.', criteria: ['Treino completo com contacto', 'Sem dor nem reação', 'Alta dada pelo departamento médico'] },
+    { n: 1, get name() { return tx('Proteção e dor'); }, get goal() { return tx('Acalmar a lesão e recuperar o movimento.'); }, get criteria() { return ['Dor em repouso até 2/10', 'Marcha normal, sem coxear', 'Movimento quase completo'].map((s) => tx(s)); } },
+    { n: 2, get name() { return tx('Força e mobilidade'); }, get goal() { return tx('Recuperar força e controlo.'); }, get criteria() { return ['Exercícios de força sem dor', 'Força perto do outro lado (≈80%)', 'Equilíbrio num só apoio'].map((s) => tx(s)); } },
+    { n: 3, get name() { return tx('Corrida'); }, get goal() { return tx('Voltar a correr, em linha reta e depois mais depressa.'); }, get criteria() { return ['Corrida contínua sem dor', 'Acelerações e travagens sem dor', 'Sem reação no dia seguinte'].map((s) => tx(s)); } },
+    { n: 4, get name() { return tx('Treino individual com bola'); }, get goal() { return tx('Gestos do futebol, sem adversário.'); }, get criteria() { return ['Mudanças de direção sem dor', 'Passe e remate sem dor', 'Sem reação no dia seguinte'].map((s) => tx(s)); } },
+    { n: 5, get name() { return tx('Treino com a equipa'); }, get goal() { return tx('Parte do treino da equipa, primeiro sem contacto.'); }, get criteria() { return ['Exercícios com a equipa sem contacto', 'Sessões completas sem dor', 'Confiança do jogador'].map((s) => tx(s)); } },
+    { n: 6, get name() { return tx('Treino completo e regresso ao jogo'); }, get goal() { return tx('Treinar sem limites e voltar a jogar.'); }, get criteria() { return ['Treino completo com contacto', 'Sem dor nem reação', 'Alta dada pelo departamento médico'].map((s) => tx(s)); } },
   ],
   concussion: [
-    { n: 1, name: 'Repouso relativo', goal: 'Atividades do dia a dia que não agravem os sintomas (24–48 h). Primeiro volta a escola.', criteria: ['Pelo menos 24 h nesta fase', 'Sintomas a melhorar', 'Regressou às aulas sem agravar'] },
-    { n: 2, name: 'Exercício aeróbico leve', goal: 'Caminhar, bicicleta estática, sem esforço intenso.', criteria: ['Pelo menos 24 h nesta fase', 'Sem sintomas durante e depois'] },
-    { n: 3, name: 'Exercício específico individual', goal: 'Corrida e exercícios com bola, sem cabeceamentos nem contacto.', criteria: ['Pelo menos 24 h nesta fase', 'Sem sintomas durante e depois'] },
-    { n: 4, name: 'Treino sem contacto', goal: 'Exercícios da equipa mais exigentes, sem contacto.', criteria: ['Pelo menos 24 h nesta fase', 'Sem sintomas', 'Regressou totalmente às aulas'] },
-    { n: 5, name: 'Treino com contacto', goal: 'Treino normal, depois de autorização médica.', criteria: ['Autorização médica', 'Sem sintomas durante e depois'] },
-    { n: 6, name: 'Regresso ao jogo', goal: 'Pode voltar a jogar.', criteria: ['Treino com contacto sem sintomas', 'Alta dada pelo departamento médico'] },
+    { n: 1, get name() { return tx('Repouso relativo'); }, get goal() { return tx('Atividades do dia a dia que não agravem os sintomas (24–48 h). Primeiro volta a escola.'); }, get criteria() { return ['Pelo menos 24 h nesta fase', 'Sintomas a melhorar', 'Regressou às aulas sem agravar'].map((s) => tx(s)); } },
+    { n: 2, get name() { return tx('Exercício aeróbico leve'); }, get goal() { return tx('Caminhar, bicicleta estática, sem esforço intenso.'); }, get criteria() { return ['Pelo menos 24 h nesta fase', 'Sem sintomas durante e depois'].map((s) => tx(s)); } },
+    { n: 3, get name() { return tx('Exercício específico individual'); }, get goal() { return tx('Corrida e exercícios com bola, sem cabeceamentos nem contacto.'); }, get criteria() { return ['Pelo menos 24 h nesta fase', 'Sem sintomas durante e depois'].map((s) => tx(s)); } },
+    { n: 4, get name() { return tx('Treino sem contacto'); }, get goal() { return tx('Exercícios da equipa mais exigentes, sem contacto.'); }, get criteria() { return ['Pelo menos 24 h nesta fase', 'Sem sintomas', 'Regressou totalmente às aulas'].map((s) => tx(s)); } },
+    { n: 5, get name() { return tx('Treino com contacto'); }, get goal() { return tx('Treino normal, depois de autorização médica.'); }, get criteria() { return ['Autorização médica', 'Sem sintomas durante e depois'].map((s) => tx(s)); } },
+    { n: 6, get name() { return tx('Regresso ao jogo'); }, get goal() { return tx('Pode voltar a jogar.'); }, get criteria() { return ['Treino com contacto sem sintomas', 'Alta dada pelo departamento médico'].map((s) => tx(s)); } },
   ],
 };
-export const PROTOCOL_LABEL: Record<RehabProtocol, string> = { standard: 'Regresso por fases', concussion: 'Protocolo de concussão' };
+export const PROTOCOL_LABEL: Record<RehabProtocol, string> = { standard: 'Regresso por fases', get concussion() { return tx('Protocolo de concussão'); } };
 
 export const phaseOf = (protocol: string | null | undefined, phase: number | null | undefined): RehabPhase | null => {
   const list = PHASES[(protocol as RehabProtocol) ?? 'standard'] ?? PHASES.standard;

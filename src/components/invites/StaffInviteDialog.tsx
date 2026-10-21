@@ -25,15 +25,15 @@ export type StaffInviteType = Extract<InviteType, 'coach' | 'assistant_coach' | 
 export const STAFF_ROLE_LABELS: Record<StaffInviteType, string> = {
   coach: 'Treinador principal',
   assistant_coach: 'Treinador adjunto',
-  staff: 'Staff do clube',
+  get staff() { return tx('Staff do clube'); },
   coordinator: 'Coordenador',
 };
 
 const ROLE_HELP: Record<StaffInviteType, string> = {
-  coach: 'Gere a equipa: plantel, treinos, jogos e convites para adjuntos.',
-  assistant_coach: 'Ajuda na equipa: treinos, presenças, jogos. Não convida outros treinadores.',
-  staff: 'Pessoa da estrutura do clube (secretaria, diretor…).',
-  coordinator: 'Gere todas as equipas: mapa de treinos e de jogos, treinadores e convites.',
+  get coach() { return tx('Gere a equipa: plantel, treinos, jogos e convites para adjuntos.'); },
+  get assistant_coach() { return tx('Ajuda na equipa: treinos, presenças, jogos. Não convida outros treinadores.'); },
+  get staff() { return tx('Pessoa da estrutura do clube (secretaria, diretor…).'); },
+  get coordinator() { return tx('Gere todas as equipas: mapa de treinos e de jogos, treinadores e convites.'); },
 };
 
 interface TeamOpt { id: string; name: string }
@@ -53,14 +53,14 @@ export function inviteLink(token: string) {
 export function inviteMessage(p: { name: string; type: StaffInviteType; team?: string; link: string; code: string }) {
   const first = p.name.trim().split(/\s+/)[0];
   return [
-    `Olá ${first}! 👋`,
+    tx('Olá {{v0}}! 👋', { v0: first }),
     `Foste convidado para ${STAFF_ROLE_LABELS[p.type].toLowerCase()}${p.team ? ` da equipa ${p.team}` : ''} no TreinON.`,
     '',
     `1) Abre este link: ${p.link}`,
-    '2) Cria a tua conta (ou entra, se já tens) e fica tudo ligado.',
+    tx('2) Cria a tua conta (ou entra, se já tens) e fica tudo ligado.'),
     '',
-    `Se o link não abrir, vai a ${window.location.origin}/accept-invite e usa o código ${p.code}.`,
-    'O convite é válido durante 7 dias.',
+    tx('Se o link não abrir, vai a {{v0}}/accept-invite e usa o código {{v1}}.', { v0: window.location.origin, v1: p.code }),
+    tx('O convite é válido durante 7 dias.'),
   ].join('\n');
 }
 
@@ -219,11 +219,11 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
               <p className="truncate font-medium">{i.recipient_name}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {STAFF_ROLE_LABELS[i.invite_type]} · {i.teams?.name} {tx('· código')}{' '}<span className="font-mono">{i.invite_code}</span>
-                {' · '}expira {new Date(i.expires_at).toLocaleDateString(intlLocale())}
+                {' · '}{tx('expira a {{d}}', { d: new Date(i.expires_at).toLocaleDateString(intlLocale()) })}
               </p>
             </div>
             <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={tx('Copiar código')}
-              onClick={async () => { if (await copyText(`${window.location.origin}/accept-invite — código ${i.invite_code}`)) toast.success(tx('Código copiado')); }}>
+              onClick={async () => { if (await copyText(tx('{{v0}}/accept-invite — código {{v1}}', { v0: window.location.origin, v1: i.invite_code }))) toast.success(tx('Código copiado')); }}>
               <Copy className="h-4 w-4" />
             </Button>
             <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={i.email ? tx('Reenviar por email') : tx('Novo link')}

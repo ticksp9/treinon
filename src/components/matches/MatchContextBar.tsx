@@ -33,9 +33,9 @@ export function MatchContextBar({
   compact = false,
 }: MatchContextBarProps) {
   const syncLabel: Record<string, string> = {
-    saving: 'A guardar…',
+    saving: tx('A guardar…'),
     saved: 'Guardado',
-    pending: 'Sincronização pendente',
+    pending: tx('Sincronização pendente'),
     error: tx('Erro ao guardar'),
   };
 

@@ -101,8 +101,8 @@ function AttendanceRequestCard({
   onViewDetails: () => void;
 }) {
   const eventTypeLabels: Record<string, string> = {
-    training: 'Treino',
-    match: 'Jogo',
+    training: tx('Treino'),
+    match: tx('Jogo'),
     other: 'Outro',
   };
 
@@ -201,7 +201,7 @@ function AttendanceDetailDialog({
             </div>
             <Progress value={(confirmed / total) * 100} className="h-2" />
             <p className="text-xs text-muted-foreground text-center">
-              {confirmed} de {responses.length} {tx('confirmados ·')}{' '}{pending} pendentes
+              {tx('{{a}} de {{b}} confirmados · {{c}} pendentes', { a: confirmed, b: responses.length, c: pending })}
             </p>
           </div>
 

@@ -390,7 +390,7 @@ export function SeasonPanel({ injuries, players }: { injuries: SeasonInjury[]; p
     doc.text(total.byPart.slice(0, 6).map((p) => `${partLabel(p.part)} (${p.n})`).join(', ') || '-', 14, y); y += 8;
     doc.setFont('helvetica', 'bold'); doc.text('Como acontecem', 14, y); y += 5; doc.setFont('helvetica', 'normal');
     doc.text(total.byMechanism.map((m) => `${mechanismLabel(m.mechanism) ?? m.mechanism} (${m.n})`).join(', ') || '-', 14, y);
-    doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text(`Gerado no TreinON em ${format(now, 'dd/MM/yyyy HH:mm')}. Sem diagnosticos (dados de saude ficam no departamento medico).`, 14, 285);
+    doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text(tx('Gerado no TreinON em {{v0}}. Sem diagnosticos (dados de saude ficam no departamento medico).', { v0: format(now, 'dd/MM/yyyy HH:mm') }), 14, 285);
     void deliverPdf(doc, `departamento-medico-epoca-${format(now, 'yyyy-MM-dd')}.pdf`);
   });
 

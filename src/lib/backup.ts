@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /** The backup file produced by the `club-backup` function (see docs/BACKUP-E-MIGRACAO.md). */
 export interface BackupFile {
   format: 'treinon-backup';
@@ -34,7 +35,7 @@ export function describeBackup(b: BackupFile): string {
     [count(b, 'training_sessions'), 'treino', 'treinos'],
   ];
   const text = parts.filter(([n]) => n > 0).map(([n, one, many]) => `${n} ${n === 1 ? one : many}`).join(' · ');
-  return `Cópia com ${text || 'os seus dados'} (${backupRowCount(b)} registos em ${Object.keys(b.tables).length} tabelas).`;
+  return tx('Cópia com {{v0}} ({{v1}} registos em {{v2}} tabelas).', { v0: text || 'os seus dados', v1: backupRowCount(b), v2: Object.keys(b.tables).length });
 }
 
 /** One of the copies the server makes on its own every night. */

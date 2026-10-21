@@ -6,6 +6,7 @@
  */
 import { getFormation } from './tactical-formations';
 import { fitScore, type LiveTactics } from './live-tactics';
+import { tx } from '@/lib/i18n/ui';
 
 export type PickMode = 'best' | 'fair';
 
@@ -86,9 +87,9 @@ export function assistantReport(
   const bench = squad.filter((c) => !starters.has(c.player_id));
 
   if (squad.length > 0 && !squad.some(isGk)) {
-    notes.push({ tone: 'warn', text: 'Não há guarda-redes convocado. Alguém vai ter de ir à baliza.' });
+    notes.push({ tone: 'warn', text: tx('Não há guarda-redes convocado. Alguém vai ter de ir à baliza.') });
   } else if (starterIds.length > 0 && !squad.some((c) => starters.has(c.player_id) && isGk(c))) {
-    notes.push({ tone: 'warn', text: 'O guarda-redes não está no onze inicial.' });
+    notes.push({ tone: 'warn', text: tx('O guarda-redes não está no onze inicial.') });
   }
   if (starterIds.length < playersOnField) {
     notes.push({ tone: 'warn', text: `Faltam ${playersOnField - starterIds.length} titulares para ${playersOnField}.` });
@@ -100,7 +101,9 @@ export function assistantReport(
   if (lowBench.length > 0 && avg > 0) {
     notes.push({
       tone: 'info',
-      text: `${lowBench.map((c) => first(c.name)).join(', ')} ${lowBench.length > 1 ? 'têm' : 'tem'} poucos minutos esta época — boa altura para ${lowBench.length > 1 ? 'jogarem' : 'jogar'}.`,
+      text: lowBench.length > 1
+        ? tx('{{names}} têm poucos minutos esta época — boa altura para jogarem.', { names: lowBench.map((c) => first(c.name)).join(', ') })
+        : tx('{{names}} tem poucos minutos esta época — boa altura para jogar.', { names: first(lowBench[0].name) }),
     });
   }
 
@@ -112,6 +115,6 @@ export function assistantReport(
   if (rising.length > 0) {
     notes.push({ tone: 'good', text: `${rising.map((c) => first(c.name)).join(', ')} em boa forma no banco.` });
   }
-  if (notes.length === 0) notes.push({ tone: 'good', text: 'Tudo em ordem para o jogo.' });
+  if (notes.length === 0) notes.push({ tone: 'good', text: tx('Tudo em ordem para o jogo.') });
   return notes;
 }

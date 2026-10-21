@@ -623,7 +623,7 @@ export default function PlayerDetail() {
                           )}
                           {player.tax_id && (
                             <div>
-                              <p className="text-xs text-muted-foreground">NIF</p>
+                              <p className="text-xs text-muted-foreground">{tx('NIF')}</p>
                               <p className="font-medium">{player.tax_id}</p>
                             </div>
                           )}

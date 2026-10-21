@@ -110,14 +110,14 @@ export function MedicalOverviewTab() {
   const injuryStats = computeInjuryStats(injuryCases || []);
 
   const fitnessChartData = [
-    { name: 'Aptos', value: fitness.fit, fill: 'hsl(var(--chart-2))' },
-    { name: 'C/ Restrições', value: fitness.fitRestricted, fill: 'hsl(var(--chart-4))' },
-    { name: 'Inaptos', value: fitness.unfit, fill: 'hsl(var(--chart-1))' },
-    { name: 'Pendentes', value: fitness.pending, fill: 'hsl(var(--chart-3))' },
+    { name: tx('Aptos'), value: fitness.fit, fill: 'hsl(var(--chart-2))' },
+    { name: tx('C/ Restrições'), value: fitness.fitRestricted, fill: 'hsl(var(--chart-4))' },
+    { name: tx('Inaptos'), value: fitness.unfit, fill: 'hsl(var(--chart-1))' },
+    { name: tx('Pendentes'), value: fitness.pending, fill: 'hsl(var(--chart-3))' },
   ].filter(d => d.value > 0);
 
   const severityData = Object.entries(injuryStats.bySeverity).map(([key, val]) => ({
-    name: key === 'mild' ? 'Leve' : key === 'moderate' ? 'Moderada' : key === 'severe' ? 'Grave' : 'Crítica',
+    name: key === 'mild' ? 'Leve' : key === 'moderate' ? 'Moderada' : key === 'severe' ? 'Grave' : tx('Crítica'),
     value: val,
   }));
 

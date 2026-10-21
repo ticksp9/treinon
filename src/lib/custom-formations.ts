@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { buildFormationFromCode, formationCodeProblem, isBuiltInFormation, normalizeFormationCode, parseFormationCode, setCustomFormations, type CustomFormationEntry, type FormationLayout } from './tactical-formations';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -107,12 +108,12 @@ export async function addCustomFormation(userId: string | undefined, sport: stri
   if (problem) return { error: problem };
   const code = normalizeFormationCode(parseFormationCode(input)!);
   if (isBuiltInFormation(sport, code) || customFormationCodes(sport).includes(code)) return { code };
-  if (!buildFormationFromCode(sport, code)) return { error: 'Formação inválida.' };
+  if (!buildFormationFromCode(sport, code)) return { error: tx('Formação inválida.') };
   // usable right away, even if saving fails (e.g. no network on the pitch)
   publish({ ...codes, [sport]: [...(codes[sport] ?? []), { code }] });
   if (userId) {
     const { error } = await db.from('custom_formations').upsert({ owner_id: userId, sport_type: sport, code }, { onConflict: 'owner_id,sport_type,code' });
-    if (error) return { code, error: 'A formação fica disponível agora, mas não foi guardada na conta: ' + error.message };
+    if (error) return { code, error: tx('A formação fica disponível agora, mas não foi guardada na conta: ') + error.message };
   }
   return { code };
 }
@@ -124,10 +125,10 @@ export async function removeCustomFormation(userId: string | undefined, sport: s
 
 /** Asks the coach for a new formation; returns its code when it can be used. */
 export async function promptNewFormation(userId: string | undefined, sport: string, notify: (msg: string, ok: boolean) => void): Promise<string | null> {
-  const typed = window.prompt('Nova formação: escreva as linhas da defesa para o ataque, sem o guarda-redes (ex.: 4-1-2-1)');
+  const typed = window.prompt(tx('Nova formação: escreva as linhas da defesa para o ataque, sem o guarda-redes (ex.: 4-1-2-1)'));
   if (typed == null || !typed.trim()) return null;
   const r = await addCustomFormation(userId, sport, typed);
-  if (!r.code) { notify(r.error ?? 'Formação inválida.', false); return null; }
+  if (!r.code) { notify(r.error ?? tx('Formação inválida.'), false); return null; }
   if (r.error) notify(r.error, false); else notify(`Formação ${r.code} adicionada.`, true);
   return r.code;
 }

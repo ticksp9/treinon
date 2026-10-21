@@ -2,6 +2,7 @@
 // Prefers immutable snapshots (written when a season is closed) and falls back to
 // on-the-fly aggregation of the operational tables filtered by season_id.
 import { supabase } from '@/integrations/supabase/client';
+import { tx } from '@/lib/i18n/ui';
 
 export interface SeasonHistoryRow {
   seasonId: string | null;
@@ -76,7 +77,7 @@ export function aggregateLiveBySeason(
   const map = new Map<string, SeasonHistoryRow>();
   const get = (seasonId: string | null): SeasonHistoryRow | null => {
     if (!seasonId) return null; // rows without a season never leak into a season
-    if (!map.has(seasonId)) map.set(seasonId, emptyRow(seasonId, seasonNames[seasonId] || 'Sem época'));
+    if (!map.has(seasonId)) map.set(seasonId, emptyRow(seasonId, seasonNames[seasonId] || tx('Sem época')));
     return map.get(seasonId)!;
   };
 

@@ -28,7 +28,7 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
   const pendingExpenses = expenseClaims.filter(ec => ec.status === 'submitted').length;
 
   const agingData = [
-    { name: 'Corrente', value: agingBuckets.current },
+    { name: tx('Corrente'), value: agingBuckets.current },
     { name: '1-30d', value: agingBuckets.days_1_30 },
     { name: '31-60d', value: agingBuckets.days_31_60 },
     { name: '61-90d', value: agingBuckets.days_61_90 },
@@ -81,7 +81,7 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">{fmt(totalOverdue)}</div>
-            <p className="text-xs text-muted-foreground mt-1">{overdueInvoices.length} faturas</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('{{n}} faturas', { n: overdueInvoices.length })}</p>
           </CardContent>
         </Card>
       </div>

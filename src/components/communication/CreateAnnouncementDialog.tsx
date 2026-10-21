@@ -23,8 +23,8 @@ interface CreateAnnouncementDialogProps {
 
 const targetTypeLabels: Record<string, string> = {
   channel: 'Grupo',
-  team: 'Equipa',
-  age_group: 'Escalão',
+  get team() { return tx('Equipa'); },
+  get age_group() { return tx('Escalão'); },
   role: 'Função',
   club: 'Clube',
 };

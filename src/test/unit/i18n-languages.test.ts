@@ -1,17 +1,20 @@
 /**
- * The app in Spanish, German and Chinese: texts, written-out dates, number formats and the short
- * position labels follow the chosen language; PDFs built in Chinese come out in English (jsPDF has
- * no Chinese font).
+ * The app in Spanish and French: texts, written-out dates, number formats and the short position
+ * labels follow the chosen language. German and Chinese are hidden for now: choosing them is not offered.
  */
 import { afterAll, describe, expect, it } from 'vitest';
-import i18n from '@/lib/i18n';
-import { inPdfLanguage, intlLocale, longDate, tx } from '@/lib/i18n/ui';
+import i18n, { READY_LANGUAGES } from '@/lib/i18n';
+import { intlLocale, longDate, monthNames, tx } from '@/lib/i18n/ui';
 import { shortPositionLabel } from '@/lib/tactical-formations';
 
 const day = new Date(2026, 2, 12, 18, 30);
 
 describe('other languages', () => {
   afterAll(() => i18n.changeLanguage('pt'));
+
+  it('offers Portuguese, English, Spanish and French', () => {
+    expect([...READY_LANGUAGES]).toEqual(['pt', 'en', 'es', 'fr']);
+  });
 
   it('Spanish', async () => {
     await i18n.changeLanguage('es');
@@ -22,21 +25,16 @@ describe('other languages', () => {
     expect(intlLocale()).toBe('es-ES');
   });
 
-  it('German', async () => {
-    await i18n.changeLanguage('de');
-    expect(tx('Novo jogador')).toBe('Neuer Spieler');
-    expect(tx('{{n}} jogadores', { n: 7 })).toBe('7 Spieler');
-    expect(longDate(day)).toBe('12. März 2026');
-    expect(shortPositionLabel('PL')).toBe('ST');
-  });
-
-  it('Chinese, and its PDFs in English', async () => {
-    await i18n.changeLanguage('zh');
-    expect(tx('Novo jogador')).toBe('新球员');
-    expect(longDate(day)).toBe('2026年3月12日');
-    expect(inPdfLanguage(() => [tx('Novo jogador'), longDate(day)])).toEqual(['New player', '12 March 2026']);
-    // back to Chinese once the PDF is built
-    expect(tx('Novo jogador')).toBe('新球员');
+  it('French', async () => {
+    await i18n.changeLanguage('fr');
+    expect(tx('Guardar')).toBe('Enregistrer');
+    expect(tx('Novo jogador')).toBe('Nouveau joueur');
+    expect(tx('{{n}} jogadores', { n: 7 })).toBe('7 joueurs');
+    expect(longDate(day)).toBe('12 mars 2026');
+    expect(longDate(day, 'weekdayTime')).toBe('jeudi 12 mars à 18:30');
+    expect(monthNames()[0]).toBe('Janvier');
+    expect(shortPositionLabel('PL')).toBe('BU');
+    expect(intlLocale()).toBe('fr-FR');
   });
 
   it('Portuguese stays as written', async () => {

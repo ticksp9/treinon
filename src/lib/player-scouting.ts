@@ -4,6 +4,7 @@
  * with marks from 1 to 5 in each area. The radar is the average of those marks.
  */
 import { normalizeTeamName } from '@/lib/opponent-scouting';
+import { tx, tr } from '@/lib/i18n/ui';
 
 export type ScoutStatus = 'identified' | 'following' | 'priority' | 'trial' | 'signed' | 'discarded';
 export type Recommendation = 'sign' | 'trial' | 'follow' | 'discard';
@@ -25,31 +26,33 @@ export interface ScoutObservation {
 }
 
 export const STATUSES: { key: ScoutStatus; label: string; hint: string }[] = [
-  { key: 'identified', label: 'Identificado', hint: 'Alguém falou dele ou foi visto uma vez.' },
-  { key: 'following', label: 'A seguir', hint: 'Vale a pena voltar a ver.' },
-  { key: 'priority', label: 'Prioritário', hint: 'Queremos este jogador.' },
-  { key: 'trial', label: 'À experiência', hint: 'Está a treinar connosco.' },
-  { key: 'signed', label: 'Inscrito', hint: 'Já é nosso jogador.' },
-  { key: 'discarded', label: 'Arquivado', hint: 'Não avançamos, por agora.' },
+  { key: 'identified', get label() { return tx('Identificado'); }, get hint() { return tx('Alguém falou dele ou foi visto uma vez.'); } },
+  { key: 'following', get label() { return tx('A seguir'); }, get hint() { return tx('Vale a pena voltar a ver.'); } },
+  { key: 'priority', get label() { return tx('Prioritário'); }, get hint() { return tx('Queremos este jogador.'); } },
+  { key: 'trial', get label() { return tx('À experiência'); }, get hint() { return tx('Está a treinar connosco.'); } },
+  { key: 'signed', get label() { return tx('Inscrito'); }, get hint() { return tx('Já é nosso jogador.'); } },
+  { key: 'discarded', get label() { return tx('Arquivado'); }, get hint() { return tx('Não avançamos, por agora.'); } },
 ];
 export const statusLabel = (s: string) => STATUSES.find((x) => x.key === s)?.label ?? s;
 /** the ones that still need work, in the order a coach reads them */
 export const OPEN_STATUSES: ScoutStatus[] = ['priority', 'trial', 'following', 'identified'];
 
 export const AREAS: { key: AreaKey; label: string; hint: string }[] = [
-  { key: 'technical', label: 'Técnica', hint: 'Receção, passe, drible, remate.' },
-  { key: 'tactical', label: 'Tática', hint: 'Posicionamento, decisão, leitura do jogo.' },
-  { key: 'physical', label: 'Física', hint: 'Velocidade, força, resistência.' },
-  { key: 'mental', label: 'Mental', hint: 'Atitude, concentração, reação ao erro.' },
-  { key: 'potential', label: 'Potencial', hint: 'Até onde pode chegar.' },
+  { key: 'technical', get label() { return tx('Técnica'); }, get hint() { return tx('Receção, passe, drible, remate.'); } },
+  { key: 'tactical', get label() { return tx('Tática'); }, get hint() { return tx('Posicionamento, decisão, leitura do jogo.'); } },
+  { key: 'physical', get label() { return tx('Física'); }, get hint() { return tx('Velocidade, força, resistência.'); } },
+  { key: 'mental', get label() { return tx('Mental'); }, get hint() { return tx('Atitude, concentração, reação ao erro.'); } },
+  { key: 'potential', get label() { return tx('Potencial'); }, get hint() { return tx('Até onde pode chegar.'); } },
 ];
-export const MARK_LABELS = ['', 'Fraco', 'Abaixo', 'Médio', 'Bom', 'Muito bom'];
+const MARK_PT = ['', tr('Fraco'), tr('Abaixo'), tr('Médio'), tr('Bom'), tr('Muito bom')];
+/** 1–5 rating words in the chosen language (index = rating). */
+export const MARK_LABELS = new Proxy(MARK_PT, { get: (a, k) => (typeof k === 'string' && /^\d+$/.test(k) ? (a[+k] ? tx(a[+k]) : '') : Reflect.get(a, k)) });
 
 export const RECOMMENDATIONS: { key: Recommendation; label: string }[] = [
-  { key: 'sign', label: 'Inscrever' },
-  { key: 'trial', label: 'Chamar à experiência' },
-  { key: 'follow', label: 'Continuar a ver' },
-  { key: 'discard', label: 'Não avançar' },
+  { key: 'sign', get label() { return tx('Inscrever'); } },
+  { key: 'trial', get label() { return tx('Chamar à experiência'); } },
+  { key: 'follow', get label() { return tx('Continuar a ver'); } },
+  { key: 'discard', get label() { return tx('Não avançar'); } },
 ];
 export const recommendationLabel = (r: string | null | undefined) => RECOMMENDATIONS.find((x) => x.key === r)?.label ?? null;
 
@@ -109,8 +112,8 @@ export const birthQuarter = (birthDate: string | null | undefined): number | nul
 export function relativeAgeNote(p: Pick<ScoutPlayer, 'birth_date' | 'birth_year'>, today = new Date()): string | null {
   const q = birthQuarter(p.birth_date);
   if (!q || !isMinor(p, today)) return null;
-  if (q === 4) return 'Nascido no último trimestre do ano: é dos mais novos do escalão. Compare-o com isso em mente.';
-  if (q === 1) return 'Nascido no primeiro trimestre do ano: é dos mais velhos do escalão. Parte da vantagem pode ser só idade.';
+  if (q === 4) return tx('Nascido no último trimestre do ano: é dos mais novos do escalão. Compare-o com isso em mente.');
+  if (q === 1) return tx('Nascido no primeiro trimestre do ano: é dos mais velhos do escalão. Parte da vantagem pode ser só idade.');
   return null;
 }
 

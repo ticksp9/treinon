@@ -4,6 +4,7 @@
  * the game), their squad and what was seen in each match watched.
  */
 import { emptyBoard, formationCodes, placeFormation, type BoardState } from '@/lib/tactic-board';
+import { tx } from '@/lib/i18n/ui';
 
 export interface Opponent {
   id: string; owner_id: string; club_id: string | null;
@@ -28,21 +29,21 @@ export interface OpponentObservation {
 
 /** The moments of the game, always from the opponent's point of view. */
 export const MOMENTS: { key: SchemeMoment; label: string; hint: string; half: boolean }[] = [
-  { key: 'attack', label: 'Como atacam', hint: 'Saída de bola, como chegam à frente e como finalizam.', half: false },
-  { key: 'defense', label: 'Como defendem', hint: 'Altura do bloco, pressão e espaços que deixam.', half: false },
-  { key: 'transition_attack', label: 'Quando ganham a bola', hint: 'Contra-ataque: quem lança e para onde.', half: false },
-  { key: 'transition_defense', label: 'Quando perdem a bola', hint: 'Reagem a pressionar ou recuam? Quem fica fora de posição?', half: false },
-  { key: 'set_piece_for', label: 'Bolas paradas a atacar', hint: 'Cantos, livres e lançamentos deles.', half: true },
-  { key: 'set_piece_against', label: 'Bolas paradas a defender', hint: 'Como marcam nos cantos e livres contra eles.', half: true },
+  { key: 'attack', get label() { return tx('Como atacam'); }, get hint() { return tx('Saída de bola, como chegam à frente e como finalizam.'); }, half: false },
+  { key: 'defense', get label() { return tx('Como defendem'); }, get hint() { return tx('Altura do bloco, pressão e espaços que deixam.'); }, half: false },
+  { key: 'transition_attack', get label() { return tx('Quando ganham a bola'); }, get hint() { return tx('Contra-ataque: quem lança e para onde.'); }, half: false },
+  { key: 'transition_defense', get label() { return tx('Quando perdem a bola'); }, get hint() { return tx('Reagem a pressionar ou recuam? Quem fica fora de posição?'); }, half: false },
+  { key: 'set_piece_for', get label() { return tx('Bolas paradas a atacar'); }, get hint() { return tx('Cantos, livres e lançamentos deles.'); }, half: true },
+  { key: 'set_piece_against', get label() { return tx('Bolas paradas a defender'); }, get hint() { return tx('Como marcam nos cantos e livres contra eles.'); }, half: true },
 ];
 export const momentLabel = (m: string) => MOMENTS.find((x) => x.key === m)?.label ?? m;
 
 export const SPORT_OPTIONS: { value: string; label: string }[] = [
-  { value: 'football_11', label: 'Futebol 11' },
-  { value: 'football_9', label: 'Futebol 9' },
-  { value: 'football_7', label: 'Futebol 7' },
-  { value: 'football_5', label: 'Futebol 5' },
-  { value: 'futsal', label: 'Futsal' },
+  { value: 'football_11', get label() { return tx('Futebol 11'); } },
+  { value: 'football_9', get label() { return tx('Futebol 9'); } },
+  { value: 'football_7', get label() { return tx('Futebol 7'); } },
+  { value: 'football_5', get label() { return tx('Futebol 5'); } },
+  { value: 'futsal', get label() { return tx('Futsal'); } },
 ];
 export const sportLabel = (s: string) => SPORT_OPTIONS.find((o) => o.value === s)?.label ?? s;
 
@@ -103,7 +104,7 @@ export function schemesByMoment(schemes: OpponentScheme[]): Record<SchemeMoment,
 /** One line for the list: "3 esquemas · 12 jogadores · 2 observações". */
 export function sheetSummary(counts: { schemes: number; players: number; observations: number }): string {
   const part = (n: number, one: string, many: string) => (n > 0 ? `${n} ${n === 1 ? one : many}` : null);
-  return [part(counts.schemes, 'esquema', 'esquemas'), part(counts.players, 'jogador', 'jogadores'), part(counts.observations, 'observação', 'observações')]
+  return [part(counts.schemes, 'esquema', 'esquemas'), part(counts.players, 'jogador', 'jogadores'), part(counts.observations, tx('observação'), tx('observações'))]
     .filter(Boolean).join(' · ') || 'Ficha ainda vazia';
 }
 

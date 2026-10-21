@@ -68,8 +68,8 @@ export function ReturnToPlayTab() {
   });
 
   const decisionTypes: Record<string, string> = {
-    return_to_train: 'Retorno ao Treino',
-    return_to_play: 'Retorno ao Jogo',
+    return_to_train: tx('Retorno ao Treino'),
+    return_to_play: tx('Retorno ao Jogo'),
   };
 
   return (

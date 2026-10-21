@@ -9,8 +9,7 @@ import { SESSION_PLANS as PT_PLANS, AGE_GUIDES as PT_GUIDES } from '@/lib/drill-
 import { AGE_GUIDES, DRILLS, DRILL_CATEGORIES, EQUIPMENT_LABELS, SESSION_PLANS, drillToText } from '@/lib/drill-library';
 import en from '@/lib/i18n/locales/ui.en.json';
 import es from '@/lib/i18n/locales/ui.es.json';
-import de from '@/lib/i18n/locales/ui.de.json';
-import zh from '@/lib/i18n/locales/ui.zh.json';
+import fr from '@/lib/i18n/locales/ui.fr.json';
 
 function texts(): string[] {
   const out = new Set<string>();
@@ -28,7 +27,7 @@ function texts(): string[] {
 describe('drill library in every language', () => {
   afterAll(() => i18n.changeLanguage('pt'));
 
-  for (const [code, dict] of Object.entries({ en, es, de, zh } as Record<string, Record<string, string>>)) {
+  for (const [code, dict] of Object.entries({ en, es, fr } as Record<string, Record<string, string>>)) {
     it(`has every text in ${code}`, () => {
       expect(texts().filter((t) => !(t in dict))).toEqual([]);
     });
@@ -36,12 +35,12 @@ describe('drill library in every language', () => {
 
   it('shows the chosen language', async () => {
     const i = PT_DRILLS.findIndex((d) => d.id === 'semaforo');
-    await i18n.changeLanguage('de');
-    expect(DRILLS[i].name).toBe('Ampel mit Ball');
-    expect(DRILLS[i].howTo[0]).toMatch(/^Grün/);
-    expect(DRILL_CATEGORIES[0].label).toBe('Aufwärmen');
-    expect(EQUIPMENT_LABELS.bolas).toBe('Bälle');
-    expect(drillToText(DRILLS[i])).toContain('Ablauf:');
+    await i18n.changeLanguage('fr');
+    expect(DRILLS[i].name).toBe('Feu tricolore avec ballon');
+    expect(DRILLS[i].howTo[0]).toMatch(/^Vert/);
+    expect(DRILL_CATEGORIES[0].label).toBe('Échauffement');
+    expect(EQUIPMENT_LABELS.bolas).toBe('Ballons');
+    expect(drillToText(DRILLS[i])).toContain('Comment jouer :');
     await i18n.changeLanguage('es');
     expect(SESSION_PLANS[0].name).toBe(es[PT_PLANS[0].name as keyof typeof es]);
     expect(AGE_GUIDES[0].priorities[0]).toBe('Un balón por niño siempre que sea posible');

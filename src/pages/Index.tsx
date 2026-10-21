@@ -8,7 +8,7 @@ import { DRILLS, SESSION_PLANS } from '@/lib/drill-library';
 import { SUPPORT_EMAIL } from '@/lib/app-config';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { isNativeApp } from '@/lib/native-files';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 const FEATURES = [
   { icon: Timer, get title() { return tx('Jogo ao vivo'); }, get text() { return tx('Cronómetro, golos, cartões e substituições. Os minutos de cada jogador calculados sozinhos — justos para todos na formação.'); } },
@@ -20,9 +20,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  'Cria a conta (gratuita, sem cartão)',
-  'Adiciona a equipa e os jogadores',
-  'Instala no telemóvel e leva para o campo',
+  tr('Cria a conta (gratuita, sem cartão)'),
+  tr('Adiciona a equipa e os jogadores'),
+  tr('Instala no telemóvel e leva para o campo'),
 ];
 
 export default function Index() {
@@ -75,7 +75,7 @@ export default function Index() {
                 {STEPS.map((s, i) => (
                   <li key={s} className="flex items-start gap-2">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">{i + 1}</span>
-                    {s}
+                    {tx(s)}
                   </li>
                 ))}
               </ul>
@@ -127,7 +127,7 @@ export default function Index() {
                 {tx('Começa na nossa nuvem, sem custos. Se o clube preferir, os dados podem ficar numa conta própria na nuvem ou num servidor do próprio clube — a app é exatamente a mesma.')}
               </p>
               <ul className="space-y-2 text-sm">
-                {['Instala-se em Android, iPhone, iPad e Windows', 'No servidor do clube: cópias de segurança diárias automáticas', 'Pode mudar de servidor levando os seus dados'].map((x) => (
+                {['Instala-se em Android, iPhone, iPad e Windows', tx('No servidor do clube: cópias de segurança diárias automáticas'), tx('Pode mudar de servidor levando os seus dados')].map((x) => (
                   <li key={x} className="flex gap-2"><CheckCircle2 className="h-5 w-5 shrink-0 text-primary" />{x}</li>
                 ))}
               </ul>

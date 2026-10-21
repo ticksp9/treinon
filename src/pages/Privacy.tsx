@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SUPPORT_EMAIL } from '@/lib/app-config';
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate } from '@/lib/i18n/ui';
 
 /** Email for privacy requests (the build can override it with VITE_SUPPORT_EMAIL). */
 const PRIVACY_CONTACT = SUPPORT_EMAIL || 'treinon.apoio@gmail.com';
-const UPDATED = '19 de outubro de 2026';
+const UPDATED = new Date(2026, 9, 19);
 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
@@ -33,7 +33,7 @@ export default function Privacy() {
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)}><ArrowLeft className="mr-1.5 h-4 w-4" />{tx('Voltar')}</Button>
         <div>
           <h1 className="text-xl font-bold">{tx('Política de privacidade')}</h1>
-          <p className="text-xs text-muted-foreground">{tx('Atualizada a')}{' '}{UPDATED}</p>
+          <p className="text-xs text-muted-foreground">{tx('Atualizada a')}{' '}{longDate(UPDATED)}</p>
         </div>
 
         <Section title={tx('O que é o TreinON')}>

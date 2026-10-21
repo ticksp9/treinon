@@ -135,7 +135,7 @@ export default function Communication() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{tx('Comunicação')}</h1>
                 {summary.total > 0 && (
-                  <Badge className="text-xs">{summary.total} nova{summary.total > 1 ? 's' : ''}</Badge>
+                  <Badge className="text-xs">{summary.total > 1 ? tx('{{n}} novas', { n: summary.total }) : tx('1 nova')}</Badge>
                 )}
               </div>
               <p className="text-muted-foreground text-sm">

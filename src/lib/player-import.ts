@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * Import players from the club's spreadsheet (xlsx/csv) — pure helpers.
  * Finds the header row on its own (club sheets usually start with a title),
@@ -9,21 +10,21 @@ export type Cell = string | number | boolean | Date | null | undefined;
 export type Rows = Cell[][];
 
 export const IMPORT_FIELDS = [
-  { key: 'name', label: 'Nome' },
-  { key: 'last_name', label: 'Apelido' },
-  { key: 'birth_date', label: 'Data de nascimento' },
-  { key: 'birth_year', label: 'Ano de nascimento' },
-  { key: 'number', label: 'Número' },
-  { key: 'position', label: 'Posição' },
-  { key: 'foot', label: 'Pé' },
-  { key: 'gender', label: 'Sexo' },
-  { key: 'phone', label: 'Telefone' },
-  { key: 'email', label: 'Email' },
-  { key: 'parent_name', label: 'Encarregado de educação' },
-  { key: 'parent_phone', label: 'Telefone do EE' },
-  { key: 'parent_email', label: 'Email do EE' },
-  { key: 'federation_id', label: 'Nº de federado / licença' },
-  { key: 'nationality', label: 'Nacionalidade' },
+  { key: 'name', get label() { return tx('Nome'); } },
+  { key: 'last_name', get label() { return tx('Apelido'); } },
+  { key: 'birth_date', get label() { return tx('Data de nascimento'); } },
+  { key: 'birth_year', get label() { return tx('Ano de nascimento'); } },
+  { key: 'number', get label() { return tx('Número'); } },
+  { key: 'position', get label() { return tx('Posição'); } },
+  { key: 'foot', get label() { return tx('Pé'); } },
+  { key: 'gender', get label() { return tx('Sexo'); } },
+  { key: 'phone', get label() { return tx('Telefone'); } },
+  { key: 'email', get label() { return tx('Email'); } },
+  { key: 'parent_name', get label() { return tx('Encarregado de educação'); } },
+  { key: 'parent_phone', get label() { return tx('Telefone do EE'); } },
+  { key: 'parent_email', get label() { return tx('Email do EE'); } },
+  { key: 'federation_id', get label() { return tx('Nº de federado / licença'); } },
+  { key: 'nationality', get label() { return tx('Nacionalidade'); } },
 ] as const;
 export type FieldKey = (typeof IMPORT_FIELDS)[number]['key'];
 export type Mapping = Partial<Record<FieldKey, number>>;

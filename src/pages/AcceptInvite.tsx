@@ -17,20 +17,20 @@ import { tx } from '@/lib/i18n/ui';
 type Step = 'validating' | 'preview' | 'auth' | 'success' | 'error';
 
 const INVITE_TYPE_LABELS: Record<string, string> = {
-  guardian: 'Encarregado de Educação',
-  player: 'Atleta',
+  get guardian() { return tx('Encarregado de Educação'); },
+  get player() { return tx('Atleta'); },
   coach: 'Treinador',
   assistant_coach: 'Treinador Adjunto',
   coordinator: 'Coordenador',
-  staff: 'Staff',
+  get staff() { return tx('Staff'); },
 };
 
 const INVITE_TYPE_DESCRIPTIONS: Record<string, string> = {
-  guardian: 'Crie a sua conta de Encarregado de Educação para acompanhar o seu atleta.',
-  player: 'Crie a sua conta de Atleta para aceder aos seus treinos, jogos e convocatórias.',
-  coach: 'Crie a sua conta de Treinador para aceder à equipa e ferramentas de gestão.',
-  assistant_coach: 'Crie a sua conta de Treinador Adjunto para colaborar com a equipa técnica.',
-  staff: 'Crie a sua conta de Staff para aceder às ferramentas da equipa.',
+  get guardian() { return tx('Crie a sua conta de Encarregado de Educação para acompanhar o seu atleta.'); },
+  get player() { return tx('Crie a sua conta de Atleta para aceder aos seus treinos, jogos e convocatórias.'); },
+  get coach() { return tx('Crie a sua conta de Treinador para aceder à equipa e ferramentas de gestão.'); },
+  get assistant_coach() { return tx('Crie a sua conta de Treinador Adjunto para colaborar com a equipa técnica.'); },
+  get staff() { return tx('Crie a sua conta de Staff para aceder às ferramentas da equipa.'); },
 };
 
 export default function AcceptInvite() {
@@ -74,7 +74,7 @@ export default function AcceptInvite() {
         if (validation.recipient_name && !name) setName(validation.recipient_name);
         setStep('preview');
       } else {
-        setErrorMsg(validation.error || 'Convite inválido');
+        setErrorMsg(validation.error || tx('Convite inválido'));
         setStep('error');
       }
     }

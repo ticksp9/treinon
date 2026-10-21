@@ -115,7 +115,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         <CardContent>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
-              {stats.trainingAttendance} de {stats.trainingSessions} {tx('sessões')}
+              {tx('{{a}} de {{b}} sessões', { a: stats.trainingAttendance, b: stats.trainingSessions })}
             </span>
             <span className="text-sm font-semibold">{attendancePercentage}%</span>
           </div>

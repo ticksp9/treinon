@@ -320,7 +320,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
   /** variant B of a corner without starting again */
   const duplicatePlay = async (p: { name: string; board_data: unknown }) => {
     if (!user) return;
-    const { error } = await supabase.from('tactical_boards').insert({ name: `${p.name} (cópia)`, owner_id: user.id, team_id: teamId ?? null, board_data: p.board_data } as never);
+    const { error } = await supabase.from('tactical_boards').insert({ name: tx('{{v0}} (cópia)', { v0: p.name }), owner_id: user.id, team_id: teamId ?? null, board_data: p.board_data } as never);
     if (error) return toast.error(error.message);
     toast.success(tx('Cópia criada.'));
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });

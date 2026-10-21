@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * Injuries as the medical department reads them (FIFA consensus, Fuller et al. 2006):
  *  - severity = days from the injury to full return to training and matches
@@ -6,10 +7,10 @@
  */
 
 export const MECHANISMS = [
-  { value: 'contact', label: 'Com contacto' },
-  { value: 'non_contact', label: 'Sem contacto' },
-  { value: 'overuse', label: 'Sobrecarga (foi aparecendo)' },
-  { value: 'unknown', label: 'Não sei' },
+  { value: 'contact', get label() { return tx('Com contacto'); } },
+  { value: 'non_contact', get label() { return tx('Sem contacto'); } },
+  { value: 'overuse', get label() { return tx('Sobrecarga (foi aparecendo)'); } },
+  { value: 'unknown', get label() { return tx('Não sei'); } },
 ] as const;
 export const mechanismLabel = (v?: string | null) => MECHANISMS.find((m) => m.value === v)?.label ?? null;
 
@@ -23,11 +24,11 @@ export function daysOut(injuryDate: string, returnDate: string | null | undefine
 }
 
 export function severityByDays(days: number): { key: 'slight' | 'minimal' | 'mild' | 'moderate' | 'severe'; label: string } {
-  if (days <= 1) return { key: 'slight', label: 'Muito ligeira' };
-  if (days <= 3) return { key: 'minimal', label: 'Ligeira' };
-  if (days <= 7) return { key: 'mild', label: 'Leve' };
-  if (days <= 28) return { key: 'moderate', label: 'Moderada' };
-  return { key: 'severe', label: 'Grave' };
+  if (days <= 1) return { key: 'slight', label: tx('Muito ligeira') };
+  if (days <= 3) return { key: 'minimal', label: tx('Ligeira') };
+  if (days <= 7) return { key: 'mild', label: tx('Leve') };
+  if (days <= 28) return { key: 'moderate', label: tx('Moderada') };
+  return { key: 'severe', label: tx('Grave') };
 }
 
 export interface InjuryLike { id?: string; injury_date: string; return_date: string | null; body_part: string | null; injury_type: string | null }

@@ -109,7 +109,7 @@ export function dayLabel(day: Date, now = new Date()): string {
   const diff = Math.round((startOfDay(day).getTime() - startOfDay(now).getTime()) / 86_400_000);
   const base = longDate(day, 'weekday');
   if (diff === 0) return `Hoje · ${base}`;
-  if (diff === 1) return `Amanhã · ${base}`;
+  if (diff === 1) return tx('Amanhã · {{v0}}', { v0: base });
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 

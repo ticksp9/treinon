@@ -17,14 +17,14 @@ const PATHWAY_COLORS: Record<string, string> = {
 
 const PATHWAY_LABELS: Record<string, string> = {
   active: 'Ativo',
-  under_observation: 'Em Observação',
+  get under_observation() { return tx('Em Observação'); },
   high_potential: 'Alto Potencial',
   accelerated: 'Acelerado',
-  eligible_promotion: 'Elegível Promoção',
+  get eligible_promotion() { return tx('Elegível Promoção'); },
   promoted: 'Promovido',
   retained: 'Retido',
-  in_transition: 'Em Transição',
-  unavailable: 'Indisponível',
+  get in_transition() { return tx('Em Transição'); },
+  get unavailable() { return tx('Indisponível'); },
   released: 'Desligado',
   archived: 'Arquivado',
 };

@@ -4,10 +4,10 @@ import { AlertTriangle, FileCheck } from 'lucide-react';
 import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const DOC_TYPES: Record<string, string> = {
-  usage_license: 'Licença de Utilização', lease_contract: 'Contrato de Arrendamento',
-  inspection_report: 'Relatório de Inspeção', safety_regulation: 'Regulamento de Segurança',
-  lighting_certificate: 'Certificado de Iluminação', insurance: 'Seguro',
-  municipal_authorization: 'Autorização Municipal', other: 'Outro',
+  get usage_license() { return tx('Licença de Utilização'); }, get lease_contract() { return tx('Contrato de Arrendamento'); },
+  get inspection_report() { return tx('Relatório de Inspeção'); }, get safety_regulation() { return tx('Regulamento de Segurança'); },
+  get lighting_certificate() { return tx('Certificado de Iluminação'); }, insurance: 'Seguro',
+  get municipal_authorization() { return tx('Autorização Municipal'); }, other: 'Outro',
 };
 
 interface Props {

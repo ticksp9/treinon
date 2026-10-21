@@ -19,7 +19,7 @@ export function ScoutRadar({ values, color = 'hsl(var(--primary))', ink = 'curre
   const any = AREAS.some((a) => values[a.key] != null);
   return (
     <svg viewBox="0 0 220 200" className={className} role="img"
-      aria-label={tx('Avaliação por áreas: {{v0}}', { v0: AREAS.map((a) => `${a.label} ${values[a.key] != null ? String(values[a.key]).replace('.', ',') : 'sem nota'}`).join(', ') })}>
+      aria-label={tx('Avaliação por áreas: {{v0}}', { v0: AREAS.map((a) => `${a.label} ${values[a.key] != null ? String(values[a.key]).replace('.', ',') : tx('sem nota')}`).join(', ') })}>
       {[1, 2, 3, 4, 5].map((v) => <polygon key={v} points={ring(v)} fill="none" stroke={ink} strokeOpacity={v === 5 ? 0.35 : 0.15} strokeWidth={1} />)}
       {AREAS.map((_, i) => { const [x, y] = at(i, MAX); return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke={ink} strokeOpacity={0.15} strokeWidth={1} />; })}
       {any && <polygon points={shape} fill={color} fillOpacity={0.25} stroke={color} strokeWidth={2} strokeLinejoin="round" />}

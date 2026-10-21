@@ -15,8 +15,8 @@ import { tx, intlLocale } from '@/lib/i18n/ui';
 const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 const STATUS_MAP: Record<string, string> = {
-  draft: 'Rascunho', calculated: 'Calculado', under_review: 'Em Revisão',
-  approved: 'Aprovado', posted: 'Lançado', paid: 'Pago', closed: 'Fechado',
+  draft: 'Rascunho', calculated: 'Calculado', get under_review() { return tx('Em Revisão'); },
+  approved: 'Aprovado', get posted() { return tx('Lançado'); }, paid: 'Pago', closed: 'Fechado',
 };
 
 interface Props {

@@ -82,6 +82,7 @@ const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 const SeasonsPage = lazy(() => import("./pages/SeasonsPage"));
 const SeasonCreateWizard = lazy(() => import("./pages/SeasonCreateWizard"));
 import { SeasonProvider } from "@/hooks/useSeasonContext";
+import { tx } from '@/lib/i18n/ui';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -123,7 +124,7 @@ function AppContent() {
         <SeasonProvider>
         <ActiveTeamProvider>
         {/* one broken screen must never blank the whole app */}
-        <ErrorBoundary label="página" fallbackTitle="Esta página teve um problema" showBack>
+        <ErrorBoundary label={tx('página')} fallbackTitle={tx('Esta página teve um problema')} showBack>
         <Fragment key={currentLanguage}>
         <Suspense fallback={<PageLoader />}>
         <Routes>

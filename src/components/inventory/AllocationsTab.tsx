@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { tx } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
-  allocated: 'Atribuído', partially_returned: 'Parc. Devolvido', returned: 'Devolvido',
+  get allocated() { return tx('Atribuído'); }, partially_returned: 'Parc. Devolvido', returned: 'Devolvido',
   consumed: 'Consumido', lost: 'Perdido', damaged: 'Danificado',
 };
 

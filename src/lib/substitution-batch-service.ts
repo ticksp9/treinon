@@ -20,6 +20,7 @@ import {
   validateSubstitutionAttempt,
   type MatchEventForCalc,
 } from './match-playing-time';
+import { tx } from '@/lib/i18n/ui';
 
 export type MatchPart = '1H' | '2H' | 'ET1' | 'ET2';
 
@@ -137,7 +138,7 @@ export function validateSubstitutionBatch({
   if (draft.substitutions.length === 0) {
     return {
       valid: false,
-      issues: [{ message: 'Adicione pelo menos uma substituição antes de confirmar.' }],
+      issues: [{ message: tx('Adicione pelo menos uma substituição antes de confirmar.') }],
       projectedOnField: [...currentOnFieldIds],
     };
   }
@@ -154,7 +155,7 @@ export function validateSubstitutionBatch({
     if (!pending.playerOutId || !pending.playerInId) {
       issues.push({
         tempId: pending.tempId,
-        message: 'Linha incompleta: indique quem sai e quem entra.',
+        message: tx('Linha incompleta: indique quem sai e quem entra.'),
       });
       continue;
     }
@@ -162,7 +163,7 @@ export function validateSubstitutionBatch({
     if (pending.playerOutId === pending.playerInId) {
       issues.push({
         tempId: pending.tempId,
-        message: 'Não é permitido sair e entrar com o mesmo jogador.',
+        message: tx('Não é permitido sair e entrar com o mesmo jogador.'),
       });
       continue;
     }
@@ -170,7 +171,7 @@ export function validateSubstitutionBatch({
     if (seenOuts.has(pending.playerOutId)) {
       issues.push({
         tempId: pending.tempId,
-        message: 'O mesmo jogador não pode sair duas vezes neste lote.',
+        message: tx('O mesmo jogador não pode sair duas vezes neste lote.'),
       });
       continue;
     }
@@ -178,7 +179,7 @@ export function validateSubstitutionBatch({
     if (seenIns.has(pending.playerInId)) {
       issues.push({
         tempId: pending.tempId,
-        message: 'O mesmo jogador não pode entrar duas vezes neste lote.',
+        message: tx('O mesmo jogador não pode entrar duas vezes neste lote.'),
       });
       continue;
     }
@@ -194,7 +195,7 @@ export function validateSubstitutionBatch({
     if (!stepValidation.allowed) {
       issues.push({
         tempId: pending.tempId,
-        message: stepValidation.reason ?? 'Substituição inválida.',
+        message: stepValidation.reason ?? tx('Substituição inválida.'),
       });
       continue;
     }
@@ -221,7 +222,7 @@ export function validateSubstitutionBatch({
 
   if (projected.size !== maxOnField && projected.size !== currentOnFieldIds.length) {
     issues.push({
-      message: `Após o lote a equipa ficaria com ${projected.size} jogadores em campo (esperado ${maxOnField}).`,
+      message: tx('Após o lote a equipa ficaria com {{v0}} jogadores em campo (esperado {{v1}}).', { v0: projected.size, v1: maxOnField }),
     });
   }
 

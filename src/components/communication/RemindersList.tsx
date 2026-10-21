@@ -22,10 +22,10 @@ interface RemindersListProps {
 }
 
 const reminderTypeLabels: Record<string, string> = {
-  training: 'Treino',
-  match: 'Jogo',
-  attendance: 'Presenças',
-  schedule_change: 'Alteração Horário',
+  get training() { return tx('Treino'); },
+  get match() { return tx('Jogo'); },
+  get attendance() { return tx('Presenças'); },
+  get schedule_change() { return tx('Alteração Horário'); },
   custom: 'Personalizado',
 };
 

@@ -8,6 +8,7 @@ import {
   type AgeGroupRule,
 } from '@/lib/age-group-rules';
 import { loadTransitionSource, matchTeamForAgeGroup, type ProposalRow } from '@/lib/season-roster-service';
+import { tx } from '@/lib/i18n/ui';
 
 export type TransitionMode = 'club_auto' | 'coach_manual';
 
@@ -120,7 +121,7 @@ export async function previewTransition(args: PreviewArgs): Promise<PreviewResul
         eligible: unknown || !!resolvedTargetId,
         selected: (unknown || !!resolvedTargetId) && classification !== 'leaves' && !inactive,
         manual: false,
-        warning: unknown ? 'sem data de nascimento — confirmar elegibilidade' : resolved.warning,
+        warning: unknown ? tx('sem data de nascimento — confirmar elegibilidade') : resolved.warning,
       };
     }
 
@@ -162,7 +163,7 @@ export async function previewTransition(args: PreviewArgs): Promise<PreviewResul
       eligible: transits,
       selected,
       manual: false,
-      warning: unknown ? 'sem data de nascimento — confirmar elegibilidade' : resolved.warning,
+      warning: unknown ? tx('sem data de nascimento — confirmar elegibilidade') : resolved.warning,
     };
 
   });
@@ -397,7 +398,7 @@ export async function applyWizardTransition(input: WizardTransitionInput): Promi
     .single();
   if (insErr) {
     console.error('[season-transition] falha ao criar a transição', insErr);
-    throw new Error(insErr.message || 'Não foi possível criar a transição.');
+    throw new Error(insErr.message || tx('Não foi possível criar a transição.'));
   }
   const transitionId = (created as { id: string }).id;
 
@@ -437,7 +438,7 @@ export async function applyWizardTransition(input: WizardTransitionInput): Promi
     }
     await supabase.from('season_transitions' as never).delete().eq('id', transitionId);
 
-    const message = (err as { message?: string })?.message ?? 'Erro desconhecido ao aplicar a transição.';
+    const message = (err as { message?: string })?.message ?? tx('Erro desconhecido ao aplicar a transição.');
     throw new Error(message);
   }
 }
@@ -452,13 +453,13 @@ export function validateNewPlayerEnrollment(
   group: AgeGroupRule | null | undefined,
 ): { eligible: boolean; message: string | null } {
   if (!group) return { eligible: true, message: null };
-  if (!birthDate) return { eligible: false, message: 'Jogador sem data de nascimento: confirmação manual necessária.' };
+  if (!birthDate) return { eligible: false, message: tx('Jogador sem data de nascimento: confirmação manual necessária.') };
   const eligible = isPlayerEligibleForAgeGroup(birthDate, group);
   return {
     eligible,
     message: eligible
       ? null
-      : `Jogador nascido em ${getBirthYear(birthDate)} não é elegível para ${group.name} (${group.min_birth_year}–${group.max_birth_year}). Requer confirmação explícita.`,
+      : tx('Jogador nascido em {{v0}} não é elegível para {{v1}} ({{v2}}–{{v3}}). Requer confirmação explícita.', { v0: getBirthYear(birthDate), v1: group.name, v2: group.min_birth_year, v3: group.max_birth_year }),
   };
 }
 

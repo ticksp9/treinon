@@ -83,7 +83,7 @@ export function computeAvailability(
       callable: false,
       status,
       reason: status === 'em_recuperacao'
-        ? 'Em recuperação clínica'
+        ? tx('Em recuperação clínica')
         : 'Inapto clinicamente',
       restrictions: worst.restrictions,
       needsClearance: recoveryEnded,
@@ -96,7 +96,7 @@ export function computeAvailability(
     callable: true,
     status,
     reason: status === 'retorno_progressivo'
-      ? 'Apto com restrição (retorno progressivo)'
+      ? tx('Apto com restrição (retorno progressivo)')
       : 'Apto condicionado',
     restrictions: worst.restrictions,
     needsClearance: recoveryEnded,

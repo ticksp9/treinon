@@ -1382,7 +1382,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     setIsLocked(type === 'championship');
     // back to championship = back to the team's own format
     await updateMatchRecord(type === 'friendly'
-      ? { match_type: 'friendly', competition: 'Amigável', tournament_locked: false }
+      ? { match_type: 'friendly', competition: tx('Amigável'), tournament_locked: false }
       : { match_type: 'championship', competition: 'Campeonato', tournament_locked: false, sport_type: null, live_tactics: null });
     toast.success(type === 'friendly' ? t('Jogo marcado como amigável.') : t('Jogo marcado como campeonato.'));
   };

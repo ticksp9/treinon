@@ -346,7 +346,7 @@ export function InvitesManagementTab() {
         />
       ) : (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">{filteredInvites.length} convite{filteredInvites.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-muted-foreground">{filteredInvites.length === 1 ? tx('1 convite') : tx('{{n}} convites', { n: filteredInvites.length })}</p>
           {filteredInvites.map((inv: any) => (
             <Card key={inv.id}>
               <CardContent className="p-3 flex items-center justify-between gap-2">

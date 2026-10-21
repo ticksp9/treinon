@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * The paper attendance sheet: printed with the players' names in rows and the trainings in
  * columns, the players sign in their box, and a photo of the signed sheet is read back.
@@ -180,7 +181,7 @@ export function findMarks(bin: Uint8Array, w: number, h: number): MarkResult {
   }).filter((b) => b.solid || b.hollow);
 
   const hollows = squares.filter((b) => b.hollow), solids = squares.filter((b) => b.solid);
-  if (!hollows.length || solids.length < 3) return { ok: false, reason: 'Não encontrei os quatro quadrados pretos dos cantos. Fotografe a folha inteira, de frente e com boa luz.' };
+  if (!hollows.length || solids.length < 3) return { ok: false, reason: tx('Não encontrei os quatro quadrados pretos dos cantos. Fotografe a folha inteira, de frente e com boa luz.') };
 
   // try each hollow square with the three solid ones of the most similar size that make the biggest quadrilateral
   let best: { pts: Pt[]; area: number } | null = null;
@@ -197,7 +198,7 @@ export function findMarks(bin: Uint8Array, w: number, h: number): MarkResult {
     const area = polygonArea(orderClockwise(quad));
     if (!best || area > best.area) best = { pts: quad, area };
   }
-  if (!best || best.area < w * h * 0.08) return { ok: false, reason: 'A folha está muito pequena na fotografia. Aproxime-se até a folha encher o ecrã.' };
+  if (!best || best.area < w * h * 0.08) return { ok: false, reason: tx('A folha está muito pequena na fotografia. Aproxime-se até a folha encher o ecrã.') };
 
   // clockwise on the photo, starting at the hollow (bottom-right): BR, BL, TL, TR
   const ordered = orderClockwise(best.pts);

@@ -260,11 +260,11 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
   const latestVersion = versions[0];
 
   const ACTION_LABELS: Record<string, string> = {
-    status_change: 'Alteração de estado',
+    status_change: tx('Alteração de estado'),
     event_added: 'Evento adicionado',
     event_deleted: 'Evento removido',
     event_edited: 'Evento editado',
-    report_created: 'Relatório criado',
+    report_created: tx('Relatório criado'),
   };
 
   return (

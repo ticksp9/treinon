@@ -63,17 +63,17 @@ export const PIPELINE_STAGES = [
 
 export const PIPELINE_STAGE_LABELS: Record<string, string> = {
   identified: 'Identificado',
-  initial_observation: 'Observação Inicial',
-  active_monitoring: 'Monitorização Ativa',
-  formal_assessment: 'Avaliação Formal',
+  get initial_observation() { return tx('Observação Inicial'); },
+  get active_monitoring() { return tx('Monitorização Ativa'); },
+  get formal_assessment() { return tx('Avaliação Formal'); },
   watchlist: 'Watchlist',
   shortlist: 'Shortlist',
-  coordinator_validation: 'Validação Coordenador',
-  technical_validation: 'Validação Dir. Técnica',
-  exploratory_contact: 'Contacto Exploratório',
+  get coordinator_validation() { return tx('Validação Coordenador'); },
+  get technical_validation() { return tx('Validação Dir. Técnica'); },
+  get exploratory_contact() { return tx('Contacto Exploratório'); },
   trial_scheduled: 'Trial Agendado',
   due_diligence: 'Due Diligence',
-  final_decision: 'Decisão Final',
+  get final_decision() { return tx('Decisão Final'); },
   approved: 'Aprovado',
   rejected: 'Rejeitado',
   deferred: 'Adiado',
@@ -154,7 +154,7 @@ export function computePipelineDistribution(entries: PipelineEntry[]): Record<st
 export function computeProspectsByPosition(prospects: ProspectSummary[]): Record<string, number> {
   const dist: Record<string, number> = {};
   for (const p of prospects) {
-    const pos = p.primary_position || 'Sem posição';
+    const pos = p.primary_position || tx('Sem posição');
     dist[pos] = (dist[pos] || 0) + 1;
   }
   return dist;

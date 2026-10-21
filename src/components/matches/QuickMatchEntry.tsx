@@ -233,7 +233,7 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
             {shownFor < ourGoals && <p className="text-center text-xs text-amber-600">{tx('Há')}{' '}{ourGoals} {tx('golos marcados nos jogadores mas o resultado diz')}{' '}{shownFor}.</p>}
 
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground">{playedCount} jogaram</span>
+              <span className="text-muted-foreground">{tx('{{n}} jogaram', { n: playedCount })}</span>
               <Button size="sm" variant="outline" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: true, parts: [...partMinutes] })))}>{tx('Todos jogaram tudo')}</Button>
               <Button size="sm" variant="ghost" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: false, parts: partMinutes.map(() => 0) })))}>{tx('Limpar')}</Button>
               {others.length > 0 && (

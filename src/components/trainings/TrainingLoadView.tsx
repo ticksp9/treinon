@@ -342,7 +342,7 @@ export function TrainingLoadView() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            {tx('Resumo por Atleta — últimos')}{' '}{period} dias
+            {tx('Resumo por atleta — últimos {{n}} dias', { n: period })}
           </CardTitle>
         </CardHeader>
         <CardContent>

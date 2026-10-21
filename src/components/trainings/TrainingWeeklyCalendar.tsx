@@ -10,7 +10,7 @@ import { pt } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { useAuth } from '@/lib/auth';
-import { dateLocale, useT } from '@/lib/i18n/ui';
+import { dateLocale, useT, tx } from '@/lib/i18n/ui';
 
 interface TrainingSession {
   id: string;
@@ -52,7 +52,7 @@ const INTENSITY_COLORS: Record<string, string> = {
 
 const INTENSITY_LABELS: Record<string, string> = {
   low: 'Baixa',
-  medium: 'Média',
+  get medium() { return tx('Média'); },
   high: 'Alta',
   very_high: 'Muito Alta',
 };
@@ -61,17 +61,17 @@ const STATUS_LABELS: Record<string, string> = {
   draft: 'Rascunho',
   planned: 'Planeado',
   published: 'Publicado',
-  completed: 'Concluído',
+  get completed() { return tx('Concluído'); },
   cancelled: 'Cancelado',
 };
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
   regular: 'Regular',
-  tactical: 'Tático',
-  physical: 'Físico',
-  recovery: 'Recuperação',
-  match_prep: 'Preparação Jogo',
-  activation: 'Ativação',
+  get tactical() { return tx('Tático'); },
+  get physical() { return tx('Físico'); },
+  get recovery() { return tx('Recuperação'); },
+  get match_prep() { return tx('Preparação Jogo'); },
+  get activation() { return tx('Ativação'); },
 };
 
 export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalendarProps) {

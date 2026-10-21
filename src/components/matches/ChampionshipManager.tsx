@@ -286,7 +286,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
       // Add own team to championship
       await supabase.from('championship_teams').insert({
         championship_id: data.id,
-        team_name: team?.name || 'A minha equipa',
+        team_name: team?.name || tx('A minha equipa'),
         is_own_team: true,
         owner_id: user.id
       });
@@ -512,8 +512,8 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                     <TableHead className="text-center">V</TableHead>
                     <TableHead className="text-center">E</TableHead>
                     <TableHead className="text-center">D</TableHead>
-                    <TableHead className="text-center">GM</TableHead>
-                    <TableHead className="text-center">GS</TableHead>
+                    <TableHead className="text-center">{tx('GM')}</TableHead>
+                    <TableHead className="text-center">{tx('GS')}</TableHead>
                     <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -588,9 +588,9 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                         <TableHead className="text-center">V</TableHead>
                         <TableHead className="text-center">E</TableHead>
                         <TableHead className="text-center">D</TableHead>
-                        <TableHead className="text-center">GM</TableHead>
-                        <TableHead className="text-center">GS</TableHead>
-                        <TableHead className="text-center">DG</TableHead>
+                        <TableHead className="text-center">{tx('GM')}</TableHead>
+                        <TableHead className="text-center">{tx('GS')}</TableHead>
+                        <TableHead className="text-center">{tx('DG')}</TableHead>
                         <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                       </TableRow>
                     </TableHeader>

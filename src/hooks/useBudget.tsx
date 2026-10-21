@@ -228,7 +228,7 @@ export function useBudget(clubId: string | null) {
       const { error: vErr } = await supabase.from('budget_versions').insert({
         budget_cycle_id: data.id,
         version_code: 'V1',
-        version_label: 'Orçamento Inicial',
+        version_label: tx('Orçamento Inicial'),
         version_type: 'initial',
         created_by: user.id,
       });
@@ -336,7 +336,7 @@ export function useBudget(clubId: string | null) {
     for (const line of lines) {
       const cat = line.category_id ? catMap.get(line.category_id) : null;
       const key = cat?.id || 'uncategorized';
-      const existing = grouped.get(key) || { budget: 0, actual: 0, forecast: 0, cat: cat || { id: '', name: 'Sem categoria', type: 'expense', code: '', club_id: null, parent_category_id: null, display_order: 0, is_active: true } as BudgetCategory };
+      const existing = grouped.get(key) || { budget: 0, actual: 0, forecast: 0, cat: cat || { id: '', name: tx('Sem categoria'), type: 'expense', code: '', club_id: null, parent_category_id: null, display_order: 0, is_active: true } as BudgetCategory };
       existing.budget += Number(line.budget_amount || 0);
       existing.actual += Number(line.actual_amount || 0);
       existing.forecast += Number(line.forecast_amount || 0);

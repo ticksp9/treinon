@@ -28,12 +28,12 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (import.meta.env.DEV) {
       console.error(
-        `[PlayerDetail] erro em ${this.props.label ?? 'secção'}: ${error.message}`,
+        `[PlayerDetail] erro em ${this.props.label ?? tx('secção')}: ${error.message}`,
         error.stack,
         info.componentStack,
       );
     } else {
-      console.error(`[ErrorBoundary] ${this.props.label ?? 'secção'}:`, error.message);
+      console.error(`[ErrorBoundary] ${this.props.label ?? tx('secção')}:`, error.message);
     }
   }
 

@@ -53,7 +53,7 @@ const CONE_COLORS: Record<ConeColor, string> = {
 };
 
 const toolLabels: Record<ToolType, string> = {
-  player: "Jogador",
+  get player() { return tx('Jogador'); },
   cone: "Cone",
   ball: "Bola",
   ladder: "Escada",

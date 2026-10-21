@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import type { Drill } from './types';
 import type { DrillAnimation } from './animation';
+import { tx } from '@/lib/i18n/ui';
 
 export type DrillSource = 'library' | 'mine' | 'club';
 
@@ -124,6 +125,6 @@ export function copyAsMine(d: AnyDrill): AnyDrill {
     ownerId: undefined,
     sharedWithClub: false,
     source: 'mine',
-    name: d.source === 'mine' ? `${d.name} (cópia)` : d.name,
+    name: d.source === 'mine' ? tx('{{v0}} (cópia)', { v0: d.name }) : d.name,
   };
 }

@@ -8,6 +8,7 @@ export { collectTemplateVariables as extractVariables } from './template-engine'
 import { VARIABLE_CATALOG } from './template-engine';
 import { renderTemplate as engineRender } from './template-engine';
 import { validateTemplate as engineValidate } from './template-engine';
+import { tx } from '@/lib/i18n/ui';
 
 export const TEMPLATE_VARIABLES = VARIABLE_CATALOG.map(v => v.key) as readonly string[];
 export type TemplateVariable = string;
@@ -29,11 +30,11 @@ export function validateTemplateContext(context: Record<string, string>): string
 }
 
 export const PROFILE_LABELS: Record<string, string> = {
-  guardian: 'Encarregado de Educação',
-  player: 'Atleta',
+  get guardian() { return tx('Encarregado de Educação'); },
+  get player() { return tx('Atleta'); },
   coach: 'Treinador',
   assistant_coach: 'Treinador Adjunto',
-  staff: 'Staff',
+  get staff() { return tx('Staff'); },
 };
 
 export const CHANNEL_LABELS: Record<string, string> = {

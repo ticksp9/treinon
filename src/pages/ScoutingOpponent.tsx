@@ -91,13 +91,13 @@ export default function ScoutingOpponent() {
   // ── the sheet itself ──
   const saveHeader = async (form: OpponentForm) => {
     const { error } = await db.from('scout_opponents').update(formToRow(form)).eq('id', id);
-    if (error) { fail('Não foi possível guardar', error); throw error; }
+    if (error) { fail(tx('Não foi possível guardar'), error); throw error; }
     refresh('scout-opponent'); toast.success(tx('Ficha atualizada.'));
   };
   const removeOpponent = async () => {
     if (!opponent || !window.confirm(tx('Apagar a ficha de "{{v0}}"? Os esquemas, o plantel e as observações desta equipa são apagados.', { v0: opponent.name }))) return;
     const { data, error } = await db.from('scout_opponents').delete().eq('id', id).select('id');
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     if (!data?.length) return toast.error(tx('Só quem criou a ficha (ou o administrador do clube) a pode apagar.'));
     qc.invalidateQueries({ queryKey: ['scout-opponents'] });
     toast.success(tx('Ficha apagada.'));
@@ -106,7 +106,7 @@ export default function ScoutingOpponent() {
   const saveSummary = async () => {
     if (!summary) return;
     const { error } = await db.from('scout_opponents').update({ strengths: summary.strengths.trim() || null, weaknesses: summary.weaknesses.trim() || null, notes: summary.notes.trim() || null }).eq('id', id);
-    if (error) return fail('Não foi possível guardar', error);
+    if (error) return fail(tx('Não foi possível guardar'), error);
     setSummary(null); refresh('scout-opponent'); toast.success(tx('Resumo guardado.'));
   };
 
@@ -125,14 +125,14 @@ export default function ScoutingOpponent() {
     const { error } = scheme.id
       ? await db.from('scout_opponent_schemes').update(row).eq('id', scheme.id)
       : await db.from('scout_opponent_schemes').insert({ ...row, opponent_id: id });
-    if (error) return fail('Não foi possível guardar o esquema', error);
+    if (error) return fail(tx('Não foi possível guardar o esquema'), error);
     clearBoardDraft(scheme.key);
     setScheme(null); refresh('scout-schemes'); toast.success(tx('Esquema guardado.'));
   };
   const removeScheme = async (s: OpponentScheme) => {
     if (!window.confirm(tx('Apagar o esquema "{{v0}}"?', { v0: s.title }))) return;
     const { error } = await db.from('scout_opponent_schemes').delete().eq('id', s.id);
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     refresh('scout-schemes');
   };
 
@@ -143,18 +143,18 @@ export default function ScoutingOpponent() {
     if (!player.shirt_number.trim() && !player.name.trim()) return toast.error(tx('Indique pelo menos o número ou o nome.'));
     const row = { shirt_number: player.shirt_number.trim() || null, name: player.name.trim() || null, position: player.position.trim() || null, foot: player.foot === NO_FOOT ? null : player.foot, is_key: player.is_key, notes: player.notes.trim() || null };
     const { error } = player.id ? await db.from('scout_opponent_players').update(row).eq('id', player.id) : await db.from('scout_opponent_players').insert({ ...row, opponent_id: id });
-    if (error) return fail('Não foi possível guardar o jogador', error);
+    if (error) return fail(tx('Não foi possível guardar o jogador'), error);
     setPlayer(null); refresh('scout-players');
   };
   const toggleKey = async (p: OpponentPlayer) => {
     const { error } = await db.from('scout_opponent_players').update({ is_key: !p.is_key }).eq('id', p.id);
-    if (error) return fail('Não foi possível guardar', error);
+    if (error) return fail(tx('Não foi possível guardar'), error);
     refresh('scout-players');
   };
   const removePlayer = async (p: OpponentPlayer) => {
     if (!window.confirm(tx('Tirar {{v0}} do plantel?', { v0: p.name || `o n.º ${p.shirt_number}` }))) return;
     const { error } = await db.from('scout_opponent_players').delete().eq('id', p.id);
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     refresh('scout-players');
   };
 
@@ -164,13 +164,13 @@ export default function ScoutingOpponent() {
     if (!obs) return;
     const row = { observed_on: obs.observed_on, against: obs.against.trim() || null, result: obs.result.trim() || null, formation: obs.formation.trim() || null, notes: obs.notes.trim() || null };
     const { error } = obs.id ? await db.from('scout_opponent_observations').update(row).eq('id', obs.id) : await db.from('scout_opponent_observations').insert({ ...row, opponent_id: id });
-    if (error) return fail('Não foi possível guardar a observação', error);
+    if (error) return fail(tx('Não foi possível guardar a observação'), error);
     setObs(null); refresh('scout-observations');
   };
   const removeObs = async (o: OpponentObservation) => {
     if (!window.confirm(tx('Apagar esta observação?'))) return;
     const { error } = await db.from('scout_opponent_observations').delete().eq('id', o.id);
-    if (error) return fail('Não foi possível apagar', error);
+    if (error) return fail(tx('Não foi possível apagar'), error);
     refresh('scout-observations');
   };
 
@@ -204,7 +204,7 @@ export default function ScoutingOpponent() {
             <Input maxLength={120} placeholder={tx('Nome do esquema (ex.: Saída de bola pelo lateral direito)')} value={scheme.title} onChange={(e) => setScheme((s) => s && { ...s, title: e.target.value })} aria-label={tx('Nome do esquema')} />
           </div>
           <Textarea rows={2} maxLength={4000} placeholder={tx('O que se vê e como podemos aproveitar (ex.: o central esquerdo demora a soltar; pressionar aí).')} value={scheme.notes} onChange={(e) => setScheme((s) => s && { ...s, notes: e.target.value })} aria-label={tx('Notas do esquema')} />
-          <TacticBoard key={scheme.key} persistKey={scheme.key} initial={scheme.board} onSaveExternal={saveScheme} saveLabel="Guardar esquema" />
+          <TacticBoard key={scheme.key} persistKey={scheme.key} initial={scheme.board} onSaveExternal={saveScheme} saveLabel={tx('Guardar esquema')} />
         </div>
       </AppLayout>
     );

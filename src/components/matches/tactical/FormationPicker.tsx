@@ -21,7 +21,7 @@ export function FormationPicker({ sportType, value, onChange, disabled }: Props)
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant="outline">{expected} jog.</Badge>
+      <Badge variant="outline">{tx('{{n}} jog.', { n: expected })}</Badge>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="h-8 w-36">
           <SelectValue placeholder={tx('Formação')} />

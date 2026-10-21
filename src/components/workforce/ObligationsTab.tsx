@@ -10,8 +10,8 @@ import { tx, intlLocale } from '@/lib/i18n/ui';
 const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 const TYPE_LABELS: Record<string, string> = {
-  salary: 'Salário', social_security: 'Seg. Social', tax_withholding: 'Retenção IRS',
-  contractor_withholding: 'Retenção Prestador', insurance: 'Seguro', pension: 'Pensão', other: 'Outro',
+  get salary() { return tx('Salário'); }, social_security: 'Seg. Social', get tax_withholding() { return tx('Retenção IRS'); },
+  get contractor_withholding() { return tx('Retenção Prestador'); }, insurance: 'Seguro', get pension() { return tx('Pensão'); }, other: 'Outro',
 };
 
 const STATUS_MAP: Record<string, string> = {
@@ -30,7 +30,7 @@ export function ObligationsTab({ obligations, alerts, isLoading }: Props) {
 
   const aging = computeObligationAging(obligations);
   const agingData = [
-    { name: 'Corrente', value: aging.current },
+    { name: tx('Corrente'), value: aging.current },
     { name: '1-30d', value: aging.days_1_30 },
     { name: '31-60d', value: aging.days_31_60 },
     { name: '61-90d', value: aging.days_61_90 },

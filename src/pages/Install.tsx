@@ -82,7 +82,7 @@ export default function Install() {
           <CardHeader className="pb-2"><CardTitle className="text-base">{tx('iPhone e iPad')}</CardTitle></CardHeader>
           <CardContent>
             <ol className="space-y-2.5">
-              <Step n={1}>{tx('Abra')}{' '}<strong>{APP_URL.replace(/^https?:\/\//, '')}</strong> no <strong>{tx('Safari')}</strong>{tx('. (No Chrome do iPhone também dá: o botão Partilhar está na barra de endereço.)')}</Step>
+              <Step n={1}>{tx('Abra')}{' '}<strong>{APP_URL.replace(/^https?:\/\//, '')}</strong> {tx('no (navegador)')} <strong>{tx('Safari')}</strong>{tx('. (No Chrome do iPhone também dá: o botão Partilhar está na barra de endereço.)')}</Step>
               <Step n={2}>{tx('Toque em')}{' '}<Share className="inline h-4 w-4 align-text-bottom" /> <strong>{tx('Partilhar')}</strong> {tx('(em baixo, ao centro; no iPad, em cima).')}</Step>
               <Step n={3}>{tx('Deslize a lista para baixo e toque em')}{' '}<SquarePlus className="inline h-4 w-4 align-text-bottom" /> <strong>{tx('Adicionar ao ecrã principal')}</strong>{tx('. Se não vir, toque em')}{' '}<strong>{tx('Editar ações')}</strong> {tx('e adicione-a.')}</Step>
               <Step n={4}>{tx('Confirme')}{' '}<strong>{tx('Abrir como app web')}</strong> {tx('ligado e toque em')}{' '}<strong>{tx('Adicionar')}</strong>{tx('. O ícone TreinON aparece no ecrã principal.')}</Step>

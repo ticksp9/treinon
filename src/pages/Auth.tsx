@@ -16,18 +16,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
 import { scopeFromModalities } from '@/lib/sport-scope';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 const loginSchema = z.object({
-  identifier: z.string().min(3, 'Email ou username inválido'),
-  password: z.string().min(6, 'A password deve ter pelo menos 6 caracteres'),
+  identifier: z.string().min(3, tr('Email ou username inválido')),
+  password: z.string().min(6, tr('A password deve ter pelo menos 6 caracteres')),
 });
 
 const signupSchema = z.object({
-  email: z.string().email('Email inválido'),
-  username: z.string().min(3, 'Username deve ter pelo menos 3 caracteres').regex(/^[a-zA-Z0-9_]+$/, 'Username só pode conter letras, números e underscore'),
-  password: z.string().min(6, 'A password deve ter pelo menos 6 caracteres'),
-  name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email(tr('Email inválido')),
+  username: z.string().min(3, tr('Username deve ter pelo menos 3 caracteres')).regex(/^[a-zA-Z0-9_]+$/, tr('Username só pode conter letras, números e underscore')),
+  password: z.string().min(6, tr('A password deve ter pelo menos 6 caracteres')),
+  name: z.string().min(2, tr('O nome deve ter pelo menos 2 caracteres')),
 });
 
 export default function Auth() {
@@ -172,7 +172,7 @@ export default function Auth() {
       loginSchema.parse({ identifier, password });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast.error(err.errors[0].message);
+        toast.error(tx(err.errors[0].message));
         return;
       }
     }
@@ -215,7 +215,7 @@ export default function Auth() {
       signupSchema.parse({ email, username, password, name });
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast.error(err.errors[0].message);
+        toast.error(tx(err.errors[0].message));
         return;
       }
     }

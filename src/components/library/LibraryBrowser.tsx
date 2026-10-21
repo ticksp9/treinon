@@ -100,7 +100,7 @@ function shareablePlan(title: string, items: Picked[]) {
     `⚽ *${title}* (${total} min)`,
     ...items.map(({ drill, minutes }, i) => `${i + 1}. ${drill.name} — ${minutes}'`),
     '',
-    'Feito com TreinON',
+    tx('Feito com TreinON'),
   ].join('\n');
 }
 
@@ -151,7 +151,7 @@ export function LibraryBrowser() {
       toast.info(tx('Crie uma conta gratuita para guardar treinos. Pode imprimir ou partilhar sem conta.'), {
         action: { label: tx('Criar conta'), onClick: () => navigate('/auth?tab=signup&next=/biblioteca') },
       });
-      printPlan(title, 'Plano de treino', items);
+      printPlan(title, tx('Plano de treino'), items);
       return;
     }
     setCreateFor({ title, items, age: planAge });
@@ -374,7 +374,7 @@ export function LibraryBrowser() {
               <p className="truncate text-xs text-muted-foreground">{picked.map((p) => p.drill.name).join(' → ')}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setPicked([])}>{tx('Limpar')}</Button>
-            <Button size="sm" onClick={() => openCreate('O meu treino', picked)}>{tx('Criar treino')}</Button>
+            <Button size="sm" onClick={() => openCreate(tx('O meu treino'), picked)}>{tx('Criar treino')}</Button>
           </div>
         </div>
       )}
@@ -393,7 +393,7 @@ export function LibraryBrowser() {
               <div className="flex flex-wrap gap-1.5 text-xs">
                 <Badge variant="secondary">{categoryLabel(open.category)}</Badge>
                 <Badge variant="outline"><Clock className="mr-1 h-3 w-3" />{open.minutes} min</Badge>
-                <Badge variant="outline"><Users className="mr-1 h-3 w-3" />{open.players.min}–{open.players.max} jogadores</Badge>
+                <Badge variant="outline"><Users className="mr-1 h-3 w-3" />{tx('{{a}}–{{b}} jogadores', { a: open.players.min, b: open.players.max })}</Badge>
                 <Badge variant="outline">{agesLabel(open.ages)}</Badge>
                 <span className={`rounded-md px-2 py-0.5 ${INTENSITY[open.intensity].className}`}>{INTENSITY[open.intensity].label}</span>
               </div>
@@ -429,7 +429,7 @@ export function LibraryBrowser() {
                 {user && open.source !== 'mine' && (
                   <Button variant="outline" onClick={() => { setEditing(copyAsMine(open)); setOpen(null); }}><Copy className="mr-1 h-4 w-4" />{tx('Copiar e adaptar')}</Button>
                 )}
-                <Button variant="outline" onClick={() => shareText(`⚽ *${open.name}*\n\n${drillToText(open)}\n\nFeito com TreinON`, open.name)}>
+                <Button variant="outline" onClick={() => shareText(tx('⚽ *{{v0}}*\n\n{{v1}}\n\nFeito com TreinON', { v0: open.name, v1: drillToText(open) }), open.name)}>
                   <Share2 className="mr-1 h-4 w-4" />{tx('Partilhar')}
                 </Button>
                 <Button onClick={() => { togglePick(open); setOpen(null); }}>
@@ -474,7 +474,7 @@ export function LibraryBrowser() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => createFor && printPlan(trainingName || createFor.title, 'Plano de treino', createFor.items)}>
+            <Button variant="outline" onClick={() => createFor && printPlan(trainingName || createFor.title, tx('Plano de treino'), createFor.items)}>
               <Printer className="mr-1 h-4 w-4" />{tx('Imprimir')}
             </Button>
             <Button onClick={saveTraining} disabled={saving}>{saving ? tx('A guardar…') : tx('Guardar treino')}</Button>

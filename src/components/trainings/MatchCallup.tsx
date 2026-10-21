@@ -282,7 +282,7 @@ export function MatchCallup() {
         guests = (others || []).map(p => {
           const r = check(p.birth_date);
           if (!p.birth_date || !r.eligible) blocked.set(p.id, t('Não pode jogar em {{cat}} em jogos oficiais', { cat: team.category }) + (r.reason ? ` (${r.reason})` : ''));
-          return { ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || 'outra equipa' };
+          return { ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || tx('outra equipa') };
         });
       }
 
@@ -447,7 +447,7 @@ export function MatchCallup() {
       // Determine competition name based on match type
       let competitionName = 'Campeonato';
       if (newMatch.matchType === 'friendly') {
-        competitionName = 'Amigável';
+        competitionName = tx('Amigável');
       } else if (newMatch.matchType === 'tournament') {
         competitionName = 'Torneio';
       } else if (newMatch.competition) {
@@ -682,7 +682,7 @@ export function MatchCallup() {
       // Determine competition name
       let competitionName = 'Campeonato';
       if (newMatch.matchType === 'friendly') {
-        competitionName = 'Amigável';
+        competitionName = tx('Amigável');
       } else if (newMatch.matchType === 'tournament') {
         competitionName = 'Torneio';
       } else if (newMatch.competition) {

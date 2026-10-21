@@ -358,7 +358,7 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
                   <span>{tx('3. Classificação')}</span>
-                  <Badge variant="secondary">{standings.length} equipas</Badge>
+                  <Badge variant="secondary">{tx('{{n}} equipas', { n: standings.length })}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -372,8 +372,8 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                         <TableHead className="text-center">V</TableHead>
                         <TableHead className="text-center">E</TableHead>
                         <TableHead className="text-center">D</TableHead>
-                        <TableHead className="text-center">GM</TableHead>
-                        <TableHead className="text-center">GS</TableHead>
+                        <TableHead className="text-center">{tx('GM')}</TableHead>
+                        <TableHead className="text-center">{tx('GS')}</TableHead>
                         <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                       </TableRow>
                     </TableHeader>

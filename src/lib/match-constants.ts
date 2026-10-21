@@ -3,8 +3,8 @@ import { tx } from '@/lib/i18n/ui';
 
 export const MATCH_TYPES = {
   championship: {
-    label: 'Campeonato',
-    description: '2 partes, tempo definido pelo escalão',
+    get label() { return tx('Campeonato'); },
+    get description() { return tx('2 partes, tempo definido pelo escalão'); },
     icon: 'Trophy',
     defaultParts: 2,
     allowCustomParts: false,
@@ -12,8 +12,8 @@ export const MATCH_TYPES = {
     lockedDuringMatch: true,
   },
   friendly: {
-    label: 'Amigável',
-    description: 'Configurar partes e tempo livremente',
+    get label() { return tx('Amigável'); },
+    get description() { return tx('Configurar partes e tempo livremente'); },
     icon: 'Users',
     defaultParts: 2,
     allowCustomParts: true,
@@ -21,8 +21,8 @@ export const MATCH_TYPES = {
     lockedDuringMatch: false,
   },
   tournament: {
-    label: 'Torneio',
-    description: 'Tempo definido, sem alterações durante o jogo',
+    get label() { return tx('Torneio'); },
+    get description() { return tx('Tempo definido, sem alterações durante o jogo'); },
     icon: 'Award',
     defaultParts: 1,
     allowCustomParts: true,
@@ -36,14 +36,14 @@ export type MatchType = keyof typeof MATCH_TYPES;
 export const COMMON_PART_OPTIONS = [1, 2, 3, 4] as const;
 
 export const COMMON_DURATION_OPTIONS = [
-  { value: 10, label: '10 min' },
-  { value: 15, label: '15 min' },
-  { value: 20, label: '20 min' },
-  { value: 25, label: '25 min' },
-  { value: 30, label: '30 min' },
-  { value: 35, label: '35 min' },
-  { value: 40, label: '40 min' },
-  { value: 45, label: '45 min' },
+  { value: 10, get label() { return tx('10 min'); } },
+  { value: 15, get label() { return tx('15 min'); } },
+  { value: 20, get label() { return tx('20 min'); } },
+  { value: 25, get label() { return tx('25 min'); } },
+  { value: 30, get label() { return tx('30 min'); } },
+  { value: 35, get label() { return tx('35 min'); } },
+  { value: 40, get label() { return tx('40 min'); } },
+  { value: 45, get label() { return tx('45 min'); } },
 ] as const;
 
 /**

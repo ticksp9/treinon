@@ -293,7 +293,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                   ))}
                   {rehabPlan.exercises.length > 3 && (
                     <p className="text-xs text-muted-foreground">
-                      +{rehabPlan.exercises.length - 3} mais
+                      {tx('+{{n}} mais', { n: rehabPlan.exercises.length - 3 })}
                     </p>
                   )}
                 </div>

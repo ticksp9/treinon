@@ -9,7 +9,7 @@ import { tx, intlLocale } from '@/lib/i18n/ui';
 interface Props { clubId: string; }
 
 const METHOD_LABELS: Record<string, string> = {
-  cash: 'Dinheiro', transfer: 'Transferência', mbway: 'MBWay', multibanco: 'Multibanco', other: 'Outro',
+  cash: 'Dinheiro', get transfer() { return tx('Transferência'); }, mbway: 'MBWay', multibanco: 'Multibanco', other: 'Outro',
 };
 
 export function PaymentsTab({ clubId }: Props) {

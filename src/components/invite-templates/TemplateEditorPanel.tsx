@@ -242,7 +242,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">{tx('Chave interna')}</Label>
-                  <Input value={templateKey} onChange={e => setTemplateKey(e.target.value)} placeholder="auto-gerada" disabled={!isCreating} />
+                  <Input value={templateKey} onChange={e => setTemplateKey(e.target.value)} placeholder={tx('auto-gerada')} disabled={!isCreating} />
                 </div>
               </div>
 
@@ -325,7 +325,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                       type="button"
                       className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                       onClick={() => insertVariable(v.key)}
-                      title={`${v.description}${v.required ? ' (obrigatória)' : ''}`}
+                      title={`${v.description}${v.required ? tx(' (obrigatória)') : ''}`}
                     >
                       {v.required && <span className="text-destructive mr-0.5">*</span>}
                       {`{{${v.key}}}`}

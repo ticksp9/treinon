@@ -12,7 +12,7 @@ export function MaintenanceTab({ maintenance }: Props) {
   const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const statusLabel: Record<string, string> = {
-    scheduled: 'Agendada', in_progress: 'Em Curso', completed: 'Concluída', overdue: 'Em Atraso', cancelled: 'Cancelada',
+    scheduled: 'Agendada', in_progress: 'Em Curso', completed: tx('Concluída'), overdue: 'Em Atraso', cancelled: 'Cancelada',
   };
 
   return (

@@ -30,8 +30,8 @@ export function useLanguage() {
           await supabase.from('profiles').update({ language: languageToUse }).eq('id', user.id);
         }
       }
-      // only the languages the app is translated into
-      if (!(READY_LANGUAGES as readonly string[]).includes(languageToUse)) languageToUse = 'pt';
+      // only the languages the app is translated into (someone who had German or Chinese gets English)
+      if (!(READY_LANGUAGES as readonly string[]).includes(languageToUse)) languageToUse = 'en';
 
       // Apply language
       if (languageToUse !== i18n.language) {

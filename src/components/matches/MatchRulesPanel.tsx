@@ -95,7 +95,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
             <span className="text-xs text-muted-foreground">{tx('Máx. em campo')}</span>
             <div className="font-medium text-sm flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {maxOnField} jogadores
+              {tx('{{n}} jogadores', { n: maxOnField })}
             </div>
           </div>
           <div className="space-y-1">

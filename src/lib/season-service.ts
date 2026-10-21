@@ -1,6 +1,6 @@
 // Season service: CRUD + lifecycle (close/archive/activate) + context resolution.
 import { supabase } from '@/integrations/supabase/client';
-import { tr } from '@/lib/i18n/ui';
+import { tr, tx } from '@/lib/i18n/ui';
 
 export type SeasonStatus = 'planning' | 'active' | 'closed' | 'archived';
 
@@ -173,10 +173,10 @@ export interface SeasonEditRules {
 
 export function getSeasonEditRules(status: SeasonStatus): SeasonEditRules {
   if (status === 'archived') {
-    return { canEdit: false, canEditName: false, canEditDates: false, reason: 'Época arquivada — não editável.' };
+    return { canEdit: false, canEditName: false, canEditDates: false, reason: tx('Época arquivada — não editável.') };
   }
   if (status === 'closed') {
-    return { canEdit: true, canEditName: true, canEditDates: false, reason: 'Época fechada — só o nome pode ser alterado.' };
+    return { canEdit: true, canEditName: true, canEditDates: false, reason: tx('Época fechada — só o nome pode ser alterado.') };
   }
   return { canEdit: true, canEditName: true, canEditDates: true };
 }
@@ -188,7 +188,7 @@ export function seasonPeriodWarning(start: string, end: string): string | null {
   if (isNaN(s.getTime()) || isNaN(e.getTime())) return null;
   const months = (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth());
   if (s.getMonth() !== 6 || months < 10 || months > 13) {
-    return 'Período fora do habitual (julho a junho). Confirme as datas.';
+    return tx('Período fora do habitual (julho a junho). Confirme as datas.');
   }
   return null;
 }
@@ -258,7 +258,7 @@ export async function updateSeason(
     const v = await validateSeasonDatesAgainstData(season.id, start, end);
     if (v.outside > 0) {
       throw new Error(
-        `As novas datas deixam ${v.outside} registo(s) fora da época (${v.matchesOutside} jogos, ${v.trainingsOutside} treinos). Ajuste o intervalo.`,
+        tx('As novas datas deixam {{v0}} registo(s) fora da época ({{v1}} jogos, {{v2}} treinos). Ajuste o intervalo.', { v0: v.outside, v1: v.matchesOutside, v2: v.trainingsOutside }),
       );
     }
   }

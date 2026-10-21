@@ -33,11 +33,11 @@ import {
   teamSeasonLabel,
 } from '@/lib/team-season-service';
 import { countActiveEnrollmentsByTeam } from '@/lib/season-roster-service';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 
 const teamSchema = z.object({
-  name: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
+  name: z.string().min(2, tr('O nome deve ter pelo menos 2 caracteres')),
   sport_type: z.enum(['football_5', 'football_7', 'football_9', 'football_11', 'futsal']),
   gender: z.enum(['male', 'female']),
   category: z.string().optional(),
@@ -197,7 +197,7 @@ export default function Teams() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['season-team-memberships'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.teamsWithCounts });
-      toast.success(tx('{{v0}} equipas associadas a {{v1}}.', { v0: result.imported, v1: seasonName ?? 'esta época' }));
+      toast.success(tx('{{v0}} equipas associadas a {{v1}}.', { v0: result.imported, v1: seasonName ?? tx('esta época') }));
     },
     onError: (error: Error) => {
       console.error('[Teams] import failed', error);
@@ -516,7 +516,7 @@ export default function Teams() {
                   </div>
                   <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground text-xs">
-                      {(selectedSeasonId ? enrollmentCounts?.get(team.id) ?? 0 : team.players_count || 0)} jogadores
+                      {tx('{{n}} jogadores', { n: selectedSeasonId ? enrollmentCounts?.get(team.id) ?? 0 : team.players_count || 0 })}
                     </span>
                     <span className="text-primary text-xs font-medium group-hover:underline">
                       {tx('Ver detalhes →')}

@@ -13,10 +13,10 @@ import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const PROFILE_LABELS: Record<string, string> = {
   guardian: 'Encarregado',
-  player: 'Atleta',
+  get player() { return tx('Atleta'); },
   coach: 'Treinador',
   assistant_coach: 'Adjunto',
-  staff: 'Staff',
+  get staff() { return tx('Staff'); },
 };
 
 const CHANNEL_ICONS: Record<string, typeof Mail> = {

@@ -71,7 +71,7 @@ export function ClearancesTab() {
     return s ? <Badge variant="outline" className={s.color}>{s.label}</Badge> : <Badge variant="outline">{status}</Badge>;
   };
 
-  const typeLabels: Record<string, string> = { global: 'Global', training: 'Treino', match: 'Jogo', partial: 'Parcial' };
+  const typeLabels: Record<string, string> = { global: 'Global', training: tx('Treino'), match: tx('Jogo'), partial: 'Parcial' };
 
   const filtered = clearances?.filter(c => {
     if (!searchTerm) return true;

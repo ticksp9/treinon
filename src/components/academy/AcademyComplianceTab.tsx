@@ -8,7 +8,7 @@ import { tx } from '@/lib/i18n/ui';
 const STATUS_LABELS: Record<string, string> = {
   compliant: 'Conforme',
   pending: 'Pendente',
-  non_compliant: 'Não Conforme',
+  get non_compliant() { return tx('Não Conforme'); },
   waived: 'Dispensado',
   expired: 'Expirado',
 };
@@ -23,9 +23,9 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | '
 
 const SEVERITY_LABELS: Record<string, string> = {
   low: 'Baixa',
-  medium: 'Média',
+  get medium() { return tx('Média'); },
   high: 'Alta',
-  critical: 'Crítica',
+  get critical() { return tx('Crítica'); },
 };
 
 export function AcademyComplianceTab() {

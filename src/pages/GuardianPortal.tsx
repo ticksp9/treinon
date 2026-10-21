@@ -117,7 +117,7 @@ export default function GuardianPortal() {
                 <h1 className="text-2xl font-bold">{tx('Portal do Encarregado')}</h1>
                 {(totalPending > 0 || notifCount > 0) && (
                   <Badge variant="destructive" className="text-xs">
-                    {totalPending + notifCount} pendente{(totalPending + notifCount) > 1 ? 's' : ''}
+                    {(totalPending + notifCount) > 1 ? tx('{{n}} pendentes', { n: totalPending + notifCount }) : tx('1 pendente')}
                   </Badge>
                 )}
               </div>

@@ -23,11 +23,11 @@ import { tx, intlLocale } from '@/lib/i18n/ui';
 type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff';
 
 const TYPE_DESCRIPTIONS: Record<InviteType, string> = {
-  guardian: 'Envie um convite ao encarregado de educação de um atleta',
-  player: 'Envie um convite para o atleta aceder à plataforma',
-  coach: 'Envie um convite para um treinador se associar à equipa',
-  assistant_coach: 'Envie um convite para um treinador adjunto',
-  staff: 'Envie um convite para um membro do staff',
+  get guardian() { return tx('Envie um convite ao encarregado de educação de um atleta'); },
+  get player() { return tx('Envie um convite para o atleta aceder à plataforma'); },
+  get coach() { return tx('Envie um convite para um treinador se associar à equipa'); },
+  get assistant_coach() { return tx('Envie um convite para um treinador adjunto'); },
+  get staff() { return tx('Envie um convite para um membro do staff'); },
 };
 
 const REQUIRES_PLAYER: Record<InviteType, boolean> = {
@@ -110,12 +110,12 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
   const templateContext: TemplateContext = useMemo(() => ({
     recipient_name: recipientName || '[Nome]',
     app_name: 'TreinON',
-    team_name: selectedTeam?.name || '[Equipa]',
+    team_name: selectedTeam?.name || tx('[Equipa]'),
     age_group: selectedTeam?.category || '',
     player_name: selectedPlayer?.name || '',
-    inviter_name: user?.user_metadata?.full_name || 'Equipa Técnica',
-    invite_link: '[link será gerado]',
-    invite_code: '[código será gerado]',
+    inviter_name: user?.user_metadata?.full_name || tx('Equipa Técnica'),
+    invite_link: tx('[link será gerado]'),
+    invite_code: tx('[código será gerado]'),
     expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(intlLocale(), { day: 'numeric', month: 'long', year: 'numeric' }),
     profile_label: PROFILE_LABELS[inviteType] || inviteType,
   }), [recipientName, selectedTeam, selectedPlayer, user, inviteType]);
@@ -138,9 +138,9 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
   const channelErrors = useMemo(() => {
     const errs: string[] = [];
-    if (selectedChannels.has('email') && !email.trim()) errs.push('Email obrigatório para envio por Email');
-    if (selectedChannels.has('sms') && !phone.trim()) errs.push('Telefone obrigatório para envio por SMS');
-    if (selectedChannels.has('whatsapp') && !phone.trim()) errs.push('Telefone obrigatório para envio por WhatsApp');
+    if (selectedChannels.has('email') && !email.trim()) errs.push(tx('Email obrigatório para envio por Email'));
+    if (selectedChannels.has('sms') && !phone.trim()) errs.push(tx('Telefone obrigatório para envio por SMS'));
+    if (selectedChannels.has('whatsapp') && !phone.trim()) errs.push(tx('Telefone obrigatório para envio por WhatsApp'));
     return errs;
   }, [selectedChannels, email, phone]);
 

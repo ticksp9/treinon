@@ -47,7 +47,7 @@ export interface SportFormatRules {
 export const SPORT_FORMAT_RULES: Record<string, SportFormatRules> = {
   football_11: {
     code: 'football_11',
-    label: 'Futebol 11',
+    get label() { return tx('Futebol 11'); },
     playersOnField: 11,
     reentryAllowed: false,
     rollingSubstitutions: false,
@@ -55,7 +55,7 @@ export const SPORT_FORMAT_RULES: Record<string, SportFormatRules> = {
   },
   football_9: {
     code: 'football_9',
-    label: 'Futebol 9',
+    get label() { return tx('Futebol 9'); },
     playersOnField: 9,
     reentryAllowed: true,
     rollingSubstitutions: true,
@@ -63,7 +63,7 @@ export const SPORT_FORMAT_RULES: Record<string, SportFormatRules> = {
   },
   football_7: {
     code: 'football_7',
-    label: 'Futebol 7',
+    get label() { return tx('Futebol 7'); },
     playersOnField: 7,
     reentryAllowed: true,
     rollingSubstitutions: true,
@@ -71,7 +71,7 @@ export const SPORT_FORMAT_RULES: Record<string, SportFormatRules> = {
   },
   football_5: {
     code: 'football_5',
-    label: 'Futebol 5',
+    get label() { return tx('Futebol 5'); },
     playersOnField: 5,
     reentryAllowed: true,
     rollingSubstitutions: true,
@@ -79,7 +79,7 @@ export const SPORT_FORMAT_RULES: Record<string, SportFormatRules> = {
   },
   futsal: {
     code: 'futsal',
-    label: 'Futsal',
+    get label() { return tx('Futsal'); },
     playersOnField: 5,
     reentryAllowed: true,
     rollingSubstitutions: true,
@@ -191,35 +191,35 @@ export function validateSubstitutionAttempt({
   if (!playerOutId) {
     return {
       allowed: false,
-      reason: 'Substituição inválida: é necessário indicar o jogador que vai sair.',
+      reason: tx('Substituição inválida: é necessário indicar o jogador que vai sair.'),
     };
   }
 
   if (!playerInId) {
     return {
       allowed: false,
-      reason: 'Substituição inválida: é necessário indicar o jogador que vai entrar.',
+      reason: tx('Substituição inválida: é necessário indicar o jogador que vai entrar.'),
     };
   }
 
   if (playerOutId === playerInId) {
     return {
       allowed: false,
-      reason: 'Substituição inválida: o jogador que sai deve ser diferente do jogador que entra.',
+      reason: tx('Substituição inválida: o jogador que sai deve ser diferente do jogador que entra.'),
     };
   }
 
   if (!currentOnFieldIds.includes(playerOutId)) {
     return {
       allowed: false,
-      reason: 'Substituição inválida: este jogador não está em campo.',
+      reason: tx('Substituição inválida: este jogador não está em campo.'),
     };
   }
 
   if (currentOnFieldIds.includes(playerInId)) {
     return {
       allowed: false,
-      reason: 'Substituição inválida: este jogador já está em campo.',
+      reason: tx('Substituição inválida: este jogador já está em campo.'),
     };
   }
 
@@ -397,7 +397,7 @@ export function reconcileSubstitutionEvents(
         logs.push({
           type: 'swap_out_in',
           minute,
-          details: `Substituição reconciliada: IDs OUT/IN trocados aos ${minute}'`,
+          details: tx('Substituição reconciliada: IDs OUT/IN trocados aos {{v0}}\'', { v0: minute }),
           originalOutPlayerId: outPid,
           originalInPlayerId: inPid,
           resolvedOutPlayerId: inPid,
@@ -476,6 +476,7 @@ export function reconcileSubstitutionEvents(
  */
 import * as engine from './match-playing-time-engine';
 import { resolveSubstitutionMode } from './match-substitution-rules';
+import { tx } from '@/lib/i18n/ui';
 
 export interface PlayingTimeOptions {
   /** Authoritative 2nd-half starters snapshot. If omitted, continuity from end-of-1H is used. */
@@ -879,7 +880,7 @@ export function checkMatchConsistency(
   if (onField.size > rules.playersOnField) {
     issues.push({
       type: 'error',
-      message: `Escalação inicial com ${onField.size} jogadores em campo (máx: ${rules.playersOnField})`,
+      message: tx('Escalação inicial com {{v0}} jogadores em campo (máx: {{v1}})', { v0: onField.size, v1: rules.playersOnField }),
     });
   }
   
@@ -907,7 +908,7 @@ export function checkMatchConsistency(
       if (!onField.has(pid)) {
         issues.push({
           type: 'error',
-          message: `Jogador saiu sem estar em campo ao minuto ${event.minute}'`,
+          message: tx('Jogador saiu sem estar em campo ao minuto {{v0}}\'', { v0: event.minute }),
           playerId: pid,
           minute: event.minute,
         });
@@ -918,7 +919,7 @@ export function checkMatchConsistency(
       if (onField.has(pid)) {
         issues.push({
           type: 'warning',
-          message: `Jogador entrou mas já estava em campo ao minuto ${event.minute}'`,
+          message: tx('Jogador entrou mas já estava em campo ao minuto {{v0}}\'', { v0: event.minute }),
           playerId: pid,
           minute: event.minute,
         });
@@ -926,7 +927,7 @@ export function checkMatchConsistency(
       if (!rules.reentryAllowed && everSubbedOut.has(pid)) {
         issues.push({
           type: 'error',
-          message: `Reentrada não permitida em ${rules.label} ao minuto ${event.minute}'`,
+          message: tx('Reentrada não permitida em {{v0}} ao minuto {{v1}}\'', { v0: rules.label, v1: event.minute }),
           playerId: pid,
           minute: event.minute,
         });
@@ -938,7 +939,7 @@ export function checkMatchConsistency(
     if (onField.size > rules.playersOnField) {
       issues.push({
         type: 'error',
-        message: `${onField.size} jogadores em campo (máx: ${rules.playersOnField}) ao minuto ${event.minute}'`,
+        message: tx('{{v0}} jogadores em campo (máx: {{v1}}) ao minuto {{v2}}\'', { v0: onField.size, v1: rules.playersOnField, v2: event.minute }),
         minute: event.minute,
       });
     }
@@ -950,7 +951,7 @@ export function checkMatchConsistency(
     if (s.totalMinutes > matchEndMinute) {
       issues.push({
         type: 'error',
-        message: `Jogador com ${s.totalMinutes} min (jogo tem ${matchEndMinute} min)`,
+        message: tx('Jogador com {{v0}} min (jogo tem {{v1}} min)', { v0: s.totalMinutes, v1: matchEndMinute }),
         playerId: s.playerId,
       });
     }
