@@ -9,6 +9,11 @@ import es from './locales/es.json';
 import de from './locales/de.json';
 import ar from './locales/ar.json';
 import zh from './locales/zh.json';
+// screens translated with the Portuguese text as key (see ./ui.ts): only the other languages need a file
+import enUi from './locales/ui.en.json';
+
+/** Languages the person can choose. The others have files from the old project but the app is not translated into them yet. */
+export const READY_LANGUAGES = ['pt', 'en'] as const;
 
 export const languages: { code: string; name: string; flag: string; rtl?: boolean }[] = [
   { code: 'pt', name: 'Português', flag: '🇵🇹' },
@@ -28,7 +33,7 @@ i18n
   .init({
     resources: {
       pt: { translation: pt },
-      en: { translation: en },
+      en: { translation: en, ui: enUi },
       fr: { translation: fr },
       es: { translation: es },
       de: { translation: de },
@@ -36,8 +41,11 @@ i18n
       zh: { translation: zh },
     },
     fallbackLng: 'pt',
+    supportedLngs: [...READY_LANGUAGES],
+    nonExplicitSupportedLngs: true,
     detection: {
-      order: ['localStorage', 'navigator'],
+      // only what the person chose: the phone's language would show a half-translated app
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'language',
     },

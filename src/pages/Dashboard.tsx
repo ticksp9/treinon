@@ -12,11 +12,13 @@ import { fetchDashboardStats, queryKeys } from '@/lib/query-helpers';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { DashboardStats } from '@/lib/types';
 import { PageLoading } from '@/components/ui/page-states';
+import { useT } from '@/lib/i18n/ui';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { isGuardian, isPlayer, loading: roleLoading } = useUserRole();
   const navigate = useNavigate();
+  const t = useT();
   const selectedSeasonId = useSelectedSeasonId();
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
@@ -25,29 +27,29 @@ export default function Dashboard() {
     enabled: !!user && !roleLoading && !isGuardian && !isPlayer,
   });
 
-  const userName = user?.user_metadata?.full_name?.split(' ')[0] || 'Treinador';
+  const userName = user?.user_metadata?.full_name?.split(' ')[0] || t('Treinador');
 
   // Redirect restricted roles to their portals
   if (!roleLoading && isGuardian) return <Navigate to="/guardian" replace />;
   if (!roleLoading && isPlayer) return <Navigate to="/player" replace />;
-  if (roleLoading) return <AppLayout title="Dashboard"><PageLoading /></AppLayout>;
+  if (roleLoading) return <AppLayout title={t('Início')}><PageLoading /></AppLayout>;
 
   return (
-    <AppLayout title="Dashboard">
+    <AppLayout title={t('Início')}>
       <div className="space-y-8">
         {/* Welcome Section */}
         <PageHeader
-          title={`Olá, ${userName}`}
-          description="Bem-vindo ao seu centro de gestão desportiva"
+          title={t('Olá, {{name}}', { name: userName })}
+          description={t('Bem-vindo ao seu centro de gestão desportiva')}
           actions={
             <>
               <Button onClick={() => navigate('/teams')} variant="outline" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Nova Equipa
+                {t('Nova Equipa')}
               </Button>
               <Button onClick={() => navigate('/matches')} size="sm">
                 <Trophy className="w-4 h-4 mr-2" />
-                Novo Jogo
+                {t('Novo Jogo')}
               </Button>
             </>
           }
@@ -56,10 +58,10 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Equipas', value: stats?.teamsCount, icon: Users, sub: 'Equipas ativas' },
-            { label: 'Jogadores', value: stats?.playersCount, icon: Target, sub: 'Jogadores registados' },
-            { label: 'Jogos', value: stats?.matchesCount, icon: Trophy, sub: 'Total de jogos' },
-            { label: 'Próximos Jogos', value: stats?.upcomingMatches, icon: Calendar, sub: 'Agendados' },
+            { label: t('Equipas'), value: stats?.teamsCount, icon: Users, sub: t('Equipas ativas') },
+            { label: t('Jogadores'), value: stats?.playersCount, icon: Target, sub: t('Jogadores registados') },
+            { label: t('Jogos'), value: stats?.matchesCount, icon: Trophy, sub: t('Total de jogos') },
+            { label: t('Próximos Jogos'), value: stats?.upcomingMatches, icon: Calendar, sub: t('Agendados') },
           ].map(({ label, value, icon: Icon, sub }) => (
             <Card key={label} className="border-border/50 hover:border-primary/20 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -84,25 +86,25 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              title: 'Quadro Tático',
-              description: 'Desenhe jogadas e explique táticas aos seus jogadores',
+              title: t('Quadro Tático'),
+              description: t('Desenhe jogadas e explique táticas aos seus jogadores'),
               icon: TrendingUp,
               path: '/tactical-board',
-              cta: 'Abrir quadro',
+              cta: t('Abrir quadro'),
             },
             {
-              title: 'Gestão de Jogos',
-              description: 'Registe eventos em tempo real: golos, cartões, substituições',
+              title: t('Gestão de Jogos'),
+              description: t('Registe eventos em tempo real: golos, cartões, substituições'),
               icon: Trophy,
               path: '/matches',
-              cta: 'Ver jogos',
+              cta: t('Ver jogos'),
             },
             {
-              title: 'Estatísticas',
-              description: 'Acompanhe minutos, golos, cartões e performance dos jogadores',
+              title: t('Estatísticas'),
+              description: t('Acompanhe minutos, golos, cartões e performance dos jogadores'),
               icon: Users,
               path: '/players',
-              cta: 'Ver jogadores',
+              cta: t('Ver jogadores'),
             },
           ].map(({ title, description, icon: Icon, path, cta }) => (
             <Card
@@ -135,13 +137,13 @@ export default function Dashboard() {
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="w-7 h-7 text-primary" />
               </div>
-              <h3 className="font-display font-bold text-lg mb-2">Comece por criar uma equipa</h3>
+              <h3 className="font-display font-bold text-lg mb-2">{t('Comece por criar uma equipa')}</h3>
               <p className="text-sm text-muted-foreground max-w-md mb-6">
-                Crie a sua primeira equipa para começar a gerir jogadores, jogos e treinos.
+                {t('Crie a sua primeira equipa para começar a gerir jogadores, jogos e treinos.')}
               </p>
               <Button onClick={() => navigate('/teams')} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Criar Equipa
+                {t('Criar Equipa')}
               </Button>
             </CardContent>
           </Card>

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, ChevronRight, AlertCircle, ShieldAlert, ShieldCheck, UserMinus } from 'lucide-react';
 import { POSITIONS } from '@/lib/player-constants';
+import { useT } from '@/lib/i18n/ui';
 import {
   computeAvailability,
   getClinicalStatusOption,
@@ -34,6 +35,7 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player, sportType = 'football_11', injuries = [], hasActiveInjury, onEdit, onDelete, onView, onRemoveFromTeam }: PlayerCardProps) {
+  const t = useT();
   const isFutsal = sportType === 'futsal';
   const positions = isFutsal ? POSITIONS.futsal : POSITIONS.football;
   const positionLabel = positions.find(p => p.value === player.position)?.label || player.position;
@@ -80,9 +82,9 @@ export function PlayerCard({ player, sportType = 'football_11', injuries = [], h
             <div className="flex items-center gap-2">
               <h3 className="font-semibold truncate">{player.name}</h3>
               {!availability.callable ? (
-                <ShieldAlert className="w-4 h-4 text-red-500 flex-shrink-0" aria-label="Indisponível" />
+                <ShieldAlert className="w-4 h-4 text-red-500 flex-shrink-0" aria-label={t('Indisponível')} />
               ) : availability.status !== 'apto' ? (
-                <ShieldCheck className="w-4 h-4 text-amber-500 flex-shrink-0" aria-label="Convocável c/ restrição" />
+                <ShieldCheck className="w-4 h-4 text-amber-500 flex-shrink-0" aria-label={t('Convocável c/ restrição')} />
               ) : hasActiveInjury ? (
                 <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
               ) : null}
@@ -96,13 +98,13 @@ export function PlayerCard({ player, sportType = 'football_11', injuries = [], h
                   {statusOpt.label}
                 </Badge>
               )}
-              {age && <span className="text-xs text-muted-foreground">{age} anos</span>}
+              {age && <span className="text-xs text-muted-foreground">{t('{{n}} anos', { n: age })}</span>}
             </div>
             {availability.restrictions && (
               <p className="text-xs text-muted-foreground mt-0.5 truncate">⚠ {availability.restrictions}</p>
             )}
             {!player.is_active && (
-              <Badge variant="outline" className="mt-1 text-xs">Inativo</Badge>
+              <Badge variant="outline" className="mt-1 text-xs">{t('Inativo')}</Badge>
             )}
           </div>
 
@@ -115,8 +117,8 @@ export function PlayerCard({ player, sportType = 'football_11', injuries = [], h
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                title="Remover da equipa nesta época"
-                aria-label="Remover da equipa nesta época"
+                title={t('Remover da equipa nesta época')}
+                aria-label={t('Remover da equipa nesta época')}
                 onClick={(e) => { e.stopPropagation(); onRemoveFromTeam(); }}
               >
                 <UserMinus className="w-4 h-4" />

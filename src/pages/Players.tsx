@@ -34,6 +34,7 @@ import {
 } from '@/lib/season-roster-service';
 import { PlayerWithTeam } from '@/lib/types';
 import { EmptyState } from '@/components/ui/page-states';
+import { useT } from '@/lib/i18n/ui';
 
 
 interface Team {
@@ -60,6 +61,7 @@ interface Player {
 export default function Players() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const t = useT();
   const queryClient = useQueryClient();
   const selectedSeasonId = useSelectedSeasonId();
   const { selectedSeason } = useSeasonContext();
@@ -182,7 +184,7 @@ export default function Players() {
     mutationFn: () => importRosterFromPreviousSeason(selectedSeasonId as string),
     onSuccess: (res) => {
       toast.success(
-        `Importados ${res.imported} jogadores; ${res.promoted} subiram de escalão; ${res.needsAttention} requerem atenção (sem data de nascimento).`,
+        t('Importados {{n}} jogadores; {{up}} subiram de escalão; {{att}} requerem atenção (sem data de nascimento).', { n: res.imported, up: res.promoted, att: res.needsAttention }),
       );
       queryClient.invalidateQueries({ queryKey: ['season-enrollments'] });
       queryClient.invalidateQueries({ queryKey: ['players'] });
@@ -214,9 +216,9 @@ export default function Players() {
 
   const createPlayer = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      if (!user) throw new Error('Utilizador não autenticado');
+      if (!user) throw new Error(t('Utilizador não autenticado'));
       const teamId = (data.team_id || selectedTeamId) as string;
-      if (!teamId || teamId === 'all') throw new Error('Selecione uma equipa');
+      if (!teamId || teamId === 'all') throw new Error(t('Selecione uma equipa'));
       const { team_id: _, ...playerData } = data;
       const cleaned = sanitizePlayerPayload(playerData);
       const { data: inserted, error } = await supabase
@@ -234,11 +236,11 @@ export default function Players() {
       queryClient.invalidateQueries({ queryKey: ['players'] });
       queryClient.invalidateQueries({ queryKey: ['season-enrollments'] });
       queryClient.invalidateQueries({ queryKey: ['team-players'] });
-      toast.success('Jogador criado com sucesso!');
+      toast.success(t('Jogador criado com sucesso!'));
       setDialogOpen(false);
     },
     onError: (error: any) => {
-      toast.error('Erro ao criar jogador: ' + error.message);
+      toast.error(t('Erro ao criar jogador: {{msg}}', { msg: error.message }));
     },
   });
 
@@ -256,7 +258,7 @@ export default function Players() {
       queryClient.invalidateQueries({ queryKey: ['seasons-list'] });
       queryClient.invalidateQueries({ queryKey: ['season-context'] });
       queryClient.invalidateQueries({ queryKey: ['season-counts'] });
-      toast.success('Jogador removido da equipa nesta época (histórico mantido).');
+      toast.success(t('Jogador removido da equipa nesta época (histórico mantido).'));
     },
 
     onError: (e: Error) => {
@@ -289,7 +291,7 @@ export default function Players() {
       queryClient.invalidateQueries({ queryKey: ['season-counts'] });
       setAddSelected([]);
       setAddExistingOpen(false);
-      toast.success(n === 1 ? '1 jogador adicionado à equipa.' : `${n} jogadores adicionados à equipa.`);
+      toast.success(n === 1 ? t('1 jogador adicionado à equipa.') : t('{{n}} jogadores adicionados à equipa.', { n }));
     },
     onError: (e: Error) => {
       console.error('[players] adicionar jogador existente falhou', e);
@@ -308,12 +310,12 @@ export default function Players() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast.success('Jogador atualizado!');
+      toast.success(t('Jogador atualizado!'));
       setEditingPlayer(null);
       setDialogOpen(false);
     },
     onError: (error: any) => {
-      toast.error('Erro ao atualizar: ' + error.message);
+      toast.error(t('Erro ao atualizar: {{msg}}', { msg: error.message }));
     },
   });
 
@@ -324,7 +326,7 @@ export default function Players() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['players'] });
-      toast.success('Jogador removido');
+      toast.success(t('Jogador removido'));
     },
   });
 
@@ -336,7 +338,7 @@ export default function Players() {
     if (!filteredPlayers) return {};
     const grouped: Record<string, { players: typeof filteredPlayers; team: Team | undefined }> = {};
     filteredPlayers.forEach(player => {
-      const category = player.team?.category || 'Sem Escalão';
+      const category = player.team?.category || t('Sem Escalão');
       if (!grouped[category]) {
         grouped[category] = { players: [], team: player.team };
       }
@@ -378,11 +380,11 @@ export default function Players() {
   const showTeamSelector = selectedTeamId === 'all' || !selectedTeamId;
 
   return (
-    <AppLayout title="Jogadores">
+    <AppLayout title={t('Jogadores')}>
       <div className="space-y-6">
         <PageHeader
-          title="Jogadores"
-          description={`${filteredPlayers?.length || 0} jogador(es) registados`}
+          title={t('Jogadores')}
+          description={t('{{n}} jogador(es) registados', { n: filteredPlayers?.length || 0 })}
           icon={<Target className="w-6 h-6 text-primary" />}
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -393,13 +395,13 @@ export default function Players() {
               <DialogTrigger asChild>
                 <Button onClick={openCreateDialog} size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Novo Jogador
+                  {t('Novo Jogador')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle className="font-display">
-                    {editingPlayer ? 'Editar Jogador' : 'Novo Jogador'}
+                    {editingPlayer ? t('Editar Jogador') : t('Novo Jogador')}
                   </DialogTitle>
                 </DialogHeader>
                 <PlayerForm
@@ -420,15 +422,15 @@ export default function Players() {
               </DialogContent>
             </Dialog>
             {/* without a team there is nowhere to put the players: say so instead of a dead button */}
-            <Button size="sm" variant="outline" title="Importar jogadores de um Excel"
+            <Button size="sm" variant="outline" title={t('Importar jogadores de um Excel')}
               onClick={() => scopedYearTeams.length > 0 ? setImportOpen(true)
-                : toast.info('Primeiro crie uma equipa: os jogadores importados ficam nela.', { action: { label: 'Criar equipa', onClick: () => navigate('/teams') } })}>
+                : toast.info(t('Primeiro crie uma equipa: os jogadores importados ficam nela.'), { action: { label: t('Criar equipa'), onClick: () => navigate('/teams') } })}>
               <FileSpreadsheet className="w-4 h-4 mr-2" />
-              Importar Excel
+              {t('Importar Excel')}
             </Button>
             <Button size="sm" variant="outline" onClick={() => setYearsOpen(true)} disabled={scopedYearTeams.length === 0}>
               <CalendarRange className="w-4 h-4 mr-2" />
-              Escalões por ano
+              {t('Escalões por ano')}
             </Button>
             </div>
           }
@@ -445,7 +447,7 @@ export default function Players() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar jogador..."
+              placeholder={t('Pesquisar jogador...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -454,10 +456,10 @@ export default function Players() {
           <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
             <SelectTrigger className="w-full sm:w-[200px]">
               <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
-              <SelectValue placeholder="Todas as equipas" />
+              <SelectValue placeholder={t('Todas as equipas')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as equipas</SelectItem>
+              <SelectItem value="all">{t('Todas as equipas')}</SelectItem>
               {teams?.map((team) => (
                 <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
               ))}
@@ -468,16 +470,16 @@ export default function Players() {
               <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="sm:self-center">
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Adicionar jogador existente
+                  {t('Adicionar jogador existente')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="font-display">Adicionar jogador existente</DialogTitle>
+                  <DialogTitle className="font-display">{t('Adicionar jogador existente')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   <Input
-                    placeholder="Pesquisar por nome..."
+                    placeholder={t('Pesquisar por nome...')}
                     value={addSearch}
                     onChange={(e) => setAddSearch(e.target.value)}
                   />
@@ -509,7 +511,7 @@ export default function Players() {
                                 <p className="text-sm font-medium truncate">{p.name}</p>
                                 {alsoIn.length > 0 && (
                                   <Badge variant="outline" className="text-xs mt-1">
-                                    também em: {alsoIn.join(', ')}
+                                    {t('também em: {{teams}}', { teams: alsoIn.join(', ') })}
                                   </Badge>
                                 )}
                               </div>
@@ -518,14 +520,14 @@ export default function Players() {
                         })}
                       {(availablePlayers || []).length === 0 && (
                         <p className="text-sm text-muted-foreground">
-                          Todos os jogadores já estão inscritos nesta equipa.
+                          {t('Todos os jogadores já estão inscritos nesta equipa.')}
                         </p>
                       )}
                     </div>
                   )}
                   <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" size="sm" onClick={() => setAddExistingOpen(false)}>
-                      Cancelar
+                      {t('Cancelar')}
                     </Button>
                     <Button
                       size="sm"
@@ -546,7 +548,7 @@ export default function Players() {
                             });
                           if (risky.length > 0) {
                             const ok = confirm(
-                              `${risky.map((p) => p.name).join(', ')} está fora da idade do escalão (ou sem data de nascimento). Adicionar mesmo assim?`,
+                              t('{{names}} está fora da idade do escalão (ou sem data de nascimento). Adicionar mesmo assim?', { names: risky.map((p) => p.name).join(', ') }),
                             );
                             if (!ok) return;
                           }
@@ -554,7 +556,7 @@ export default function Players() {
                         addExisting.mutate(addSelected);
                       }}
                     >
-                      Adicionar {addSelected.length > 0 ? `(${addSelected.length})` : ''}
+                      {t('Adicionar')} {addSelected.length > 0 ? `(${addSelected.length})` : ''}
                     </Button>
                   </div>
                 </div>
@@ -582,11 +584,11 @@ export default function Players() {
                       {category}
                       {team && (
                         <Badge variant={team.gender === 'female' ? 'default' : 'secondary'} className="text-xs">
-                          {team.gender === 'female' ? 'Feminino' : 'Masculino'}
+                          {team.gender === 'female' ? t('Feminino') : t('Masculino')}
                         </Badge>
                       )}
                     </CardTitle>
-                    <Badge variant="outline" className="text-xs">{categoryPlayers.length} jogador(es)</Badge>
+                    <Badge variant="outline" className="text-xs">{t('{{n}} jogador(es)', { n: categoryPlayers.length })}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -611,31 +613,31 @@ export default function Players() {
                             <div className="absolute -top-2 -right-2 z-10" title={eligibility.reason}>
                               <Badge variant="destructive" className="gap-1 text-xs">
                                 <AlertTriangle className="w-3 h-3" />
-                                Inelegível
+                                {t('Inelegível')}
                               </Badge>
                             </div>
                           )}
                           {eligibility.eligible && outOfGroup && (
                             <div
                               className="absolute -top-2 -right-2 z-10"
-                              title={`Nascido em ${player.birth_date?.slice(0, 4)} — fora do escalão ${enrolledGroup?.name ?? ''}`}
+                              title={t('Nascido em {{year}} — fora do escalão {{group}}', { year: player.birth_date?.slice(0, 4), group: enrolledGroup?.name ?? '' })}
                             >
                               <Badge variant="destructive" className="gap-1 text-xs">
                                 <AlertTriangle className="w-3 h-3" />
-                                Fora do escalão
+                                {t('Fora do escalão')}
                               </Badge>
                             </div>
                           )}
                           {shared && (
                             <div
                               className="absolute -top-2 left-2 z-10"
-                              title={`Também em: ${playerEnrollments
+                              title={t('Também em: {{teams}}', { teams: playerEnrollments
                                 .filter((e) => e.team_id && e.team_id !== selectedTeamId)
                                 .map((e) => teams?.find((t) => t.id === e.team_id)?.name)
                                 .filter(Boolean)
-                                .join(', ')}`}
+                                .join(', ') })}
                             >
-                              <Badge variant="secondary" className="text-xs">Partilhado</Badge>
+                              <Badge variant="secondary" className="text-xs">{t('Partilhado')}</Badge>
                             </div>
                           )}
 
@@ -649,7 +651,7 @@ export default function Players() {
                                 ? () => {
                                     if (
                                       confirm(
-                                        `Remover ${player.name} da equipa nesta época? O histórico é mantido.`,
+                                        t('Remover {{name}} da equipa nesta época? O histórico é mantido.', { name: player.name }),
                                       )
                                     ) {
                                       removeFromTeam.mutate(player.id);
@@ -658,7 +660,7 @@ export default function Players() {
                                 : undefined
                             }
                             onDelete={() => {
-                              if (confirm('Tem a certeza que pretende remover este jogador?')) {
+                              if (confirm(t('Tem a certeza que pretende remover este jogador?'))) {
                                 deletePlayer.mutate(player.id);
                               }
                             }}
@@ -679,26 +681,26 @@ export default function Players() {
               <Users className="w-7 h-7 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-display text-base">Sem jogadores nesta época</h3>
+              <h3 className="font-display text-base">{t('Sem jogadores nesta época')}</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 {teamScoped
-                  ? 'Esta época ainda não tem jogadores inscritos nesta equipa.'
-                  : 'Esta época ainda não tem jogadores inscritos.'}
+                  ? t('Esta época ainda não tem jogadores inscritos nesta equipa.')
+                  : t('Esta época ainda não tem jogadores inscritos.')}
               </p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center">
               {teamScoped && (
                 <Button size="sm" variant="outline" onClick={() => setAddExistingOpen(true)}>
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Adicionar jogador existente
+                  {t('Adicionar jogador existente')}
                 </Button>
               )}
               <Button size="sm" onClick={() => importRoster.mutate()} disabled={importRoster.isPending}>
-                {importRoster.isPending ? 'A importar…' : 'Importar plantel da época anterior'}
+                {importRoster.isPending ? t('A importar…') : t('Importar plantel da época anterior')}
               </Button>
-              <Button variant="outline" size="sm" onClick={openCreateDialog}>Novo Jogador</Button>
+              <Button variant="outline" size="sm" onClick={openCreateDialog}>{t('Novo Jogador')}</Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/seasons/transition')}>
-                Ir para Transição de época
+                {t('Ir para Transição de época')}
               </Button>
             </div>
           </div>
@@ -709,14 +711,14 @@ export default function Players() {
                 <Users className="w-7 h-7 text-muted-foreground" />
               </div>
             }
-            title={searchQuery ? 'Nenhum jogador encontrado' : 'Sem jogadores'}
+            title={searchQuery ? t('Nenhum jogador encontrado') : t('Sem jogadores')}
             description={searchQuery
-              ? 'Tente uma pesquisa diferente'
+              ? t('Tente uma pesquisa diferente')
               : selectedTeamId === 'all'
-                ? 'Selecione uma equipa e adicione o primeiro jogador'
-                : 'Adicione o primeiro jogador a esta equipa'}
+                ? t('Selecione uma equipa e adicione o primeiro jogador')
+                : t('Adicione o primeiro jogador a esta equipa')}
             action={!searchQuery && selectedTeamId !== 'all' ? {
-              label: 'Adicionar Jogador',
+              label: t('Adicionar Jogador'),
               onClick: openCreateDialog,
             } : undefined}
           />

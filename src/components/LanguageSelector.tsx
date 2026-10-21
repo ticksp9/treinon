@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { languages, LanguageCode } from '@/lib/i18n';
+import { languages, LanguageCode, READY_LANGUAGES } from '@/lib/i18n';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from '@/hooks/use-toast';
@@ -88,7 +88,7 @@ export function LanguageSelector({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        {languages.map((lang) => (
+        {languages.filter((l) => (READY_LANGUAGES as readonly string[]).includes(l.code)).map((lang) => (
           <DropdownMenuItem
             key={lang.code}
             onClick={() => handleLanguageChange(lang.code as LanguageCode)}

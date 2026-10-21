@@ -3,22 +3,23 @@ import { Home, Trophy, Calendar, CalendarDays, Users, Menu, MessageSquare, Setti
 import { useSidebar } from '@/components/ui/sidebar';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
+import { tr, useT } from '@/lib/i18n/ui';
 
 type Item = { label: string; icon: typeof Home; path?: string; action?: 'menu' };
 
 const COACH_ITEMS: Item[] = [
-  { label: 'Início', icon: Home, path: '/dashboard' },
-  { label: 'Jogos', icon: Trophy, path: '/matches' },
-  { label: 'Treinos', icon: Calendar, path: '/training' },
-  { label: 'Jogadores', icon: Users, path: '/players' },
-  { label: 'Mais', icon: Menu, action: 'menu' },
+  { label: tr('Início'), icon: Home, path: '/dashboard' },
+  { label: tr('Jogos'), icon: Trophy, path: '/matches' },
+  { label: tr('Treinos'), icon: Calendar, path: '/training' },
+  { label: tr('Jogadores'), icon: Users, path: '/players' },
+  { label: tr('Mais'), icon: Menu, action: 'menu' },
 ];
 
 const FAMILY_ITEMS = (home: string): Item[] => [
-  { label: 'Eventos', icon: CalendarDays, path: home },
-  { label: 'Mensagens', icon: MessageSquare, path: '/communication' },
-  { label: 'Definições', icon: Settings, path: '/settings' },
-  { label: 'Mais', icon: Menu, action: 'menu' },
+  { label: tr('Eventos'), icon: CalendarDays, path: home },
+  { label: tr('Mensagens'), icon: MessageSquare, path: '/communication' },
+  { label: tr('Definições'), icon: Settings, path: '/settings' },
+  { label: tr('Mais'), icon: Menu, action: 'menu' },
 ];
 
 /**
@@ -30,12 +31,13 @@ export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { setOpenMobile } = useSidebar();
   const { isGuardian, isPlayer } = useUserRole();
+  const t = useT();
 
   const items = isGuardian ? FAMILY_ITEMS('/guardian') : isPlayer ? FAMILY_ITEMS('/player') : COACH_ITEMS;
 
   return (
     <nav
-      aria-label="Navegação principal"
+      aria-label={t('Navegação principal')}
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-card/95 backdrop-blur-md md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
@@ -56,7 +58,7 @@ export function MobileBottomNav() {
                 <span className={cn('flex h-8 w-12 items-center justify-center rounded-full transition-colors', active && 'bg-primary/10')}>
                   <item.icon className="h-5 w-5" />
                 </span>
-                {item.label}
+                {t(item.label)}
               </button>
             </li>
           );

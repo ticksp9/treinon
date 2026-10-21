@@ -46,10 +46,12 @@ import { useState, useMemo } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { minutesByKind } from '@/lib/match-kind';
+import { useT } from '@/lib/i18n/ui';
 
 export default function PlayerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const t = useT();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { hasPin, isPinVerified, verifyPin, lockSensitiveData, createPin } = useSecurityPin();
@@ -99,7 +101,7 @@ export default function PlayerDetail() {
     if (!window.confirm('Ver o contacto de emergência dos encarregados? A consulta fica registada para o clube.')) return;
     setEmergency('loading');
     const { contact, error } = await getEmergencyContact(id);
-    if (error) { setEmergency(null); toast.error('Não foi possível obter o contacto: ' + error); return; }
+    if (error) { setEmergency(null); toast.error(t('Não foi possível obter o contacto: {{msg}}', { msg: String(error) })); return; }
     setEmergency(contact ?? { parent_name: null, parent_phone: null, parent_name_2: null, parent_phone_2: null });
   };
 
@@ -149,10 +151,10 @@ export default function PlayerDetail() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Estado atualizado');
+      toast.success(t('Estado atualizado'));
       refetchPlayer();
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(t('Erro: {{msg}}', { msg: e.message })),
   });
 
   // Fetch season stats — always scoped to the selected season.
@@ -289,7 +291,7 @@ export default function PlayerDetail() {
                   Tentar novamente
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => navigate('/players')}>
-                  Voltar à lista
+                  {t('Voltar à lista')}
                 </Button>
               </div>
             </CardContent>
@@ -305,9 +307,9 @@ export default function PlayerDetail() {
         <div>
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Jogador não encontrado ou sem acesso</p>
+              <p className="text-muted-foreground">{t('Jogador não encontrado ou sem acesso')}</p>
               <Button variant="link" onClick={() => navigate('/players')}>
-                Voltar à lista
+                {t('Voltar à lista')}
               </Button>
             </CardContent>
           </Card>
@@ -346,13 +348,13 @@ export default function PlayerDetail() {
             <p className="text-sm text-muted-foreground">{player.team?.name}</p>
             <div className="mt-2 flex items-center gap-1.5 flex-wrap">
               {consent && (
-                <Badge variant="outline" title="Resposta dos encarregados de educação sobre fotografias e vídeos"
+                <Badge variant="outline" title={t('Resposta dos encarregados de educação sobre fotografias e vídeos')}
                   className={consent.image === 'yes' ? 'border-primary text-primary' : consent.image === 'no' ? 'border-destructive text-destructive' : 'text-muted-foreground'}>
-                  <Camera className="mr-1 h-3 w-3" />{IMAGE_LABELS[consent.image]}
+                  <Camera className="mr-1 h-3 w-3" />{t(IMAGE_LABELS[consent.image])}
                 </Badge>
               )}
               {consent && !consent.dataOk && (
-                <Badge variant="outline" className="text-muted-foreground" title="Nenhum encarregado de educação aceitou ainda o tratamento de dados na aplicação">Sem consentimento dos pais</Badge>
+                <Badge variant="outline" className="text-muted-foreground" title={t('Nenhum encarregado de educação aceitou ainda o tratamento de dados na aplicação')}>{t('Sem consentimento dos pais')}</Badge>
               )}
               {statusOption && (
                 <Badge className={statusOption.tone}>
@@ -369,7 +371,7 @@ export default function PlayerDetail() {
             onValueChange={(v) => updateStatus.mutate(v)}
           >
             <SelectTrigger className="w-36 h-9">
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder={t('Estado')} />
             </SelectTrigger>
             <SelectContent>
               {PLAYER_STATUS_OPTIONS.map((s) => (
@@ -378,9 +380,9 @@ export default function PlayerDetail() {
             </SelectContent>
           </Select>
           {!canSeePrivate && (
-            <Button variant="outline" size="sm" onClick={askEmergency} disabled={emergency === 'loading'} title="Telefone dos encarregados, para uma emergência">
+            <Button variant="outline" size="sm" onClick={askEmergency} disabled={emergency === 'loading'} title={t('Telefone dos encarregados, para uma emergência')}>
               <Phone className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Contacto de emergência</span>
+              <span className="hidden sm:inline">{t('Contacto de emergência')}</span>
             </Button>
           )}
           <Button
@@ -389,7 +391,7 @@ export default function PlayerDetail() {
             className="gap-2"
           >
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Exportar PDF</span>
+            <span className="hidden sm:inline">{t('Exportar PDF')}</span>
           </Button>
           </div>
         </div>
@@ -415,13 +417,13 @@ export default function PlayerDetail() {
               <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                 {positionLabel && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Posição Principal</p>
+                    <p className="text-xs text-muted-foreground">{t('Posição Principal')}</p>
                     <p className="font-medium">{positionLabel}</p>
                   </div>
                 )}
                 {secondaryLabels.length > 0 && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Posições Secundárias</p>
+                    <p className="text-xs text-muted-foreground">{t('Posições Secundárias')}</p>
                     <p className="font-medium text-sm">{secondaryLabels.join(', ')}</p>
                   </div>
                 )}
@@ -429,8 +431,8 @@ export default function PlayerDetail() {
                   <div className="flex items-start gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Idade</p>
-                      <p className="font-medium">{age} anos</p>
+                      <p className="text-xs text-muted-foreground">{t('Idade')}</p>
+                      <p className="font-medium">{t('{{n}} anos', { n: age })}</p>
                     </div>
                   </div>
                 )}
@@ -438,7 +440,7 @@ export default function PlayerDetail() {
                   <div className="flex items-start gap-2">
                     <Ruler className="w-4 h-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Altura</p>
+                      <p className="text-xs text-muted-foreground">{t('Altura')}</p>
                       <p className="font-medium">{player.height_cm} cm</p>
                     </div>
                   </div>
@@ -447,7 +449,7 @@ export default function PlayerDetail() {
                   <div className="flex items-start gap-2">
                     <Weight className="w-4 h-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Peso</p>
+                      <p className="text-xs text-muted-foreground">{t('Peso')}</p>
                       <p className="font-medium">{player.weight_kg} kg</p>
                     </div>
                   </div>
@@ -456,14 +458,14 @@ export default function PlayerDetail() {
                   <div className="flex items-start gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Nacionalidade</p>
+                      <p className="text-xs text-muted-foreground">{t('Nacionalidade')}</p>
                       <p className="font-medium">{player.nationality}</p>
                     </div>
                   </div>
                 )}
                 {footLabel && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Pé Dominante</p>
+                    <p className="text-xs text-muted-foreground">{t('Pé Dominante')}</p>
                     <p className="font-medium">{footLabel}</p>
                   </div>
                 )}
@@ -483,9 +485,9 @@ export default function PlayerDetail() {
                           <Lock className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">Dados Pessoais Protegidos</p>
+                          <p className="font-medium">{t('Dados Pessoais Protegidos')}</p>
                           <p className="text-sm text-muted-foreground">
-                            Contactos, morada, documentos e dados dos pais
+                            {t('Contactos, morada, documentos e dados dos pais')}
                           </p>
                         </div>
                       </div>
@@ -498,7 +500,7 @@ export default function PlayerDetail() {
                         }}
                       >
                         <Unlock className="w-4 h-4 mr-1" />
-                        Desbloquear
+                        {t('Desbloquear')}
                       </Button>
                     </div>
                   </div>
@@ -506,7 +508,7 @@ export default function PlayerDetail() {
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex items-center justify-between p-3 bg-warning/10 border border-warning/20 rounded-lg">
                       <p className="text-sm text-warning">
-                        ⚠️ Dados sensíveis não protegidos. Configure um PIN nas definições.
+                        {t('⚠️ Dados sensíveis não protegidos. Configure um PIN nas definições.')}
                       </p>
                       <Button
                         variant="outline"
@@ -517,7 +519,7 @@ export default function PlayerDetail() {
                         }}
                       >
                         <Shield className="w-4 h-4 mr-1" />
-                        Criar PIN
+                        {t('Criar PIN')}
                       </Button>
                     </div>
 
@@ -525,7 +527,7 @@ export default function PlayerDetail() {
                     {/* Contact Info */}
                     {(player.email || player.phone || player.address) && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium mb-3">Contacto do Jogador</h4>
+                        <h4 className="text-sm font-medium mb-3">{t('Contacto do Jogador')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           {player.email && (
                             <div>
@@ -535,13 +537,13 @@ export default function PlayerDetail() {
                           )}
                           {player.phone && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Telefone</p>
+                              <p className="text-xs text-muted-foreground">{t('Telefone')}</p>
                               <p className="font-medium">{player.phone}</p>
                             </div>
                           )}
                           {player.address && (
                             <div className="md:col-span-3">
-                              <p className="text-xs text-muted-foreground">Morada</p>
+                              <p className="text-xs text-muted-foreground">{t('Morada')}</p>
                               <p className="font-medium">{player.address}</p>
                             </div>
                           )}
@@ -556,7 +558,7 @@ export default function PlayerDetail() {
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-xs text-success flex items-center gap-1">
                           <Unlock className="w-3 h-3" />
-                          Desbloqueado
+                          {t('Desbloqueado')}
                         </span>
                         <Button
                           variant="ghost"
@@ -565,7 +567,7 @@ export default function PlayerDetail() {
                           className="h-6 text-xs"
                         >
                           <Lock className="w-3 h-3 mr-1" />
-                          Bloquear
+                          {t('Bloquear')}
                         </Button>
                       </div>
                     </div>
@@ -573,7 +575,7 @@ export default function PlayerDetail() {
                     {/* Contact Info */}
                     {(player.email || player.phone || player.address) && (
                       <div className="mt-2">
-                        <h4 className="text-sm font-medium mb-3">Contacto do Jogador</h4>
+                        <h4 className="text-sm font-medium mb-3">{t('Contacto do Jogador')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           {player.email && (
                             <div>
@@ -583,13 +585,13 @@ export default function PlayerDetail() {
                           )}
                           {player.phone && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Telefone</p>
+                              <p className="text-xs text-muted-foreground">{t('Telefone')}</p>
                               <p className="font-medium">{player.phone}</p>
                             </div>
                           )}
                           {player.address && (
                             <div className="md:col-span-3">
-                              <p className="text-xs text-muted-foreground">Morada</p>
+                              <p className="text-xs text-muted-foreground">{t('Morada')}</p>
                               <p className="font-medium">{player.address}</p>
                             </div>
                           )}
@@ -602,12 +604,12 @@ export default function PlayerDetail() {
                       <div className="mt-4 pt-4 border-t">
                         <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                           <FileText className="w-4 h-4" />
-                          Documentação
+                          {t('Documentação')}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           {player.id_document_type && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Documento de ID</p>
+                              <p className="text-xs text-muted-foreground">{t('Documento de ID')}</p>
                               <p className="font-medium">
                                 {ID_DOCUMENT_TYPES.find(d => d.value === player.id_document_type)?.label || player.id_document_type}
                                 {player.id_document_number && ` - ${player.id_document_number}`}
@@ -629,7 +631,7 @@ export default function PlayerDetail() {
                             <div className="flex items-start gap-2">
                               <Shield className="w-4 h-4 text-muted-foreground mt-0.5" />
                               <div>
-                                <p className="text-xs text-muted-foreground">Nº Federado</p>
+                                <p className="text-xs text-muted-foreground">{t('Nº Federado')}</p>
                                 <p className="font-medium">{player.federation_id}</p>
                               </div>
                             </div>
@@ -638,7 +640,7 @@ export default function PlayerDetail() {
                             <div className="flex items-start gap-2">
                               <Heart className="w-4 h-4 text-muted-foreground mt-0.5" />
                               <div>
-                                <p className="text-xs text-muted-foreground">Atestado Médico</p>
+                                <p className="text-xs text-muted-foreground">{t('Atestado Médico')}</p>
                                 <p className="font-medium">
                                   Válido até {format(new Date(player.medical_certificate_expiry), 'dd/MM/yyyy')}
                                 </p>
@@ -652,7 +654,7 @@ export default function PlayerDetail() {
                     {/* Parents Info */}
                     {(player.parent_name || player.parent_name_2) && (
                       <div className="mt-4 pt-4 border-t">
-                        <h4 className="text-sm font-medium mb-3">Encarregados de Educação</h4>
+                        <h4 className="text-sm font-medium mb-3">{t('Encarregados de Educação')}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {player.parent_name && (
                             <div className="space-y-2">
@@ -692,32 +694,32 @@ export default function PlayerDetail() {
         {emergency && emergency !== 'loading' && (
           <Card className="border-accent/50">
             <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4 text-sm">
-              <span className="font-semibold">Contacto de emergência</span>
+              <span className="font-semibold">{t('Contacto de emergência')}</span>
               {[[emergency.parent_name, emergency.parent_phone], [emergency.parent_name_2, emergency.parent_phone_2]].filter(([, ph]) => ph).map(([n, ph]) => (
                 <a key={ph} href={`tel:${ph}`} className="flex items-center gap-1.5 font-medium text-primary hover:underline"><Phone className="h-4 w-4" />{n ? `${n}: ` : ''}{ph}</a>
               ))}
-              {!emergency.parent_phone && !emergency.parent_phone_2 && <span className="text-muted-foreground">Não há telefone dos encarregados registado. Fale com a secretaria do clube.</span>}
-              <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setEmergency(null)}>Fechar</Button>
+              {!emergency.parent_phone && !emergency.parent_phone_2 && <span className="text-muted-foreground">{t('Não há telefone dos encarregados registado. Fale com a secretaria do clube.')}</span>}
+              <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setEmergency(null)}>{t('Fechar')}</Button>
             </CardContent>
           </Card>
         )}
         <Tabs defaultValue={new URLSearchParams(window.location.search).get('tab') || 'summary'} className="space-y-4">
           <TabsList className="flex flex-wrap h-auto justify-start">
-            <TabsTrigger value="summary">Resumo</TabsTrigger>
-            <TabsTrigger value="evaluations">Avaliações</TabsTrigger>
-            <TabsTrigger value="evolution">Evolução</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="trainings">Treinos</TabsTrigger>
-            <TabsTrigger value="matches">Jogos</TabsTrigger>
-            <TabsTrigger value="positions">Posições</TabsTrigger>
-            <TabsTrigger value="minutes">Minutos</TabsTrigger>
-            <TabsTrigger value="plan">Plano Individual</TabsTrigger>
-            <TabsTrigger value="observations">Observações</TabsTrigger>
-            <TabsTrigger value="health">Saúde / Lesões</TabsTrigger>
-            <TabsTrigger value="availability">Disponibilidade</TabsTrigger>
-            {canSeePrivate && <TabsTrigger value="documents">Documentos</TabsTrigger>}
-            <TabsTrigger value="seasons">Histórico Época</TabsTrigger>
-            <TabsTrigger value="history">Auditoria</TabsTrigger>
+            <TabsTrigger value="summary">{t('Resumo')}</TabsTrigger>
+            <TabsTrigger value="evaluations">{t('Avaliações')}</TabsTrigger>
+            <TabsTrigger value="evolution">{t('Evolução')}</TabsTrigger>
+            <TabsTrigger value="analytics">{t('Analytics')}</TabsTrigger>
+            <TabsTrigger value="trainings">{t('Treinos')}</TabsTrigger>
+            <TabsTrigger value="matches">{t('Jogos')}</TabsTrigger>
+            <TabsTrigger value="positions">{t('Posições')}</TabsTrigger>
+            <TabsTrigger value="minutes">{t('Minutos')}</TabsTrigger>
+            <TabsTrigger value="plan">{t('Plano Individual')}</TabsTrigger>
+            <TabsTrigger value="observations">{t('Observações')}</TabsTrigger>
+            <TabsTrigger value="health">{t('Saúde / Lesões')}</TabsTrigger>
+            <TabsTrigger value="availability">{t('Disponibilidade')}</TabsTrigger>
+            {canSeePrivate && <TabsTrigger value="documents">{t('Documentos')}</TabsTrigger>}
+            <TabsTrigger value="seasons">{t('Histórico Época')}</TabsTrigger>
+            <TabsTrigger value="history">{t('Auditoria')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="summary" className="space-y-4">

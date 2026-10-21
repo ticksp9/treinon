@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/ui';
 /**
  * Which sports a coach works with. Football and futsal are separate worlds:
  * a football coach only sees football (5/7/9/11), a futsal coach only futsal,
@@ -6,9 +7,9 @@
 export type SportScope = 'football' | 'futsal' | 'both';
 
 export const SPORT_SCOPE_LABELS: Record<SportScope, string> = {
-  football: 'Futebol',
-  futsal: 'Futsal',
-  both: 'Futebol e futsal',
+  football: tr('Futebol'),
+  futsal: tr('Futsal'),
+  both: tr('Futebol e futsal'),
 };
 
 /** 'futsal' → futsal; every other match/team format (football_5/7/9/11) → football. */

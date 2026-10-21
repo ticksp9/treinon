@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { loadCustomFormations, watchCustomFormations } from '@/lib/custom-formations';
 import { TeamCrest, TeamThemeStyle, useTeamBranding } from '@/hooks/useTeamBranding';
+import { useT } from '@/lib/i18n/ui';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -20,6 +21,7 @@ interface AppLayoutProps {
 
 /** Which team the coach is working with; tap to switch (only shown with 2+ teams). */
 function ActiveTeamChip() {
+  const t = useT();
   const { myTeams, activeTeam, openChooser } = useActiveTeam();
   const { crestUrl } = useTeamBranding();
   // one team: nothing to switch, but its crest still belongs at the top
@@ -37,11 +39,11 @@ function ActiveTeamChip() {
       type="button"
       onClick={openChooser}
       className="flex min-w-0 max-w-[9.5rem] items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-left text-xs hover:border-primary sm:max-w-[14rem]"
-      title="Trocar de equipa"
+      title={t('Trocar de equipa')}
     >
       {crestUrl ? <TeamCrest url={crestUrl} name={activeTeam?.name} className="h-6 w-6" /> : <Shirt className="h-3.5 w-3.5 shrink-0 text-primary" />}
       <span className="min-w-0">
-        <span className="block truncate font-semibold leading-tight">{activeTeam?.name ?? 'Escolher equipa'}</span>
+        <span className="block truncate font-semibold leading-tight">{activeTeam?.name ?? t('Escolher equipa')}</span>
         {activeTeam?.club_name && <span className="block truncate text-[10px] leading-tight text-muted-foreground">{activeTeam.club_name}</span>}
       </span>
       <ChevronsUpDown className="h-3 w-3 shrink-0 text-muted-foreground" />

@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/ui';
 /**
  * Parents' consent (RGPD), per child: data processing (required to use the app for that
  * child) and use of image (free choice). The notice below is a plain-language summary;
@@ -31,9 +32,9 @@ export function consentStatus(rows: ConsentRow[]): { dataOk: boolean; image: Ima
 }
 
 export const IMAGE_LABELS: Record<ImageStatus, string> = {
-  yes: 'Imagem autorizada',
-  no: 'Imagem NÃO autorizada',
-  unanswered: 'Imagem: sem resposta dos pais',
+  yes: tr('Imagem autorizada'),
+  no: tr('Imagem NÃO autorizada'),
+  unanswered: tr('Imagem: sem resposta dos pais'),
 };
 
 /** Who is responsible for the data, in the parent's words. */

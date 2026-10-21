@@ -12,6 +12,7 @@ export type SportType =
   | 'football_9'
   | 'football_11'
   | 'futsal';
+import { isEnglish, tr, tx } from '@/lib/i18n/ui';
 
 export type SlotRole =
   | 'goalkeeper'
@@ -43,8 +44,19 @@ export interface Formation {
 }
 
 /** Helper de construção. */
+// the short label on the pitch: Portuguese (GR, DC, PL…) or English (GK, CB, ST…), read when shown
+const EN_SHORT: Record<string, string> = {
+  GR: 'GK', DC: 'CB', DCE: 'LCB', DCD: 'RCB', DE: 'LB', DD: 'RB', LE: 'LB', LD: 'RB', ALE: 'LWB', ALD: 'RWB',
+  MDC: 'DM', MDE: 'LDM', MDD: 'RDM', MC: 'CM', MCE: 'LCM', MCD: 'RCM', MOC: 'AM', MOE: 'LAM', MOD: 'RAM',
+  ME: 'LM', MD: 'RM', EE: 'LW', ED: 'RW', PL: 'ST', PLE: 'LS', PLD: 'RS', 'Ala E': 'Wing L', 'Ala D': 'Wing R', 'Pivô': 'Pivot',
+};
+export const shortPositionLabel = (pt: string) => (isEnglish() ? EN_SHORT[pt] ?? pt : pt);
+/** a slot whose short label follows the chosen language */
+function withLabel<T extends object>(o: T, pt: string): T & { label: string } {
+  return Object.defineProperty(o, 'label', { get: () => shortPositionLabel(pt), enumerable: true, configurable: true }) as T & { label: string };
+}
 const s = (slot_id: string, role: SlotRole, label: string, x: number, y: number): FormationSlot =>
-  ({ slot_id, role, label, x, y });
+  withLabel({ slot_id, role, x, y }, label);
 
 // ─── Futebol 11 ────────────────────────────────────────────────────────────
 const F11: Formation[] = [
@@ -445,7 +457,8 @@ export function applyFormationLayout(f: Formation, layout: FormationLayout | nul
       const x = clamp01(p[0]), y = clamp01(p[1]);
       const moved = Math.abs(x - sl.x) > 0.06 || Math.abs(y - sl.y) > 0.06;
       if (!moved || sl.role === 'goalkeeper') return { ...sl, x, y };
-      return { ...sl, x, y, ...roleFromPosition(f.sport_type, x, y) };
+      const r = roleFromPosition(f.sport_type, x, y);
+      return withLabel({ ...sl, x, y, role: r.role }, ROLE_SHORT[r.role] ?? '');
     }),
   };
 }
@@ -528,33 +541,33 @@ export function validateFormation(
 
 /** Tradução PT do role para UI. */
 export const ROLE_LABELS_PT: Record<string, string> = {
-  goalkeeper: 'Guarda-Redes',
-  defender_center: 'Defesa Central',
-  defender_center_left: 'Defesa Central Esq.',
-  defender_center_right: 'Defesa Central Dir.',
-  defender_left: 'Lateral Esquerdo',
-  defender_right: 'Lateral Direito',
-  sweeper: 'Líbero',
-  midfielder_defensive: 'Médio Defensivo',
-  midfielder_center: 'Médio Centro',
-  midfielder_center_left: 'Médio C. Esq.',
-  midfielder_center_right: 'Médio C. Dir.',
-  midfielder_left: 'Médio Esquerdo',
-  midfielder_right: 'Médio Direito',
-  midfielder_attacking: 'Médio Ofensivo',
-  winger_left: 'Extremo Esquerdo',
-  winger_right: 'Extremo Direito',
-  forward_left: 'Avançado Esquerdo',
-  forward_right: 'Avançado Direito',
-  forward_center: 'Avançado Centro',
-  striker: 'Ponta de Lança',
-  pivot: 'Pivô',
-  ala_left: 'Ala Esquerda',
-  ala_right: 'Ala Direita',
-  fixo: 'Fixo',
+  goalkeeper: tr('Guarda-Redes'),
+  defender_center: tr('Defesa Central'),
+  defender_center_left: tr('Defesa Central Esq.'),
+  defender_center_right: tr('Defesa Central Dir.'),
+  defender_left: tr('Lateral Esquerdo'),
+  defender_right: tr('Lateral Direito'),
+  sweeper: tr('Líbero'),
+  midfielder_defensive: tr('Médio Defensivo'),
+  midfielder_center: tr('Médio Centro'),
+  midfielder_center_left: tr('Médio C. Esq.'),
+  midfielder_center_right: tr('Médio C. Dir.'),
+  midfielder_left: tr('Médio Esquerdo'),
+  midfielder_right: tr('Médio Direito'),
+  midfielder_attacking: tr('Médio Ofensivo'),
+  winger_left: tr('Extremo Esquerdo'),
+  winger_right: tr('Extremo Direito'),
+  forward_left: tr('Avançado Esquerdo'),
+  forward_right: tr('Avançado Direito'),
+  forward_center: tr('Avançado Centro'),
+  striker: tr('Ponta de Lança'),
+  pivot: tr('Pivô'),
+  ala_left: tr('Ala Esquerda'),
+  ala_right: tr('Ala Direita'),
+  fixo: tr('Fixo'),
 };
 
 export function roleLabel(role: string | null | undefined): string {
   if (!role) return '—';
-  return ROLE_LABELS_PT[role] ?? role;
+  return ROLE_LABELS_PT[role] ? tx(ROLE_LABELS_PT[role]) : role;
 }

@@ -1,5 +1,6 @@
 // Season service: CRUD + lifecycle (close/archive/activate) + context resolution.
 import { supabase } from '@/integrations/supabase/client';
+import { tr } from '@/lib/i18n/ui';
 
 export type SeasonStatus = 'planning' | 'active' | 'closed' | 'archived';
 
@@ -492,10 +493,10 @@ export function formatSeasonPeriod(start: string, end: string): string {
 }
 
 export const SEASON_STATUS_LABEL: Record<SeasonStatus, string> = {
-  planning: 'Planeamento',
-  active: 'Ativa',
-  closed: 'Fechada',
-  archived: 'Arquivada',
+  planning: tr('Planeamento'),
+  active: tr('Ativa'),
+  closed: tr('Fechada'),
+  archived: tr('Arquivada'),
 };
 
 export interface SeasonCounts {

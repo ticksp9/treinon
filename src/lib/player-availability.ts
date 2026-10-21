@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 // Engine único de disponibilidade médica para convocatória.
 // Decide se um jogador pode ser convocado e que restrições aplicar,
 // com base nos registos de `player_injuries` (estado clínico + can_play + datas).
@@ -22,11 +23,11 @@ export interface InjuryRecord {
 }
 
 export const CLINICAL_STATUS_OPTIONS: { value: ClinicalStatus; label: string; tone: string }[] = [
-  { value: 'apto', label: 'Apto', tone: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
-  { value: 'inapto', label: 'Inapto', tone: 'bg-red-500/10 text-red-600 border-red-500/30' },
-  { value: 'condicionado', label: 'Condicionado', tone: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
-  { value: 'em_recuperacao', label: 'Em Recuperação', tone: 'bg-orange-500/10 text-orange-600 border-orange-500/30' },
-  { value: 'retorno_progressivo', label: 'Retorno Progressivo', tone: 'bg-sky-500/10 text-sky-600 border-sky-500/30' },
+  { value: 'apto', get label() { return tx('Apto'); }, tone: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
+  { value: 'inapto', get label() { return tx('Inapto'); }, tone: 'bg-red-500/10 text-red-600 border-red-500/30' },
+  { value: 'condicionado', get label() { return tx('Condicionado'); }, tone: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
+  { value: 'em_recuperacao', get label() { return tx('Em Recuperação'); }, tone: 'bg-orange-500/10 text-orange-600 border-orange-500/30' },
+  { value: 'retorno_progressivo', get label() { return tx('Retorno Progressivo'); }, tone: 'bg-sky-500/10 text-sky-600 border-sky-500/30' },
 ];
 
 export interface AvailabilityResult {

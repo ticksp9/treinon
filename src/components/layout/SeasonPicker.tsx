@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
 import { dedupeSeasons, SEASON_STATUS_LABEL, type SeasonStatus } from '@/lib/season-service';
+import { useT } from '@/lib/i18n/ui';
 
 function statusVariant(status: SeasonStatus) {
   if (status === 'active') return 'default' as const;
@@ -21,6 +22,7 @@ function statusVariant(status: SeasonStatus) {
 
 /** ERP-style global season selector, always visible in the app header. */
 export function SeasonPicker() {
+  const t = useT();
   const nav = useNavigate();
   const { seasons, selectedSeason, setSelectedSeason } = useSeasonContext();
   const uniqueSeasons = dedupeSeasons(seasons).map((g) => g.season);
@@ -29,7 +31,7 @@ export function SeasonPicker() {
     return (
       <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={() => nav('/seasons')}>
         <CalendarRange className="w-4 h-4" />
-        <span className="hidden sm:inline">Definir época</span>
+        <span className="hidden sm:inline">{t('Definir época')}</span>
       </Button>
     );
   }
@@ -39,12 +41,12 @@ export function SeasonPicker() {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="shrink-0 gap-2 px-2 sm:px-3">
           <CalendarRange className="hidden w-4 h-4 text-muted-foreground sm:block" />
-          <span className="text-xs text-muted-foreground hidden sm:inline">Época</span>
+          <span className="text-xs text-muted-foreground hidden sm:inline">{t('Época')}</span>
           <span className="font-medium">{selectedSeason?.name ?? '—'}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 max-h-[60vh] overflow-auto">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Épocas desportivas</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">{t('Épocas desportivas')}</DropdownMenuLabel>
         {uniqueSeasons.map((s) => (
           <DropdownMenuItem
             key={s.id}
@@ -53,13 +55,13 @@ export function SeasonPicker() {
           >
             <span className={s.id === selectedSeason?.id ? 'font-semibold' : ''}>{s.name}</span>
             <Badge variant={statusVariant(s.status)} className="text-[10px]">
-              {SEASON_STATUS_LABEL[s.status]}
+              {t(SEASON_STATUS_LABEL[s.status])}
             </Badge>
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => nav('/seasons')} className="gap-2">
-          <Settings2 className="w-4 h-4" /> Gerir épocas...
+          <Settings2 className="w-4 h-4" /> {t('Gerir épocas...')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -68,17 +70,17 @@ export function SeasonPicker() {
 
 /** Discrete read-only notice shown when browsing a closed/archived season. */
 export function SeasonReadOnlyBanner() {
+  const t = useT();
   const { selectedSeason, isViewingArchivedOrClosed, activeSeason, setSelectedSeason } = useSeasonContext();
   if (!isViewingArchivedOrClosed || !selectedSeason) return null;
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-2 text-xs bg-amber-500/10 text-amber-700 dark:text-amber-400 border-b border-amber-500/20">
       <span>
-        A visualizar a época <strong>{selectedSeason.name}</strong> (
-        {SEASON_STATUS_LABEL[selectedSeason.status].toLowerCase()}). Os dados não podem ser alterados.
+        {t('A visualizar a época {{name}} ({{status}}). Os dados não podem ser alterados.', { name: selectedSeason.name, status: t(SEASON_STATUS_LABEL[selectedSeason.status]).toLowerCase() })}
       </span>
       {activeSeason && (
         <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => setSelectedSeason(activeSeason.id)}>
-          Voltar à época ativa ({activeSeason.name})
+          {t('Voltar à época ativa ({{name}})', { name: activeSeason.name })}
         </Button>
       )}
     </div>
