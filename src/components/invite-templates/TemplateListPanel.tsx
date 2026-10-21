@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2, MoreHorizontal, Edit, Copy, Star, StarOff, Eye, EyeOff, Mail, Phone, MessageCircle, Search, History } from 'lucide-react';
 import { toast } from 'sonner';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const PROFILE_LABELS: Record<string, string> = {
   guardian: 'Encarregado',
@@ -177,7 +177,7 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
                         <span className="text-[10px] text-muted-foreground">v{t.version_number}</span>
                         <span className="text-[10px] text-muted-foreground">{t.language.toUpperCase()}</span>
                         <span className="text-[10px] text-muted-foreground">
-                          {new Date(t.updated_at).toLocaleDateString('pt-PT')}
+                          {new Date(t.updated_at).toLocaleDateString(intlLocale())}
                         </span>
                       </div>
                     </div>

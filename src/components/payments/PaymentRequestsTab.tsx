@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 import { ExternalLink, CreditCard, Plus, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -27,7 +27,7 @@ export function PaymentRequestsTab({ clubId }: Props) {
   const [selectedCharge, setSelectedCharge] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('card');
   const [showCreate, setShowCreate] = useState(false);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const isOnlineEnabled = paymentConfig?.settings?.allow_online_payments === true &&
     paymentConfig?.settings?.configuration_status === 'active';

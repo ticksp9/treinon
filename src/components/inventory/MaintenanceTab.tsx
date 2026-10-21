@@ -2,14 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   maintenance: any[];
 }
 
 export function MaintenanceTab({ maintenance }: Props) {
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const statusLabel: Record<string, string> = {
     scheduled: 'Agendada', in_progress: 'Em Curso', completed: 'Concluída', overdue: 'Em Atraso', cancelled: 'Cancelada',

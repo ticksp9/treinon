@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useGuardianCharges, useGuardianPayments, useGuardianAlerts } from '@/hooks/useBilling';
 import { Euro, CheckCircle2, AlertTriangle, Clock, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   guardianProfileId: string;
@@ -16,7 +16,7 @@ export function GuardianFinancialTab({ guardianProfileId, userId }: Props) {
   const { data: payments, isLoading: paymentsLoading } = useGuardianPayments(guardianProfileId);
   const { data: alerts } = useGuardianAlerts(userId);
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (chargesLoading || paymentsLoading) return <Skeleton className="h-48" />;
 

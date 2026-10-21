@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarDays, Wrench, AlertTriangle, DollarSign, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { computeOccupancyRate, computeCostsByFacility } from '@/hooks/useFacilities';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   facilities: any[];
@@ -36,7 +36,7 @@ export function FacilitiesOverviewTab({ facilities, spaces, reservations, workOr
     { label: tx('Ocupação (30d)'), value: `${occupancy}%`, icon: CalendarDays },
     { label: tx('Manutenções Abertas'), value: openWO, icon: Wrench },
     { label: tx('Docs a Expirar'), value: expiringDocs, icon: AlertTriangle },
-    { label: tx('Custos Operacionais'), value: `€${totalCosts.toLocaleString('pt-PT')}`, icon: DollarSign },
+    { label: tx('Custos Operacionais'), value: `€${totalCosts.toLocaleString(intlLocale())}`, icon: DollarSign },
   ];
 
   return (
@@ -61,7 +61,7 @@ export function FacilitiesOverviewTab({ facilities, spaces, reservations, workOr
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v: number) => `€${v.toLocaleString('pt-PT')}`} />
+                <Tooltip formatter={(v: number) => `€${v.toLocaleString(intlLocale())}`} />
                 <Bar dataKey="custos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

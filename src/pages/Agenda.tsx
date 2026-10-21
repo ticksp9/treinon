@@ -30,7 +30,7 @@ import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { ConsentDialog, useChildrenConsents } from '@/components/family/ConsentGate';
 import { cn } from '@/lib/utils';
 import { FamilyRehab } from '@/components/family/FamilyRehab';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface FamilyRow { team_id: string; team_name: string; club_id: string | null; player_id: string; player_name: string }
 interface RsvpDetail { user_id: string; name: string; players: string | null; status: 'yes' | 'no'; people: number; note: string | null }
@@ -366,7 +366,7 @@ export default function Agenda() {
                             <div className="mt-2 space-y-2">
                               {i.rsvpDeadline && (
                                 <p className={cn('text-xs', closed ? 'text-destructive' : 'text-muted-foreground')}>
-                                  {closed ? tx('O prazo para responder terminou a ') : tx('Responder até ')}{i.rsvpDeadline.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                  {closed ? tx('O prazo para responder terminou a ') : tx('Responder até ')}{i.rsvpDeadline.toLocaleDateString(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}
                                 </p>
                               )}
                               {over ? (

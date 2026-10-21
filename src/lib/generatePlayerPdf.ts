@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { format, differenceInYears } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import { deliverPdf } from '@/lib/native-files';
+import { inPdfLanguage, lang, longDate, tr, tx } from '@/lib/i18n/ui';
 
 interface PlayerData {
   name: string;
@@ -37,40 +37,44 @@ interface PlayerData {
 }
 
 const ID_DOCUMENT_LABELS: Record<string, string> = {
-  national_id: 'Cartão de Cidadão / BI',
-  passport: 'Passaporte',
-  residence_permit: 'Título de Residência',
-  birth_certificate: 'Certidão de Nascimento',
-  other: 'Outro',
+  national_id: tr('Cartão de Cidadão / BI'),
+  passport: tr('Passaporte'),
+  residence_permit: tr('Título de Residência'),
+  birth_certificate: tr('Certidão de Nascimento'),
+  other: tr('Outro'),
 };
 
 const POSITION_LABELS: Record<string, string> = {
-  GK: 'Guarda-Redes',
-  CB: 'Defesa Central',
-  LB: 'Lateral Esquerdo',
-  RB: 'Lateral Direito',
-  CDM: 'Médio Defensivo',
-  CM: 'Médio Centro',
-  CAM: 'Médio Ofensivo',
-  LM: 'Médio Esquerdo',
-  RM: 'Médio Direito',
-  LW: 'Extremo Esquerdo',
-  RW: 'Extremo Direito',
-  CF: 'Avançado Centro',
-  ST: 'Ponta de Lança',
-  FIX: 'Fixo',
-  ALA: 'Ala',
-  PIV: 'Pivot',
-  UNI: 'Universal',
+  GK: tr('Guarda-Redes'),
+  CB: tr('Defesa Central'),
+  LB: tr('Lateral Esquerdo'),
+  RB: tr('Lateral Direito'),
+  CDM: tr('Médio Defensivo'),
+  CM: tr('Médio Centro'),
+  CAM: tr('Médio Ofensivo'),
+  LM: tr('Médio Esquerdo'),
+  RM: tr('Médio Direito'),
+  LW: tr('Extremo Esquerdo'),
+  RW: tr('Extremo Direito'),
+  CF: tr('Avançado Centro'),
+  ST: tr('Ponta de Lança'),
+  FIX: tr('Fixo'),
+  ALA: tr('Ala'),
+  PIV: tr('Pivot'),
+  UNI: tr('Universal'),
 };
 
 const FOOT_LABELS: Record<string, string> = {
-  right: 'Direito',
-  left: 'Esquerdo',
-  both: 'Ambos',
+  right: tr('Direito'),
+  left: tr('Esquerdo'),
+  both: tr('Ambos'),
 };
 
 export function generatePlayerPdf(player: PlayerData): void {
+  inPdfLanguage(() => buildPlayerPdf(player));
+}
+
+function buildPlayerPdf(player: PlayerData): void {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let y = 20;
@@ -104,7 +108,7 @@ export function generatePlayerPdf(player: PlayerData): void {
   // Title
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('FICHA DE JOGADOR', pageWidth / 2, y, { align: 'center' });
+  doc.text(tx('FICHA DE JOGADOR'), pageWidth / 2, y, { align: 'center' });
   y += 5;
   
   // Subtitle with team info
@@ -120,52 +124,52 @@ export function generatePlayerPdf(player: PlayerData): void {
   // Date generated
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text(`Gerado em: ${format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: pt })}`, pageWidth - 14, y, { align: 'right' });
+  doc.text(tx('Gerado em: {{date}}', { date: longDate(new Date(), 'date') }), pageWidth - 14, y, { align: 'right' });
   doc.setTextColor(0, 0, 0);
 
   // Personal Data Section
-  addSection('DADOS PESSOAIS');
+  addSection(tx('DADOS PESSOAIS'));
   
-  addField('Nome Completo', player.name);
-  addField('Número', player.number?.toString());
-  addField('Posição', player.position ? POSITION_LABELS[player.position] || player.position : null);
-  addField('Género', player.gender === 'male' ? 'Masculino' : 'Feminino');
+  addField(tx('Nome Completo'), player.name);
+  addField(tx('Número'), player.number?.toString());
+  addField(tx('Posição'), player.position ? tx(POSITION_LABELS[player.position] || player.position) : null);
+  addField(tx('Género'), tx(player.gender === 'male' ? 'Masculino' : 'Feminino'));
   
   if (player.birth_date) {
     const age = differenceInYears(new Date(), new Date(player.birth_date));
-    addField('Data de Nascimento', `${format(new Date(player.birth_date), 'dd/MM/yyyy')} (${age} anos)`);
+    addField(tx('Data de Nascimento'), `${format(new Date(player.birth_date), 'dd/MM/yyyy')} (${tx('{{n}} anos', { n: age })})`);
   }
   
-  addField('Local de Nascimento', player.birth_place);
-  addField('Nacionalidade', player.nationality);
-  addField('Altura', player.height_cm ? `${player.height_cm} cm` : null);
-  addField('Peso', player.weight_kg ? `${player.weight_kg} kg` : null);
-  addField('Pé Dominante', player.foot ? FOOT_LABELS[player.foot] || player.foot : null);
+  addField(tx('Local de Nascimento'), player.birth_place);
+  addField(tx('Nacionalidade'), player.nationality);
+  addField(tx('Altura'), player.height_cm ? `${player.height_cm} cm` : null);
+  addField(tx('Peso'), player.weight_kg ? `${player.weight_kg} kg` : null);
+  addField(tx('Pé Dominante'), player.foot ? tx(FOOT_LABELS[player.foot] || player.foot) : null);
 
   // Contact Section
   if (player.email || player.phone || player.address) {
-    addSection('CONTACTO');
-    addField('Email', player.email);
-    addField('Telefone', player.phone);
-    addField('Morada', player.address);
+    addSection(tx('CONTACTO'));
+    addField(tx('Email'), player.email);
+    addField(tx('Telefone'), player.phone);
+    addField(tx('Morada'), player.address);
   }
 
   // Documentation Section
   if (player.id_document_type || player.tax_id || player.federation_id) {
-    addSection('DOCUMENTAÇÃO');
+    addSection(tx('DOCUMENTAÇÃO'));
     
     if (player.id_document_type) {
-      const docLabel = ID_DOCUMENT_LABELS[player.id_document_type] || player.id_document_type;
-      addField('Tipo de Documento', docLabel);
+      const docLabel = tx(ID_DOCUMENT_LABELS[player.id_document_type] || player.id_document_type);
+      addField(tx('Tipo de Documento'), docLabel);
     }
-    addField('Número do Documento', player.id_document_number);
+    addField(tx('Número do Documento'), player.id_document_number);
     if (player.id_document_expiry) {
-      addField('Validade do Documento', format(new Date(player.id_document_expiry), 'dd/MM/yyyy'));
+      addField(tx('Validade do Documento'), format(new Date(player.id_document_expiry), 'dd/MM/yyyy'));
     }
-    addField('NIF / ID Fiscal', player.tax_id);
-    addField('Número de Federado', player.federation_id);
+    addField(tx('NIF / ID Fiscal'), player.tax_id);
+    addField(tx('Número de Federado'), player.federation_id);
     if (player.medical_certificate_expiry) {
-      addField('Validade Atestado Médico', format(new Date(player.medical_certificate_expiry), 'dd/MM/yyyy'));
+      addField(tx('Validade Atestado Médico'), format(new Date(player.medical_certificate_expiry), 'dd/MM/yyyy'));
     }
   }
 
@@ -177,35 +181,35 @@ export function generatePlayerPdf(player: PlayerData): void {
 
   // Parents Section
   if (player.parent_name || player.parent_name_2) {
-    addSection('ENCARREGADOS DE EDUCAÇÃO');
+    addSection(tx('ENCARREGADOS DE EDUCAÇÃO'));
     
     if (player.parent_name) {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text('Encarregado 1:', 14, y);
+      doc.text(tx('Encarregado 1:'), 14, y);
       y += 6;
       doc.setFont('helvetica', 'normal');
-      addField('Nome', player.parent_name);
-      addField('Email', player.parent_email);
-      addField('Telefone', player.parent_phone);
+      addField(tx('Nome'), player.parent_name);
+      addField(tx('Email'), player.parent_email);
+      addField(tx('Telefone'), player.parent_phone);
     }
     
     if (player.parent_name_2) {
       y += 4;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text('Encarregado 2:', 14, y);
+      doc.text(tx('Encarregado 2:'), 14, y);
       y += 6;
       doc.setFont('helvetica', 'normal');
-      addField('Nome', player.parent_name_2);
-      addField('Email', player.parent_email_2);
-      addField('Telefone', player.parent_phone_2);
+      addField(tx('Nome'), player.parent_name_2);
+      addField(tx('Email'), player.parent_email_2);
+      addField(tx('Telefone'), player.parent_phone_2);
     }
   }
 
   // Notes Section
   if (player.notes) {
-    addSection('OBSERVAÇÕES');
+    addSection(tx('OBSERVAÇÕES'));
     doc.setFontSize(10);
     const splitNotes = doc.splitTextToSize(player.notes, pageWidth - 28);
     doc.text(splitNotes, 14, y);
@@ -218,7 +222,7 @@ export function generatePlayerPdf(player: PlayerData): void {
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `Página ${i} de ${pageCount}`,
+      tx('Página {{i}} de {{n}}', { i, n: pageCount }),
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
@@ -226,6 +230,6 @@ export function generatePlayerPdf(player: PlayerData): void {
   }
 
   // Save the PDF
-  const fileName = `ficha_jogador_${player.name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  const fileName = `${lang() !== 'pt' ? 'player_profile' : 'ficha_jogador'}_${player.name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   void deliverPdf(doc, fileName);
 }

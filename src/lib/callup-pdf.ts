@@ -6,7 +6,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { deliverPdf, isNativeApp } from '@/lib/native-files';
-import { dateLocale, isEnglish, tx } from '@/lib/i18n/ui';
+import { dateLocale, tx, lang, inPdfLanguage } from '@/lib/i18n/ui';
 
 export interface CallupPlayer { name: string; number: number | null; position: string | null }
 export interface CallupGroup { label: string; players: CallupPlayer[] }
@@ -38,10 +38,11 @@ export function callupLayout(groups: CallupGroup[]) {
 }
 
 export const callupFileName = (s: Pick<CallupSheet, 'teamName' | 'opponent' | 'matchDate'>) =>
-  `${isEnglish() ? 'call-up' : 'convocatoria'}-${s.teamName}-vs-${s.opponent}-${format(new Date(s.matchDate), 'yyyy-MM-dd')}`
+  `${lang() !== 'pt' ? 'call-up' : 'convocatoria'}-${s.teamName}-vs-${s.opponent}-${format(new Date(s.matchDate), 'yyyy-MM-dd')}`
     .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.pdf';
 
 export function buildCallupPdf(s: CallupSheet): jsPDF {
+  return inPdfLanguage(() => {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 15;
   const total = s.groups.reduce((n, g) => n + g.players.length, 0);
@@ -123,6 +124,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   doc.setFontSize(8); doc.setTextColor(148, 163, 184);
   doc.text(tx('Total de convocados: {{n}} · Gerado no TreinON em {{when}}', { n: total, when: format(new Date(), 'dd/MM/yyyy HH:mm') }), M, 287);
   return doc;
+});
 }
 
 /** Share the PDF where the device can (iPad/phone: WhatsApp, email…), else download it. */

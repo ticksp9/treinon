@@ -29,7 +29,7 @@ import {
   overallAverage,
   roundedOverall,
 } from '@/lib/player-attributes';
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate } from '@/lib/i18n/ui';
 
 interface PlayerEvaluationsProps {
   playerId: string;
@@ -368,9 +368,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <CardTitle className="text-base">
-                        {format(new Date(ev.evaluation_date), "d 'de' MMMM 'de' yyyy", {
-                          locale: pt,
-                        })}
+                        {longDate(new Date(ev.evaluation_date), 'date')}
                       </CardTitle>
                       <div className="flex items-center gap-2 flex-wrap">
                         {ev.context && (

@@ -5,7 +5,7 @@ import { useChargesSummary, useGenerateCharges, useMarkOverdue } from '@/hooks/u
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, RefreshCw, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -19,7 +19,7 @@ export function BillingOverviewTab({ clubId }: Props) {
   const [genMonth, setGenMonth] = useState((now.getMonth() + 1).toString());
   const [genYear, setGenYear] = useState(now.getFullYear().toString());
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (isLoading) return <Skeleton className="h-64" />;
 

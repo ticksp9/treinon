@@ -20,7 +20,7 @@ import { uploadCommunicationFile } from '@/hooks/useCommunicationPhase2';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate } from '@/lib/i18n/ui';
 
 interface ChatViewProps {
   channelId: string;
@@ -34,7 +34,7 @@ function formatDateSeparator(dateStr: string): string {
   const date = new Date(dateStr);
   if (isToday(date)) return 'Hoje';
   if (isYesterday(date)) return 'Ontem';
-  return format(date, "d 'de' MMMM yyyy", { locale: pt });
+  return longDate(date, 'date');
 }
 
 export function ChatView({ channelId, channelName, canManage = false, channelType, channelDescription }: ChatViewProps) {

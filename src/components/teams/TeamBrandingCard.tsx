@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BRANDING_KEY, TeamCrest } from '@/hooks/useTeamBranding';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { colorsOfImage, isHex, shrinkImage, textOn, usableShade, type TeamTheme } from '@/lib/team-branding';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 const DEFAULT = { primary: '#265a8f', accent: '#ef6c0c' };
 
@@ -65,7 +65,7 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
       const { error } = await supabase.storage.from('crests').upload(path, blob, { contentType: 'image/png', upsert: false });
       if (error) { toast.error(error.message.includes('row-level') ? tx('Só o treinador principal (ou o administrador do clube) muda o símbolo.') : tx('Não foi possível carregar o símbolo: ') + error.message); return; }
       const url = supabase.storage.from('crests').getPublicUrl(path).data.publicUrl;
-      if (await save({ crest_url: url }, 'Símbolo guardado.')) {
+      if (await save({ crest_url: url }, tx('Símbolo guardado.'))) {
         setCrest(url);
         // first crest and no colours yet: offer the crest's own colours
         if (!primary) { const local = URL.createObjectURL(blob); await suggest(local, true); URL.revokeObjectURL(local); }
@@ -76,10 +76,10 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
 
   const removeCrest = async () => {
     if (!window.confirm(tx('Tirar o símbolo desta equipa?'))) return;
-    if (await save({ crest_url: null }, 'Símbolo retirado.')) setCrest(null);
+    if (await save({ crest_url: null }, tx('Símbolo retirado.'))) setCrest(null);
   };
   const saveColors = () => save({ theme: { primary: isHex(primary) ? primary : null, accent: isHex(accent) ? accent : null } },
-    isActive ? 'Cores guardadas. A app já está com as cores da equipa.' : `Cores guardadas para ${team.name}. Aparecem quando trabalhar com esta equipa.`);
+    isActive ? tx('Cores guardadas. A app já está com as cores da equipa.') : tx('Cores guardadas para {{name}}. Aparecem quando trabalhar com esta equipa.', { name: team.name }));
 
   // the same club, the same crest: copy this look to my other teams in one go
   const copyToOthers = async () => {
@@ -88,9 +88,9 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
     const { data, error } = await supabase.from('teams').update({ crest_url: crest, theme } as never).in('id', others.map((t) => t.id)).select('id');
     if (error) return toast.error(tx('Não foi possível copiar: ') + error.message);
     refresh();
-    toast.success(tx('Símbolo e cores aplicados em {{v0}} {{v1}}.', { v0: data?.length ?? 0, v1: data?.length === 1 ? 'equipa' : 'equipas' }));
+    toast.success(tx('Símbolo e cores aplicados em {{v0}} {{v1}}.', { v0: data?.length ?? 0, v1: data?.length === 1 ? tx('equipa') : tx('equipas') }));
   };
-  const resetColors = async () => { if (await save({ theme: null }, 'Voltou às cores do TreinON.')) { setPrimary(''); setAccent(''); } };
+  const resetColors = async () => { if (await save({ theme: null }, tx('Voltou às cores do TreinON.'))) { setPrimary(''); setAccent(''); } };
 
   const p = isHex(primary) ? primary : DEFAULT.primary;
   const a = isHex(accent) ? accent : DEFAULT.accent;
@@ -123,12 +123,12 @@ export function TeamBrandingCard({ team }: { team: { id: string; name: string; c
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {([['Cor principal', primary, setPrimary, DEFAULT.primary, 'botões, menu, destaques'], ['Cor de realce', accent, setAccent, DEFAULT.accent, 'avisos e pormenores']] as const).map(([label, value, set, def, hint]) => (
+          {([[tr('Cor principal'), primary, setPrimary, DEFAULT.primary, tr('botões, menu, destaques')], [tr('Cor de realce'), accent, setAccent, DEFAULT.accent, tr('avisos e pormenores')]] as const).map(([label, value, set, def, hint]) => (
             <div key={label} className="space-y-1">
-              <Label>{label} <span className="font-normal text-muted-foreground">({hint})</span></Label>
+              <Label>{tx(label)} <span className="font-normal text-muted-foreground">({tx(hint)})</span></Label>
               <div className="flex items-center gap-2">
-                <input type="color" value={isHex(value) ? value : def} onChange={(e) => set(e.target.value)} className="h-9 w-12 cursor-pointer rounded border bg-transparent p-0.5" aria-label={label} />
-                <Input className="h-9 w-28 font-mono" maxLength={7} value={value} placeholder={def} onChange={(e) => set(e.target.value.trim())} aria-label={tx('{{v0}} (código)', { v0: label })} />
+                <input type="color" value={isHex(value) ? value : def} onChange={(e) => set(e.target.value)} className="h-9 w-12 cursor-pointer rounded border bg-transparent p-0.5" aria-label={tx(label)} />
+                <Input className="h-9 w-28 font-mono" maxLength={7} value={value} placeholder={def} onChange={(e) => set(e.target.value.trim())} aria-label={tx('{{v0}} (código)', { v0: tx(label) })} />
               </div>
             </div>
           ))}

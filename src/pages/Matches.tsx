@@ -20,7 +20,7 @@ import { MatchResultsView } from '@/components/matches/MatchResultsView';
 import { ChampionshipManager } from '@/components/matches/ChampionshipManager';
 import { toast } from 'sonner';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
-import { dateLocale, isEnglish, tx, useT } from '@/lib/i18n/ui';
+import { dateLocale, tx, useT, longDate } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -950,7 +950,7 @@ export default function Matches() {
                     {deleteDialogMatch.is_home ? t('Casa') : t('Fora')} vs {deleteDialogMatch.opponent_name}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(deleteDialogMatch.match_date), isEnglish() ? "d MMMM yyyy, HH:mm" : "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: dateLocale() })}
+                    {longDate(new Date(deleteDialogMatch.match_date), 'dateTime')}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">

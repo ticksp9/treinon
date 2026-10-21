@@ -20,7 +20,7 @@ import {
 } from '@/lib/player-import';
 import { BirthYearRules } from './BirthYearRules';
 import { cn } from '@/lib/utils';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   open: boolean;
@@ -177,7 +177,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
                       <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value={NONE}>{tx('— não tem —')}</SelectItem>
-                        {headers.map((h, i) => <SelectItem key={i} value={String(i)}>{h instanceof Date ? h.toLocaleDateString('pt-PT') : String(h ?? `Coluna ${i + 1}`) || tx('Coluna {{v0}}', { v0: i + 1 })}</SelectItem>)}
+                        {headers.map((h, i) => <SelectItem key={i} value={String(i)}>{h instanceof Date ? h.toLocaleDateString(intlLocale()) : String(h ?? `Coluna ${i + 1}`) || tx('Coluna {{v0}}', { v0: i + 1 })}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </label>

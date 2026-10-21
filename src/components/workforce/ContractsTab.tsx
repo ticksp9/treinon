@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import type { EmploymentContract, PersonRegistry } from '@/hooks/useWorkforce';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const CONTRACT_TYPES = [
   { value: 'open_ended', get label() { return tx('Sem Termo'); } },
@@ -28,7 +28,7 @@ const STATUS_MAP: Record<string, string> = {
   terminated: 'Terminado', expired: 'Expirado', renewed: 'Renovado',
 };
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 interface Props {
   contracts: EmploymentContract[];

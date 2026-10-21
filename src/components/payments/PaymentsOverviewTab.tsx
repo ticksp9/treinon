@@ -2,13 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTransactionsSummary } from '@/hooks/usePaymentIntents';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, TrendingUp, AlertTriangle, CreditCard } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
 export function PaymentsOverviewTab({ clubId }: Props) {
   const { data: summary, isLoading } = useTransactionsSummary(clubId);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (isLoading) return <Skeleton className="h-64" />;
   if (!summary) return null;

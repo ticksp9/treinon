@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { backupFileName, describeBackup, formatSize, type AutoCopy, type BackupFile } from '@/lib/backup';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -116,7 +116,7 @@ export function BackupCard() {
             <ul className="divide-y text-sm">
               {auto.copies.map((c) => (
                 <li key={c.name} className="flex items-center gap-2 py-1.5">
-                  <span className="min-w-0"><span className="block font-medium first-letter:uppercase">{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+                  <span className="min-w-0"><span className="block font-medium first-letter:uppercase">{new Date(c.date + 'T12:00:00').toLocaleDateString(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                   {c.size != null && <span className="block text-xs text-muted-foreground">{formatSize(c.size)}</span>}</span>
                   <Button size="sm" variant="outline" className="ml-auto h-8 shrink-0" disabled={fetching === c.name} onClick={() => downloadAuto(c)}>
                     {fetching === c.name ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}{tx('Descarregar')}
@@ -127,7 +127,7 @@ export function BackupCard() {
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {lastLog ? tx('Última cópia: {{v0}}.', { v0: new Date(lastLog.created_at).toLocaleString('pt-PT', { dateStyle: 'long', timeStyle: 'short' }) }) : tx('Ainda não foi feita nenhuma cópia.')}
+          {lastLog ? tx('Última cópia: {{v0}}.', { v0: new Date(lastLog.created_at).toLocaleString(intlLocale(), { dateStyle: 'long', timeStyle: 'short' }) }) : tx('Ainda não foi feita nenhuma cópia.')}
           {' '}{tx('O ficheiro tem dados pessoais de menores e dos encarregados: guarde-o protegido e não o partilhe. Não inclui palavras-passe nem os ficheiros carregados (fotografias e documentos).')}
         </p>
       </CardContent>

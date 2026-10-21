@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 export interface CoordinatorAlert {
   kind: 'absence' | 'payment'; player_id: string; player_name: string; team_id: string; team_name: string; club_id: string;
@@ -28,7 +28,7 @@ export interface CoordinatorAlert {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 const ALL = '__all__';
-const euro = (n: number) => n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+const euro = (n: number) => n.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' });
 
 const KINDS = {
   absence: { get title() { return tx('Faltas a treinos sem motivo'); }, icon: CalendarX, tone: 'bg-accent/15 text-accent', get empty() { return tx('Nenhum jogador com dois treinos seguidos sem motivo de falta.'); } },

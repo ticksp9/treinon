@@ -19,7 +19,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { OpponentFormDialog, formToRow, type OpponentForm } from '@/components/scouting/OpponentFormDialog';
 import { ScoutPlayersTab } from '@/components/scouting/ScoutPlayersTab';
 import { normalizeTeamName, sheetSummary, sportLabel, type Opponent } from '@/lib/opponent-scouting';
-import { tx } from '@/lib/i18n/ui';
+import { tr, tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -91,9 +91,9 @@ export default function Scouting() {
     <AppLayout title={tx('Scouting')}>
       <div className="mx-auto max-w-4xl space-y-4">
         <div className="inline-flex rounded-md border bg-muted/40 p-1" role="tablist" aria-label={tx('Scouting')}>
-          {([['adversarios', 'Adversários', Shield], ['jogadores', 'Jogadores', UserSearch]] as const).map(([key, label, Icon]) => (
+          {([['adversarios', tr('Adversários'), Shield], ['jogadores', tr('Jogadores'), UserSearch]] as const).map(([key, label, Icon]) => (
             <Button key={key} role="tab" aria-selected={tab === key} size="sm" variant={tab === key ? 'default' : 'ghost'} className="h-9" onClick={() => setParams(key === 'adversarios' ? {} : { tab: key }, { replace: true })}>
-              <Icon className="mr-1.5 h-4 w-4" />{label}
+              <Icon className="mr-1.5 h-4 w-4" />{tx(label)}
             </Button>
           ))}
         </div>
@@ -116,7 +116,7 @@ export default function Scouting() {
                   <Button key={m.opponent_name} size="sm" variant="outline" className="h-9"
                     onClick={() => setDialog({ defaults: { name: m.opponent_name, category: m.team?.category ?? '', sport_type: m.sport_type || m.team?.sport_type || 'football_11', competition: m.competition ?? '' } })}>
                     <Plus className="mr-1 h-3.5 w-3.5" />{m.opponent_name}
-                    <span className="ml-1.5 text-xs text-muted-foreground">{new Date(m.match_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}</span>
+                    <span className="ml-1.5 text-xs text-muted-foreground">{new Date(m.match_date).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit' })}</span>
                   </Button>
                 ))}
               </div>

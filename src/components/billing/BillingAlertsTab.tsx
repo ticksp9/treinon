@@ -4,13 +4,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBillingAlerts } from '@/hooks/useBilling';
 import { Bell } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
 export function BillingAlertsTab({ clubId }: Props) {
   const { data: alerts, isLoading } = useBillingAlerts(clubId);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (isLoading) return <Skeleton className="h-64" />;
 

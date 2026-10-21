@@ -39,7 +39,7 @@ import {
 import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { MatchStatusBadge } from './MatchStatusBadge';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface ReportReviewScreenProps {
   matchId: string;
@@ -337,7 +337,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
                     <div key={v.id} className="flex items-center justify-between p-2 border rounded text-sm">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">v{v.version_no}</Badge>
-                        <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString('pt-PT')}</span>
+                        <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString(intlLocale())}</span>
                       </div>
                       {v.snapshot_json && (
                         <span className="text-xs text-muted-foreground">
@@ -425,7 +425,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
                         <Clock className="w-3 h-3 text-muted-foreground" />
                         <span className="font-medium">{ACTION_LABELS[log.action] || log.action}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('pt-PT')}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString(intlLocale())}</span>
                     </div>
                     {log.reason && (
                       <p className="text-xs text-muted-foreground mt-1">{tx('Motivo:')}{' '}{log.reason}</p>

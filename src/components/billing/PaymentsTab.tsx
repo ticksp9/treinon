@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePayments } from '@/hooks/useBilling';
 import { CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -14,7 +14,7 @@ const METHOD_LABELS: Record<string, string> = {
 
 export function PaymentsTab({ clubId }: Props) {
   const { data: payments, isLoading } = usePayments(clubId);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (isLoading) return <Skeleton className="h-64" />;
 

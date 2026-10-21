@@ -12,7 +12,7 @@ export type SportType =
   | 'football_9'
   | 'football_11'
   | 'futsal';
-import { isEnglish, tr, tx } from '@/lib/i18n/ui';
+import { lang, tr, tx } from '@/lib/i18n/ui';
 
 export type SlotRole =
   | 'goalkeeper'
@@ -44,13 +44,25 @@ export interface Formation {
 }
 
 /** Helper de construção. */
-// the short label on the pitch: Portuguese (GR, DC, PL…) or English (GK, CB, ST…), read when shown
+// the short label on the pitch in the chosen language (GR, DC, PL… / GK, CB, ST… / POR, DFC, DC… / TW, IV, ST…), read when shown
 const EN_SHORT: Record<string, string> = {
   GR: 'GK', DC: 'CB', DCE: 'LCB', DCD: 'RCB', DE: 'LB', DD: 'RB', LE: 'LB', LD: 'RB', ALE: 'LWB', ALD: 'RWB',
   MDC: 'DM', MDE: 'LDM', MDD: 'RDM', MC: 'CM', MCE: 'LCM', MCD: 'RCM', MOC: 'AM', MOE: 'LAM', MOD: 'RAM',
   ME: 'LM', MD: 'RM', EE: 'LW', ED: 'RW', PL: 'ST', PLE: 'LS', PLD: 'RS', 'Ala E': 'Wing L', 'Ala D': 'Wing R', 'Pivô': 'Pivot',
 };
-export const shortPositionLabel = (pt: string) => (isEnglish() ? EN_SHORT[pt] ?? pt : pt);
+const ES_SHORT: Record<string, string> = {
+  GR: 'POR', DC: 'DFC', DCE: 'DFC', DCD: 'DFC', DE: 'LI', DD: 'LD', LE: 'LI', LD: 'LD', ALE: 'CAI', ALD: 'CAD',
+  MDC: 'MCD', MDE: 'MCD', MDD: 'MCD', MC: 'MC', MCE: 'MC', MCD: 'MC', MOC: 'MCO', MOE: 'MCO', MOD: 'MCO',
+  ME: 'MI', MD: 'MD', EE: 'EI', ED: 'ED', PL: 'DC', PLE: 'DC', PLD: 'DC', 'Ala E': 'Ala I', 'Ala D': 'Ala D', 'Pivô': 'Pívot',
+};
+const DE_SHORT: Record<string, string> = {
+  GR: 'TW', DC: 'IV', DCE: 'IV', DCD: 'IV', DE: 'LV', DD: 'RV', LE: 'LV', LD: 'RV', ALE: 'LAV', ALD: 'RAV',
+  MDC: 'ZDM', MDE: 'ZDM', MDD: 'ZDM', MC: 'ZM', MCE: 'ZM', MCD: 'ZM', MOC: 'ZOM', MOE: 'ZOM', MOD: 'ZOM',
+  ME: 'LM', MD: 'RM', EE: 'LA', ED: 'RA', PL: 'ST', PLE: 'ST', PLD: 'ST', 'Ala E': 'Flügel L', 'Ala D': 'Flügel R', 'Pivô': 'Pivot',
+};
+// Chinese football apps use the English abbreviations
+const SHORT: Record<string, Record<string, string>> = { en: EN_SHORT, es: ES_SHORT, de: DE_SHORT, zh: EN_SHORT };
+export const shortPositionLabel = (pt: string) => SHORT[lang()]?.[pt] ?? pt;
 /** a slot whose short label follows the chosen language */
 function withLabel<T extends object>(o: T, pt: string): T & { label: string } {
   return Object.defineProperty(o, 'label', { get: () => shortPositionLabel(pt), enumerable: true, configurable: true }) as T & { label: string };

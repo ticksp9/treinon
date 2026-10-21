@@ -36,7 +36,7 @@ import { imageAsDataUrl } from '@/lib/team-branding';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 import { deliverPdf } from '@/lib/native-files';
-import { dateLocale, isEnglish, tr, useT, tx } from '@/lib/i18n/ui';
+import { dateLocale, tr, useT, tx, longDate } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -1183,7 +1183,7 @@ export function MatchCallup() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>{format(new Date(selectedMatchData.match_date), isEnglish() ? 'd MMMM yyyy' : "dd 'de' MMMM 'de' yyyy", { locale: dateLocale() })}</span>
+                    <span>{longDate(new Date(selectedMatchData.match_date), 'date')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />

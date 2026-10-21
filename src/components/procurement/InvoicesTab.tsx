@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
   unpaid: 'Por pagar', partially_paid: 'Parc. Pago', paid: 'Pago', overdue: 'Vencido', disputed: 'Disputado', cancelled: 'Cancelado',
@@ -22,7 +22,7 @@ const statusColors: Record<string, string> = {
   disputed: 'bg-purple-100 text-purple-800', cancelled: 'bg-muted text-muted-foreground',
 };
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 export function InvoicesTab({ clubId }: { clubId: string }) {
   const { invoices, invoicesLoading, vendors, createInvoice } = useProcurement(clubId);

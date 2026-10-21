@@ -39,7 +39,7 @@ export default function Settings() {
     try { localStorage.setItem('language', code); } catch { /* private mode */ }
     document.documentElement.lang = code;
     if (user) await supabase.from('profiles').update({ language: code }).eq('id', user.id);
-    toast.success(code === 'en' ? tx('Language: English') : tx('Idioma: Português'));
+    toast.success(`✓ ${languages.find((l) => l.code === code)?.name ?? code}`);
   };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, FileCheck } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const DOC_TYPES: Record<string, string> = {
   usage_license: 'Licença de Utilização', lease_contract: 'Contrato de Arrendamento',
@@ -68,7 +68,7 @@ export function ComplianceTab({ documents, complianceAlerts, facilities }: Props
                     {d.mandatory && <Badge variant="secondary" className="ml-2 text-xs">{tx('Obrigatório')}</Badge>}
                   </div>
                   <div className="flex gap-2 items-center">
-                    {d.valid_to && <span className="text-xs text-muted-foreground">{tx('Até')}{' '}{new Date(d.valid_to).toLocaleDateString('pt-PT')}</span>}
+                    {d.valid_to && <span className="text-xs text-muted-foreground">{tx('Até')}{' '}{new Date(d.valid_to).toLocaleDateString(intlLocale())}</span>}
                     <Badge variant={isExpired ? 'destructive' : 'default'} className="text-xs">{isExpired ? tx('Expirado') : d.status}</Badge>
                   </div>
                 </div>

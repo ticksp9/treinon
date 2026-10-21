@@ -29,12 +29,12 @@ import {
   recommendationLabel, relativeAgeNote, statusLabel, yearOfBirth,
   type AreaKey, type Recommendation, type ScoutObservation, type ScoutPlayer, type ScoutStatus,
 } from '@/lib/player-scouting';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 const NO_REC = '__none__';
-const day = (d: string) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const day = (d: string) => new Date(d).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 const num = (n: number | null) => (n != null ? String(n).replace('.', ',') : '–');
 
 interface ObsDraft { id: string | null; observed_on: string; context: string; position_played: string; minutes_seen: string; marks: Record<AreaKey, number | null>; strengths: string; weaknesses: string; notes: string; recommendation: string }

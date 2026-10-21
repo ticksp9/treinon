@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Package, Warehouse, AlertTriangle, Wrench, Users, TrendingDown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { computeStockHealth, computeConsumptionByTeam, computeMaintenanceStatus } from '@/hooks/useInventory';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   assets: any[];
@@ -19,7 +19,7 @@ export function InventoryOverviewTab({ assets, stock, movements, maintenance, al
   const consumption = computeConsumptionByTeam(movements, teams);
   const maint = computeMaintenanceStatus(maintenance);
   const totalAssetValue = assets.reduce((s, a) => s + (Number(a.acquisition_cost) || 0), 0);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const chartData = consumption.slice(0, 8).map(c => ({ name: c.team_name.substring(0, 12), custo: c.total_cost }));
 

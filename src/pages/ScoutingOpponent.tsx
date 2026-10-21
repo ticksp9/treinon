@@ -29,12 +29,12 @@ import {
   FOOT_LABEL, MOMENTS, headToHead, matchesAgainst, newSchemeBoard, nextMatchAgainst, schemesByMoment, sortSquad, sportLabel,
   type Opponent, type OpponentObservation, type OpponentPlayer, type OpponentScheme, type PlayedMatch, type SchemeMoment,
 } from '@/lib/opponent-scouting';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
 const NO_FOOT = '__none__';
-const day = (d: string) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const day = (d: string) => new Date(d).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 interface SchemeDraft { id: string | null; moment: SchemeMoment; title: string; notes: string; board: BoardState; key: string }
 interface PlayerDraft { id: string | null; shirt_number: string; name: string; position: string; foot: string; is_key: boolean; notes: string }

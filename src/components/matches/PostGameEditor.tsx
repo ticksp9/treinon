@@ -37,7 +37,7 @@ import {
 import { getMatchRuleSnapshot, type MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -667,7 +667,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
                 <div key={v.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
                     <span>{tx('Versão')}{' '}{v.version_no}</span>
-                    <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString('pt-PT')}</span>
+                    <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString(intlLocale())}</span>
                   </div>
                 </div>
               ))}
@@ -680,7 +680,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
                 <div key={log.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium">{log.action}</span>
-                    <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString('pt-PT')}</span>
+                    <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString(intlLocale())}</span>
                   </div>
                   {log.reason && <p className="text-muted-foreground text-xs mt-1">{tx('Motivo:')}{' '}{log.reason}</p>}
                 </div>

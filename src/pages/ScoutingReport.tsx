@@ -16,11 +16,11 @@ import {
   FOOT_LABEL, MOMENTS, headToHead, matchesAgainst, plannedSchemes, schemesByMoment, sortSquad, sportLabel,
   type MatchPlan, type Opponent, type OpponentObservation, type OpponentPlayer, type OpponentScheme, type PlayedMatch,
 } from '@/lib/opponent-scouting';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
-const day = (d: string) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const day = (d: string) => new Date(d).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 const H2 = ({ children }: { children: React.ReactNode }) => (
   <h2 className="mb-2 mt-6 border-b-2 border-slate-800 pb-1 text-sm font-bold uppercase tracking-wide text-slate-900">{children}</h2>

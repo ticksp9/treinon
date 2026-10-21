@@ -1,7 +1,7 @@
 /** The attendance sheet as an A4 PDF: names in rows, trainings in columns, a box to sign. */
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { dateLocale, inPdfLanguage, tx } from '@/lib/i18n/ui';
 import { NAME_COLUMN, PAGE, sheetLayout, type SheetGeometry } from '@/lib/attendance-sheet';
 
 export interface SheetPdfInput {
@@ -20,6 +20,10 @@ export function sheetGeometryFor(players: { name: string; number?: number | null
 }
 
 export function buildAttendanceSheetPdf(s: SheetPdfInput & { geometry?: SheetGeometry }): jsPDF {
+  return inPdfLanguage(() => buildSheet(s));
+}
+
+function buildSheet(s: SheetPdfInput & { geometry?: SheetGeometry }): jsPDF {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const L = sheetLayout(s.players.length, s.sessions.length, s.geometry ?? sheetGeometryFor(s.players));
   const t = L.table;
@@ -28,14 +32,14 @@ export function buildAttendanceSheetPdf(s: SheetPdfInput & { geometry?: SheetGeo
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
   const top = L.table.y >= 50 ? 0 : -6;
-  doc.text(s.season ? `Época ${s.season}` : 'Folha de Presenças', PAGE.w / 2, 18 + top / 2, { align: 'center' });
+  doc.text(s.season ? tx('Época {{name}}', { name: s.season }) : tx('Folha de Presenças'), PAGE.w / 2, 18 + top / 2, { align: 'center' });
   doc.setFontSize(13);
-  doc.text(s.season ? 'Folha de Presenças' : '', PAGE.w / 2, 25 + top / 2, { align: 'center' });
+  doc.text(s.season ? tx('Folha de Presenças') : '', PAGE.w / 2, 25 + top / 2, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(71, 85, 105);
   doc.text(s.teamName, PAGE.w / 2, 31 + top / 2, { align: 'center' });
   if (s.crest) { const h = 18, w = Math.min(h * s.crest.ratio, 24); doc.addImage(s.crest.dataUrl, 'PNG', 14, 6, w, w / s.crest.ratio); }
   doc.setFont('courier', 'bold'); doc.setFontSize(10); doc.setTextColor(15, 23, 42);
-  doc.text(`Folha ${s.code}`, PAGE.w - 14, 14, { align: 'right' });
+  doc.text(tx('Folha {{code}}', { code: s.code }), PAGE.w - 14, 14, { align: 'right' });
 
   // the four corner marks (bottom-right hollow: tells the reader which way up the photo is)
   doc.setFillColor(0, 0, 0);
@@ -48,11 +52,11 @@ export function buildAttendanceSheetPdf(s: SheetPdfInput & { geometry?: SheetGeo
   // column titles
   doc.setDrawColor(30, 41, 59); doc.setLineWidth(0.35);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(15, 23, 42);
-  doc.text('Nome', t.x + 2, t.y + L.header.h / 2 + 1.5);
+  doc.text(tx('Nome'), t.x + 2, t.y + L.header.h / 2 + 1.5);
   s.sessions.slice(0, L.cols).forEach((ses, c) => {
     const x = t.x + L.nameW + c * L.colW + L.colW / 2, d = new Date(ses.date);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(71, 85, 105);
-    doc.text(format(d, 'EEE', { locale: pt }).replace('.', ''), x, t.y + L.header.h * 0.3, { align: 'center' });
+    doc.text(format(d, 'EEE', { locale: dateLocale() }).replace('.', ''), x, t.y + L.header.h * 0.3, { align: 'center' });
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(15, 23, 42);
     doc.text(format(d, 'dd/MM'), x, t.y + L.header.h * 0.63, { align: 'center' });
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(100, 116, 139);
@@ -75,7 +79,7 @@ export function buildAttendanceSheetPdf(s: SheetPdfInput & { geometry?: SheetGeo
   // footer
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(100, 116, 139);
   const foot = L.marks[2][1] + L.markSize / 2 + 6;
-  doc.text('Cada jogador assina dentro do quadrado do dia. Não escrever sobre os quadrados pretos dos cantos.', PAGE.w / 2, foot, { align: 'center' });
-  doc.text(`Depois: TreinON > Treinos > Presenças > Ler folha assinada (fotografia) · Folha ${s.code}`, PAGE.w / 2, foot + 4.5, { align: 'center' });
+  doc.text(tx('Cada jogador assina dentro do quadrado do dia. Não escrever sobre os quadrados pretos dos cantos.'), PAGE.w / 2, foot, { align: 'center' });
+  doc.text(tx('Depois: TreinON > Treinos > Presenças > Ler folha assinada (fotografia) · Folha {{code}}', { code: s.code }), PAGE.w / 2, foot + 4.5, { align: 'center' });
   return doc;
 }

@@ -25,7 +25,7 @@ import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { orderByPosition, partLineup, shortName, type PartLineup } from '@/lib/report-lineup';
 import type { LiveTactics } from '@/lib/live-tactics';
 import { deliverPdf } from '@/lib/native-files';
-import { dateLocale, isEnglish, tr, tx, useT } from '@/lib/i18n/ui';
+import { dateLocale, tr, tx, useT, lang, inPdfLanguage } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -276,7 +276,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
     return pairs.sort((a, b) => a.minute - b.minute);
   };
 
-  const generatePdf = () => {
+  const generatePdf = () => inPdfLanguage(() => {
     setGenerating(true);
     
     try {
@@ -553,12 +553,12 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         );
       }
 
-      const fileName = `${isEnglish() ? 'match_report' : 'relatorio_jogo'}_${match.opponent_name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+      const fileName = `${lang() !== 'pt' ? 'match_report' : 'relatorio_jogo'}_${match.opponent_name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
       void deliverPdf(doc, fileName, { title: tx('Relatório de jogo') });
     } finally {
       setGenerating(false);
     }
-  };
+  });
 
   return (
     <div className="space-y-6">

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ContractorFeeBatch, PersonRegistry } from '@/hooks/useWorkforce';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
   draft: 'Rascunho', under_review: 'Em Revisão', approved: 'Aprovado', paid: 'Pago', closed: 'Fechado',
@@ -45,7 +45,7 @@ export function FeesTab({ batches, people, isLoading }: Props) {
                   <TableCell className="font-medium">{b.batch_name}</TableCell>
                   <TableCell>{b.period_reference || '—'}</TableCell>
                   <TableCell><Badge variant={b.status === 'paid' ? 'default' : 'secondary'}>{STATUS_MAP[b.status] || b.status}</Badge></TableCell>
-                  <TableCell>{new Date(b.created_at).toLocaleDateString('pt-PT')}</TableCell>
+                  <TableCell>{new Date(b.created_at).toLocaleDateString(intlLocale())}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { longDate } from '@/lib/i18n/ui';
 
 export interface NoticeResult { configured?: boolean; total?: number; sent?: number; failed?: number; skipped?: number; note?: string; error?: string; groups?: Record<string, number>; alerts?: number }
 /** who a call-up email goes to; in a club team the coordinator always gets it, whatever is chosen here */
@@ -66,7 +67,7 @@ export function announcementText(a: { title: string; content: string; priority?:
 }
 
 export function callupText(p: { team?: string; opponent: string; date: string | Date; location?: string | null; players: string[]; message?: string }): string {
-  const when = format(new Date(p.date), "EEEE, d 'de' MMMM 'às' HH:mm", { locale: pt });
+  const when = longDate(new Date(p.date), 'weekdayTime');
   return [
     `*Convocatória${p.team ? ` ${p.team}` : ''} vs ${p.opponent}*`,
     `📅 ${when}`,

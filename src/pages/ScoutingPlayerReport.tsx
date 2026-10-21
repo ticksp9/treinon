@@ -14,11 +14,11 @@ import {
   AREAS, ageOf, areaAverages, markHistory, observationMark, overallMark, recommendationLabel, relativeAgeNote, statusLabel, yearOfBirth,
   type ScoutObservation, type ScoutPlayer,
 } from '@/lib/player-scouting';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
-const day = (d: string) => new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const day = (d: string) => new Date(d).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 const num = (n: number | null) => (n != null ? String(n).replace('.', ',') : '–');
 const INK = '#0f172a', BLUE = '#1d4ed8';
 

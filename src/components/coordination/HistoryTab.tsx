@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate } from '@/lib/i18n/ui';
 
 interface HistoryTabProps {
   clubId: string;
@@ -154,7 +154,7 @@ export function HistoryTab({ clubId }: HistoryTabProps) {
                     )}
                     
                     <p className="text-xs text-muted-foreground mt-2">
-                      {format(new Date(entry.performed_at), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
+                      {longDate(new Date(entry.performed_at), 'dateTime')}
                     </p>
                   </div>
                 </div>

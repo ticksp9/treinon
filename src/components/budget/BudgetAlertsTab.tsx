@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const severityConfig = {
   info: { icon: Info, color: 'text-blue-500', variant: 'secondary' as const },
@@ -11,7 +11,7 @@ const severityConfig = {
   critical: { icon: AlertCircle, color: 'text-destructive', variant: 'destructive' as const },
 };
 
-const formatCurrency = (v: number | null) => v != null ? new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v) : '—';
+const formatCurrency = (v: number | null) => v != null ? new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v) : '—';
 
 export function BudgetAlertsTab({ clubId }: { clubId: string }) {
   const { alerts } = useBudget(clubId);

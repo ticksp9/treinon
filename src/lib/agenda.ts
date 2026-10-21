@@ -4,16 +4,17 @@
  */
 import { format, isSameDay, startOfDay } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { longDate, tx } from '@/lib/i18n/ui';
 
 export type AgendaKind = 'match' | 'training' | 'event';
 export type EventKind = 'social' | 'activity' | 'meeting' | 'tournament' | 'other';
 
 export const EVENT_KIND_LABELS: Record<EventKind, string> = {
-  social: 'Convívio / jantar',
-  activity: 'Atividade',
-  meeting: 'Reunião',
-  tournament: 'Torneio',
-  other: 'Outro',
+  get social() { return tx('Convívio / jantar'); },
+  get activity() { return tx('Atividade'); },
+  get meeting() { return tx('Reunião'); },
+  get tournament() { return tx('Torneio'); },
+  get other() { return tx('Outro'); },
 };
 
 export interface AgendaItem {
@@ -56,8 +57,8 @@ export function buildAgenda(input: {
     const team = name(m.team_id);
     items.push({
       id: m.id, kind: 'match', start: new Date(m.match_date), teamId: m.team_id, scope: team,
-      title: m.is_home ? `${team || 'Nós'} vs ${m.opponent_name}` : `${m.opponent_name} vs ${team || 'Nós'}`,
-      location: m.location || (m.is_home ? 'Casa' : 'Fora'), detail: m.competition || null, status: m.status ?? null,
+      title: m.is_home ? `${team || tx('Nós')} vs ${m.opponent_name}` : `${m.opponent_name} vs ${team || tx('Nós')}`,
+      location: m.location || (m.is_home ? tx('Casa') : tx('Fora')), detail: m.competition || null, status: m.status ?? null,
       calledUp: calledUpMatchIds?.has(m.id) ?? false,
     });
   }
@@ -67,12 +68,12 @@ export function buildAgenda(input: {
   for (const s of input.sessions ?? []) {
     const start = new Date(s.date);
     sessionDays.add(`${s.team_id}|${start.toDateString()}`);
-    items.push({ id: s.id, kind: 'training', start, teamId: s.team_id, scope: name(s.team_id), title: s.title?.trim() || 'Treino', location: s.location, status: s.status ?? null, answerable: true });
+    items.push({ id: s.id, kind: 'training', start, teamId: s.team_id, scope: name(s.team_id), title: s.title?.trim() || tx('Treino'), location: s.location, status: s.status ?? null, answerable: true });
   }
   for (const t of input.trainings ?? []) {
     if (!t.training_date) continue;
     if (sessionDays.has(`${t.team_id}|${new Date(t.training_date).toDateString()}`)) continue;
-    items.push({ id: t.id, kind: 'training', start: new Date(t.training_date), teamId: t.team_id, scope: name(t.team_id), title: t.name?.trim() || 'Treino', status: t.status ?? null });
+    items.push({ id: t.id, kind: 'training', start: new Date(t.training_date), teamId: t.team_id, scope: name(t.team_id), title: t.name?.trim() || tx('Treino'), status: t.status ?? null });
   }
   for (const e of input.events ?? []) {
     items.push({
@@ -106,7 +107,7 @@ export function groupByDay(items: AgendaItem[]): { day: Date; items: AgendaItem[
 
 export function dayLabel(day: Date, now = new Date()): string {
   const diff = Math.round((startOfDay(day).getTime() - startOfDay(now).getTime()) / 86_400_000);
-  const base = format(day, "EEEE, d 'de' MMMM", { locale: pt });
+  const base = longDate(day, 'weekday');
   if (diff === 0) return `Hoje · ${base}`;
   if (diff === 1) return `Amanhã · ${base}`;
   return base.charAt(0).toUpperCase() + base.slice(1);
@@ -129,16 +130,17 @@ export function rsvpSummary(rows: RsvpRow[], eventId: string): { yes: number; no
   return { yes, no, people };
 }
 export function rsvpSummaryText(s: { yes: number; no: number; people: number }): string {
-  if (s.yes + s.no === 0) return 'Ainda sem respostas';
-  const going = s.yes === 0 ? 'Ninguém vai' : `${s.yes} ${s.yes === 1 ? 'resposta' : 'respostas'} "vou" · ${s.people} ${s.people === 1 ? 'pessoa' : 'pessoas'}`;
-  return s.no ? `${going} · ${s.no} não ${s.no === 1 ? 'vai' : 'vão'}` : going;
+  if (s.yes + s.no === 0) return tx('Ainda sem respostas');
+  const going = s.yes === 0 ? tx('Ninguém vai')
+    : `${s.yes === 1 ? tx('1 resposta "vou"') : tx('{{n}} respostas "vou"', { n: s.yes })} · ${s.people === 1 ? tx('1 pessoa') : tx('{{n}} pessoas', { n: s.people })}`;
+  return s.no ? `${going} · ${s.no === 1 ? tx('1 não vai') : tx('{{n}} não vão', { n: s.no })}` : going;
 }
 
 /** Text to paste in the parents' WhatsApp group. */
 export function eventShareText(e: { title: string; start: Date; end?: Date | null; location?: string | null; detail?: string | null; scope?: string }): string {
   return [
     `*${e.title.trim()}*${e.scope ? ` · ${e.scope}` : ''}`,
-    `📅 ${format(e.start, "EEEE, d 'de' MMMM", { locale: pt })} · ${timeLabel(e)}`,
+    `📅 ${longDate(e.start, 'weekday')} · ${timeLabel(e)}`,
     e.location ? `📍 ${e.location}` : null,
     e.detail?.trim() ? `\n${e.detail.trim()}` : null,
   ].filter((x) => x !== null).join('\n');

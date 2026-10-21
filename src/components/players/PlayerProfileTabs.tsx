@@ -139,7 +139,7 @@ export function KindSplit({ totals }: { totals: KindTotals[] }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
                 <p className="font-mono text-xl font-bold tabular-nums">{t.minutes}'</p>
               </div>
-              <p className="text-xs text-muted-foreground">{t.played} {t.played === 1 ? 'jogo' : 'jogos'} {tx('com minutos de')}{' '}{t.matches} {t.matches === 1 ? tx('convocatória') : tx('convocatórias')} · {t.starts} titular</p>
+              <p className="text-xs text-muted-foreground">{tx('{{n}} jogos com minutos de {{m}} convocatórias · {{s}} como titular', { n: t.played, m: t.matches, s: t.starts })}</p>
               <p className="text-xs"><span className="font-semibold">{t.goals}</span> {t.goals === 1 ? 'golo' : 'golos'} · <span className="font-semibold">{t.yellow}</span> {t.yellow === 1 ? 'amarelo' : 'amarelos'} · <span className="font-semibold">{t.red}</span> {t.red === 1 ? 'vermelho' : 'vermelhos'}</p>
               {all > 0 && <Progress value={(t.minutes / all) * 100} className="h-1.5" aria-label={tx('{{v0}}: {{v1}}% dos minutos', { v0: label, v1: Math.round((t.minutes / all) * 100) })} />}
             </CardContent>
@@ -223,10 +223,10 @@ export function PlayerEvolutionTab({ playerId }: { playerId: string }) {
             <YAxis domain={[0, 10]} className="text-xs" />
             <Tooltip />
             <Legend />
-            <Line type="monotone" dataKey="Técnica" stroke="hsl(var(--primary))" />
-            <Line type="monotone" dataKey="Tática" stroke="#a855f7" />
-            <Line type="monotone" dataKey="Física" stroke="#f97316" />
-            <Line type="monotone" dataKey="Mental" stroke="#10b981" />
+            <Line type="monotone" dataKey="Técnica" name={tx('Técnica')} stroke="hsl(var(--primary))" />
+            <Line type="monotone" dataKey="Tática" name={tx('Tática')} stroke="#a855f7" />
+            <Line type="monotone" dataKey="Física" name={tx('Física')} stroke="#f97316" />
+            <Line type="monotone" dataKey="Mental" name={tx('Mental')} stroke="#10b981" />
             <Line
               type="monotone"
               dataKey="Global"

@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { deliverPdf } from '@/lib/native-files';
+import { intlLocale, inPdfLanguage, lang, tr, tx } from '@/lib/i18n/ui';
 
 interface Schedule {
   id: string;
@@ -17,7 +18,7 @@ interface Schedule {
   };
 }
 
-const DAYS_OF_WEEK = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
+const DAYS_OF_WEEK = [tr('Segunda'), tr('Terça'), tr('Quarta'), tr('Quinta'), tr('Sexta')];
 
 const SCHEDULE_COLORS: Record<string, [number, number, number]> = {
   "Petizes": [252, 231, 243],      // pink-100
@@ -30,6 +31,7 @@ const SCHEDULE_COLORS: Record<string, [number, number, number]> = {
 };
 
 export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
+  return inPdfLanguage(() => {
   const doc = new jsPDF({
     orientation: 'landscape',
     unit: 'mm',
@@ -47,7 +49,7 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
   // Title
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('Quadro Semanal de Treinos', pageWidth / 2, margin + 8, { align: 'center' });
+  doc.text(tx('Quadro Semanal de Treinos'), pageWidth / 2, margin + 8, { align: 'center' });
   
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
@@ -63,7 +65,7 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
     doc.rect(x, startY, dayWidth, 10, 'F');
     doc.setDrawColor(200, 200, 200);
     doc.rect(x, startY, dayWidth, 10, 'S');
-    doc.text(day, x + dayWidth / 2, startY + 7, { align: 'center' });
+    doc.text(tx(day), x + dayWidth / 2, startY + 7, { align: 'center' });
   });
 
   // Content area outline
@@ -134,8 +136,8 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
   doc.setFont('helvetica', 'italic');
-  const today = new Date().toLocaleDateString('pt-PT');
-  doc.text(`Gerado em ${today}`, pageWidth - margin, pageHeight - 5, { align: 'right' });
+  const today = new Date().toLocaleDateString(intlLocale());
+  doc.text(tx('Gerado em: {{date}}', { date: today }), pageWidth - margin, pageHeight - 5, { align: 'right' });
 
   // Legend
   doc.setFontSize(8);
@@ -143,7 +145,7 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
   let legendX = margin;
   const legendY = pageHeight - 8;
   
-  doc.text('Legenda:', legendX, legendY);
+  doc.text(tx('Legenda:'), legendX, legendY);
   legendX += 18;
   
   Object.entries(SCHEDULE_COLORS).slice(0, 5).forEach(([name, color]) => {
@@ -157,5 +159,6 @@ export function generateSchedulePdf(schedules: Schedule[], clubName: string) {
   });
 
   // Save
-  void deliverPdf(doc, `quadro-treinos-${today.replace(/\//g, '-')}.pdf`);
+  void deliverPdf(doc, `${lang() !== 'pt' ? 'training-schedule' : 'quadro-treinos'}-${today.replace(/\//g, '-')}.pdf`);
+  });
 }

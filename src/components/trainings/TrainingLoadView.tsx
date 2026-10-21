@@ -152,9 +152,9 @@ export function TrainingLoadView() {
       const lastEntry = playerEntries.sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
 
       let warning: string | null = null;
-      if (avgRpe >= 8 && sessionCount >= 3) warning = 'Carga elevada';
-      else if (sessionCount === 0 && parseInt(period) >= 7) warning = 'Baixa participação';
-      else if (avgRpe >= 9) warning = 'RPE muito alto';
+      if (avgRpe >= 8 && sessionCount >= 3) warning = tx('Carga elevada');
+      else if (sessionCount === 0 && parseInt(period) >= 7) warning = tx('Baixa participação');
+      else if (avgRpe >= 9) warning = tx('RPE muito alto');
 
       return {
         player,

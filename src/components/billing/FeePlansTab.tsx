@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFeePlans, useCreateFeePlan, useUpdateFeePlan } from '@/hooks/useBilling';
 import { Plus, Edit, Settings2 } from 'lucide-react';
 import { getCurrentSeasonName } from '@/lib/constants';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -55,7 +55,7 @@ export function FeePlansTab({ clubId }: Props) {
 
   if (isLoading) return <Skeleton className="h-64" />;
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   return (
     <div className="space-y-4">

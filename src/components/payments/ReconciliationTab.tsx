@@ -10,7 +10,7 @@ import { Upload, Zap, FileText, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -28,7 +28,7 @@ export function ReconciliationTab({ clubId }: Props) {
   const [bankAccountId, setBankAccountId] = useState('');
   const [newAccountName, setNewAccountName] = useState('');
   const [newAccountLabel, setNewAccountLabel] = useState('');
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const parseCsv = (text: string) => {
     const rows = text.trim().split('\n');

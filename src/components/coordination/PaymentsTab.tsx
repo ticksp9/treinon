@@ -18,7 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface PaymentsTabProps {
   clubId: string;
@@ -164,7 +164,7 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
   });
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
+    return new Intl.NumberFormat(intlLocale(), {
       style: 'currency',
       currency: 'EUR'
     }).format(value);

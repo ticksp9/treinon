@@ -1,12 +1,15 @@
 /**
- * Every text passed to t('…') / tx('…') / tr('…') in a translated screen must have its English in
- * src/lib/i18n/locales/ui.en.json (otherwise it would show in Portuguese to English users),
- * and the placeholders ({{n}}) must be the same in both.
+ * Every text passed to t('…') / tx('…') / tr('…') in a translated screen must have its translation
+ * in every language (src/lib/i18n/locales/ui.<lang>.json), otherwise it would show in Portuguese,
+ * and the placeholders ({{n}}) must be the same.
  */
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import en from '@/lib/i18n/locales/ui.en.json';
+import es from '@/lib/i18n/locales/ui.es.json';
+import de from '@/lib/i18n/locales/ui.de.json';
+import zh from '@/lib/i18n/locales/ui.zh.json';
 
 const ROOT = join(__dirname, '..', '..');
 function files(dir: string): string[] {
@@ -30,22 +33,25 @@ function used(): Map<string, string> {
   return out;
 }
 
-describe('English translation of the screens', () => {
+const LANGS: Record<string, Record<string, string>> = { en, es, de, zh };
+
+describe('translation of the screens', () => {
   const texts = used();
-  const dict = en as Record<string, string>;
 
   it('finds the translated screens', () => {
     expect(texts.size).toBeGreaterThan(50);
   });
 
-  it('every text has its English', () => {
-    const missing = [...texts].filter(([k]) => !(k in dict)).map(([k, f]) => `${f}: ${k}`);
-    expect(missing).toEqual([]);
-  });
+  for (const [code, dict] of Object.entries(LANGS)) {
+    it(`every text has its ${code} translation`, () => {
+      const missing = [...texts].filter(([k]) => !(k in dict)).map(([k, f]) => `${f}: ${k}`);
+      expect(missing).toEqual([]);
+    });
 
-  it('placeholders match', () => {
-    const vars = (s: string) => [...s.matchAll(/{{\s*(\w+)\s*}}/g)].map((m) => m[1]).sort().join(',');
-    const bad = [...texts.keys()].filter((k) => k in dict && vars(k) !== vars(dict[k]));
-    expect(bad).toEqual([]);
-  });
+    it(`placeholders match in ${code}`, () => {
+      const vars = (s: string) => [...s.matchAll(/{{s*(w+)s*}}/g)].map((m) => m[1]).sort().join(',');
+      const bad = [...texts.keys()].filter((k) => k in dict && vars(k) !== vars(dict[k]));
+      expect(bad).toEqual([]);
+    });
+  }
 });

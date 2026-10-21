@@ -18,7 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCreateInvite, useRevokeInvite, useResendInvite, useEmailStatus, type InviteType } from '@/hooks/useAccessInvites';
 import { shareText, copyText } from '@/lib/share';
 import { cn } from '@/lib/utils';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 export type StaffInviteType = Extract<InviteType, 'coach' | 'assistant_coach' | 'staff' | 'coordinator'>;
 
@@ -219,7 +219,7 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
               <p className="truncate font-medium">{i.recipient_name}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {STAFF_ROLE_LABELS[i.invite_type]} · {i.teams?.name} {tx('· código')}{' '}<span className="font-mono">{i.invite_code}</span>
-                {' · '}expira {new Date(i.expires_at).toLocaleDateString('pt-PT')}
+                {' · '}expira {new Date(i.expires_at).toLocaleDateString(intlLocale())}
               </p>
             </div>
             <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={tx('Copiar código')}

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { computeCostsByFacility, computeCostsByTeam } from '@/hooks/useFacilities';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const COST_TYPES: Record<string, string> = {
   utilities: 'Utilidades', cleaning: 'Limpeza', maintenance: 'Manutenção', rental: 'Aluguer',
@@ -26,7 +26,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base">{tx('Total: €')}{total.toLocaleString('pt-PT')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{tx('Total: €')}{total.toLocaleString(intlLocale())}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -35,7 +35,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                 {Object.entries(byFacility).sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
                   <div key={id} className="flex justify-between items-center text-sm">
                     <span>{getFacName(id)}</span>
-                    <Badge variant="outline">€{amount.toLocaleString('pt-PT')}</Badge>
+                    <Badge variant="outline">€{amount.toLocaleString(intlLocale())}</Badge>
                   </div>
                 ))}
                 {Object.keys(byFacility).length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem dados')}</p>}
@@ -47,7 +47,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                 {Object.entries(byTeam).sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
                   <div key={id} className="flex justify-between items-center text-sm">
                     <span>{getTeamName(id)}</span>
-                    <Badge variant="outline">€{amount.toLocaleString('pt-PT')}</Badge>
+                    <Badge variant="outline">€{amount.toLocaleString(intlLocale())}</Badge>
                   </div>
                 ))}
                 {Object.keys(byTeam).length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem dados')}</p>}
@@ -67,7 +67,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                   <span className="font-medium">{getFacName(c.facility_id)}</span>
                   <span className="text-muted-foreground"> • {COST_TYPES[c.cost_type] || c.cost_type} • {c.period_reference}</span>
                 </div>
-                <span className="font-medium">€{Number(c.amount).toLocaleString('pt-PT')}</span>
+                <span className="font-medium">€{Number(c.amount).toLocaleString(intlLocale())}</span>
               </div>
             ))}
             {operationalCosts.length === 0 && <p className="text-center text-muted-foreground">{tx('Nenhum custo operacional registado')}</p>}

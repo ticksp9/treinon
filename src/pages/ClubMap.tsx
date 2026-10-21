@@ -26,7 +26,7 @@ import { shareText } from '@/lib/share';
 import { addDays, findClashes, fixturesText, hhmm, timetableText, weekStart, WEEKDAYS, type MapMatch, type MatchLogistics, type TrainingSlot } from '@/lib/club-map';
 import { cn } from '@/lib/utils';
 import { useClubCoordinators } from '@/components/club/CoordinatorsPanel';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Team { id: string; name: string; category: string | null }
 
@@ -180,7 +180,7 @@ export default function ClubMap() {
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, -7))} aria-label={tx('Semana anterior')}><ChevronLeft className="h-4 w-4" /></Button>
                 <span className="min-w-[11rem] text-center text-sm font-semibold">
-                  {week.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })} – {addDays(week, 6).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {week.toLocaleDateString(intlLocale(), { day: 'numeric', month: 'short' })} – {addDays(week, 6).toLocaleDateString(intlLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
                 <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, 7))} aria-label={tx('Semana seguinte')}><ChevronRight className="h-4 w-4" /></Button>
                 {!isThisWeek && <Button size="sm" variant="ghost" onClick={() => setWeek(weekStart(new Date()))}>{tx('Esta semana')}</Button>}
@@ -196,7 +196,7 @@ export default function ClubMap() {
                 if (list.length === 0) return null;
                 return (
                   <div key={dayKey(d)}>
-                    <p className="mb-1.5 text-sm font-semibold capitalize">{d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                    <p className="mb-1.5 text-sm font-semibold capitalize">{d.toLocaleDateString(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
                     <div className="space-y-2">
                       {list.map((m) => {
                         const md = new Date(m.match_date);

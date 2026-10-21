@@ -1,3 +1,4 @@
+import { intlLocale } from '@/lib/i18n/ui';
 /** Club map helpers: weekly training timetable and weekend fixtures (pure, testable). */
 
 export interface TrainingSlot {
@@ -54,11 +55,11 @@ const time = (iso: string) => { const d = new Date(iso); return `${two(d.getHour
 
 /** WhatsApp text of the week's fixtures, grouped by day. */
 export function fixturesText(clubName: string, from: Date, matches: MapMatch[]): string {
-  const lines = [`📅 *Jogos da semana — ${clubName}*`, `${from.toLocaleDateString('pt-PT')} a ${addDays(from, 6).toLocaleDateString('pt-PT')}`];
+  const lines = [`📅 *Jogos da semana — ${clubName}*`, `${from.toLocaleDateString(intlLocale())} a ${addDays(from, 6).toLocaleDateString(intlLocale())}`];
   let day = '';
   for (const m of matches) {
     const d = new Date(m.match_date);
-    const label = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
+    const label = d.toLocaleDateString(intlLocale(), { weekday: 'long', day: 'numeric', month: 'long' });
     if (label !== day) { day = label; lines.push('', `*${label[0].toUpperCase()}${label.slice(1)}*`); }
     lines.push(`${time(m.match_date)} · ${m.team_name} ${m.is_home ? 'vs' : '@'} ${m.opponent_name}${m.location ? ` · ${m.location}` : ''}`);
     const l = m.logistics ?? {};

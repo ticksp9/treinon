@@ -18,7 +18,7 @@ import { pt } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AttendanceSheetPanel } from './AttendanceSheetPanel';
 import { cleanSchedule, plannedTrainings } from '@/lib/attendance-sheet';
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -584,7 +584,7 @@ export function TrainingAttendance() {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
-                {format(new Date(selectedSessionData.date), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: pt })}
+                {longDate(new Date(selectedSessionData.date), 'weekdayYear')}
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />

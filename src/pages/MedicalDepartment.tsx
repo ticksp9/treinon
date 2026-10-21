@@ -31,7 +31,7 @@ import { BODY_PARTS, INJURY_TYPES } from '@/lib/player-constants';
 import { getClinicalStatusOption, CLINICAL_STATUS_OPTIONS } from '@/lib/player-availability';
 import { phaseOf } from '@/lib/rehab';
 import { MECHANISMS, careGroups, daysOut, mechanismLabel, seasonSummary, type CareGroup, type CareInjury } from '@/lib/injury-care';
-import { tx } from '@/lib/i18n/ui';
+import { tx, tr } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -141,8 +141,8 @@ export default function MedicalDepartment() {
           <TabsContent value="injuries" className="space-y-4">
         {/* the season, at a glance */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {([['Lesões esta época', summary.injuries], ['Ainda em aberto', summary.open], ['Dias de paragem', summary.daysLost], ['Recaídas', summary.recurrences]] as const).map(([k, v]) => (
-            <Card key={k}><CardContent className="p-3"><p className="text-xs text-muted-foreground">{k}</p><p className="font-mono text-2xl font-bold tabular-nums">{v}</p></CardContent></Card>
+          {([[tr('Lesões esta época'), summary.injuries], [tr('Ainda em aberto'), summary.open], [tr('Dias de paragem'), summary.daysLost], [tr('Recaídas'), summary.recurrences]] as const).map(([k, v]) => (
+            <Card key={k}><CardContent className="p-3"><p className="text-xs text-muted-foreground">{tx(k)}</p><p className="font-mono text-2xl font-bold tabular-nums">{v}</p></CardContent></Card>
           ))}
         </div>
         {summary.injuries > 0 && (
@@ -310,10 +310,10 @@ function MedicalStaffCard({ clubId, canManage }: { clubId: string; canManage: bo
     queryKey: ['club-medical-staff', clubId],
     queryFn: async () => ((await db.rpc('club_medical_staff', { _club: clubId })).data ?? []) as { user_id: string; name: string; email: string | null; role: string }[],
   });
-  const call = async (mail: string, r: string, ok: string) => {
+  const call = async (mail: string, r: string, ok: (name: string) => string) => {
     const { data, error } = await db.rpc('set_medical_staff', { _club: clubId, _email: mail, _role: r });
     if (error) return toast.error(error.message);
-    toast.success(ok.replace('%', String(data)));
+    toast.success(ok(String(data)));
     setEmail('');
     qc.invalidateQueries({ queryKey: ['club-medical-staff', clubId] });
   };
@@ -327,7 +327,7 @@ function MedicalStaffCard({ clubId, canManage }: { clubId: string; canManage: bo
             {staff.map((s) => (
               <span key={s.user_id} className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm">
                 <Badge variant="secondary">{s.role === 'medico' ? tx('Médico') : tx('Fisioterapeuta')}</Badge>{s.name}
-                {canManage && s.email && <button type="button" onClick={() => window.confirm(tx('Retirar {{v0}} da equipa médica? Deixa de ver os dados clínicos.', { v0: s.name })) && call(s.email!, 'none', '% deixou a equipa médica.')} aria-label={tx('Retirar {{v0}}', { v0: s.name })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>}
+                {canManage && s.email && <button type="button" onClick={() => window.confirm(tx('Retirar {{v0}} da equipa médica? Deixa de ver os dados clínicos.', { v0: s.name })) && call(s.email!, 'none', (name) => tx('{{name}} deixou a equipa médica.', { name }))} aria-label={tx('Retirar {{v0}}', { v0: s.name })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>}
               </span>
             ))}
           </div>
@@ -339,7 +339,7 @@ function MedicalStaffCard({ clubId, canManage }: { clubId: string; canManage: bo
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="physio">{tx('Fisioterapeuta')}</SelectItem><SelectItem value="medico">{tx('Médico')}</SelectItem></SelectContent>
             </Select>
-            <Button onClick={() => call(email, role, `% faz agora parte da equipa médica.`)} disabled={!email.includes('@')}><UserPlus className="mr-1.5 h-4 w-4" />{tx('Dar acesso')}</Button>
+            <Button onClick={() => call(email, role, (name) => tx('{{name}} faz agora parte da equipa médica.', { name }))} disabled={!email.includes('@')}><UserPlus className="mr-1.5 h-4 w-4" />{tx('Dar acesso')}</Button>
           </div>
         )}
         {canManage && <p className="text-xs text-muted-foreground">{tx('A pessoa tem de ter conta na TreinON (criada em treinon.vercel.app). O médico e o fisioterapeuta veem os jogadores do clube e os dados clínicos das lesões; os treinadores e a direção veem só o estado.')}</p>}

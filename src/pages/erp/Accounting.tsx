@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 export default function Accounting() {
   const { user } = useAuth();
@@ -127,7 +127,7 @@ export default function Accounting() {
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+    return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(value);
   };
 
   const filteredTransactions = transactions?.filter(t => 
@@ -524,7 +524,7 @@ function AccountsManager({ clubId, userId, accounts }: { clubId: string; userId:
                 </div>
               </div>
               <div className="mt-4 text-2xl font-bold">
-                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(account.balance || 0)}
+                {new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(account.balance || 0)}
               </div>
             </CardContent>
           </Card>

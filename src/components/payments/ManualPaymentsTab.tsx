@@ -8,7 +8,7 @@ import { useClubPaymentSettings } from '@/hooks/useClubPaymentSettings';
 import { ManualPaymentDialog } from './ManualPaymentDialog';
 import { HandCoins, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -16,7 +16,7 @@ export function ManualPaymentsTab({ clubId }: Props) {
   const { data: charges, isLoading } = useCharges(clubId, { status: 'all' });
   const { data: paymentConfig } = useClubPaymentSettings(clubId);
   const [selectedCharge, setSelectedCharge] = useState<any>(null);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const pendingCharges = (charges || []).filter((c: any) =>
     ['pending', 'overdue', 'partially_paid'].includes(c.status)
@@ -65,7 +65,7 @@ export function ManualPaymentsTab({ clubId }: Props) {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {c.players?.name && `${c.players.name} · `}
-                    {tx('Vencimento:')}{' '}{new Date(c.due_date).toLocaleDateString('pt-PT')}
+                    {tx('Vencimento:')}{' '}{new Date(c.due_date).toLocaleDateString(intlLocale())}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

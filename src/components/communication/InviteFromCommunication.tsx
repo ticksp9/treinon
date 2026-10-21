@@ -18,7 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Copy, UserPlus, Mail, Phone, MessageCircle, Send, Eye } from 'lucide-react';
 import { renderTemplate, validateTemplateContext, PROFILE_LABELS, CHANNEL_LABELS, type TemplateContext } from '@/lib/invite-templates';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff';
 
@@ -116,7 +116,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
     inviter_name: user?.user_metadata?.full_name || 'Equipa Técnica',
     invite_link: '[link será gerado]',
     invite_code: '[código será gerado]',
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' }),
+    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(intlLocale(), { day: 'numeric', month: 'long', year: 'numeric' }),
     profile_label: PROFILE_LABELS[inviteType] || inviteType,
   }), [recipientName, selectedTeam, selectedPlayer, user, inviteType]);
 

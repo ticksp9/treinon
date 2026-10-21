@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRegisterManualPayment } from '@/hooks/useClubPaymentSettings';
 import { HandCoins } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   clubId: string;
@@ -32,7 +32,7 @@ export function ManualPaymentDialog({ clubId, chargeId, chargeDescription, balan
   const [amount, setAmount] = useState(balanceDue.toString());
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const handleSubmit = () => {
     register.mutate(

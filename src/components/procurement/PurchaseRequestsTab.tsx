@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho', submitted: 'Submetido', under_review: 'Em Revisão',
@@ -24,7 +24,7 @@ const statusColors: Record<string, string> = {
   rejected: 'bg-destructive/10 text-destructive', converted: 'bg-primary/10 text-primary', cancelled: 'bg-muted text-muted-foreground',
 };
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 export function PurchaseRequestsTab({ clubId }: { clubId: string }) {
   const { purchaseRequests, purchaseRequestsLoading, createPurchaseRequest, updatePurchaseRequestStatus } = useProcurement(clubId);

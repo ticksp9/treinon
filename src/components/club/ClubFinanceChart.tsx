@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface ClubFinanceChartProps {
   clubId: string;
@@ -108,7 +108,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
               <div>
                 <p className="text-sm text-muted-foreground">{tx('Receitas')}{' '}{selectedYear}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {totals.income.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                  {totals.income.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' })}
                 </p>
               </div>
               <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30">
@@ -123,7 +123,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
               <div>
                 <p className="text-sm text-muted-foreground">{tx('Despesas')}{' '}{selectedYear}</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {totals.expense.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                  {totals.expense.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' })}
                 </p>
               </div>
               <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
@@ -138,7 +138,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
               <div>
                 <p className="text-sm text-muted-foreground">{tx('Balanço')}{' '}{selectedYear}</p>
                 <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {balance.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                  {balance.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' })}
                 </p>
               </div>
               <div className={`p-3 rounded-full ${balance >= 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
@@ -193,7 +193,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
                   className="text-xs"
                 />
                 <Tooltip 
-                  formatter={(value: number) => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                  formatter={(value: number) => value.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' })}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
@@ -228,7 +228,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
                   className="text-xs"
                 />
                 <Tooltip 
-                  formatter={(value: number) => value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
+                  formatter={(value: number) => value.toLocaleString(intlLocale(), { style: 'currency', currency: 'EUR' })}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',

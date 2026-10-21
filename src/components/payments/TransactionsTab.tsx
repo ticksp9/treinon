@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentTransactions } from '@/hooks/usePaymentIntents';
 import { format } from 'date-fns';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -19,7 +19,7 @@ const METHOD_MAP: Record<string, string> = {
 
 export function TransactionsTab({ clubId }: Props) {
   const { data: txns, isLoading } = usePaymentTransactions(clubId);
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   if (isLoading) return <Skeleton className="h-64" />;
 

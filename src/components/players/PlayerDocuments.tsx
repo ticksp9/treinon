@@ -229,20 +229,20 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
     <div className="grid gap-4 md:grid-cols-3">
       {renderUploadCard(
         'photo_url',
-        'Foto do Jogador',
-        'Foto para identificação',
+        tx('Foto do Jogador'),
+        tx('Foto para identificação'),
         'image/jpeg,image/png,image/webp'
       )}
       {renderUploadCard(
         'id_document_url',
-        'Documento de Identificação',
-        'CC, Passaporte ou Título de Residência',
+        tx('Documento de Identificação'),
+        tx('CC, Passaporte ou Título de Residência'),
         'image/jpeg,image/png,image/webp,application/pdf'
       )}
       {renderUploadCard(
         'medical_certificate_url',
-        'Atestado Médico',
-        'Certificado médico desportivo',
+        tx('Atestado Médico'),
+        tx('Certificado médico desportivo'),
         'image/jpeg,image/png,image/webp,application/pdf'
       )}
     </div>

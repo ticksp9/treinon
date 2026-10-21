@@ -10,9 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import type { PayrollCycle, PayrollEntry, PersonRegistry } from '@/hooks/useWorkforce';
 import { computePayrollTotals } from '@/hooks/useWorkforce';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 const STATUS_MAP: Record<string, string> = {
   draft: 'Rascunho', calculated: 'Calculado', under_review: 'Em Revisão',

@@ -18,7 +18,7 @@ import {
   CheckCircle2, AlertTriangle, XCircle, Info, Unplug
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -222,7 +222,7 @@ export function PaymentConfigTab({ clubId }: Props) {
 
                 {account.last_sync_at && (
                   <p className="text-xs text-muted-foreground">
-                    {tx('Última sincronização:')}{' '}{new Date(account.last_sync_at).toLocaleString('pt-PT')}
+                    {tx('Última sincronização:')}{' '}{new Date(account.last_sync_at).toLocaleString(intlLocale())}
                   </p>
                 )}
               </>

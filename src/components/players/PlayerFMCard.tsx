@@ -13,7 +13,7 @@ import { abilityStars, computeForm, currentAbility, ratingBg, ratingTone } from 
 import { cn } from '@/lib/utils';
 import { getSeasonName } from '@/lib/constants';
 import { POSITIONS, FOOT_OPTIONS } from '@/lib/player-constants';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface EvalRow { evaluation_date: string; attributes: AttributeScores | null; overall_rating: number | null }
 interface RatingRow { rating: number; date: string; opponent: string | null }
@@ -63,7 +63,7 @@ export function summarizeAbsences(rows: { match_date: string; opponent_name: str
   for (const r of rows) {
     const map = (r.absences && typeof r.absences === 'object' ? r.absences : {}) as Record<string, unknown>;
     if (!(playerId in map)) continue;
-    const reason = typeof map[playerId] === 'string' && (map[playerId] as string).trim() ? (map[playerId] as string).trim() : 'Sem motivo indicado';
+    const reason = typeof map[playerId] === 'string' && (map[playerId] as string).trim() ? (map[playerId] as string).trim() : tx('Sem motivo indicado');
     list.push({ date: r.match_date, opponent: r.opponent_name, reason });
   }
   list.sort((a, b) => b.date.localeCompare(a.date));
@@ -72,7 +72,7 @@ export function summarizeAbsences(rows: { match_date: string; opponent_name: str
   return { total: list.length, byReason: [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])), list };
 }
 
-const fmtDate = (d: string) => new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+const fmtDate = (d: string) => new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString(intlLocale(), { day: '2-digit', month: '2-digit' });
 
 function Stars({ value }: { value: number }) {
   return (
@@ -137,10 +137,10 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   const age = bio?.birth_date ? Math.floor((Date.now() - new Date(bio.birth_date).getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
   const posLabel = (v: string | null | undefined) => (v ? [...POSITIONS.football, ...POSITIONS.futsal].find((p) => p.value === v)?.label ?? v : null);
   const bioItems: [string, string | null][] = [
-    ['Posição', posLabel(bio?.position)],
-    ['Outras posições', bio?.secondary_positions?.length ? bio.secondary_positions.map((p) => posLabel(p)).join(', ') : null],
-    ['Pé preferido', bio?.foot ? FOOT_OPTIONS.find((o) => o.value === bio.foot)?.label ?? bio.foot : null],
-    ['Idade', age != null ? `${age} anos` : null],
+    [tx('Posição'), posLabel(bio?.position)],
+    [tx('Outras posições'), bio?.secondary_positions?.length ? bio.secondary_positions.map((p) => posLabel(p)).join(', ') : null],
+    [tx('Pé preferido'), bio?.foot ? FOOT_OPTIONS.find((o) => o.value === bio.foot)?.label ?? bio.foot : null],
+    [tx('Idade'), age != null ? tx('{{n}} anos', { n: age }) : null],
     ['Altura', bio?.height_cm ? `${bio.height_cm} cm` : null],
     ['Peso', bio?.weight_kg ? `${bio.weight_kg} kg` : null],
   ];
@@ -323,8 +323,8 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
                   <YAxis domain={[1, 10]} ticks={[2, 4, 6, 8, 10]} tick={{ fontSize: 11 }} />
                   <Tooltip />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="ability" name="Nota (avaliação)" stroke="hsl(var(--primary))" strokeWidth={2} connectNulls dot />
-                  <Line type="monotone" dataKey="rating" name="Nota de jogo" stroke="hsl(var(--accent))" strokeWidth={1.5} connectNulls dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="ability" name={tx('Nota (avaliação)')} stroke="hsl(var(--primary))" strokeWidth={2} connectNulls dot />
+                  <Line type="monotone" dataKey="rating" name={tx('Nota de jogo')} stroke="hsl(var(--accent))" strokeWidth={1.5} connectNulls dot={{ r: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

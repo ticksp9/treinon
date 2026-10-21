@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search } from 'lucide-react';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
   in_stock: 'Em Stock', assigned: 'Atribuído', in_use: 'Em Uso', maintenance: 'Manutenção',
@@ -30,7 +30,7 @@ export function AssetsTab({ assets, onCreateAsset }: Props) {
     a.asset_code?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const handleSubmit = () => {
     if (!form.asset_code || !form.name) return;

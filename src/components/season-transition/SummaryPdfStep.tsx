@@ -12,7 +12,7 @@ import { AGE_CATEGORIES } from '@/lib/constants';
 import jsPDF from 'jspdf';
 import { Database } from '@/integrations/supabase/types';
 import { deliverPdf } from '@/lib/native-files';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale, inPdfLanguage, lang } from '@/lib/i18n/ui';
 
 type SeasonPlayerStatus = Database['public']['Enums']['season_player_status'];
 
@@ -188,7 +188,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     return playerPlans?.filter(p => p.status === 'leaves') || [];
   }, [playerPlans]);
 
-  const generatePDF = () => {
+  const generatePDF = () => inPdfLanguage(() => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     let y = 20;
@@ -196,7 +196,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     // Title
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Mapeamento de Equipas - ${seasonName}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(tx('Mapeamento de Equipas - {{name}}', { name: seasonName }), pageWidth / 2, y, { align: 'center' });
     
     y += 8;
     if (clubName) {
@@ -207,13 +207,13 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     }
 
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-PT')}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(tx('Gerado em: {{date}}', { date: new Date().toLocaleDateString(intlLocale()) }), pageWidth / 2, y, { align: 'center' });
     y += 15;
 
     // Summary stats
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Resumo', 14, y);
+    doc.text(tx('Resumo'), 14, y);
     y += 7;
 
     doc.setFontSize(10);
@@ -223,9 +223,9 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     const promotingCount = playerPlans?.filter(p => p.status === 'promotes').length || 0;
     const leavingCount = playerPlans?.filter(p => p.status === 'leaves').length || 0;
 
-    doc.text(`Total de jogadores: ${totalPlayers}`, 14, y);
+    doc.text(tx('Total de jogadores: {{n}}', { n: totalPlayers }), 14, y);
     y += 5;
-    doc.text(`Mantêm-se: ${stayingCount} | Sobem: ${promotingCount} | Saem: ${leavingCount}`, 14, y);
+    doc.text(tx('Mantêm-se: {{a}} | Sobem: {{b}} | Saem: {{c}}', { a: stayingCount, b: promotingCount, c: leavingCount }), 14, y);
     y += 10;
 
     // Teams section
@@ -242,16 +242,16 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
       
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${data.team.name} (${data.team.category || 'Sem escalão'})`, 16, y);
+      doc.text(`${data.team.name} (${data.team.category || tx('Sem escalão')})`, 16, y);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${data.totalPlayers} jogadores`, pageWidth - 16, y, { align: 'right' });
+      doc.text(tx('{{n}} jogadores', { n: data.totalPlayers }), pageWidth - 16, y, { align: 'right' });
       y += 10;
 
       // Coaches
       if (data.coaches.length > 0) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('Treinadores:', 16, y);
+        doc.text(tx('Treinadores:'), 16, y);
         doc.setFont('helvetica', 'normal');
         const coachText = data.coaches.map(c => `${c.name} (${c.role})`).join(', ');
         doc.text(coachText, 40, y);
@@ -262,7 +262,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
       if (data.stayingPlayers.length > 0) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Mantêm-se (${data.stayingPlayers.length}):`, 16, y);
+        doc.text(tx('Mantêm-se ({{n}}):', { n: data.stayingPlayers.length }), 16, y);
         y += 5;
         doc.setFont('helvetica', 'normal');
         
@@ -279,7 +279,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
       if (data.incomingPlayers.length > 0) {
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Chegam (${data.incomingPlayers.length}):`, 16, y);
+        doc.text(tx('Chegam ({{n}}):', { n: data.incomingPlayers.length }), 16, y);
         y += 5;
         doc.setFont('helvetica', 'normal');
         
@@ -304,7 +304,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
 
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Jogadores que Saem do Clube (${leavingPlayers.length})`, 14, y);
+      doc.text(tx('Jogadores que Saem do Clube ({{n}})', { n: leavingPlayers.length }), 14, y);
       y += 7;
 
       doc.setFontSize(9);
@@ -320,7 +320,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
       doc.setPage(i);
       doc.setFontSize(8);
       doc.text(
-        `Página ${i} de ${pageCount}`,
+        tx('Página {{i}} de {{n}}', { i, n: pageCount }),
         pageWidth / 2,
         doc.internal.pageSize.getHeight() - 10,
         { align: 'center' }
@@ -328,10 +328,10 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     }
 
     // Save
-    const filename = `mapeamento-equipas-${seasonName.replace('/', '-')}.pdf`;
+    const filename = `${lang() !== 'pt' ? 'team-mapping' : 'mapeamento-equipas'}-${seasonName.replace('/', '-')}.pdf`;
     void deliverPdf(doc, filename);
     toast.success(tx('PDF gerado com sucesso'));
-  };
+  });
 
   const isLoading = teamsLoading || plansLoading || assignmentsLoading || profilesLoading;
 

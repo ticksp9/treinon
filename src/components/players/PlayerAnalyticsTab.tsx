@@ -284,7 +284,7 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="period" className="text-xs" />
                 <YAxis className="text-xs" />
-                <Tooltip formatter={(v: any) => [`${Number(v).toFixed(0)}'`, 'Média']} />
+                <Tooltip formatter={(v: any) => [`${Number(v).toFixed(0)}'`, tx('Média')]} />
                 <Line
                   type="monotone"
                   dataKey="avgMinutes"
@@ -340,10 +340,10 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
                 <YAxis domain={[0, 10]} className="text-xs" />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="Técnica" stroke="#3b82f6" />
-                <Line type="monotone" dataKey="Tática"  stroke="#a855f7" />
-                <Line type="monotone" dataKey="Física"  stroke="#f97316" />
-                <Line type="monotone" dataKey="Mental"  stroke="#10b981" />
+                <Line type="monotone" dataKey="Técnica" name={tx('Técnica')} stroke="#3b82f6" />
+                <Line type="monotone" dataKey="Tática" name={tx('Tática')} stroke="#a855f7" />
+                <Line type="monotone" dataKey="Física" name={tx('Física')} stroke="#f97316" />
+                <Line type="monotone" dataKey="Mental" name={tx('Mental')} stroke="#10b981" />
                 <Line type="monotone" dataKey="Global"  stroke="hsl(var(--foreground))" strokeWidth={2} strokeDasharray="4 4" />
               </LineChart>
             </ResponsiveContainer>
@@ -366,9 +366,9 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
                 <PolarGrid />
                 <PolarAngleAxis dataKey="category" className="text-xs" />
                 <PolarRadiusAxis angle={30} domain={[0, 10]} />
-                <Radar name="Jogador" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} />
+                <Radar name={tx('Jogador')} dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} />
                 {peerAverages && (
-                  <Radar name="Média posição" dataKey="positionAvg" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} />
+                  <Radar name={tx('Média posição')} dataKey="positionAvg" stroke="#a855f7" fill="#a855f7" fillOpacity={0.2} />
                 )}
                 <Legend />
                 <Tooltip />

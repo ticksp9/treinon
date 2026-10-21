@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { tx } from '@/lib/i18n/ui';
+import { tx, longDate, intlLocale } from '@/lib/i18n/ui';
 
 export default function ERPDashboard() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
@@ -141,7 +141,7 @@ export default function ERPDashboard() {
   }
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+    return new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(value);
   };
 
   return (
@@ -150,7 +150,7 @@ export default function ERPDashboard() {
         <div>
           <h1 className="text-2xl font-display font-bold">{tx('ERP do Clube')}</h1>
           <p className="text-muted-foreground">
-            {tx('Visão geral da gestão financeira -')}{' '}{format(now, "MMMM 'de' yyyy", { locale: pt })}
+            {tx('Visão geral da gestão financeira -')}{' '}{longDate(now, 'monthYear')}
           </p>
         </div>
 

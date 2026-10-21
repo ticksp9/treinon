@@ -5,7 +5,7 @@ import { Users, FileText, Wallet, AlertTriangle, TrendingUp, Clock } from 'lucid
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { PersonRegistry, EmploymentContract, PayrollEntry, StatutoryObligation, ContractAlert } from '@/hooks/useWorkforce';
 import { computePayrollTotals, computeObligationAging } from '@/hooks/useWorkforce';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props {
   people: PersonRegistry[];
@@ -16,7 +16,7 @@ interface Props {
   isLoading: boolean;
 }
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 export function WorkforceOverviewTab({ people, contracts, payrollEntries, obligations, alerts, isLoading }: Props) {
   if (isLoading) return <div className="grid grid-cols-1 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-32" />)}</div>;

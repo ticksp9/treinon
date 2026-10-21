@@ -5,9 +5,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { StatutoryObligation, ContractAlert } from '@/hooks/useWorkforce';
 import { computeObligationAging } from '@/hooks/useWorkforce';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
-const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
 const TYPE_LABELS: Record<string, string> = {
   salary: 'Salário', social_security: 'Seg. Social', tax_withholding: 'Retenção IRS',

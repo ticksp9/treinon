@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
 import { getCurrentSeasonName } from '@/lib/constants';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -50,7 +50,7 @@ export function FeeAssignmentsTab({ clubId }: Props) {
     enabled: !!clubId,
   });
 
-  const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+  const fmt = (v: number) => new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(v);
 
   const handleCreate = () => {
     createAssignment.mutate({

@@ -11,7 +11,8 @@ export function useLanguage() {
   useEffect(() => {
     const loadLanguagePreference = async () => {
       // what was chosen on this device; the account's choice wins when there is one
-      let languageToUse = (() => { try { return localStorage.getItem('language') || 'pt'; } catch { return 'pt'; } })();
+      const stored = (() => { try { return localStorage.getItem('language'); } catch { return null; } })();
+      let languageToUse = stored || (i18n.language || 'pt').slice(0, 2);
 
       // If user is authenticated, fetch from profile
       if (user) {
@@ -21,10 +22,12 @@ export function useLanguage() {
           .eq('id', user.id)
           .single();
 
-        if (profile?.language) {
+        // 'pt' is the column's default, not a choice: on a new device the phone's language wins and is saved
+        if (profile?.language && (stored || profile.language !== 'pt')) {
           languageToUse = profile.language;
-          // Also update localStorage
-          localStorage.setItem('language', profile.language);
+          try { localStorage.setItem('language', profile.language); } catch { /* private mode */ }
+        } else if (profile && profile.language !== languageToUse && (READY_LANGUAGES as readonly string[]).includes(languageToUse)) {
+          await supabase.from('profiles').update({ language: languageToUse }).eq('id', user.id);
         }
       }
       // only the languages the app is translated into

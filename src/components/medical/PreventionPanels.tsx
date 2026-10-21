@@ -29,7 +29,7 @@ import {
   EXAM_LABEL, FAST_GROWTH_CM_YEAR, addWorkingDays, daysLeft, examState, growthVelocity, measureDue, oneYearFrom, warmupByWeek,
   type ExamState, type Measure,
 } from '@/lib/prevention';
-import { tx } from '@/lib/i18n/ui';
+import { tx, inPdfLanguage } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -114,7 +114,7 @@ function MeasureDialog({ players, onClose, onSaved }: { players: CarePlayer[]; o
     const { error } = await db.from('player_growth').upsert(rows, { onConflict: 'player_id,measured_on' });
     setBusy(false);
     if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
-    toast.success(`${rows.length} ${rows.length === 1 ? 'medição guardada' : 'medições guardadas'}.`);
+    toast.success(rows.length === 1 ? tx('1 medição guardada.') : tx('{{n}} medições guardadas.', { n: rows.length }));
     onSaved();
   };
   return (
@@ -151,7 +151,7 @@ export function ExamsInsurancePanel({ players }: { players: CarePlayer[] }) {
   const [days, setDays] = useState(5);
   const [submitFor, setSubmitFor] = useState<{ claim: Claim; date: string; number: string } | null>(null);
   const ids = players.map((p) => p.id);
-  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? 'Jogador';
+  const nameOf = (id: string) => players.find((p) => p.id === id)?.name ?? tx('Jogador');
   const { data } = useQuery({
     queryKey: ['exams-claims', ids.join(',')],
     enabled: ids.length > 0,
@@ -371,16 +371,16 @@ export function SeasonPanel({ injuries, players }: { injuries: SeasonInjury[]; p
   const total = seasonSummary(season);
   const partLabel = (v: string) => BODY_PARTS.find((b) => b.value === v)?.label ?? v;
 
-  const pdf = () => {
+  const pdf = () => inPdfLanguage(() => {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('Departamento medico - resumo da epoca', 14, 18);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(tx('Departamento médico - resumo da época'), 14, 18);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(100, 116, 139);
-    doc.text(`Desde ${format(new Date(start), 'dd/MM/yyyy')} ate ${format(now, 'dd/MM/yyyy')}`, 14, 25);
+    doc.text(tx('Desde {{a}} até {{b}}', { a: format(new Date(start), 'dd/MM/yyyy'), b: format(now, 'dd/MM/yyyy') }), 14, 25);
     doc.setTextColor(15, 23, 42); doc.setFontSize(11);
-    doc.text(`Lesoes: ${total.injuries}   Em aberto: ${total.open}   Dias de paragem: ${total.daysLost}   Recaidas: ${total.recurrences}`, 14, 34);
+    doc.text(tx('Lesões: {{a}}   Em aberto: {{b}}   Dias de paragem: {{c}}   Recaídas: {{d}}', { a: total.injuries, b: total.open, c: total.daysLost, d: total.recurrences }), 14, 34);
     let y = 44;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-    ['Equipa', 'Jogadores', 'Lesoes', 'Abertas', 'Dias perdidos', 'Recaidas', 'Em jogo'].forEach((h, i) => doc.text(h, [14, 70, 92, 110, 128, 154, 174][i], y));
+    [tx('Equipa'), tx('Jogadores'), tx('Lesões'), tx('Abertas'), tx('Dias perdidos'), tx('Recaídas'), tx('Em jogo')].forEach((h, i) => doc.text(h, [14, 70, 92, 110, 128, 154, 174][i], y));
     doc.line(14, y + 2, 196, y + 2); y += 7; doc.setFont('helvetica', 'normal');
     byTeam.forEach((t) => {
       [t.name, String(t.squad), String(t.injuries), String(t.open), String(t.daysLost), String(t.recurrences), `${t.matchShare}%`].forEach((v, i) => doc.text(v, [14, 70, 92, 110, 128, 154, 174][i], y));
@@ -392,7 +392,7 @@ export function SeasonPanel({ injuries, players }: { injuries: SeasonInjury[]; p
     doc.text(total.byMechanism.map((m) => `${mechanismLabel(m.mechanism) ?? m.mechanism} (${m.n})`).join(', ') || '-', 14, y);
     doc.setFontSize(8); doc.setTextColor(148, 163, 184); doc.text(`Gerado no TreinON em ${format(now, 'dd/MM/yyyy HH:mm')}. Sem diagnosticos (dados de saude ficam no departamento medico).`, 14, 285);
     void deliverPdf(doc, `departamento-medico-epoca-${format(now, 'yyyy-MM-dd')}.pdf`);
-  };
+  });
 
   return (
     <div className="space-y-3">

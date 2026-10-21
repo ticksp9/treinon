@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -338,7 +338,7 @@ export default function Athletes() {
                       </div>
                     </div>
                     <div className="mt-4 text-xl font-bold">
-                      {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(kit.price)}
+                      {new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(kit.price)}
                     </div>
                   </CardContent>
                 </Card>
@@ -374,7 +374,7 @@ export default function Athletes() {
                           <TableCell>{assignment.kits?.name}</TableCell>
                           <TableCell>{assignment.size || '-'}</TableCell>
                           <TableCell>
-                            {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(assignment.amount)}
+                            {new Intl.NumberFormat(intlLocale(), { style: 'currency', currency: 'EUR' }).format(assignment.amount)}
                           </TableCell>
                           <TableCell>
                             <Badge variant={

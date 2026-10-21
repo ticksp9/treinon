@@ -31,7 +31,7 @@ import {
   type DeliveryChannel,
   type ProfileType,
 } from '@/lib/template-engine';
-import { tx } from '@/lib/i18n/ui';
+import { tx, intlLocale } from '@/lib/i18n/ui';
 
 const PROFILE_OPTIONS = [
   { value: 'guardian', get label() { return tx('Encarregado'); } },
@@ -515,7 +515,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                                       {v.is_published && <Badge className="text-[9px]">{tx('Publicado')}</Badge>}
                                     </div>
                                     <span className="text-[10px] text-muted-foreground">
-                                      {new Date(v.created_at).toLocaleString('pt-PT')}
+                                      {new Date(v.created_at).toLocaleString(intlLocale())}
                                     </span>
                                   </div>
                                   {v.change_notes && (
@@ -556,7 +556,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                                 <div key={ev.id} className="text-[11px] flex items-center gap-2">
                                   <Badge variant="secondary" className="text-[9px] shrink-0">{ev.event_type}</Badge>
                                   <span className="text-muted-foreground truncate">
-                                    {new Date(ev.created_at).toLocaleString('pt-PT')}
+                                    {new Date(ev.created_at).toLocaleString(intlLocale())}
                                   </span>
                                 </div>
                               ))}

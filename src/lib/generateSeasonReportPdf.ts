@@ -1,6 +1,7 @@
 // Lightweight season report PDF using jsPDF (already present in repo deps via generatePlayerPdf).
 import { supabase } from '@/integrations/supabase/client';
 import { deliverPdf } from '@/lib/native-files';
+import { inPdfLanguage, lang, tx } from '@/lib/i18n/ui';
 
 export async function generateSeasonReportPdf(seasonId: string, seasonName: string): Promise<void> {
   const [{ data: matches }, { data: trainings }, { data: attendance }, { data: evaluations }, { data: enrollments }] = await Promise.all([
@@ -15,28 +16,31 @@ export async function generateSeasonReportPdf(seasonId: string, seasonName: stri
   const rate = (attendance || []).length ? Math.round((presentCount / (attendance || []).length) * 100) : 0;
 
   const { jsPDF } = await import('jspdf');
+  const doc = inPdfLanguage(() => {
   const doc = new jsPDF();
   doc.setFontSize(16);
-  doc.text(`Relatório de Época — ${seasonName}`, 14, 18);
+  doc.text(tx('Relatório de Época — {{name}}', { name: seasonName }), 14, 18);
   doc.setFontSize(11);
   let y = 30;
   const line = (label: string, value: string | number) => { doc.text(`${label}: ${value}`, 14, y); y += 7; };
-  line('Jogos', (matches || []).length);
-  line('Treinos', (trainings || []).length);
-  line('Presenças registadas', (attendance || []).length);
-  line('Taxa de presença', `${rate}%`);
-  line('Avaliações', (evaluations || []).length);
-  line('Jogadores inscritos', (enrollments || []).length);
+  line(tx('Jogos'), (matches || []).length);
+  line(tx('Treinos'), (trainings || []).length);
+  line(tx('Presenças registadas'), (attendance || []).length);
+  line(tx('Taxa de presença'), `${rate}%`);
+  line(tx('Avaliações'), (evaluations || []).length);
+  line(tx('Jogadores inscritos'), (enrollments || []).length);
 
   y += 4;
   doc.setFontSize(12);
-  doc.text('Resumo de jogos', 14, y); y += 6;
+  doc.text(tx('Resumo de jogos'), 14, y); y += 6;
   doc.setFontSize(9);
   (matches || []).slice(0, 40).forEach((m: any) => {
     const txt = `${m.match_date || ''} · ${m.home_team || ''} ${m.home_score ?? '-'}–${m.away_score ?? '-'} ${m.away_team || ''}`;
     if (y > 280) { doc.addPage(); y = 20; }
     doc.text(txt, 14, y); y += 5;
   });
+  return doc;
+  });
 
-  void deliverPdf(doc, `epoca-${seasonName.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
+  void deliverPdf(doc, `${lang() !== 'pt' ? 'season' : 'epoca'}-${seasonName.replace(/[^a-z0-9]+/gi, '_')}.pdf`);
 }

@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 /**
  * Prevention and the season, for the medical department:
  *  - growth: how fast a player is growing (cm per year). Around the growth spurt the knee and
@@ -47,7 +48,10 @@ export function examState(validUntil: string | null | undefined, today = new Dat
   const left = (utc(validUntil) - utc(todayIso(today))) / DAY;
   return left < 0 ? 'expired' : left <= 30 ? 'soon' : 'ok';
 }
-export const EXAM_LABEL: Record<ExamState, string> = { missing: 'Sem exame registado', expired: 'Exame caducado', soon: 'Exame a caducar', ok: 'Exame válido' };
+export const EXAM_LABEL: Record<ExamState, string> = {
+  get missing() { return tx('Sem exame registado'); }, get expired() { return tx('Exame caducado'); },
+  get soon() { return tx('Exame a caducar'); }, get ok() { return tx('Exame válido'); },
+};
 
 /** The same day one year later, less a day (an exam of 17/10/2026 is valid until 16/10/2027). */
 export function oneYearFrom(iso: string): string {
