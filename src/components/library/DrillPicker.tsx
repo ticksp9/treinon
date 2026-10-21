@@ -8,6 +8,7 @@ import { DrillDiagram } from './DrillDiagram';
 import { DRILLS, drillToText } from '@/lib/drill-library';
 import { autoAnimate, elementsAt } from '@/lib/drill-library/animation';
 import { useCoachDrills, type AnyDrill } from '@/lib/drill-library/custom';
+import { tx } from '@/lib/i18n/ui';
 
 export interface PickedExercise {
   id: string;
@@ -40,12 +41,12 @@ export function DrillPicker({ open, onClose, onPick }: { open: boolean; onClose:
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Escolher exercício</DialogTitle>
-          <DialogDescription>Os seus, os do clube e os da biblioteca TreinON.</DialogDescription>
+          <DialogTitle>{tx('Escolher exercício')}</DialogTitle>
+          <DialogDescription>{tx('Os seus, os do clube e os da biblioteca TreinON.')}</DialogDescription>
         </DialogHeader>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Procurar…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx('Procurar…')} className="pl-9" />
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {list.map((d) => (
@@ -56,12 +57,12 @@ export function DrillPicker({ open, onClose, onPick }: { open: boolean; onClose:
               </div>
               <div className="p-2">
                 <p className="truncate text-sm font-medium">{d.name}</p>
-                <p className="text-xs text-muted-foreground">{d.minutes} min · {d.source === 'mine' ? 'Meu' : d.source === 'club' ? 'Do clube' : 'Biblioteca'}</p>
+                <p className="text-xs text-muted-foreground">{d.minutes} {tx('min ·')}{' '}{d.source === 'mine' ? tx('Meu') : d.source === 'club' ? tx('Do clube') : tx('Biblioteca')}</p>
               </div>
             </button>
           ))}
         </div>
-        <Button variant="outline" onClick={onClose}>Fechar</Button>
+        <Button variant="outline" onClick={onClose}>{tx('Fechar')}</Button>
       </DialogContent>
     </Dialog>
   );

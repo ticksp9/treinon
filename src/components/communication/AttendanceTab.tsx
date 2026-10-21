@@ -23,6 +23,7 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface AttendanceTabProps {
   clubId: string | null;
@@ -46,10 +47,10 @@ export function AttendanceTab({ clubId, userId, canManage }: AttendanceTabProps)
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Presenças</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">{tx('Presenças')}</h3>
         {canManage && (
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Nova Chamada
+            <Plus className="h-4 w-4 mr-1" /> {tx('Nova Chamada')}
           </Button>
         )}
       </div>
@@ -57,7 +58,7 @@ export function AttendanceTab({ clubId, userId, canManage }: AttendanceTabProps)
       {requests.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <ClipboardCheck className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhuma chamada de presença</p>
+          <p className="text-sm">{tx('Nenhuma chamada de presença')}</p>
         </div>
       ) : (
         <ScrollArea className="max-h-[60vh] md:max-h-none">
@@ -114,7 +115,7 @@ function AttendanceRequestCard({
               <ClipboardCheck className="h-4 w-4 text-primary shrink-0" />
               <h4 className="text-sm font-semibold truncate">{request.event_title}</h4>
               <Badge variant={request.status === 'open' ? 'default' : 'secondary'} className="text-[10px]">
-                {request.status === 'open' ? 'Aberta' : 'Fechada'}
+                {request.status === 'open' ? tx('Aberta') : tx('Fechada')}
               </Badge>
             </div>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -130,7 +131,7 @@ function AttendanceRequestCard({
               {request.deadline && (
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Prazo: {format(new Date(request.deadline), "d MMM HH:mm", { locale: pt })}
+                  {tx('Prazo:')}{' '}{format(new Date(request.deadline), "d MMM HH:mm", { locale: pt })}
                 </span>
               )}
             </div>
@@ -172,7 +173,7 @@ function AttendanceDetailDialog({
   const handleRespond = (value: string) => {
     respond.mutate(
       { requestId: request.id, response: value, comment: comment.trim() || undefined },
-      { onSuccess: () => { toast.success('Resposta registada'); setComment(''); } }
+      { onSuccess: () => { toast.success(tx('Resposta registada')); setComment(''); } }
     );
   };
 
@@ -189,29 +190,29 @@ function AttendanceDetailDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-1 text-success">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Confirmados: {confirmed}
+                <CheckCircle2 className="h-3.5 w-3.5" /> {tx('Confirmados:')}{' '}{confirmed}
               </span>
               <span className="flex items-center gap-1 text-destructive">
-                <XCircle className="h-3.5 w-3.5" /> Ausentes: {declined}
+                <XCircle className="h-3.5 w-3.5" /> {tx('Ausentes:')}{' '}{declined}
               </span>
               <span className="flex items-center gap-1 text-warning">
-                <HelpCircle className="h-3.5 w-3.5" /> Talvez: {maybe}
+                <HelpCircle className="h-3.5 w-3.5" /> {tx('Talvez:')}{' '}{maybe}
               </span>
             </div>
             <Progress value={(confirmed / total) * 100} className="h-2" />
             <p className="text-xs text-muted-foreground text-center">
-              {confirmed} de {responses.length} confirmados · {pending} pendentes
+              {confirmed} de {responses.length} {tx('confirmados ·')}{' '}{pending} pendentes
             </p>
           </div>
 
           {/* My response */}
           {request.status === 'open' && (
             <div className="border-t pt-3 space-y-2">
-              <Label className="text-sm font-medium">A sua resposta</Label>
+              <Label className="text-sm font-medium">{tx('A sua resposta')}</Label>
               {myResponse && myResponse.response !== 'pending' ? (
                 <div className="flex items-center gap-2">
                   <Badge variant={myResponse.response === 'confirmed' ? 'default' : 'secondary'}>
-                    {myResponse.response === 'confirmed' ? 'Confirmado' : myResponse.response === 'declined' ? 'Ausente' : 'Talvez'}
+                    {myResponse.response === 'confirmed' ? tx('Confirmado') : myResponse.response === 'declined' ? tx('Ausente') : tx('Talvez')}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {myResponse.responded_at && format(new Date(myResponse.responded_at), 'dd/MM HH:mm')}
@@ -222,18 +223,18 @@ function AttendanceDetailDialog({
                   <Input
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder="Comentário opcional..."
+                    placeholder={tx('Comentário opcional...')}
                     className="text-sm"
                   />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleRespond('confirmed')} disabled={respond.isPending} className="flex-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Confirmar
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> {tx('Confirmar')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => handleRespond('declined')} disabled={respond.isPending} className="flex-1">
-                      <XCircle className="h-3.5 w-3.5 mr-1" /> Ausente
+                      <XCircle className="h-3.5 w-3.5 mr-1" /> {tx('Ausente')}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => handleRespond('maybe')} disabled={respond.isPending}>
-                      Talvez
+                      {tx('Talvez')}
                     </Button>
                   </div>
                 </div>
@@ -244,7 +245,7 @@ function AttendanceDetailDialog({
           {/* Response list for managers */}
           {canManage && responses.length > 0 && (
             <div className="border-t pt-3">
-              <Label className="text-sm font-medium mb-2 block">Respostas ({responses.length})</Label>
+              <Label className="text-sm font-medium mb-2 block">{tx('Respostas (')}{responses.length})</Label>
               <ScrollArea className="max-h-40">
                 <div className="space-y-1">
                   {responses.map((r) => (
@@ -256,7 +257,7 @@ function AttendanceDetailDialog({
                           variant={r.response === 'confirmed' ? 'default' : r.response === 'declined' ? 'destructive' : 'secondary'}
                           className="text-[10px]"
                         >
-                          {r.response === 'confirmed' ? 'Sim' : r.response === 'declined' ? 'Não' : r.response === 'maybe' ? 'Talvez' : 'Pendente'}
+                          {r.response === 'confirmed' ? tx('Sim') : r.response === 'declined' ? tx('Não') : r.response === 'maybe' ? tx('Talvez') : tx('Pendente')}
                         </Badge>
                       </div>
                     </div>
@@ -288,7 +289,7 @@ function CreateAttendanceDialog({
   const [notes, setNotes] = useState('');
 
   const handleSubmit = () => {
-    if (!title.trim()) { toast.error('Título é obrigatório'); return; }
+    if (!title.trim()) { toast.error(tx('Título é obrigatório')); return; }
     create.mutate(
       {
         event_type: eventType,
@@ -299,11 +300,11 @@ function CreateAttendanceDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Chamada de presença criada');
+          toast.success(tx('Chamada de presença criada'));
           setTitle(''); setEventDate(''); setDeadline(''); setNotes('');
           onClose();
         },
-        onError: () => toast.error('Erro ao criar chamada'),
+        onError: () => toast.error(tx('Erro ao criar chamada')),
       }
     );
   };
@@ -312,40 +313,40 @@ function CreateAttendanceDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Nova Chamada de Presença</DialogTitle>
+          <DialogTitle>{tx('Nova Chamada de Presença')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Título *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Treino de quarta-feira" />
+            <Label>{tx('Título *')}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tx('Ex: Treino de quarta-feira')} />
           </div>
           <div>
-            <Label>Tipo de Evento</Label>
+            <Label>{tx('Tipo de Evento')}</Label>
             <Select value={eventType} onValueChange={setEventType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="training">Treino</SelectItem>
-                <SelectItem value="match">Jogo</SelectItem>
-                <SelectItem value="other">Outro</SelectItem>
+                <SelectItem value="training">{tx('Treino')}</SelectItem>
+                <SelectItem value="match">{tx('Jogo')}</SelectItem>
+                <SelectItem value="other">{tx('Outro')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Data do Evento</Label>
+            <Label>{tx('Data do Evento')}</Label>
             <Input type="datetime-local" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
           </div>
           <div>
-            <Label>Prazo de Resposta</Label>
+            <Label>{tx('Prazo de Resposta')}</Label>
             <Input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
           </div>
           <div>
-            <Label>Notas</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Informações adicionais..." rows={2} />
+            <Label>{tx('Notas')}</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tx('Informações adicionais...')} rows={2} />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={create.isPending}>
-              {create.isPending ? 'A criar...' : 'Criar Chamada'}
+              {create.isPending ? tx('A criar...') : tx('Criar Chamada')}
             </Button>
           </div>
         </div>

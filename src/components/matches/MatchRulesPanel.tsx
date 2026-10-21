@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Users, RotateCcw, Clock, AlertTriangle, Info } from 'lucide-react';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface MatchRulesPanelProps {
   snapshot: MatchRuleSnapshot | null;
@@ -44,11 +45,11 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
       <div className="flex items-center gap-2 flex-wrap text-xs">
         <Badge variant="outline" className="gap-1">
           <Users className="w-3 h-3" />
-          {maxOnField} em campo
+          {maxOnField} {tx('em campo')}
         </Badge>
         <Badge variant={reentryAllowed ? 'secondary' : 'destructive'} className="gap-1">
           <RotateCcw className="w-3 h-3" />
-          {reentryAllowed ? 'Reentrada sim' : 'Sem reentrada'}
+          {reentryAllowed ? tx('Reentrada sim') : tx('Sem reentrada')}
         </Badge>
         <Badge variant="outline" className="gap-1">
           <Clock className="w-3 h-3" />
@@ -57,7 +58,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
         {isOverridden && (
           <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600">
             <AlertTriangle className="w-3 h-3" />
-            Alterado
+            {tx('Alterado')}
           </Badge>
         )}
       </div>
@@ -69,11 +70,11 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-sm flex items-center gap-2">
           <Shield className="w-4 h-4" />
-          Regras Aplicadas
+          {tx('Regras Aplicadas')}
           {isOverridden && (
             <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">
               <AlertTriangle className="w-3 h-3 mr-1" />
-              Diferente do formato da equipa
+              {tx('Diferente do formato da equipa')}
             </Badge>
           )}
         </CardTitle>
@@ -81,39 +82,39 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
       <CardContent className="py-2 px-4 space-y-3">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Modalidade</span>
+            <span className="text-xs text-muted-foreground">{tx('Modalidade')}</span>
             <div className="font-medium text-sm">{modalityLabel}</div>
           </div>
           {category && (
             <div className="space-y-1">
-              <span className="text-xs text-muted-foreground">Escalão</span>
+              <span className="text-xs text-muted-foreground">{tx('Escalão')}</span>
               <div className="font-medium text-sm capitalize">{snapshot?.age_group_code || category}</div>
             </div>
           )}
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Máx. em campo</span>
+            <span className="text-xs text-muted-foreground">{tx('Máx. em campo')}</span>
             <div className="font-medium text-sm flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
               {maxOnField} jogadores
             </div>
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Reentrada</span>
+            <span className="text-xs text-muted-foreground">{tx('Reentrada')}</span>
             <Badge variant={reentryAllowed ? 'secondary' : 'destructive'} className="text-xs">
-              {reentryAllowed ? 'Permitida' : 'Não permitida'}
+              {reentryAllowed ? tx('Permitida') : tx('Não permitida')}
             </Badge>
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Substituição rotativa</span>
+            <span className="text-xs text-muted-foreground">{tx('Substituição rotativa')}</span>
             <Badge variant={rollingSubstitutions ? 'secondary' : 'outline'} className="text-xs">
-              {rollingSubstitutions ? 'Sim' : 'Não'}
+              {rollingSubstitutions ? tx('Sim') : tx('Não')}
             </Badge>
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Tempo de jogo</span>
+            <span className="text-xs text-muted-foreground">{tx('Tempo de jogo')}</span>
             <div className="font-medium text-sm flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {partsLabel} ({totalMinutes}' total)
+              {partsLabel} ({totalMinutes}{tx('\' total)')}
             </div>
           </div>
         </div>
@@ -121,7 +122,7 @@ export function MatchRulesPanel({ snapshot, sportType, category, compact, isOver
         {snapshot?.rule_profile_name && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground pt-1 border-t">
             <Info className="w-3 h-3" />
-            Perfil: {snapshot.rule_profile_name}
+            {tx('Perfil:')}{' '}{snapshot.rule_profile_name}
           </div>
         )}
       </CardContent>

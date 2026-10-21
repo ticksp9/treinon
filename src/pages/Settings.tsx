@@ -19,7 +19,7 @@ import { PageLoading } from '@/components/ui/page-states';
 import { useSportScope } from '@/hooks/useSportScope';
 import { SPORT_SCOPE_LABELS, type SportScope } from '@/lib/sport-scope';
 import { languages, READY_LANGUAGES } from '@/lib/i18n';
-import { useT } from '@/lib/i18n/ui';
+import { useT, tx } from '@/lib/i18n/ui';
 
 export default function Settings() {
   const { user, loading: authLoading } = useAuth();
@@ -39,7 +39,7 @@ export default function Settings() {
     try { localStorage.setItem('language', code); } catch { /* private mode */ }
     document.documentElement.lang = code;
     if (user) await supabase.from('profiles').update({ language: code }).eq('id', user.id);
-    toast.success(code === 'en' ? 'Language: English' : 'Idioma: Português');
+    toast.success(code === 'en' ? tx('Language: English') : tx('Idioma: Português'));
   };
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -152,12 +152,12 @@ export default function Settings() {
                   <Input id="displayName" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t('O seu nome')} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">{tx('Username')}</Label>
                   <Input id="username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} placeholder="username" />
                   <p className="text-xs text-muted-foreground">{t('Só letras, números e underscore. Mínimo 3 caracteres.')}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{tx('Email')}</Label>
                   <Input value={user.email || ''} disabled className="bg-muted/50" />
                   <p className="text-xs text-muted-foreground">{t('O email não pode ser alterado')}</p>
                 </div>

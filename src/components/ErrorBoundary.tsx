@@ -3,6 +3,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RotateCcw, ArrowLeft } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   children: ReactNode;
@@ -47,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <CardContent className="py-10 text-center space-y-3">
           <AlertTriangle className="w-10 h-10 mx-auto text-destructive" />
           <p className="font-medium">
-            {this.props.fallbackTitle ?? 'Ocorreu um erro nesta secção'}
+            {this.props.fallbackTitle ?? tx('Ocorreu um erro nesta secção')}
           </p>
           {(
             <p className="text-xs text-muted-foreground break-words max-w-xl mx-auto">
@@ -58,12 +59,12 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex items-center justify-center gap-2 pt-1">
             <Button variant="outline" size="sm" onClick={this.reset}>
               <RotateCcw className="w-4 h-4 mr-1" />
-              Tentar novamente
+              {tx('Tentar novamente')}
             </Button>
             {this.props.showBack && (
               <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Voltar
+                {tx('Voltar')}
               </Button>
             )}
           </div>

@@ -29,6 +29,7 @@ import {
   overallAverage,
   roundedOverall,
 } from '@/lib/player-attributes';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerEvaluationsProps {
   playerId: string;
@@ -85,7 +86,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
 
   const upsertEvaluation = useMutation({
     mutationFn: async (state: FormState) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const overall = roundedOverall(state.attributes);
       const payload: any = {
         player_id: playerId,
@@ -120,11 +121,11 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-evaluations', playerId] });
-      toast.success(form.id ? 'Avaliação atualizada' : 'Avaliação registada');
+      toast.success(form.id ? tx('Avaliação atualizada') : tx('Avaliação registada'));
       setDialogOpen(false);
       setForm(emptyForm());
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   const deleteEvaluation = useMutation({
@@ -134,7 +135,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-evaluations', playerId] });
-      toast.success('Avaliação removida');
+      toast.success(tx('Avaliação removida'));
     },
   });
 
@@ -191,7 +192,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold">Avaliações</h3>
+          <h3 className="text-lg font-semibold">{tx('Avaliações')}</h3>
           {latest?.overall_rating != null && (
             <Badge className="gap-1 px-2 py-1">
               <Star className="w-3 h-3 fill-current" />
@@ -208,18 +209,18 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
           <DialogTrigger asChild>
             <Button size="sm" onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" />
-              Nova Avaliação
+              {tx('Nova Avaliação')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>{form.id ? 'Editar Avaliação' : 'Nova Avaliação'}</DialogTitle>
+              <DialogTitle>{form.id ? tx('Editar Avaliação') : tx('Nova Avaliação')}</DialogTitle>
             </DialogHeader>
             <ScrollArea className="flex-1 pr-3">
               <div className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-2">
-                    <Label>Data</Label>
+                    <Label>{tx('Data')}</Label>
                     <Input
                       type="date"
                       value={form.evaluation_date}
@@ -227,7 +228,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Contexto</Label>
+                    <Label>{tx('Contexto')}</Label>
                     <Select
                       value={form.context}
                       onValueChange={(v) => setForm({ ...form, context: v })}
@@ -245,17 +246,17 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Período (opcional)</Label>
+                    <Label>{tx('Período (opcional)')}</Label>
                     <Input
                       value={form.period_label}
                       onChange={(e) => setForm({ ...form, period_label: e.target.value })}
-                      placeholder="Ex: 1ª volta"
+                      placeholder={tx('Ex: 1ª volta')}
                     />
                   </div>
                 </div>
 
                 <div className="rounded-lg border p-3 flex items-center justify-between bg-muted/30">
-                  <span className="text-sm text-muted-foreground">Média global</span>
+                  <span className="text-sm text-muted-foreground">{tx('Média global')}</span>
                   <span className={`text-2xl font-bold ${ratingTone(overallNow)}`}>
                     {overallNow ?? '—'}/10
                   </span>
@@ -275,7 +276,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                       <TabsContent key={cat.key} value={cat.key} className="space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">
-                            Média {cat.label}
+                            {tx('Média')}{' '}{cat.label}
                           </span>
                           <span className={`font-semibold ${ratingTone(avg)}`}>
                             {avg != null ? avg.toFixed(1) : '—'}/10
@@ -308,31 +309,31 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Pontos Fortes</Label>
+                    <Label>{tx('Pontos Fortes')}</Label>
                     <Textarea
                       rows={3}
                       value={form.strengths}
                       onChange={(e) => setForm({ ...form, strengths: e.target.value })}
-                      placeholder="Velocidade, finalização..."
+                      placeholder={tx('Velocidade, finalização...')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Pontos a Melhorar</Label>
+                    <Label>{tx('Pontos a Melhorar')}</Label>
                     <Textarea
                       rows={3}
                       value={form.weaknesses}
                       onChange={(e) => setForm({ ...form, weaknesses: e.target.value })}
-                      placeholder="Pé esquerdo, posicionamento..."
+                      placeholder={tx('Pé esquerdo, posicionamento...')}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Observações</Label>
+                  <Label>{tx('Observações')}</Label>
                   <Textarea
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    placeholder="Notas adicionais do avaliador..."
+                    placeholder={tx('Notas adicionais do avaliador...')}
                   />
                 </div>
               </div>
@@ -343,7 +344,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                 onClick={() => upsertEvaluation.mutate(form)}
                 disabled={upsertEvaluation.isPending}
               >
-                {form.id ? 'Atualizar' : 'Guardar Avaliação'}
+                {form.id ? tx('Atualizar') : tx('Guardar Avaliação')}
               </Button>
             </div>
           </DialogContent>
@@ -430,13 +431,13 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t">
                       {ev.strengths && (
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Pontos Fortes</p>
+                          <p className="text-xs text-muted-foreground mb-1">{tx('Pontos Fortes')}</p>
                           <p className="text-sm whitespace-pre-wrap">{ev.strengths}</p>
                         </div>
                       )}
                       {ev.weaknesses && (
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Pontos a Melhorar</p>
+                          <p className="text-xs text-muted-foreground mb-1">{tx('Pontos a Melhorar')}</p>
                           <p className="text-sm whitespace-pre-wrap">{ev.weaknesses}</p>
                         </div>
                       )}
@@ -456,7 +457,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
             <Star className="w-10 h-10 mx-auto mb-2" />
-            <p>Sem avaliações registadas</p>
+            <p>{tx('Sem avaliações registadas')}</p>
           </CardContent>
         </Card>
       )}

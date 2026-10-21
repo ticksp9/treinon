@@ -17,6 +17,7 @@ import { Plus, ArrowUpRight, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { RTP_STAGES } from '@/hooks/useMedical';
+import { tx } from '@/lib/i18n/ui';
 
 export function ReturnToPlayTab() {
   const { user } = useAuth();
@@ -61,9 +62,9 @@ export function ReturnToPlayTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rtp-decisions'] });
       setShowDialog(false);
-      toast.success('Decisão registada!');
+      toast.success(tx('Decisão registada!'));
     },
-    onError: () => toast.error('Erro ao registar decisão'),
+    onError: () => toast.error(tx('Erro ao registar decisão')),
   });
 
   const decisionTypes: Record<string, string> = {
@@ -75,30 +76,30 @@ export function ReturnToPlayTab() {
     <div className="space-y-6">
       <div className="flex justify-end">
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nova Decisão</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />{tx('Nova Decisão')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Decisão de Retorno</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Decisão de Retorno')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{players?.map(p => <SelectItem key={p.id} value={p.id}>#{p.number} {p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tipo *</Label>
+                  <Label>{tx('Tipo *')}</Label>
                   <Select value={form.decision_type} onValueChange={v => setForm({...form, decision_type: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="return_to_train">Retorno ao Treino</SelectItem>
-                      <SelectItem value="return_to_play">Retorno ao Jogo</SelectItem>
+                      <SelectItem value="return_to_train">{tx('Retorno ao Treino')}</SelectItem>
+                      <SelectItem value="return_to_play">{tx('Retorno ao Jogo')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Estágio</Label>
+                  <Label>{tx('Estágio')}</Label>
                   <Select value={form.stage} onValueChange={v => setForm({...form, stage: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{RTP_STAGES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
@@ -106,13 +107,13 @@ export function ReturnToPlayTab() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Data Decisão</Label><Input type="date" value={form.decision_date} onChange={e => setForm({...form, decision_date: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Próxima Revisão</Label><Input type="date" value={form.next_review_date} onChange={e => setForm({...form, next_review_date: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Data Decisão')}</Label><Input type="date" value={form.decision_date} onChange={e => setForm({...form, decision_date: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Próxima Revisão')}</Label><Input type="date" value={form.next_review_date} onChange={e => setForm({...form, next_review_date: e.target.value})} /></div>
               </div>
-              <div className="space-y-2"><Label>Justificação</Label><Textarea value={form.justification} onChange={e => setForm({...form, justification: e.target.value})} rows={2} /></div>
-              <div className="space-y-2"><Label>Risco Percebido</Label><Input value={form.perceived_risk} onChange={e => setForm({...form, perceived_risk: e.target.value})} placeholder="Baixo, Moderado, Alto..." /></div>
-              <div className="space-y-2"><Label>Restrições Remanescentes</Label><Textarea value={form.remaining_restrictions} onChange={e => setForm({...form, remaining_restrictions: e.target.value})} rows={2} /></div>
-              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || createMutation.isPending}>Registar Decisão</Button>
+              <div className="space-y-2"><Label>{tx('Justificação')}</Label><Textarea value={form.justification} onChange={e => setForm({...form, justification: e.target.value})} rows={2} /></div>
+              <div className="space-y-2"><Label>{tx('Risco Percebido')}</Label><Input value={form.perceived_risk} onChange={e => setForm({...form, perceived_risk: e.target.value})} placeholder={tx('Baixo, Moderado, Alto...')} /></div>
+              <div className="space-y-2"><Label>{tx('Restrições Remanescentes')}</Label><Textarea value={form.remaining_restrictions} onChange={e => setForm({...form, remaining_restrictions: e.target.value})} rows={2} /></div>
+              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || createMutation.isPending}>{tx('Registar Decisão')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -123,19 +124,19 @@ export function ReturnToPlayTab() {
           {isLoading ? (
             <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
           ) : decisions?.length === 0 ? (
-            <div className="text-center py-12"><ArrowUpRight className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">Nenhuma decisão de retorno</p></div>
+            <div className="text-center py-12"><ArrowUpRight className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">{tx('Nenhuma decisão de retorno')}</p></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Estágio</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Risco</TableHead>
-                    <TableHead>Próxima Revisão</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>{tx('Atleta')}</TableHead>
+                    <TableHead>{tx('Tipo')}</TableHead>
+                    <TableHead>{tx('Estágio')}</TableHead>
+                    <TableHead>{tx('Data')}</TableHead>
+                    <TableHead>{tx('Risco')}</TableHead>
+                    <TableHead>{tx('Próxima Revisão')}</TableHead>
+                    <TableHead>{tx('Estado')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -150,7 +151,7 @@ export function ReturnToPlayTab() {
                         <TableCell>{format(new Date(d.decision_date), 'dd/MM/yyyy')}</TableCell>
                         <TableCell className="text-muted-foreground">{d.perceived_risk || '-'}</TableCell>
                         <TableCell>{d.next_review_date ? format(new Date(d.next_review_date), 'dd/MM/yyyy') : '-'}</TableCell>
-                        <TableCell><Badge variant={d.status === 'approved' ? 'secondary' : 'outline'}>{d.status === 'approved' ? 'Aprovado' : d.status}</Badge></TableCell>
+                        <TableCell><Badge variant={d.status === 'approved' ? 'secondary' : 'outline'}>{d.status === 'approved' ? tx('Aprovado') : d.status}</Badge></TableCell>
                       </TableRow>
                     );
                   })}

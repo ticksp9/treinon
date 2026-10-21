@@ -14,6 +14,7 @@ import {
 import { MatchStatusBadge } from './MatchStatusBadge';
 import { REPORT_STATUS_LABELS, type ReportStatus, ENTRY_MODE_LABELS, type ReportEntryMode } from '@/lib/match-report-service';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { tx } from '@/lib/i18n/ui';
 
 interface Match {
   id: string;
@@ -118,7 +119,7 @@ export function MatchListMobile({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar adversário, competição..."
+            placeholder={tx('Buscar adversário, competição...')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -126,15 +127,15 @@ export function MatchListMobile({
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Estado" />
+            <SelectValue placeholder={tx('Estado')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="scheduled">Agendado</SelectItem>
-            <SelectItem value="in_progress">Em Curso</SelectItem>
-            <SelectItem value="completed">Terminado</SelectItem>
-            <SelectItem value="draft">Rascunho</SelectItem>
-            <SelectItem value="finalized">Finalizado</SelectItem>
+            <SelectItem value="all">{tx('Todos')}</SelectItem>
+            <SelectItem value="scheduled">{tx('Agendado')}</SelectItem>
+            <SelectItem value="in_progress">{tx('Em Curso')}</SelectItem>
+            <SelectItem value="completed">{tx('Terminado')}</SelectItem>
+            <SelectItem value="draft">{tx('Rascunho')}</SelectItem>
+            <SelectItem value="finalized">{tx('Finalizado')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -143,16 +144,16 @@ export function MatchListMobile({
       <Tabs value={activeTab} onValueChange={v => setActiveTab(v as TabFilter)}>
         <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="today" className="text-xs">
-            Hoje {tabCounts.today > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.today}</Badge>}
+            {tx('Hoje')}{' '}{tabCounts.today > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.today}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="text-xs">
-            Próximos {tabCounts.upcoming > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.upcoming}</Badge>}
+            {tx('Próximos')}{' '}{tabCounts.upcoming > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.upcoming}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="finished" className="text-xs">
-            Finalizados {tabCounts.finished > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.finished}</Badge>}
+            {tx('Finalizados')}{' '}{tabCounts.finished > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.finished}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="drafts" className="text-xs">
-            Rascunhos {tabCounts.drafts > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.drafts}</Badge>}
+            {tx('Rascunhos')}{' '}{tabCounts.drafts > 0 && <Badge variant="secondary" className="ml-1 text-[10px] px-1">{tabCounts.drafts}</Badge>}
           </TabsTrigger>
         </TabsList>
       </Tabs>
@@ -162,14 +163,14 @@ export function MatchListMobile({
         <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-            <h3 className="font-semibold mb-1">Nenhum jogo encontrado</h3>
-            <p className="text-sm text-muted-foreground mb-4">Não encontramos jogos com estes filtros.</p>
+            <h3 className="font-semibold mb-1">{tx('Nenhum jogo encontrado')}</h3>
+            <p className="text-sm text-muted-foreground mb-4">{tx('Não encontramos jogos com estes filtros.')}</p>
             <div className="flex gap-2 justify-center">
               {searchQuery && (
-                <Button variant="outline" size="sm" onClick={() => { setSearchQuery(''); setFilterStatus('all'); }}>Limpar filtros</Button>
+                <Button variant="outline" size="sm" onClick={() => { setSearchQuery(''); setFilterStatus('all'); }}>{tx('Limpar filtros')}</Button>
               )}
               {onCreateNew && (
-                <Button size="sm" onClick={onCreateNew}><Plus className="w-4 h-4 mr-1" /> Nova convocatória</Button>
+                <Button size="sm" onClick={onCreateNew}><Plus className="w-4 h-4 mr-1" /> {tx('Nova convocatória')}</Button>
               )}
             </div>
           </CardContent>
@@ -203,7 +204,7 @@ export function MatchListMobile({
                           {format(new Date(match.match_date), isMobile ? 'dd MMM HH:mm' : "dd MMM yyyy, HH:mm", { locale: pt })}
                         </span>
                         <Badge variant={isInProgress ? 'default' : 'outline'} className={`text-[10px] px-1 ${isInProgress ? 'bg-green-600' : ''}`}>
-                          {isInProgress ? 'Em Curso' : match.status === 'scheduled' ? 'Agendado' : match.status === 'completed' ? 'Terminado' : match.status}
+                          {isInProgress ? tx('Em Curso') : match.status === 'scheduled' ? tx('Agendado') : match.status === 'completed' ? tx('Terminado') : match.status}
                         </Badge>
                         {match.report_status && match.report_status !== 'locked' && (
                           <MatchStatusBadge status={match.report_status as ReportStatus} className="text-[10px]" />
@@ -213,7 +214,7 @@ export function MatchListMobile({
                       {/* Opponent */}
                       <div className="flex items-center gap-2">
                         <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-[10px] px-1">
-                          {match.is_home ? 'CASA' : 'FORA'}
+                          {match.is_home ? tx('CASA') : tx('FORA')}
                         </Badge>
                         <span className="font-medium text-sm truncate">{match.opponent_name}</span>
                         {getResultBadge(match)}
@@ -238,17 +239,17 @@ export function MatchListMobile({
                       )}
                       {isInProgress && (
                         <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                          <Play className="w-3 h-3 mr-1 fill-current" /> Continuar
+                          <Play className="w-3 h-3 mr-1 fill-current" /> {tx('Continuar')}
                         </Button>
                       )}
                       {!isInProgress && !isCompleted && (
                         <Button size="sm" variant="outline" disabled={!!inProgressMatchId}>
-                          <Play className="w-3 h-3 mr-1" /> Iniciar
+                          <Play className="w-3 h-3 mr-1" /> {tx('Iniciar')}
                         </Button>
                       )}
                       {isCompleted && (
                         <Button size="sm" variant="ghost" className="text-xs">
-                          <Eye className="w-3 h-3 mr-1" /> Ver
+                          <Eye className="w-3 h-3 mr-1" /> {tx('Ver')}
                         </Button>
                       )}
                     </div>

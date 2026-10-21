@@ -16,6 +16,7 @@ import { TacticBoard } from '@/components/board/TacticBoard';
 import { emptyBoard, placeFormation, formationCodes, type BoardPlayer, type BoardState } from '@/lib/tactic-board';
 import { useTeamTactics } from '@/hooks/useTeamTactics';
 import { defaultTacticCode } from '@/lib/team-tactics';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team { id: string; name: string; sport_type: string | null }
 interface MatchOpt { id: string; opponent_name: string; match_date: string; status: string; sport_type: string | null; live_tactics: { formation?: string; slots?: Record<string, string | null> } | null }
@@ -100,27 +101,27 @@ export default function TacticalBoard() {
   }, [matchId, matches, teamSport]);
 
   return (
-    <AppLayout title="Quadro Tático">
+    <AppLayout title={tx('Quadro Tático')}>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           {myTeams.length > 1 && (
             <Select value={teamId ?? ''} onValueChange={(v) => { setTeamId(v); setMatchId(NONE); }}>
-              <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Equipa" /></SelectTrigger>
+              <SelectTrigger className="h-9 w-44"><SelectValue placeholder={tx('Equipa')} /></SelectTrigger>
               <SelectContent>{myTeams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
             </Select>
           )}
           <Select value={matchId} onValueChange={setMatchId}>
             <SelectTrigger className="h-9 w-72"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>Quadro livre (sem nomes)</SelectItem>
+              <SelectItem value={NONE}>{tx('Quadro livre (sem nomes)')}</SelectItem>
               {matches.map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  Onze: vs {m.opponent_name} · {new Date(m.match_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}{m.status === 'in_progress' ? ' · a decorrer' : ''}
+                  {tx('Onze: vs')}{' '}{m.opponent_name} · {new Date(m.match_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}{m.status === 'in_progress' ? tx(' · a decorrer') : ''}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground">Escolha um jogo para trazer o onze com nomes e a tática.</span>
+          <span className="text-xs text-muted-foreground">{tx('Escolha um jogo para trazer o onze com nomes e a tática.')}</span>
         </div>
         {board && <TacticBoard key={board.key} persistKey={board.key} homeSig={board.sig} initial={board.initial} players={board.players} slotMap={board.slotMap} teamId={teamId} />}
       </div>

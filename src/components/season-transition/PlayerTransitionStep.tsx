@@ -14,6 +14,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AGE_CATEGORIES, getSportingAge, getSeasonStartYear, parseSeasonStartYear } from '@/lib/constants';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Database } from '@/integrations/supabase/types';
+import { tx } from '@/lib/i18n/ui';
 
 type SeasonPlayerStatus = Database['public']['Enums']['season_player_status'];
 
@@ -51,9 +52,9 @@ interface PlayerTransitionStepProps {
 }
 
 const STATUS_LABELS: Record<SeasonPlayerStatus, { label: string; icon: typeof UserCheck; color: string }> = {
-  promotes: { label: 'Sobe de escalão', icon: ArrowRight, color: 'text-primary' },
-  stays: { label: 'Mantém-se', icon: UserCheck, color: 'text-green-600' },
-  leaves: { label: 'Sai do clube', icon: UserMinus, color: 'text-destructive' },
+  promotes: { get label() { return tx('Sobe de escalão'); }, icon: ArrowRight, color: 'text-primary' },
+  stays: { get label() { return tx('Mantém-se'); }, icon: UserCheck, color: 'text-green-600' },
+  leaves: { get label() { return tx('Sai do clube'); }, icon: UserMinus, color: 'text-destructive' },
 };
 
 export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTransitionStepProps) {
@@ -239,12 +240,12 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
       }
     },
     onSuccess: () => {
-      toast.success('Planeamento de jogadores guardado');
+      toast.success(tx('Planeamento de jogadores guardado'));
       queryClient.invalidateQueries({ queryKey: ['season-player-plans', seasonId] });
       setHasChanges(false);
     },
     onError: (error: any) => {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     },
   });
 
@@ -277,16 +278,16 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Jogadores por Escalão
+            {tx('Jogadores por Escalão')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Defina o destino de cada jogador para a época {seasonName}
+            {tx('Defina o destino de cada jogador para a época')}{' '}{seasonName}
           </p>
         </div>
         {hasChanges && (
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
             <Save className="w-4 h-4 mr-2" />
-            {saveMutation.isPending ? 'A guardar...' : 'Guardar Alterações'}
+            {saveMutation.isPending ? tx('A guardar...') : tx('Guardar Alterações')}
           </Button>
         )}
       </div>
@@ -295,7 +296,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Nenhum jogador ativo encontrado.</p>
+            <p className="text-muted-foreground">{tx('Nenhum jogador ativo encontrado.')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -325,7 +326,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-primary">{statusCounts.promotes} sobem</span>
                             <span className="text-muted-foreground">•</span>
-                            <span className="text-green-600">{statusCounts.stays} mantêm</span>
+                            <span className="text-green-600">{statusCounts.stays} {tx('mantêm')}</span>
                             <span className="text-muted-foreground">•</span>
                             <span className="text-destructive">{statusCounts.leaves} saem</span>
                           </div>
@@ -359,7 +360,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                                     <span className="font-medium">{player.name}</span>
                                     {playerAge && (
                                       <span className="text-sm text-muted-foreground">
-                                        ({playerAge} anos)
+                                        ({playerAge} {tx('anos)')}
                                       </span>
                                     )}
                                   </div>
@@ -399,7 +400,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                                         })}
                                       >
                                         <SelectTrigger className="w-[120px]">
-                                          <SelectValue placeholder="Escalão..." />
+                                          <SelectValue placeholder={tx('Escalão...')} />
                                         </SelectTrigger>
                                         <SelectContent>
                                           {AGE_CATEGORIES.map(cat => (
@@ -416,7 +417,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
                                           onValueChange={(value) => updatePlayerPlan(player.id, { target_team_id: value })}
                                         >
                                           <SelectTrigger className="w-[150px]">
-                                            <SelectValue placeholder="Equipa..." />
+                                            <SelectValue placeholder={tx('Equipa...')} />
                                           </SelectTrigger>
                                           <SelectContent>
                                             {targetTeams.map(team => (
@@ -430,7 +431,7 @@ export function PlayerTransitionStep({ seasonId, clubId, seasonName }: PlayerTra
 
                                       {plan.target_category && targetTeams.length === 0 && (
                                         <Badge variant="outline" className="text-amber-600 border-amber-600/30">
-                                          Sem equipa disponível
+                                          {tx('Sem equipa disponível')}
                                         </Badge>
                                       )}
                                     </div>

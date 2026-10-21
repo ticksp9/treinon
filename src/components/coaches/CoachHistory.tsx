@@ -14,6 +14,7 @@ import { Plus, Briefcase, Trash2, Trophy } from 'lucide-react';
 import { COACHING_ROLES, AGE_GROUPS } from '@/lib/coach-constants';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface HistoryEntry {
   id: string;
@@ -76,7 +77,7 @@ export function CoachHistory() {
 
   const handleSave = async () => {
     if (!user || !form.club_name) {
-      toast.error('Preencha o nome do clube');
+      toast.error(tx('Preencha o nome do clube'));
       return;
     }
 
@@ -98,7 +99,7 @@ export function CoachHistory() {
 
       if (error) throw error;
       
-      toast.success('Experiência adicionada!');
+      toast.success(tx('Experiência adicionada!'));
       setDialogOpen(false);
       setForm({
         club_name: '',
@@ -111,14 +112,14 @@ export function CoachHistory() {
       setSelectedAgeGroups([]);
       fetchHistory();
     } catch (error: any) {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem a certeza que deseja eliminar esta entrada?')) return;
+    if (!confirm(tx('Tem a certeza que deseja eliminar esta entrada?'))) return;
 
     try {
       const { error } = await supabase
@@ -127,10 +128,10 @@ export function CoachHistory() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Entrada eliminada');
+      toast.success(tx('Entrada eliminada'));
       fetchHistory();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(tx('Erro ao eliminar: ') + error.message);
     }
   };
 
@@ -160,7 +161,7 @@ export function CoachHistory() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -170,41 +171,41 @@ export function CoachHistory() {
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Histórico Profissional</h3>
-          <p className="text-sm text-muted-foreground">A sua experiência como treinador</p>
+          <h3 className="text-lg font-semibold">{tx('Histórico Profissional')}</h3>
+          <p className="text-sm text-muted-foreground">{tx('A sua experiência como treinador')}</p>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar Experiência
+              {tx('Adicionar Experiência')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Nova Experiência</DialogTitle>
+              <DialogTitle>{tx('Nova Experiência')}</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Clube / Organização *</Label>
+                  <Label>{tx('Clube / Organização *')}</Label>
                   <Input
                     value={form.club_name}
                     onChange={(e) => setForm(prev => ({ ...prev, club_name: e.target.value }))}
-                    placeholder="Nome do clube"
+                    placeholder={tx('Nome do clube')}
                   />
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Função</Label>
+                  <Label>{tx('Função')}</Label>
                   <Select
                     value={form.role}
                     onValueChange={(v) => setForm(prev => ({ ...prev, role: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a função" />
+                      <SelectValue placeholder={tx('Selecione a função')} />
                     </SelectTrigger>
                     <SelectContent>
                       {COACHING_ROLES.map((role) => (
@@ -217,7 +218,7 @@ export function CoachHistory() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Data de Início</Label>
+                  <Label>{tx('Data de Início')}</Label>
                   <Input
                     type="date"
                     value={form.start_date}
@@ -226,7 +227,7 @@ export function CoachHistory() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Data de Fim</Label>
+                  <Label>{tx('Data de Fim')}</Label>
                   <Input
                     type="date"
                     value={form.end_date}
@@ -235,7 +236,7 @@ export function CoachHistory() {
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Escalões</Label>
+                  <Label>{tx('Escalões')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {AGE_GROUPS.map((group) => (
                       <Badge
@@ -251,21 +252,21 @@ export function CoachHistory() {
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Conquistas</Label>
+                  <Label>{tx('Conquistas')}</Label>
                   <Textarea
                     value={form.achievements}
                     onChange={(e) => setForm(prev => ({ ...prev, achievements: e.target.value }))}
-                    placeholder="Títulos, promoções, resultados importantes..."
+                    placeholder={tx('Títulos, promoções, resultados importantes...')}
                     rows={2}
                   />
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Notas</Label>
+                  <Label>{tx('Notas')}</Label>
                   <Textarea
                     value={form.notes}
                     onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Observações adicionais..."
+                    placeholder={tx('Observações adicionais...')}
                     rows={2}
                   />
                 </div>
@@ -273,10 +274,10 @@ export function CoachHistory() {
               
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'A guardar...' : 'Guardar'}
+                  {saving ? tx('A guardar...') : tx('Guardar')}
                 </Button>
               </div>
             </div>
@@ -288,9 +289,9 @@ export function CoachHistory() {
         <Card>
           <CardContent className="py-12 text-center">
             <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Sem Histórico</h3>
+            <h3 className="text-lg font-medium mb-2">{tx('Sem Histórico')}</h3>
             <p className="text-muted-foreground">
-              Adicione a sua experiência profissional como treinador
+              {tx('Adicione a sua experiência profissional como treinador')}
             </p>
           </CardContent>
         </Card>

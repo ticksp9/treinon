@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 // Scouting & Talent Pipeline – pure business logic + data hooks
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -80,53 +81,53 @@ export const PIPELINE_STAGE_LABELS: Record<string, string> = {
 };
 
 export const RECOMMENDATION_OPTIONS = [
-  { value: 'sign', label: 'Recrutar' },
-  { value: 'shortlist', label: 'Shortlist' },
-  { value: 'monitor', label: 'Monitorizar' },
-  { value: 'trial', label: 'Trial' },
-  { value: 'reject', label: 'Rejeitar' },
+  { value: 'sign', get label() { return tx('Recrutar'); } },
+  { value: 'shortlist', get label() { return tx('Shortlist'); } },
+  { value: 'monitor', get label() { return tx('Monitorizar'); } },
+  { value: 'trial', get label() { return tx('Trial'); } },
+  { value: 'reject', get label() { return tx('Rejeitar'); } },
 ] as const;
 
 export const OBSERVATION_TYPES = [
-  { value: 'match', label: 'Jogo' },
-  { value: 'training', label: 'Treino' },
-  { value: 'tournament', label: 'Torneio' },
-  { value: 'video', label: 'Vídeo' },
-  { value: 'trial', label: 'Trial' },
-  { value: 'showcase', label: 'Showcase' },
-  { value: 'other', label: 'Outro' },
+  { value: 'match', get label() { return tx('Jogo'); } },
+  { value: 'training', get label() { return tx('Treino'); } },
+  { value: 'tournament', get label() { return tx('Torneio'); } },
+  { value: 'video', get label() { return tx('Vídeo'); } },
+  { value: 'trial', get label() { return tx('Trial'); } },
+  { value: 'showcase', get label() { return tx('Showcase'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ] as const;
 
 export const PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Crítica', color: 'text-red-600' },
-  { value: 'high', label: 'Alta', color: 'text-orange-600' },
-  { value: 'medium', label: 'Média', color: 'text-yellow-600' },
-  { value: 'low', label: 'Baixa', color: 'text-muted-foreground' },
+  { value: 'critical', get label() { return tx('Crítica'); }, color: 'text-red-600' },
+  { value: 'high', get label() { return tx('Alta'); }, color: 'text-orange-600' },
+  { value: 'medium', get label() { return tx('Média'); }, color: 'text-yellow-600' },
+  { value: 'low', get label() { return tx('Baixa'); }, color: 'text-muted-foreground' },
 ] as const;
 
 export const SOURCE_OPTIONS = [
-  { value: 'match_observation', label: 'Observação em Jogo' },
-  { value: 'training_observation', label: 'Observação em Treino' },
-  { value: 'tournament', label: 'Torneio' },
-  { value: 'coach_recommendation', label: 'Recomendação de Treinador' },
-  { value: 'scout_recommendation', label: 'Recomendação de Scout' },
-  { value: 'internal_referral', label: 'Indicação Interna' },
-  { value: 'partner_academy', label: 'Academia Parceira' },
-  { value: 'video', label: 'Vídeo' },
-  { value: 'school', label: 'Escola' },
-  { value: 'grassroots', label: 'Grassroots' },
-  { value: 'other', label: 'Outro' },
+  { value: 'match_observation', get label() { return tx('Observação em Jogo'); } },
+  { value: 'training_observation', get label() { return tx('Observação em Treino'); } },
+  { value: 'tournament', get label() { return tx('Torneio'); } },
+  { value: 'coach_recommendation', get label() { return tx('Recomendação de Treinador'); } },
+  { value: 'scout_recommendation', get label() { return tx('Recomendação de Scout'); } },
+  { value: 'internal_referral', get label() { return tx('Indicação Interna'); } },
+  { value: 'partner_academy', get label() { return tx('Academia Parceira'); } },
+  { value: 'video', get label() { return tx('Vídeo'); } },
+  { value: 'school', get label() { return tx('Escola'); } },
+  { value: 'grassroots', get label() { return tx('Grassroots'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ] as const;
 
 export const ASSESSMENT_DIMENSIONS = [
-  { key: 'technical', label: 'Técnica', weight: 1.5 },
-  { key: 'tactical', label: 'Tática', weight: 1.2 },
-  { key: 'physical', label: 'Física', weight: 1.0 },
-  { key: 'mental', label: 'Mental', weight: 1.0 },
-  { key: 'behavioral', label: 'Comportamental', weight: 0.8 },
-  { key: 'competitive', label: 'Competitiva', weight: 1.0 },
-  { key: 'potential', label: 'Potencial', weight: 1.5 },
-  { key: 'club_fit', label: 'Fit com Clube', weight: 1.0 },
+  { key: 'technical', get label() { return tx('Técnica'); }, weight: 1.5 },
+  { key: 'tactical', get label() { return tx('Tática'); }, weight: 1.2 },
+  { key: 'physical', get label() { return tx('Física'); }, weight: 1.0 },
+  { key: 'mental', get label() { return tx('Mental'); }, weight: 1.0 },
+  { key: 'behavioral', get label() { return tx('Comportamental'); }, weight: 0.8 },
+  { key: 'competitive', get label() { return tx('Competitiva'); }, weight: 1.0 },
+  { key: 'potential', get label() { return tx('Potencial'); }, weight: 1.5 },
+  { key: 'club_fit', get label() { return tx('Fit com Clube'); }, weight: 1.0 },
 ] as const;
 
 // ─── Pure business functions ─────────────────────────────────────

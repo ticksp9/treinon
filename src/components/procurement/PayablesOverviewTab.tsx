@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -23,11 +24,11 @@ export function PayablesOverviewTab({ clubId }: { clubId: string }) {
       {/* Aging Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         {[
-          { label: 'Corrente', value: agingBuckets.current, color: 'text-green-600' },
-          { label: '1-30 dias', value: agingBuckets.days_1_30, color: 'text-amber-600' },
-          { label: '31-60 dias', value: agingBuckets.days_31_60, color: 'text-orange-600' },
-          { label: '61-90 dias', value: agingBuckets.days_61_90, color: 'text-red-500' },
-          { label: '>90 dias', value: agingBuckets.over_90, color: 'text-destructive' },
+          { label: tx('Corrente'), value: agingBuckets.current, color: 'text-green-600' },
+          { label: tx('1-30 dias'), value: agingBuckets.days_1_30, color: 'text-amber-600' },
+          { label: tx('31-60 dias'), value: agingBuckets.days_31_60, color: 'text-orange-600' },
+          { label: tx('61-90 dias'), value: agingBuckets.days_61_90, color: 'text-red-500' },
+          { label: tx('>90 dias'), value: agingBuckets.over_90, color: 'text-destructive' },
         ].map(b => (
           <Card key={b.label}>
             <CardContent className="pt-4 pb-3 px-4">
@@ -44,18 +45,18 @@ export function PayablesOverviewTab({ clubId }: { clubId: string }) {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-4 w-4" />
-              Faturas Vencidas ({overdueInvoices.length})
+              {tx('Faturas Vencidas (')}{overdueInvoices.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Nº Fatura</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Dias Atraso</TableHead>
-                  <TableHead>Em Aberto</TableHead>
+                  <TableHead>{tx('Fornecedor')}</TableHead>
+                  <TableHead>{tx('Nº Fatura')}</TableHead>
+                  <TableHead>{tx('Vencimento')}</TableHead>
+                  <TableHead>{tx('Dias Atraso')}</TableHead>
+                  <TableHead>{tx('Em Aberto')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -79,24 +80,24 @@ export function PayablesOverviewTab({ clubId }: { clubId: string }) {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            Próximos Vencimentos ({upcomingInvoices.length})
+            {tx('Próximos Vencimentos (')}{upcomingInvoices.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Nº Fatura</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Dias até vencimento</TableHead>
-                <TableHead>Em Aberto</TableHead>
+                <TableHead>{tx('Fornecedor')}</TableHead>
+                <TableHead>{tx('Nº Fatura')}</TableHead>
+                <TableHead>{tx('Vencimento')}</TableHead>
+                <TableHead>{tx('Dias até vencimento')}</TableHead>
+                <TableHead>{tx('Em Aberto')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {upcomingInvoices.length === 0 ? (
                 <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8 flex items-center justify-center gap-2">
-                  <CheckCircle className="h-4 w-4" /> Sem faturas por vencer
+                  <CheckCircle className="h-4 w-4" /> {tx('Sem faturas por vencer')}
                 </TableCell></TableRow>
               ) : upcomingInvoices.map(inv => {
                 const daysUntil = differenceInDays(new Date(inv.due_date), now);

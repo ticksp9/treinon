@@ -12,6 +12,7 @@ import { Plus, Building2, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerHistoryProps {
   playerId: string;
@@ -45,7 +46,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
 
   const createHistory = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       
       const { error } = await supabase
         .from('player_history')
@@ -61,7 +62,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-history', playerId] });
-      toast.success('Historial registado');
+      toast.success(tx('Historial registado'));
       setDialogOpen(false);
       setFormData({
         club_name: '',
@@ -72,7 +73,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
       });
     },
     onError: (error: any) => {
-      toast.error('Erro ao registar historial: ' + error.message);
+      toast.error(tx('Erro ao registar historial: ') + error.message);
     },
   });
 
@@ -87,7 +88,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-history', playerId] });
-      toast.success('Registo removido');
+      toast.success(tx('Registo removido'));
     },
   });
 
@@ -99,31 +100,31 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Historial de Carreira</h3>
+        <h3 className="text-lg font-semibold">{tx('Historial de Carreira')}</h3>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar
+              {tx('Adicionar')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Adicionar ao Historial</DialogTitle>
+              <DialogTitle>{tx('Adicionar ao Historial')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Nome do Clube *</Label>
+                <Label>{tx('Nome do Clube *')}</Label>
                 <Input
                   value={formData.club_name}
                   onChange={(e) => setFormData({ ...formData, club_name: e.target.value })}
-                  placeholder="Ex: FC Porto"
+                  placeholder={tx('Ex: FC Porto')}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Data de Entrada</Label>
+                  <Label>{tx('Data de Entrada')}</Label>
                   <Input
                     type="date"
                     value={formData.start_date}
@@ -131,7 +132,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Data de Saída</Label>
+                  <Label>{tx('Data de Saída')}</Label>
                   <Input
                     type="date"
                     value={formData.end_date}
@@ -141,20 +142,20 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Posição</Label>
+                <Label>{tx('Posição')}</Label>
                 <Input
                   value={formData.position}
                   onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                  placeholder="Ex: Médio Centro"
+                  placeholder={tx('Ex: Médio Centro')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Notas</Label>
+                <Label>{tx('Notas')}</Label>
                 <Textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Observações..."
+                  placeholder={tx('Observações...')}
                 />
               </div>
 
@@ -163,7 +164,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
                 onClick={() => createHistory.mutate()}
                 disabled={!formData.club_name || createHistory.isPending}
               >
-                Guardar
+                {tx('Guardar')}
               </Button>
             </div>
           </DialogContent>
@@ -198,9 +199,9 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
                             <p className="text-sm text-muted-foreground">{item.position}</p>
                           )}
                           <p className="text-xs text-muted-foreground mt-1">
-                            {formatDate(item.start_date) || 'Data desconhecida'}
+                            {formatDate(item.start_date) || tx('Data desconhecida')}
                             {' → '}
-                            {formatDate(item.end_date) || 'Presente'}
+                            {formatDate(item.end_date) || tx('Presente')}
                           </p>
                           {item.notes && (
                             <p className="text-sm mt-2">{item.notes}</p>
@@ -226,7 +227,7 @@ export function PlayerHistory({ playerId }: PlayerHistoryProps) {
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <Building2 className="w-10 h-10 mx-auto mb-2" />
-            <p>Sem historial de clubes anteriores</p>
+            <p>{tx('Sem historial de clubes anteriores')}</p>
           </CardContent>
         </Card>
       )}

@@ -18,20 +18,21 @@ import { InvoicesTab } from '@/components/procurement/InvoicesTab';
 import { ExpenseClaimsTab } from '@/components/procurement/ExpenseClaimsTab';
 import { PayablesOverviewTab } from '@/components/procurement/PayablesOverviewTab';
 import { ProcurementOverviewTab } from '@/components/procurement/ProcurementOverviewTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function ProcurementDashboard() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
   const [activeTab, setActiveTab] = useState('overview');
 
   if (roleLoading) return <AppLayout><PageLoading /></AppLayout>;
-  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message="Acesso restrito a administradores." /></AppLayout>;
+  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message={tx('Acesso restrito a administradores.')} /></AppLayout>;
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Compras & Despesas"
-          description="Gestão de fornecedores, compras, despesas e contas a pagar"
+          title={tx('Compras & Despesas')}
+          description={tx('Gestão de fornecedores, compras, despesas e contas a pagar')}
           icon={<ShoppingCart className="w-6 h-6 text-primary" />}
         />
 
@@ -39,27 +40,27 @@ export default function ProcurementDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span>Visão Geral</span>
+              <span>{tx('Visão Geral')}</span>
             </TabsTrigger>
             <TabsTrigger value="vendors" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span>Fornecedores</span>
+              <span>{tx('Fornecedores')}</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              <span>Requisições</span>
+              <span>{tx('Requisições')}</span>
             </TabsTrigger>
             <TabsTrigger value="invoices" className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />
-              <span>Faturas</span>
+              <span>{tx('Faturas')}</span>
             </TabsTrigger>
             <TabsTrigger value="expenses" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              <span>Despesas</span>
+              <span>{tx('Despesas')}</span>
             </TabsTrigger>
             <TabsTrigger value="payables" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span>Contas a Pagar</span>
+              <span>{tx('Contas a Pagar')}</span>
             </TabsTrigger>
           </TabsList>
 

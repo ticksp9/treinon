@@ -36,7 +36,7 @@ import { imageAsDataUrl } from '@/lib/team-branding';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 import { deliverPdf } from '@/lib/native-files';
-import { dateLocale, isEnglish, tr, useT } from '@/lib/i18n/ui';
+import { dateLocale, isEnglish, tr, useT, tx } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -548,7 +548,7 @@ export function MatchCallup() {
       // Navigate to Matches with team context so the new match is visible
       navigate(`/matches?teamId=${selectedTeam}`);
     } catch (error: any) {
-      toast.error('Erro ao criar: ' + error.message);
+      toast.error(tx('Erro ao criar: ') + error.message);
     } finally {
       setCreating(false);
     }
@@ -583,7 +583,7 @@ export function MatchCallup() {
       toast.success(t('Convocatória guardada!'));
       emailCallup(selectedMatch, Array.from(selectedPlayers));
     } catch (error: any) {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     }
   };
 
@@ -623,7 +623,7 @@ export function MatchCallup() {
       setSelectedMatch('');
       fetchMatches();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(tx('Erro ao eliminar: ') + error.message);
     } finally {
       setDeleting(false);
     }
@@ -721,7 +721,7 @@ export function MatchCallup() {
       setEditDialogOpen(false);
       fetchMatches();
     } catch (error: any) {
-      toast.error('Erro ao atualizar: ' + error.message);
+      toast.error(tx('Erro ao atualizar: ') + error.message);
     } finally {
       setCreating(false);
     }
@@ -823,7 +823,7 @@ export function MatchCallup() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -834,7 +834,7 @@ export function MatchCallup() {
       <Card>
         <CardContent className="py-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem Equipas</h3>
+          <h3 className="text-lg font-semibold mb-2">{tx('Sem Equipas')}</h3>
           <p className="text-muted-foreground">
             {t('Crie uma equipa primeiro para gerar convocatórias.')}
           </p>
@@ -1237,7 +1237,7 @@ export function MatchCallup() {
               <DialogHeader>
                 <DialogTitle>{t('Editar Jogo')}</DialogTitle>
                 <DialogDescription>
-                  Atualize os dados do jogo
+                  {tx('Atualize os dados do jogo')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -1431,7 +1431,7 @@ export function MatchCallup() {
                 </Button>
                 <Button variant="outline" size="sm" onClick={shareCallup} disabled={selectedPlayers.size === 0}>
                   <Share2 className="w-4 h-4 mr-2" />
-                  WhatsApp
+                  {tx('WhatsApp')}
                 </Button>
                 <Button onClick={saveCallup}>
                   {t('Guardar')}

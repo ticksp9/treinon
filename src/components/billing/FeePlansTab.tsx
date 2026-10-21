@@ -11,22 +11,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFeePlans, useCreateFeePlan, useUpdateFeePlan } from '@/hooks/useBilling';
 import { Plus, Edit, Settings2 } from 'lucide-react';
 import { getCurrentSeasonName } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
 const PLAN_TYPES = [
-  { value: 'monthly_fee', label: 'Mensalidade' },
-  { value: 'membership_quota', label: 'Quota Sócio' },
-  { value: 'registration', label: 'Inscrição' },
-  { value: 'insurance', label: 'Seguro' },
-  { value: 'annual_fee', label: 'Taxa Anual' },
-  { value: 'extra', label: 'Extra' },
+  { value: 'monthly_fee', get label() { return tx('Mensalidade'); } },
+  { value: 'membership_quota', get label() { return tx('Quota Sócio'); } },
+  { value: 'registration', get label() { return tx('Inscrição'); } },
+  { value: 'insurance', get label() { return tx('Seguro'); } },
+  { value: 'annual_fee', get label() { return tx('Taxa Anual'); } },
+  { value: 'extra', get label() { return tx('Extra'); } },
 ];
 const FREQUENCIES = [
-  { value: 'monthly', label: 'Mensal' },
-  { value: 'quarterly', label: 'Trimestral' },
-  { value: 'annual', label: 'Anual' },
-  { value: 'one_time', label: 'Única' },
+  { value: 'monthly', get label() { return tx('Mensal'); } },
+  { value: 'quarterly', get label() { return tx('Trimestral'); } },
+  { value: 'annual', get label() { return tx('Anual'); } },
+  { value: 'one_time', get label() { return tx('Única'); } },
 ];
 
 export function FeePlansTab({ clubId }: Props) {
@@ -59,31 +60,31 @@ export function FeePlansTab({ clubId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <div><h3 className="font-semibold">Planos de Cobrança</h3><p className="text-sm text-muted-foreground">Configure mensalidades, quotas e taxas</p></div>
+        <div><h3 className="font-semibold">{tx('Planos de Cobrança')}</h3><p className="text-sm text-muted-foreground">{tx('Configure mensalidades, quotas e taxas')}</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-1" /> Novo Plano</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-1" /> {tx('Novo Plano')}</Button></DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Criar Plano de Cobrança</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Criar Plano de Cobrança')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><Label>Nome</Label><Input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder="Ex: Mensalidade Sub-13" /></div>
-                <div><Label>Tipo</Label><Select value={form.plan_type} onValueChange={v => setForm(f => ({...f, plan_type: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PLAN_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Frequência</Label><Select value={form.billing_frequency} onValueChange={v => setForm(f => ({...f, billing_frequency: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{FREQUENCIES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Valor (€)</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({...f, amount: e.target.value}))} /></div>
-                <div><Label>Dia Vencimento</Label><Input type="number" min="1" max="28" value={form.due_day} onChange={e => setForm(f => ({...f, due_day: e.target.value}))} /></div>
-                <div><Label>Época</Label><Input value={form.season} onChange={e => setForm(f => ({...f, season: e.target.value}))} /></div>
-                <div><Label>Âmbito</Label><Select value={form.applies_to_scope} onValueChange={v => setForm(f => ({...f, applies_to_scope: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="club">Clube</SelectItem><SelectItem value="team">Equipa</SelectItem><SelectItem value="age_group">Escalão</SelectItem><SelectItem value="individual">Individual</SelectItem></SelectContent></Select></div>
+                <div className="col-span-2"><Label>{tx('Nome')}</Label><Input value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} placeholder={tx('Ex: Mensalidade Sub-13')} /></div>
+                <div><Label>{tx('Tipo')}</Label><Select value={form.plan_type} onValueChange={v => setForm(f => ({...f, plan_type: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{PLAN_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Frequência')}</Label><Select value={form.billing_frequency} onValueChange={v => setForm(f => ({...f, billing_frequency: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{FREQUENCIES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Valor (€)')}</Label><Input type="number" step="0.01" value={form.amount} onChange={e => setForm(f => ({...f, amount: e.target.value}))} /></div>
+                <div><Label>{tx('Dia Vencimento')}</Label><Input type="number" min="1" max="28" value={form.due_day} onChange={e => setForm(f => ({...f, due_day: e.target.value}))} /></div>
+                <div><Label>{tx('Época')}</Label><Input value={form.season} onChange={e => setForm(f => ({...f, season: e.target.value}))} /></div>
+                <div><Label>{tx('Âmbito')}</Label><Select value={form.applies_to_scope} onValueChange={v => setForm(f => ({...f, applies_to_scope: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="club">{tx('Clube')}</SelectItem><SelectItem value="team">{tx('Equipa')}</SelectItem><SelectItem value="age_group">{tx('Escalão')}</SelectItem><SelectItem value="individual">{tx('Individual')}</SelectItem></SelectContent></Select></div>
               </div>
-              <div className="col-span-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} /></div>
-              <div className="flex gap-6"><div className="flex items-center gap-2"><Switch checked={form.auto_generate} onCheckedChange={v => setForm(f => ({...f, auto_generate: v}))} /><Label>Geração automática</Label></div><div className="flex items-center gap-2"><Switch checked={form.send_alerts} onCheckedChange={v => setForm(f => ({...f, send_alerts: v}))} /><Label>Alertas</Label></div></div>
-              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={handleCreate} disabled={!form.name || !form.amount || createPlan.isPending}>Criar</Button></div>
+              <div className="col-span-2"><Label>{tx('Descrição')}</Label><Input value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} /></div>
+              <div className="flex gap-6"><div className="flex items-center gap-2"><Switch checked={form.auto_generate} onCheckedChange={v => setForm(f => ({...f, auto_generate: v}))} /><Label>{tx('Geração automática')}</Label></div><div className="flex items-center gap-2"><Switch checked={form.send_alerts} onCheckedChange={v => setForm(f => ({...f, send_alerts: v}))} /><Label>{tx('Alertas')}</Label></div></div>
+              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setOpen(false)}>{tx('Cancelar')}</Button><Button onClick={handleCreate} disabled={!form.name || !form.amount || createPlan.isPending}>{tx('Criar')}</Button></div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
       {(!plans || plans.length === 0) ? (
-        <Card><CardContent className="py-12 text-center"><Settings2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">Nenhum plano criado. Crie o primeiro plano de cobrança.</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><Settings2 className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">{tx('Nenhum plano criado. Crie o primeiro plano de cobrança.')}</p></CardContent></Card>
       ) : (
         <div className="grid gap-3">
           {plans.map((plan: any) => (
@@ -92,15 +93,15 @@ export function FeePlansTab({ clubId }: Props) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">{plan.name}</span>
-                    <Badge variant={plan.is_active ? 'default' : 'secondary'}>{plan.is_active ? 'Ativo' : 'Inativo'}</Badge>
+                    <Badge variant={plan.is_active ? 'default' : 'secondary'}>{plan.is_active ? tx('Ativo') : tx('Inativo')}</Badge>
                     <Badge variant="outline">{PLAN_TYPES.find(t => t.value === plan.plan_type)?.label || plan.plan_type}</Badge>
                     <Badge variant="outline">{FREQUENCIES.find(f => f.value === plan.billing_frequency)?.label}</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">{plan.description || plan.season || ''} · Venc. dia {plan.due_day}</p>
+                  <p className="text-sm text-muted-foreground">{plan.description || plan.season || ''} {tx('· Venc. dia')}{' '}{plan.due_day}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-lg font-bold">{fmt(plan.amount)}</span>
-                  <Button variant="ghost" size="sm" onClick={() => toggleActive(plan)}>{plan.is_active ? 'Desativar' : 'Ativar'}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => toggleActive(plan)}>{plan.is_active ? tx('Desativar') : tx('Ativar')}</Button>
                 </div>
               </CardContent>
             </Card>

@@ -10,6 +10,7 @@ import { Upload, Zap, FileText, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -72,28 +73,28 @@ export function ReconciliationTab({ clubId }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="font-semibold">Reconciliação Bancária</h3>
-          <p className="text-sm text-muted-foreground">Importar extratos e reconciliar com cobranças</p>
+          <h3 className="font-semibold">{tx('Reconciliação Bancária')}</h3>
+          <p className="text-sm text-muted-foreground">{tx('Importar extratos e reconciliar com cobranças')}</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={showAddAccount} onOpenChange={setShowAddAccount}>
-            <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-1" />Conta</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm" variant="outline"><Plus className="w-4 h-4 mr-1" />{tx('Conta')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Adicionar Conta Bancária</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Adicionar Conta Bancária')}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <Input placeholder="Nome do Banco" value={newAccountName} onChange={e => setNewAccountName(e.target.value)} />
-                <Input placeholder="Identificação (ex: Conta Principal)" value={newAccountLabel} onChange={e => setNewAccountLabel(e.target.value)} />
-                <Button onClick={handleAddAccount} className="w-full" disabled={!newAccountName || !newAccountLabel}>Adicionar</Button>
+                <Input placeholder={tx('Nome do Banco')} value={newAccountName} onChange={e => setNewAccountName(e.target.value)} />
+                <Input placeholder={tx('Identificação (ex: Conta Principal)')} value={newAccountLabel} onChange={e => setNewAccountLabel(e.target.value)} />
+                <Button onClick={handleAddAccount} className="w-full" disabled={!newAccountName || !newAccountLabel}>{tx('Adicionar')}</Button>
               </div>
             </DialogContent>
           </Dialog>
           <Dialog open={showImport} onOpenChange={setShowImport}>
-            <DialogTrigger asChild><Button size="sm"><Upload className="w-4 h-4 mr-1" />Importar Extrato</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm"><Upload className="w-4 h-4 mr-1" />{tx('Importar Extrato')}</Button></DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>Importar Extrato CSV</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Importar Extrato CSV')}</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <Select value={bankAccountId} onValueChange={setBankAccountId}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar conta bancária" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar conta bancária')} /></SelectTrigger>
                   <SelectContent>
                     {(accounts || []).map((a: any) => (
                       <SelectItem key={a.id} value={a.id}>{a.account_label} ({a.bank_name})</SelectItem>
@@ -101,18 +102,18 @@ export function ReconciliationTab({ clubId }: Props) {
                   </SelectContent>
                 </Select>
                 <Textarea
-                  placeholder={"data;montante;descricao;entidade;referencia\n2025-01-15;50.00;Mensalidade Jan;João Silva;REF001"}
+                  placeholder={tx('data;montante;descricao;entidade;referencia\n2025-01-15;50.00;Mensalidade Jan;João Silva;REF001')}
                   rows={8} value={csvText} onChange={e => setCsvText(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">Formato CSV com ; como separador. Colunas: data, montante, descricao, entidade, referencia</p>
+                <p className="text-xs text-muted-foreground">{tx('Formato CSV com ; como separador. Colunas: data, montante, descricao, entidade, referencia')}</p>
                 <Button onClick={handleImport} className="w-full" disabled={!bankAccountId || !csvText || importStatement.isPending}>
-                  {importStatement.isPending ? 'A importar...' : 'Importar'}
+                  {importStatement.isPending ? tx('A importar...') : tx('Importar')}
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
           <Button size="sm" variant="outline" onClick={() => autoMatch.mutate(selectedImport)} disabled={autoMatch.isPending}>
-            <Zap className="w-4 h-4 mr-1" />{autoMatch.isPending ? 'A processar...' : 'Auto-Match'}
+            <Zap className="w-4 h-4 mr-1" />{autoMatch.isPending ? tx('A processar...') : tx('Auto-Match')}
           </Button>
         </div>
       </div>
@@ -126,12 +127,12 @@ export function ReconciliationTab({ clubId }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{(imp.bank_accounts as any)?.account_label || 'Conta'}</span>
+                  <span className="text-sm font-medium">{(imp.bank_accounts as any)?.account_label || tx('Conta')}</span>
                 </div>
                 <Badge variant={imp.import_status === 'completed' ? 'default' : 'secondary'}>{imp.import_status}</Badge>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {imp.row_count} linhas · {imp.matched_count || 0} reconciliadas
+                {imp.row_count} {tx('linhas ·')}{' '}{imp.matched_count || 0} reconciliadas
                 {imp.period_start && ` · ${imp.period_start} a ${imp.period_end}`}
               </p>
             </CardContent>
@@ -142,13 +143,13 @@ export function ReconciliationTab({ clubId }: Props) {
       {/* Statement lines */}
       {selectedImport && lines && (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">Linhas do Extrato</h4>
+          <h4 className="font-medium text-sm">{tx('Linhas do Extrato')}</h4>
           {lines.map((line: any) => (
             <Card key={line.id}>
               <CardContent className="flex items-center justify-between py-2.5">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{line.counterparty_name || 'N/A'}</span>
+                    <span className="text-sm font-medium">{line.counterparty_name || tx('N/A')}</span>
                     <Badge variant={STATUS_BADGE[line.reconciliation_status] || 'outline'}>
                       {line.reconciliation_status}
                     </Badge>
@@ -156,7 +157,7 @@ export function ReconciliationTab({ clubId }: Props) {
                   <p className="text-xs text-muted-foreground">
                     {format(new Date(line.booking_date), 'dd/MM/yyyy')}
                     {line.remittance_info && ` · ${line.remittance_info.substring(0, 40)}`}
-                    {line.bank_reference && ` · Ref: ${line.bank_reference}`}
+                    {line.bank_reference && tx(' · Ref: {{v0}}', { v0: line.bank_reference })}
                   </p>
                 </div>
                 <span className={`font-bold ${line.debit_credit === 'credit' ? 'text-green-600' : 'text-red-600'}`}>

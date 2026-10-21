@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Target, AlertTriangle, BarChart3, Wallet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { tx } from '@/lib/i18n/ui';
 
 const formatCurrency = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -50,8 +51,8 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
       <Card>
         <CardContent className="py-12 text-center">
           <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem orçamento ativo</h3>
-          <p className="text-muted-foreground">Crie um ciclo orçamental no separador "Ciclos" para começar.</p>
+          <h3 className="text-lg font-semibold mb-2">{tx('Sem orçamento ativo')}</h3>
+          <p className="text-muted-foreground">{tx('Crie um ciclo orçamental no separador "Ciclos" para começar.')}</p>
         </CardContent>
       </Card>
     );
@@ -62,7 +63,7 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Orçamento Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Orçamento Total')}</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -73,18 +74,18 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Realizado</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Realizado')}</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalActual)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Execução: {executionPct}%</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('Execução:')}{' '}{executionPct}%</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Desvio</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Desvio')}</CardTitle>
             {totalVariance >= 0 ? <TrendingUp className="h-4 w-4 text-destructive" /> : <TrendingDown className="h-4 w-4 text-primary" />}
           </CardHeader>
           <CardContent>
@@ -92,37 +93,37 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
               {formatCurrency(totalVariance)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {totalBudget ? `${Math.round((totalVariance / totalBudget) * 100)}%` : '0%'} vs orçamento
+              {totalBudget ? `${Math.round((totalVariance / totalBudget) * 100)}%` : '0%'} {tx('vs orçamento')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Alertas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Alertas')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-accent-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-accent-foreground">{criticalAlerts}</div>
-            <p className="text-xs text-muted-foreground mt-1">{(alerts.data || []).length} alertas ativos</p>
+            <p className="text-xs text-muted-foreground mt-1">{(alerts.data || []).length} {tx('alertas ativos')}</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Receitas</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tx('Receitas')}</CardTitle></CardHeader>
           <CardContent>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Orçamento</span>
+              <span className="text-muted-foreground">{tx('Orçamento')}</span>
               <span className="font-medium">{formatCurrency(revenueBudget)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Realizado</span>
+              <span className="text-muted-foreground">{tx('Realizado')}</span>
               <span className="font-medium">{formatCurrency(revenueActual)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Desvio</span>
+              <span className="text-muted-foreground">{tx('Desvio')}</span>
               <Badge variant={revenueActual >= revenueBudget ? 'default' : 'destructive'} className="text-xs">
                 {formatCurrency(revenueActual - revenueBudget)}
               </Badge>
@@ -130,18 +131,18 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-sm">Custos + Investimentos</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tx('Custos + Investimentos')}</CardTitle></CardHeader>
           <CardContent>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Orçamento</span>
+              <span className="text-muted-foreground">{tx('Orçamento')}</span>
               <span className="font-medium">{formatCurrency(expenseBudget)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Realizado</span>
+              <span className="text-muted-foreground">{tx('Realizado')}</span>
               <span className="font-medium">{formatCurrency(expenseActual)}</span>
             </div>
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Desvio</span>
+              <span className="text-muted-foreground">{tx('Desvio')}</span>
               <Badge variant={expenseActual <= expenseBudget ? 'default' : 'destructive'} className="text-xs">
                 {formatCurrency(expenseActual - expenseBudget)}
               </Badge>
@@ -151,7 +152,7 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Budget vs Realizado Mensal</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tx('Budget vs Realizado Mensal')}</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={monthlyData}>
@@ -170,7 +171,7 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
 
       {variances.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Top Desvios por Categoria</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tx('Top Desvios por Categoria')}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-3">
               {variances
@@ -179,7 +180,7 @@ export function BudgetOverviewTab({ clubId }: { clubId: string }) {
                 .map((v, i) => (
                   <div key={i} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{v.category_type === 'revenue' ? 'Rec' : 'Cst'}</Badge>
+                      <Badge variant="outline" className="text-xs">{v.category_type === 'revenue' ? tx('Rec') : tx('Cst')}</Badge>
                       <span>{v.category_name}</span>
                     </div>
                     <div className="flex items-center gap-4">

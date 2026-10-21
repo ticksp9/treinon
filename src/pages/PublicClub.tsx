@@ -10,6 +10,7 @@ import { Calendar, MapPin, Trophy, Users, Facebook, Instagram, Globe, Share2 } f
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { shareText } from '@/lib/share';
+import { tx } from '@/lib/i18n/ui';
 
 interface PubMatch { match_date: string; opponent_name: string; is_home: boolean; location: string | null; competition: string | null; team_name: string; goals_for?: number; goals_against?: number }
 interface PubClub {
@@ -35,13 +36,13 @@ export default function PublicClub() {
     },
   });
 
-  if (isLoading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">A carregar…</div>;
+  if (isLoading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">{tx('A carregar…')}</div>;
   if (!club) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 p-6 text-center">
-        <p className="text-lg font-semibold">Página não encontrada</p>
-        <p className="text-sm text-muted-foreground">Este clube não tem página pública ativa.</p>
-        <Link to="/" className="text-sm text-primary underline">TreinON</Link>
+        <p className="text-lg font-semibold">{tx('Página não encontrada')}</p>
+        <p className="text-sm text-muted-foreground">{tx('Este clube não tem página pública ativa.')}</p>
+        <Link to="/" className="text-sm text-primary underline">{tx('TreinON')}</Link>
       </div>
     );
   }
@@ -49,9 +50,9 @@ export default function PublicClub() {
   const color = club.primary_color || '#24558f';
   const color2 = club.secondary_color || '#ffffff';
   const socials = [
-    { url: safeUrl(club.website_url), icon: Globe, label: 'Site' },
-    { url: safeUrl(club.facebook_url), icon: Facebook, label: 'Facebook' },
-    { url: safeUrl(club.instagram_url), icon: Instagram, label: 'Instagram' },
+    { url: safeUrl(club.website_url), icon: Globe, label: tx('Site') },
+    { url: safeUrl(club.facebook_url), icon: Facebook, label: tx('Facebook') },
+    { url: safeUrl(club.instagram_url), icon: Instagram, label: tx('Instagram') },
   ].filter((s) => s.url);
 
   return (
@@ -63,18 +64,18 @@ export default function PublicClub() {
             : <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-white/20 text-3xl font-bold">{club.name[0]}</div>}
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold sm:text-3xl">{club.name}</h1>
-            {club.founded_year && <p className="opacity-80">Fundado em {club.founded_year}</p>}
+            {club.founded_year && <p className="opacity-80">{tx('Fundado em')}{' '}{club.founded_year}</p>}
           </div>
           <Button variant="secondary" size="sm" onClick={() => shareText(`${club.name}: jogos e resultados\n${window.location.href}`, club.name)}>
-            <Share2 className="mr-1.5 h-4 w-4" />Partilhar
+            <Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}
           </Button>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-6">
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Calendar className="h-5 w-5" style={{ color }} />Próximos jogos</h2>
-          {club.upcoming.length === 0 ? <p className="text-sm text-muted-foreground">Sem jogos marcados.</p> : (
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Calendar className="h-5 w-5" style={{ color }} />{tx('Próximos jogos')}</h2>
+          {club.upcoming.length === 0 ? <p className="text-sm text-muted-foreground">{tx('Sem jogos marcados.')}</p> : (
             <ul className="divide-y rounded-lg border bg-card">
               {club.upcoming.map((m, i) => (
                 <li key={i} className="flex flex-wrap items-center gap-x-4 gap-y-1 p-3">
@@ -88,8 +89,8 @@ export default function PublicClub() {
         </section>
 
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Trophy className="h-5 w-5" style={{ color }} />Resultados</h2>
-          {club.results.length === 0 ? <p className="text-sm text-muted-foreground">Ainda sem resultados.</p> : (
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Trophy className="h-5 w-5" style={{ color }} />{tx('Resultados')}</h2>
+          {club.results.length === 0 ? <p className="text-sm text-muted-foreground">{tx('Ainda sem resultados.')}</p> : (
             <ul className="divide-y rounded-lg border bg-card">
               {club.results.map((m, i) => {
                 const gf = m.goals_for ?? 0, ga = m.goals_against ?? 0;
@@ -108,7 +109,7 @@ export default function PublicClub() {
 
         {club.teams.length > 0 && (
           <section>
-            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Users className="h-5 w-5" style={{ color }} />Equipas</h2>
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold"><Users className="h-5 w-5" style={{ color }} />{tx('Equipas')}</h2>
             <div className="grid gap-2 sm:grid-cols-3">
               {club.teams.map((t, i) => (
                 <div key={i} className="rounded-lg border bg-card p-3">
@@ -122,7 +123,7 @@ export default function PublicClub() {
 
         {club.history && (
           <section>
-            <h2 className="mb-2 text-lg font-semibold">O clube</h2>
+            <h2 className="mb-2 text-lg font-semibold">{tx('O clube')}</h2>
             <p className="whitespace-pre-line text-sm text-muted-foreground">{club.history}</p>
           </section>
         )}
@@ -139,7 +140,7 @@ export default function PublicClub() {
         )}
 
         <footer className="pt-4 text-center text-xs text-muted-foreground">
-          Página do clube feita com <Link to="/" className="underline">TreinON</Link> — gratuito para todas as equipas.
+          {tx('Página do clube feita com')}{' '}<Link to="/" className="underline">{tx('TreinON')}</Link> {tx('— gratuito para todas as equipas.')}
         </footer>
       </main>
     </div>

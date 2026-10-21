@@ -8,6 +8,7 @@ import { ArrowRight, ArrowUpRight, Users, AlertTriangle, CheckCircle2, ExternalL
 import { useNavigate } from "react-router-dom";
 import { AGE_CATEGORIES, getSportingAge, getSeasonStartYear, parseCalendarDate } from "@/lib/constants";
 import { alignAgeGroupsToSeason, type AgeGroupRule } from "@/lib/age-group-rules";
+import { tx } from '@/lib/i18n/ui';
 
 interface SeasonTransitionTabProps {
   clubId: string;
@@ -162,7 +163,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-muted-foreground text-center">A carregar projeções...</p>
+          <p className="text-muted-foreground text-center">{tx('A carregar projeções...')}</p>
         </CardContent>
       </Card>
     );
@@ -174,38 +175,38 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jogadores</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Total Jogadores')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{projections.length}</div>
-            <p className="text-xs text-muted-foreground">Ativos no clube</p>
+            <p className="text-xs text-muted-foreground">{tx('Ativos no clube')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Precisam de Promoção</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Precisam de Promoção')}</CardTitle>
             <ArrowUpRight className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{playersNeedingPromotion.length}</div>
             <p className="text-xs text-muted-foreground">
-              {playersWithTarget.length} com equipa disponível
+              {playersWithTarget.length} {tx('com equipa disponível')}
             </p>
           </CardContent>
         </Card>
 
         <Card className={playersWithoutTarget.length > 0 ? "border-amber-500" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sem Equipa Destino</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Sem Equipa Destino')}</CardTitle>
             <AlertTriangle className={`h-4 w-4 ${playersWithoutTarget.length > 0 ? 'text-amber-500' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${playersWithoutTarget.length > 0 ? 'text-amber-500' : ''}`}>
               {playersWithoutTarget.length}
             </div>
-            <p className="text-xs text-muted-foreground">Criar equipas necessárias</p>
+            <p className="text-xs text-muted-foreground">{tx('Criar equipas necessárias')}</p>
           </CardContent>
         </Card>
       </div>
@@ -213,9 +214,9 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
       {/* Category Flow Preview */}
       <Card>
         <CardHeader>
-          <CardTitle>Previsão por Escalão</CardTitle>
+          <CardTitle>{tx('Previsão por Escalão')}</CardTitle>
           <CardDescription>
-            Movimentação esperada para a próxima época
+            {tx('Movimentação esperada para a próxima época')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -228,13 +229,13 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
                       {category}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {counts.current} jogadores atuais
+                      {counts.current} {tx('jogadores atuais')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {counts.incoming > 0 && (
                       <Badge variant="secondary" className="bg-green-500/10 text-green-600">
-                        +{counts.incoming} a entrar
+                        +{counts.incoming} {tx('a entrar')}
                       </Badge>
                     )}
                   </div>
@@ -243,7 +244,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
             </div>
           ) : (
             <p className="text-muted-foreground text-center py-4">
-              Sem dados de jogadores para projeção.
+              {tx('Sem dados de jogadores para projeção.')}
             </p>
           )}
         </CardContent>
@@ -255,14 +256,14 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Jogadores a Promover</CardTitle>
+                <CardTitle>{tx('Jogadores a Promover')}</CardTitle>
                 <CardDescription>
-                  Mudanças de escalão na próxima época
+                  {tx('Mudanças de escalão na próxima época')}
                 </CardDescription>
               </div>
               <Button onClick={() => navigate('/season-transition')}>
                 <ExternalLink className="h-4 w-4 mr-2" />
-                Ir para Transição
+                {tx('Ir para Transição')}
               </Button>
             </div>
           </CardHeader>
@@ -280,7 +281,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
                       <span className="font-medium truncate">{player.playerName}</span>
                       {player.playerAge && (
                         <span className="text-sm text-muted-foreground">
-                          ({player.playerAge} anos)
+                          ({player.playerAge} {tx('anos)')}
                         </span>
                       )}
                     </div>
@@ -304,7 +305,7 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
               ))}
               {playersNeedingPromotion.length > 20 && (
                 <p className="text-sm text-muted-foreground text-center pt-2">
-                  E mais {playersNeedingPromotion.length - 20} jogadores...
+                  {tx('E mais')}{' '}{playersNeedingPromotion.length - 20} jogadores...
                 </p>
               )}
             </div>
@@ -316,9 +317,9 @@ export function SeasonTransitionTab({ clubId }: SeasonTransitionTabProps) {
         <Card>
           <CardContent className="py-12 text-center">
             <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Tudo em ordem!</h3>
+            <h3 className="text-lg font-semibold mb-2">{tx('Tudo em ordem!')}</h3>
             <p className="text-muted-foreground">
-              Todos os jogadores estão nos escalões corretos para a próxima época.
+              {tx('Todos os jogadores estão nos escalões corretos para a próxima época.')}
             </p>
           </CardContent>
         </Card>

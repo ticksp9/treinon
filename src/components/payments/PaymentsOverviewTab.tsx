@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTransactionsSummary } from '@/hooks/usePaymentIntents';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DollarSign, TrendingUp, AlertTriangle, CreditCard } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -13,10 +14,10 @@ export function PaymentsOverviewTab({ clubId }: Props) {
   if (!summary) return null;
 
   const cards = [
-    { label: 'Recebido (bruto)', value: fmt(summary.total_gross), icon: DollarSign, color: 'text-green-600' },
-    { label: 'Taxas Provider', value: fmt(summary.total_fees), icon: AlertTriangle, color: 'text-amber-600' },
-    { label: 'Recebido (líquido)', value: fmt(summary.total_net), icon: TrendingUp, color: 'text-primary' },
-    { label: 'Transações', value: `${summary.succeeded} ok / ${summary.failed} falhadas`, icon: CreditCard, color: 'text-muted-foreground' },
+    { label: tx('Recebido (bruto)'), value: fmt(summary.total_gross), icon: DollarSign, color: 'text-green-600' },
+    { label: tx('Taxas Provider'), value: fmt(summary.total_fees), icon: AlertTriangle, color: 'text-amber-600' },
+    { label: tx('Recebido (líquido)'), value: fmt(summary.total_net), icon: TrendingUp, color: 'text-primary' },
+    { label: tx('Transações'), value: `${summary.succeeded} ok / ${summary.failed} falhadas`, icon: CreditCard, color: 'text-muted-foreground' },
   ];
 
   return (
@@ -37,7 +38,7 @@ export function PaymentsOverviewTab({ clubId }: Props) {
 
       {Object.keys(summary.by_method).length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Recebimento por Método</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{tx('Recebimento por Método')}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
               {Object.entries(summary.by_method).map(([method, total]) => (

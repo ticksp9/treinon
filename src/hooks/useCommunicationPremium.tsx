@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useEffect, useMemo, useCallback } from 'react';
+import { tx } from '@/lib/i18n/ui';
 
 // ---- Unread tracking via communication_member_states ----
 
@@ -48,7 +49,7 @@ export function useMarkChannelRead() {
 
   return useMutation({
     mutationFn: async (channelId: string) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const now = new Date().toISOString();
 
       // Upsert member state to zero unread
@@ -279,7 +280,7 @@ export function useMarkNotificationRead() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase
         .from('communication_notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
@@ -300,7 +301,7 @@ export function useDismissNotification() {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase
         .from('communication_notifications')
         .update({ is_dismissed: true, dismissed_at: new Date().toISOString() })

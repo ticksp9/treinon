@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Clock, Wifi, WifiOff, CloudOff, Check } from 'lucide-react';
 import { REPORT_STATUS_LABELS, ENTRY_MODE_LABELS, type ReportStatus, type ReportEntryMode } from '@/lib/match-report-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface MatchContextBarProps {
   opponentName: string;
@@ -35,7 +36,7 @@ export function MatchContextBar({
     saving: 'A guardar…',
     saved: 'Guardado',
     pending: 'Sincronização pendente',
-    error: 'Erro ao guardar',
+    error: tx('Erro ao guardar'),
   };
 
   const syncIcon: Record<string, React.ReactNode> = {
@@ -92,7 +93,7 @@ export function MatchContextBar({
             {!isOnline && (
               <span className="flex items-center gap-1 text-destructive">
                 <WifiOff className="w-3 h-3" />
-                Offline
+                {tx('Offline')}
               </span>
             )}
             <span className={`flex items-center gap-1 ${syncStatus === 'error' ? 'text-destructive' : ''}`}>

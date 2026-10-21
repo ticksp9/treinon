@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { ExternalLink, CreditCard, Plus, WifiOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -48,28 +49,27 @@ export function PaymentRequestsTab({ clubId }: Props) {
         <Alert>
           <WifiOff className="h-4 w-4" />
           <AlertDescription>
-            Pagamentos online não estão ativados. Configure na aba "Configuração" para começar a criar links de pagamento.
-            Pode continuar a registar pagamentos manualmente na aba "Manual".
+            {tx('Pagamentos online não estão ativados. Configure na aba "Configuração" para começar a criar links de pagamento. Pode continuar a registar pagamentos manualmente na aba "Manual".')}
           </AlertDescription>
         </Alert>
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold">Links de Pagamento</h3>
-          <p className="text-sm text-muted-foreground">Sessões de checkout e pagamentos digitais</p>
+          <h3 className="font-semibold">{tx('Links de Pagamento')}</h3>
+          <p className="text-sm text-muted-foreground">{tx('Sessões de checkout e pagamentos digitais')}</p>
         </div>
         {isOnlineEnabled && (
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-2" />Criar Link</Button>
+            <Button size="sm"><Plus className="w-4 h-4 mr-2" />{tx('Criar Link')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Criar Link de Pagamento</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Criar Link de Pagamento')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Cobrança</label>
+                <label className="text-sm font-medium">{tx('Cobrança')}</label>
                 <Select value={selectedCharge} onValueChange={setSelectedCharge}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar cobrança" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar cobrança')} /></SelectTrigger>
                   <SelectContent>
                     {pendingCharges.map((c: any) => (
                       <SelectItem key={c.id} value={c.id}>
@@ -80,19 +80,19 @@ export function PaymentRequestsTab({ clubId }: Props) {
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Método</label>
+                <label className="text-sm font-medium">{tx('Método')}</label>
                 <Select value={selectedMethod} onValueChange={setSelectedMethod}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="card">Cartão</SelectItem>
-                    <SelectItem value="mb_way">MB WAY</SelectItem>
-                    <SelectItem value="sepa_debit">SEPA Direct Debit</SelectItem>
+                    <SelectItem value="card">{tx('Cartão')}</SelectItem>
+                    <SelectItem value="mb_way">{tx('MB WAY')}</SelectItem>
+                    <SelectItem value="sepa_debit">{tx('SEPA Direct Debit')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Button onClick={handleCreate} disabled={!selectedCharge || createCheckout.isPending} className="w-full">
                 <CreditCard className="w-4 h-4 mr-2" />
-                {createCheckout.isPending ? 'A criar...' : 'Criar Link de Pagamento'}
+                {createCheckout.isPending ? tx('A criar...') : tx('Criar Link de Pagamento')}
               </Button>
             </div>
           </DialogContent>
@@ -101,7 +101,7 @@ export function PaymentRequestsTab({ clubId }: Props) {
       </div>
 
       {(!intents || intents.length === 0) ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">Sem pedidos de pagamento</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">{tx('Sem pedidos de pagamento')}</CardContent></Card>
       ) : (
         <div className="space-y-2">
           {intents.map((i: any) => (
@@ -109,7 +109,7 @@ export function PaymentRequestsTab({ clubId }: Props) {
               <CardContent className="flex items-center justify-between py-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{(i.charges as any)?.description || 'Pagamento'}</span>
+                    <span className="font-medium text-sm">{(i.charges as any)?.description || tx('Pagamento')}</span>
                     <Badge variant="outline">{i.payment_method_code}</Badge>
                     <Badge variant={STATUS_COLORS[i.status] || 'outline'}>{i.status}</Badge>
                   </div>
@@ -122,7 +122,7 @@ export function PaymentRequestsTab({ clubId }: Props) {
                   <span className="font-bold">{fmt(Number(i.amount))}</span>
                   {i.checkout_url && i.status === 'pending' && (
                     <Button size="sm" variant="outline" onClick={() => window.open(i.checkout_url, '_blank')}>
-                      <ExternalLink className="w-3 h-3 mr-1" />Abrir
+                      <ExternalLink className="w-3 h-3 mr-1" />{tx('Abrir')}
                     </Button>
                   )}
                 </div>

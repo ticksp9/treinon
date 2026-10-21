@@ -37,6 +37,7 @@ import {
 import { applyWizardTransition } from '@/lib/season-transition-service';
 import { AddTransitionPlayerDialog } from '@/components/season-transition/AddTransitionPlayerDialog';
 import { describeTransition } from '@/lib/age-group-rules';
+import { tx } from '@/lib/i18n/ui';
 
 const INACTIVE_SOURCE = ['left', 'loaned_out'];
 
@@ -159,12 +160,12 @@ export default function SeasonCreateWizard() {
 
   const create = useMutation({
     mutationFn: async (withTransition: boolean) => {
-      if (!scope) throw new Error('Sem contexto de utilizador');
+      if (!scope) throw new Error(tx('Sem contexto de utilizador'));
       if (withTransition && !previous) {
-        throw new Error("Sem época anterior: usa 'Criar sem transitar jogadores'.");
+        throw new Error(tx('Sem época anterior: usa \'Criar sem transitar jogadores\'.'));
       }
       if (withTransition && selectedCount === 0) {
-        throw new Error('Nenhum jogador selecionado para transitar.');
+        throw new Error(tx('Nenhum jogador selecionado para transitar.'));
       }
       const duplicate = await findSeasonByName(scope, form.name);
       if (duplicate) throw new SeasonAlreadyExistsError(duplicate);
@@ -212,10 +213,10 @@ export default function SeasonCreateWizard() {
     onSuccess: ({ season, transitioned, promoted, added, withTransition }) => {
       if (withTransition) {
         toast.success(
-          `Transição aplicada: ${transitioned} jogadores transitaram, ${promoted} subiram de escalão, ${added} adicionados.`,
+          tx('Transição aplicada: {{v0}} jogadores transitaram, {{v1}} subiram de escalão, {{v2}} adicionados.', { v0: transitioned, v1: promoted, v2: added }),
         );
       } else {
-        toast.success(`Época ${season.name} criada em planeamento. Ative-a quando quiser começar.`);
+        toast.success(tx('Época {{v0}} criada em planeamento. Ative-a quando quiser começar.', { v0: season.name }));
       }
       qc.invalidateQueries();
       qc.refetchQueries({ queryKey: ['players'] });
@@ -227,14 +228,14 @@ export default function SeasonCreateWizard() {
     },
     onError: (e: any) => {
       if (e instanceof SeasonAlreadyExistsError) {
-        toast.error(`Já existe a época ${e.season.name}.`);
+        toast.error(tx('Já existe a época {{v0}}.', { v0: e.season.name }));
         setSelectedSeason(e.season.id);
         refresh();
         nav('/seasons');
         return;
       }
       console.error('[season-wizard] falha ao criar época/transição', e);
-      toast.error('Erro: ' + (e?.message ?? 'operação falhou'));
+      toast.error(tx('Erro: ') + (e?.message ?? tx('operação falhou')));
     },
   });
 
@@ -248,45 +249,45 @@ export default function SeasonCreateWizard() {
   const excludedCount = allRows.filter((r) => !r.selected).length;
 
   return (
-    <AppLayout title="Nova época">
+    <AppLayout title={tx('Nova época')}>
       <div className="space-y-4 max-w-4xl">
         <PageHeader
-          title="Iniciar nova época"
-          description={`Passo ${step} de 3`}
+          title={tx('Iniciar nova época')}
+          description={tx('Passo {{v0}} de 3', { v0: step })}
           icon={<CalendarPlus className="w-6 h-6 text-primary" />}
         />
 
         {step === 1 && (
           <Card>
-            <CardHeader><CardTitle className="text-base">1. Dados da época</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{tx('1. Dados da época')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1">
-                <Label>Nome</Label>
+                <Label>{tx('Nome')}</Label>
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 {previous && (
-                  <p className="text-xs text-muted-foreground">Sugerido a partir da época {previous.name}.</p>
+                  <p className="text-xs text-muted-foreground">{tx('Sugerido a partir da época')}{' '}{previous.name}.</p>
                 )}
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1">
-                  <Label>Início</Label>
+                  <Label>{tx('Início')}</Label>
                   <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Fim</Label>
+                  <Label>{tx('Fim')}</Label>
                   <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Data de referência</Label>
+                  <Label>{tx('Data de referência')}</Label>
                   <Input type="date" value={form.reference_date} onChange={(e) => setForm({ ...form, reference_date: e.target.value })} />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                A data de referência é usada para calcular idades e escalões.
+                {tx('A data de referência é usada para calcular idades e escalões.')}
               </p>
               <div className="flex justify-end">
                 <Button disabled={!form.name || !form.start_date || !form.end_date} onClick={() => setStep(2)}>
-                  Seguinte <ArrowRight className="w-4 h-4 ml-1" />
+                  {tx('Seguinte')}{' '}<ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             </CardContent>
@@ -295,15 +296,15 @@ export default function SeasonCreateWizard() {
 
         {step === 2 && !isClubMode && (
           <Card>
-            <CardHeader><CardTitle className="text-base">2. Transição de jogadores (treinador)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{tx('2. Transição de jogadores (treinador)')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Na nova época, continua na mesma equipa e no mesmo escalão?</Label>
+                <Label>{tx('Na nova época, continua na mesma equipa e no mesmo escalão?')}</Label>
                 <Select value={keepSame ? 'yes' : 'no'} onValueChange={(v) => setKeepSame(v === 'yes')}>
                   <SelectTrigger className="w-full sm:w-72"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="yes">Sim, mesma equipa e escalão</SelectItem>
-                    <SelectItem value="no">Não, mudo de escalão/equipa</SelectItem>
+                    <SelectItem value="yes">{tx('Sim, mesma equipa e escalão')}</SelectItem>
+                    <SelectItem value="no">{tx('Não, mudo de escalão/equipa')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -311,9 +312,9 @@ export default function SeasonCreateWizard() {
               {!keepSame && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <Label>Novo escalão</Label>
+                    <Label>{tx('Novo escalão')}</Label>
                     <Select value={targetAgeGroupId} onValueChange={setTargetAgeGroupId}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar escalão" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={tx('Selecionar escalão')} /></SelectTrigger>
                       <SelectContent>
                         {(source?.ageGroups || []).map((g) => (
                           <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
@@ -322,9 +323,9 @@ export default function SeasonCreateWizard() {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label>Nova equipa</Label>
+                    <Label>{tx('Nova equipa')}</Label>
                     <Select value={targetTeamId} onValueChange={setTargetTeamId}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar equipa" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={tx('Selecionar equipa')} /></SelectTrigger>
                       <SelectContent>
                         {(source?.teams || []).map((t) => (
                           <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
@@ -336,14 +337,13 @@ export default function SeasonCreateWizard() {
               )}
 
               <p className="text-sm text-muted-foreground">
-                O sistema calcula automaticamente, pela data de nascimento e pela data de referência {form.reference_date},
-                quem continua no escalão. Não é preciso escolher jogador a jogador.
+                {tx('O sistema calcula automaticamente, pela data de nascimento e pela data de referência')}{' '}{form.reference_date}{tx(', quem continua no escalão. Não é preciso escolher jogador a jogador.')}
               </p>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">
-                    Ficam neste escalão ({coachSplit.continuing.length})
+                    {tx('Ficam neste escalão (')}{coachSplit.continuing.length})
                   </p>
                   <div className="border rounded max-h-[40vh] overflow-auto divide-y">
                     {coachSplit.continuing.map((r) => (
@@ -354,50 +354,50 @@ export default function SeasonCreateWizard() {
                       </div>
                     ))}
                     {coachSplit.continuing.length === 0 && (
-                      <p className="p-3 text-sm text-muted-foreground">Nenhum jogador elegível.</p>
+                      <p className="p-3 text-sm text-muted-foreground">{tx('Nenhum jogador elegível.')}</p>
                     )}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Sobem de escalão ({coachSplit.leaving.length})</p>
+                  <p className="text-sm font-medium">{tx('Sobem de escalão (')}{coachSplit.leaving.length})</p>
                   <div className="border rounded max-h-[40vh] overflow-auto divide-y">
                     {coachSplit.leaving.map((r) => (
                       <div key={r.player_id} className="flex items-center gap-2 p-2 text-sm">
                         <span className="flex-1">{r.name}</span>
                         <Badge variant="secondary" className="text-[10px]">
-                          {INACTIVE_SOURCE.includes(r.current_status) ? 'saiu na época anterior' : 'não transita'}
+                          {INACTIVE_SOURCE.includes(r.current_status) ? tx('saiu na época anterior') : tx('não transita')}
                         </Badge>
                       </div>
                     ))}
                     {coachSplit.leaving.length === 0 && (
-                      <p className="p-3 text-sm text-muted-foreground">Todos continuam.</p>
+                      <p className="p-3 text-sm text-muted-foreground">{tx('Todos continuam.')}</p>
                     )}
                   </div>
                 </div>
               </div>
               {coachSplit.attention.length > 0 && (
                 <div className="border border-amber-500/40 bg-amber-500/5 rounded p-3 space-y-1">
-                  <p className="text-sm font-medium">Requer atenção ({coachSplit.attention.length})</p>
+                  <p className="text-sm font-medium">{tx('Requer atenção (')}{coachSplit.attention.length})</p>
                   {coachSplit.attention.map((r) => (
                     <p key={r.player_id} className="text-xs text-muted-foreground">
-                      {r.name} — sem data de nascimento. Fica inscrito; confirme a data depois.
+                      {r.name} {tx('— sem data de nascimento. Fica inscrito; confirme a data depois.')}
                     </p>
                   ))}
                 </div>
               )}
               <div className="flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-                  <UserPlus className="w-4 h-4 mr-1" /> Adicionar jogador
+                  <UserPlus className="w-4 h-4 mr-1" /> {tx('Adicionar jogador')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Os jogadores que não transitam mantêm-se na base de dados e na época anterior; apenas não ficam inscritos nesta.
+                {tx('Os jogadores que não transitam mantêm-se na base de dados e na época anterior; apenas não ficam inscritos nesta.')}
               </p>
 
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
-                <Button onClick={() => setStep(3)}>Seguinte <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> {tx('Voltar')}</Button>
+                <Button onClick={() => setStep(3)}>{tx('Seguinte')}{' '}<ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
 
             </CardContent>
@@ -406,15 +406,15 @@ export default function SeasonCreateWizard() {
 
         {step === 2 && isClubMode && (
           <Card>
-            <CardHeader><CardTitle className="text-base">2. Distribuição por escalão (clube)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{tx('2. Distribuição por escalão (clube)')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Distribuição automática pelo ano de nascimento e data de referência {form.reference_date}. Não é preciso escolher jogador a jogador.
+                {tx('Distribuição automática pelo ano de nascimento e data de referência')}{' '}{form.reference_date}{tx('. Não é preciso escolher jogador a jogador.')}
               </p>
 
               {(source?.ageGroups.length ?? 0) === 0 && (
                 <div className="border border-destructive/40 bg-destructive/5 rounded p-3 text-sm">
-                  Não existem escalões configurados. Configure os escalões do clube antes de aplicar a transição automática.
+                  {tx('Não existem escalões configurados. Configure os escalões do clube antes de aplicar a transição automática.')}
                 </div>
               )}
 
@@ -424,7 +424,7 @@ export default function SeasonCreateWizard() {
                     <div key={b.ageGroupId ?? 'none'} className="border rounded p-2 text-xs">
                       <p className="text-sm font-medium">{b.ageGroupName}</p>
                       <p className="text-muted-foreground">
-                        entram {b.incoming.length} · mantêm {b.staying.length} · saem {b.leaving.length}
+                        entram {b.incoming.length} {tx('· mantêm')}{' '}{b.staying.length} {tx('· saem')}{' '}{b.leaving.length}
                       </p>
                     </div>
                   ))}
@@ -433,10 +433,10 @@ export default function SeasonCreateWizard() {
 
               {attentionRows(allRows).length > 0 && (
                 <div className="border border-amber-500/40 bg-amber-500/5 rounded p-3 space-y-1">
-                  <p className="text-sm font-medium">Requer atenção ({attentionRows(allRows).length})</p>
+                  <p className="text-sm font-medium">{tx('Requer atenção (')}{attentionRows(allRows).length})</p>
                   {attentionRows(allRows).map((r) => (
                     <p key={r.player_id} className="text-xs text-muted-foreground">
-                      {r.name} — {r.birth_date ? 'sem escalão elegível' : 'sem data de nascimento'}. Confirme a data de nascimento depois.
+                      {r.name} — {r.birth_date ? tx('sem escalão elegível') : tx('sem data de nascimento')}{tx('. Confirme a data de nascimento depois.')}
                     </p>
                   ))}
                 </div>
@@ -444,14 +444,14 @@ export default function SeasonCreateWizard() {
 
               <div className="flex justify-end">
                 <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-                  <UserPlus className="w-4 h-4 mr-1" /> Adicionar jogador
+                  <UserPlus className="w-4 h-4 mr-1" /> {tx('Adicionar jogador')}
                 </Button>
               </div>
 
               <Collapsible open={manualOpen} onOpenChange={setManualOpen}>
                 <CollapsibleTrigger asChild>
                   <Button variant="ghost" size="sm" className="px-0 text-xs">
-                    Ajustes manuais (opcional) {manualOpen ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+                    {tx('Ajustes manuais (opcional)')}{' '}{manualOpen ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -459,11 +459,11 @@ export default function SeasonCreateWizard() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted text-xs sticky top-0">
                         <tr>
-                          <th className="p-2 text-left">Inscrever</th>
-                          <th className="p-2 text-left">Jogador</th>
-                          <th className="p-2 text-left">Escalão atual</th>
-                          <th className="p-2 text-left">Novo escalão</th>
-                          <th className="p-2 text-left">Ação</th>
+                          <th className="p-2 text-left">{tx('Inscrever')}</th>
+                          <th className="p-2 text-left">{tx('Jogador')}</th>
+                          <th className="p-2 text-left">{tx('Escalão atual')}</th>
+                          <th className="p-2 text-left">{tx('Novo escalão')}</th>
+                          <th className="p-2 text-left">{tx('Ação')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -492,7 +492,7 @@ export default function SeasonCreateWizard() {
                           </tr>
                         ))}
                         {allRows.length === 0 && (
-                          <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">Sem jogadores para transitar.</td></tr>
+                          <tr><td colSpan={5} className="p-4 text-center text-muted-foreground">{tx('Sem jogadores para transitar.')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -500,8 +500,8 @@ export default function SeasonCreateWizard() {
                 </CollapsibleContent>
               </Collapsible>
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
-                <Button onClick={() => setStep(3)}>Seguinte <ArrowRight className="w-4 h-4 ml-1" /></Button>
+                <Button variant="outline" onClick={() => setStep(1)}><ArrowLeft className="w-4 h-4 mr-1" /> {tx('Voltar')}</Button>
+                <Button onClick={() => setStep(3)}>{tx('Seguinte')}{' '}<ArrowRight className="w-4 h-4 ml-1" /></Button>
               </div>
 
             </CardContent>
@@ -510,40 +510,40 @@ export default function SeasonCreateWizard() {
 
         {step === 3 && (
           <Card>
-            <CardHeader><CardTitle className="text-base">3. Resumo e confirmação</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{tx('3. Resumo e confirmação')}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm">
-                <strong>{form.name}</strong> · {form.start_date} → {form.end_date} · referência {form.reference_date}
+                <strong>{form.name}</strong> · {form.start_date} → {form.end_date} {tx('· referência')}{' '}{form.reference_date}
               </p>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-muted-foreground">
-                  Transitam {selectedCount} · Sobem {promotedCount} · Saem {leavingCount} · Verificar {verifyCount}
-                  {verifyCount > 0 ? ` (${verifyIncludedCount} incluídos)` : ''} · Excluídos {excludedCount}
+                  {tx('Transitam')}{' '}{selectedCount} {tx('· Sobem')}{' '}{promotedCount} {tx('· Saem')}{' '}{leavingCount} {tx('· Verificar')}{' '}{verifyCount}
+                  {verifyCount > 0 ? tx(' ({{v0}} incluídos)', { v0: verifyIncludedCount }) : ''} {tx('· Excluídos')}{' '}{excludedCount}
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={selectAllEligible}>Selecionar todos</Button>
-                  <Button size="sm" variant="outline" onClick={resetSelection}>Repor defaults</Button>
+                  <Button size="sm" variant="outline" onClick={selectAllEligible}>{tx('Selecionar todos')}</Button>
+                  <Button size="sm" variant="outline" onClick={resetSelection}>{tx('Repor defaults')}</Button>
 
                   <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-1" /> Adicionar jogador
+                    <UserPlus className="w-4 h-4 mr-1" /> {tx('Adicionar jogador')}
                   </Button>
                 </div>
               </div>
 
               {!loadingPrevious && !hasPrevious && (
                 <div className="border border-amber-500/40 bg-amber-500/5 rounded p-3 text-sm">
-                  Não foi encontrada época anterior. A nova época será criada vazia e poderás inscrever jogadores manualmente.
+                  {tx('Não foi encontrada época anterior. A nova época será criada vazia e poderás inscrever jogadores manualmente.')}
                 </div>
               )}
               <div className="border rounded max-h-[45vh] overflow-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted text-xs sticky top-0">
                     <tr>
-                      <th className="p-2 text-left">Incluir</th>
-                      <th className="p-2 text-left">Jogador</th>
-                      <th className="p-2 text-left">Antes</th>
-                      <th className="p-2 text-left">Depois</th>
-                      <th className="p-2 text-left">Ação</th>
+                      <th className="p-2 text-left">{tx('Incluir')}</th>
+                      <th className="p-2 text-left">{tx('Jogador')}</th>
+                      <th className="p-2 text-left">{tx('Antes')}</th>
+                      <th className="p-2 text-left">{tx('Depois')}</th>
+                      <th className="p-2 text-left">{tx('Ação')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -555,7 +555,7 @@ export default function SeasonCreateWizard() {
                             checked={r.selected}
                             disabled={r.action === 'leaves' || (!isClubMode && r.action === 'promotes')}
                             onCheckedChange={(value) => toggleRow(r.player_id, !!value)}
-                            aria-label={`Incluir ${r.name}`}
+                            aria-label={tx('Incluir {{v0}}', { v0: r.name })}
                           />
                         </td>
                         <td className="p-2">{r.name}</td>
@@ -586,7 +586,7 @@ export default function SeasonCreateWizard() {
                           </Badge>
                           {r.action === 'unknown' && (
                             <span className="block text-[10px] text-muted-foreground">
-                              sem data de nascimento — confirmar elegibilidade
+                              {tx('sem data de nascimento — confirmar elegibilidade')}
                             </span>
                           )}
                         </td>
@@ -596,10 +596,10 @@ export default function SeasonCreateWizard() {
                 </table>
               </div>
               <div className="flex flex-wrap justify-between gap-2 pt-2 border-t">
-                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> Voltar</Button>
+                <Button variant="outline" onClick={() => setStep(2)}><ArrowLeft className="w-4 h-4 mr-1" /> {tx('Voltar')}</Button>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" disabled={create.isPending} onClick={() => create.mutate(false)}>
-                    Criar sem transitar jogadores
+                    {tx('Criar sem transitar jogadores')}
                   </Button>
                   <Button
                     disabled={create.isPending || !hasPrevious}
@@ -607,19 +607,19 @@ export default function SeasonCreateWizard() {
                       hasPrevious && selectedCount > 0
                         ? undefined
                         : hasPrevious
-                          ? 'Nenhum jogador selecionado para transitar.'
-                        : "Sem época anterior: não há jogadores para transitar. Usa 'Criar sem transitar jogadores'."
+                          ? tx('Nenhum jogador selecionado para transitar.')
+                        : tx('Sem época anterior: não há jogadores para transitar. Usa \'Criar sem transitar jogadores\'.')
                     }
                     onClick={() => selectedCount > 0
                       ? create.mutate(true)
-                      : toast.error('Nenhum jogador selecionado para transitar.')}
+                      : toast.error(tx('Nenhum jogador selecionado para transitar.'))}
                   >
-                    <Check className="w-4 h-4 mr-1" /> Criar época e aplicar transição
+                    <Check className="w-4 h-4 mr-1" /> {tx('Criar época e aplicar transição')}
                   </Button>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                A nova época fica em planeamento. Só passa a ativa quando a ativar em Épocas.
+                {tx('A nova época fica em planeamento. Só passa a ativa quando a ativar em Épocas.')}
               </p>
             </CardContent>
           </Card>

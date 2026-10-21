@@ -39,6 +39,7 @@ import {
 import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { MatchStatusBadge } from './MatchStatusBadge';
+import { tx } from '@/lib/i18n/ui';
 
 interface ReportReviewScreenProps {
   matchId: string;
@@ -145,12 +146,12 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
   };
 
   const handleReopen = async () => {
-    if (!user || !reopenReason.trim()) { toast.error('Informe o motivo da reabertura.'); return; }
+    if (!user || !reopenReason.trim()) { toast.error(tx('Informe o motivo da reabertura.')); return; }
     await updateReportStatus(matchId, 'reopened', user.id, reopenReason);
     onStatusChange('reopened');
     setShowReopenDialog(false);
     setReopenReason('');
-    toast.success('Relatório reaberto com sucesso. Já pode corrigir.');
+    toast.success(tx('Relatório reaberto com sucesso. Já pode corrigir.'));
     // Navigate to edit tab immediately
     onRequestTabChange?.('edit');
     loadData();
@@ -182,10 +183,10 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
         const lineup = lineups.find((l: any) => l.player_id === stat.playerId);
         if (lineup) await supabase.from('match_lineups').update({ minutes_played: stat.totalMinutes }).eq('id', lineup.id);
       }
-      toast.success('Minutos recalculados com sucesso');
+      toast.success(tx('Minutos recalculados com sucesso'));
       loadData();
     } catch (error) {
-      toast.error('Erro ao recalcular');
+      toast.error(tx('Erro ao recalcular'));
     } finally {
       setRecalculating(false);
     }
@@ -195,7 +196,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
     if (!user) return;
     try {
       const report = await getOrCreateMatchReport(matchId, user.id, null);
-      if (!report) throw new Error('REPORT_CREATE_FAILED');
+      if (!report) throw new Error(tx('REPORT_CREATE_FAILED'));
 
       await supabase.from('match_reports').update({ notes: reportNotes, updated_by: user.id }).eq('id', report.id);
       const snapshot: ReportSnapshot = {
@@ -206,7 +207,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
       await saveReportVersion(matchId, user.id, snapshot);
       await updateReportStatus(matchId, 'corrected', user.id);
       onStatusChange('corrected');
-      toast.success('Nova versão finalizada com sucesso');
+      toast.success(tx('Nova versão finalizada com sucesso'));
       loadData();
     } catch (error) { toast.error(getReportMutationErrorMessage(error)); }
   };
@@ -250,7 +251,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-        <p className="text-muted-foreground">A carregar revisão...</p>
+        <p className="text-muted-foreground">{tx('A carregar revisão...')}</p>
       </div>
     );
   }
@@ -284,15 +285,15 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
         <div className="flex gap-2">
           {canReopen && (
             <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)}>
-              <RotateCcw className="w-4 h-4 mr-1" /> Reabrir
+              <RotateCcw className="w-4 h-4 mr-1" /> {tx('Reabrir')}
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={handleRecalculate} disabled={recalculating}>
-            <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} /> Recalcular
+            <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} /> {tx('Recalcular')}
           </Button>
           {isEditable && (
             <Button size="sm" onClick={handleFinalizeCorrection} disabled={localIssues.some(i => i.type === 'error')}>
-              <CheckCircle className="w-4 h-4 mr-1" /> Finalizar nova versão
+              <CheckCircle className="w-4 h-4 mr-1" /> {tx('Finalizar nova versão')}
             </Button>
           )}
         </div>
@@ -300,16 +301,16 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
 
       <Tabs defaultValue="summary">
         <TabsList className="w-full grid grid-cols-4">
-          <TabsTrigger value="summary"><FileText className="w-4 h-4 mr-1 hidden sm:inline" /> Resumo</TabsTrigger>
-          <TabsTrigger value="diff"><ArrowRight className="w-4 h-4 mr-1 hidden sm:inline" /> Diferenças</TabsTrigger>
-          <TabsTrigger value="conflicts"><AlertTriangle className="w-4 h-4 mr-1 hidden sm:inline" /> Conflitos</TabsTrigger>
-          <TabsTrigger value="audit"><History className="w-4 h-4 mr-1 hidden sm:inline" /> Auditoria</TabsTrigger>
+          <TabsTrigger value="summary"><FileText className="w-4 h-4 mr-1 hidden sm:inline" /> {tx('Resumo')}</TabsTrigger>
+          <TabsTrigger value="diff"><ArrowRight className="w-4 h-4 mr-1 hidden sm:inline" /> {tx('Diferenças')}</TabsTrigger>
+          <TabsTrigger value="conflicts"><AlertTriangle className="w-4 h-4 mr-1 hidden sm:inline" /> {tx('Conflitos')}</TabsTrigger>
+          <TabsTrigger value="audit"><History className="w-4 h-4 mr-1 hidden sm:inline" /> {tx('Auditoria')}</TabsTrigger>
         </TabsList>
 
         {/* Summary */}
         <TabsContent value="summary" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Minutos por Atleta</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{tx('Minutos por Atleta')}</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-1">
                 {lineups.sort((a: any, b: any) => (b.minutes_played || 0) - (a.minutes_played || 0)).map((l: any) => (
@@ -326,10 +327,10 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-sm">Versões ({versions.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{tx('Versões (')}{versions.length})</CardTitle></CardHeader>
             <CardContent>
               {versions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem versões guardadas</p>
+                <p className="text-sm text-muted-foreground">{tx('Sem versões guardadas')}</p>
               ) : (
                 <div className="space-y-2">
                   {versions.map(v => (
@@ -357,7 +358,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
             <Card>
               <CardContent className="py-8 text-center">
                 <ArrowRight className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                <p className="text-muted-foreground text-sm">São necessárias pelo menos 2 versões para comparar diferenças.</p>
+                <p className="text-muted-foreground text-sm">{tx('São necessárias pelo menos 2 versões para comparar diferenças.')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -369,7 +370,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
               </div>
               {diff.length === 0 ? (
                 <Card>
-                  <CardContent className="py-4 text-center text-sm text-muted-foreground">Sem diferenças detetadas entre estas versões.</CardContent>
+                  <CardContent className="py-4 text-center text-sm text-muted-foreground">{tx('Sem diferenças detetadas entre estas versões.')}</CardContent>
                 </Card>
               ) : (
                 <Card>
@@ -397,7 +398,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
             <Card>
               <CardContent className="py-8 text-center">
                 <Shield className="w-10 h-10 mx-auto text-primary/50 mb-2" />
-                <p className="text-sm text-muted-foreground">Sem conflitos detetados.</p>
+                <p className="text-sm text-muted-foreground">{tx('Sem conflitos detetados.')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -411,7 +412,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
             <Card>
               <CardContent className="py-8 text-center">
                 <History className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Ainda não existem registos de auditoria.</p>
+                <p className="text-sm text-muted-foreground">{tx('Ainda não existem registos de auditoria.')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -427,12 +428,12 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
                       <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString('pt-PT')}</span>
                     </div>
                     {log.reason && (
-                      <p className="text-xs text-muted-foreground mt-1">Motivo: {log.reason}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{tx('Motivo:')}{' '}{log.reason}</p>
                     )}
                     {(log.before_data || log.after_data) && (
                       <div className="flex gap-4 mt-1 text-xs">
-                        {log.before_data && <span className="text-destructive">Antes: {JSON.stringify(log.before_data)}</span>}
-                        {log.after_data && <span className="text-primary">Depois: {JSON.stringify(log.after_data)}</span>}
+                        {log.before_data && <span className="text-destructive">{tx('Antes:')}{' '}{JSON.stringify(log.before_data)}</span>}
+                        {log.after_data && <span className="text-primary">{tx('Depois:')}{' '}{JSON.stringify(log.after_data)}</span>}
                       </div>
                     )}
                   </div>
@@ -445,23 +446,23 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
 
       {/* Close */}
       <div className="flex justify-end pt-2 border-t">
-        <Button variant="outline" onClick={onClose}>Fechar</Button>
+        <Button variant="outline" onClick={onClose}>{tx('Fechar')}</Button>
       </div>
 
       {/* Reopen Dialog */}
       <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reabrir Relatório</DialogTitle>
-            <DialogDescription>Indique o motivo para reabrir o relatório finalizado.</DialogDescription>
+            <DialogTitle>{tx('Reabrir Relatório')}</DialogTitle>
+            <DialogDescription>{tx('Indique o motivo para reabrir o relatório finalizado.')}</DialogDescription>
           </DialogHeader>
           <div>
-            <Label>Motivo da reabertura</Label>
-            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder="Ex: Corrigir substituição registada incorretamente" rows={3} />
+            <Label>{tx('Motivo da reabertura')}</Label>
+            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder={tx('Ex: Corrigir substituição registada incorretamente')} rows={3} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>Cancelar</Button>
-            <Button onClick={handleReopen}>Confirmar Reabertura</Button>
+            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>{tx('Cancelar')}</Button>
+            <Button onClick={handleReopen}>{tx('Confirmar Reabertura')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

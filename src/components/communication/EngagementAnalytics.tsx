@@ -9,6 +9,7 @@ import {
   useChannelEngagement,
 } from '@/hooks/useCommunicationPhase3';
 import { EmptyState, PageLoading } from '@/components/ui/page-states';
+import { tx } from '@/lib/i18n/ui';
 
 interface EngagementAnalyticsProps {
   clubId: string | null;
@@ -23,7 +24,7 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
   const isLoading = aLoading || atLoading || cLoading;
 
   if (isLoading) {
-    return <PageLoading message="A carregar analytics..." />;
+    return <PageLoading message={tx('A carregar analytics...')} />;
   }
 
   const totalAnnouncements = announcementData?.totalAnnouncements || 0;
@@ -46,9 +47,9 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Taxa de Leitura</p>
+                <p className="text-xs text-muted-foreground font-medium">{tx('Taxa de Leitura')}</p>
                 <p className="text-2xl font-bold">{readRate}%</p>
-                <p className="text-xs text-muted-foreground">{totalReads} leituras · {totalAnnouncements} anúncios</p>
+                <p className="text-xs text-muted-foreground">{totalReads} {tx('leituras ·')}{' '}{totalAnnouncements} {tx('anúncios')}</p>
               </div>
               <Megaphone className="h-8 w-8 text-primary/20" />
             </div>
@@ -60,9 +61,9 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Taxa de Confirmação</p>
+                <p className="text-xs text-muted-foreground font-medium">{tx('Taxa de Confirmação')}</p>
                 <p className="text-2xl font-bold">{confirmRate}%</p>
-                <p className="text-xs text-muted-foreground">{attStats.confirmed} confirmados · {attStats.total} total</p>
+                <p className="text-xs text-muted-foreground">{attStats.confirmed} {tx('confirmados ·')}{' '}{attStats.total} total</p>
               </div>
               <ClipboardCheck className="h-8 w-8 text-primary/20" />
             </div>
@@ -74,9 +75,9 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Itens Pendentes</p>
+                <p className="text-xs text-muted-foreground font-medium">{tx('Itens Pendentes')}</p>
                 <p className="text-2xl font-bold">{attStats.pending}</p>
-                <p className="text-xs text-muted-foreground">{pendingRate}% sem resposta</p>
+                <p className="text-xs text-muted-foreground">{pendingRate}{tx('% sem resposta')}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-warning/30" />
             </div>
@@ -88,7 +89,7 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Atividade de Grupos</p>
+                <p className="text-xs text-muted-foreground font-medium">{tx('Atividade de Grupos')}</p>
                 <p className="text-2xl font-bold">{activeChannels}/{totalChannels}</p>
                 <p className="text-xs text-muted-foreground">{totalMessages} mensagens</p>
               </div>
@@ -104,13 +105,13 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Megaphone className="h-4 w-4" />
-              Engagement de Anúncios
+              {tx('Engagement de Anúncios')}
             </CardTitle>
-            <CardDescription className="text-xs">Últimos 20 anúncios</CardDescription>
+            <CardDescription className="text-xs">{tx('Últimos 20 anúncios')}</CardDescription>
           </CardHeader>
           <CardContent>
             {(announcementData?.announcements || []).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Sem anúncios</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{tx('Sem anúncios')}</p>
             ) : (
               <ScrollArea className="max-h-[300px]">
                 <div className="space-y-2">
@@ -139,13 +140,13 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Atividade por Grupo
+              {tx('Atividade por Grupo')}
             </CardTitle>
-            <CardDescription className="text-xs">Mensagens e membros por canal</CardDescription>
+            <CardDescription className="text-xs">{tx('Mensagens e membros por canal')}</CardDescription>
           </CardHeader>
           <CardContent>
             {channelData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Sem grupos</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{tx('Sem grupos')}</p>
             ) : (
               <ScrollArea className="max-h-[300px]">
                 <div className="space-y-2">
@@ -173,22 +174,22 @@ export function EngagementAnalytics({ clubId, userId }: EngagementAnalyticsProps
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4" />
-            Resumo de Presenças
+            {tx('Resumo de Presenças')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-lg font-bold text-green-600">{attStats.confirmed}</div>
-              <p className="text-xs text-muted-foreground">Confirmados</p>
+              <p className="text-xs text-muted-foreground">{tx('Confirmados')}</p>
             </div>
             <div>
               <div className="text-lg font-bold text-red-600">{attStats.declined}</div>
-              <p className="text-xs text-muted-foreground">Recusados</p>
+              <p className="text-xs text-muted-foreground">{tx('Recusados')}</p>
             </div>
             <div>
               <div className="text-lg font-bold text-yellow-600">{attStats.pending}</div>
-              <p className="text-xs text-muted-foreground">Pendentes</p>
+              <p className="text-xs text-muted-foreground">{tx('Pendentes')}</p>
             </div>
           </div>
         </CardContent>

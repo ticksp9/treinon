@@ -46,7 +46,7 @@ import { useState, useMemo } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { minutesByKind } from '@/lib/match-kind';
-import { useT } from '@/lib/i18n/ui';
+import { useT, tx } from '@/lib/i18n/ui';
 
 export default function PlayerDetail() {
   const { id } = useParams<{ id: string }>();
@@ -98,7 +98,7 @@ export default function PlayerDetail() {
   const [emergency, setEmergency] = useState<EmergencyContact | 'loading' | null>(null);
   const askEmergency = async () => {
     if (!id) return;
-    if (!window.confirm('Ver o contacto de emergência dos encarregados? A consulta fica registada para o clube.')) return;
+    if (!window.confirm(tx('Ver o contacto de emergência dos encarregados? A consulta fica registada para o clube.'))) return;
     setEmergency('loading');
     const { contact, error } = await getEmergencyContact(id);
     if (error) { setEmergency(null); toast.error(t('Não foi possível obter o contacto: {{msg}}', { msg: String(error) })); return; }
@@ -281,14 +281,14 @@ export default function PlayerDetail() {
           <Card>
             <CardContent className="py-12 text-center space-y-3">
               <p className="text-muted-foreground">
-                Não foi possível carregar o jogador.
+                {tx('Não foi possível carregar o jogador.')}
               </p>
               {import.meta.env.DEV && (
                 <p className="text-xs text-muted-foreground">{(playerError as any)?.message}</p>
               )}
               <div className="flex justify-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => refetchPlayer()}>
-                  Tentar novamente
+                  {tx('Tentar novamente')}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => navigate('/players')}>
                   {t('Voltar à lista')}
@@ -334,7 +334,7 @@ export default function PlayerDetail() {
 
   return (
     <AppLayout>
-      <ErrorBoundary label="página do jogador" showBack>
+      <ErrorBoundary label={tx('página do jogador')} showBack>
       <div className="space-y-6">
         {/* Header */}
         {/* phone: name and badges on top, actions below; computer: one row */}
@@ -531,7 +531,7 @@ export default function PlayerDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           {player.email && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Email</p>
+                              <p className="text-xs text-muted-foreground">{tx('Email')}</p>
                               <p className="font-medium">{player.email}</p>
                             </div>
                           )}
@@ -579,7 +579,7 @@ export default function PlayerDetail() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                           {player.email && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Email</p>
+                              <p className="text-xs text-muted-foreground">{tx('Email')}</p>
                               <p className="font-medium">{player.email}</p>
                             </div>
                           )}
@@ -616,7 +616,7 @@ export default function PlayerDetail() {
                               </p>
                               {player.id_document_expiry && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  Validade: {format(new Date(player.id_document_expiry), 'dd/MM/yyyy')}
+                                  {tx('Validade:')}{' '}{format(new Date(player.id_document_expiry), 'dd/MM/yyyy')}
                                 </p>
                               )}
                             </div>
@@ -642,7 +642,7 @@ export default function PlayerDetail() {
                               <div>
                                 <p className="text-xs text-muted-foreground">{t('Atestado Médico')}</p>
                                 <p className="font-medium">
-                                  Válido até {format(new Date(player.medical_certificate_expiry), 'dd/MM/yyyy')}
+                                  {tx('Válido até')}{' '}{format(new Date(player.medical_certificate_expiry), 'dd/MM/yyyy')}
                                 </p>
                               </div>
                             </div>
@@ -723,16 +723,16 @@ export default function PlayerDetail() {
           </TabsList>
 
           <TabsContent value="summary" className="space-y-4">
-            <ErrorBoundary label="tab Resumo">
-            <ErrorBoundary label="ficha FM">
+            <ErrorBoundary label={tx('tab Resumo')}>
+            <ErrorBoundary label={tx('ficha FM')}>
               <PlayerFMCard playerId={player.id} />
             </ErrorBoundary>
             <PlayerSummaryTab player={player} seasonStats={seasonStats} latestEval={latestEval} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ErrorBoundary label="painel Pontos Fortes">
+              <ErrorBoundary label={tx('painel Pontos Fortes')}>
                 <PlayerStrengthsPanel playerId={player.id} kind="strength" canEdit={canEditFocus} />
               </ErrorBoundary>
-              <ErrorBoundary label="painel A Melhorar">
+              <ErrorBoundary label={tx('painel A Melhorar')}>
                 <PlayerImprovementPanel playerId={player.id} canEdit={canEditFocus} />
               </ErrorBoundary>
             </div>
@@ -740,19 +740,19 @@ export default function PlayerDetail() {
           </TabsContent>
 
           <TabsContent value="evaluations">
-            <ErrorBoundary label="tab Avaliações">
+            <ErrorBoundary label={tx('tab Avaliações')}>
             <PlayerEvaluations playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="evolution">
-            <ErrorBoundary label="tab Evolução">
+            <ErrorBoundary label={tx('tab Evolução')}>
             <PlayerEvolutionTab playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="analytics">
-            <ErrorBoundary label="tab Analytics">
+            <ErrorBoundary label={tx('tab Analytics')}>
             <PlayerAnalyticsTab
               playerId={player.id}
               teamId={player.team?.id ?? null}
@@ -762,19 +762,19 @@ export default function PlayerDetail() {
           </TabsContent>
 
           <TabsContent value="trainings">
-            <ErrorBoundary label="tab Treinos">
+            <ErrorBoundary label={tx('tab Treinos')}>
             <PlayerTrainingsTab playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="matches">
-            <ErrorBoundary label="tab Jogos">
+            <ErrorBoundary label={tx('tab Jogos')}>
             <PlayerMatchesTab playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="positions">
-            <ErrorBoundary label="tab Posições">
+            <ErrorBoundary label={tx('tab Posições')}>
             <PlayerPositionsTab
               playerId={player.id}
               declaredPosition={player.position}
@@ -785,25 +785,25 @@ export default function PlayerDetail() {
 
 
           <TabsContent value="minutes">
-            <ErrorBoundary label="tab Minutos">
+            <ErrorBoundary label={tx('tab Minutos')}>
             <PlayerMinutesTab playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="plan">
-            <ErrorBoundary label="tab Plano Individual">
+            <ErrorBoundary label={tx('tab Plano Individual')}>
             <PlayerDevelopmentPlanTab playerId={player.id} clubId={clubId} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="observations">
-            <ErrorBoundary label="tab Observações">
+            <ErrorBoundary label={tx('tab Observações')}>
             <PlayerObservationsTab playerId={player.id} clubId={clubId} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="health">
-            <ErrorBoundary label="tab Saúde / Lesões">
+            <ErrorBoundary label={tx('tab Saúde / Lesões')}>
             <div className="space-y-4">
               {seasonStats && (
                 <PlayerSeasonStats stats={seasonStats} isGoalkeeper={player.position === 'GK'} />
@@ -814,18 +814,18 @@ export default function PlayerDetail() {
           </TabsContent>
 
           <TabsContent value="availability">
-            <ErrorBoundary label="tab Disponibilidade">
+            <ErrorBoundary label={tx('tab Disponibilidade')}>
             <PlayerAvailabilityTab playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="documents">
-            <ErrorBoundary label="tab Documentos">
+            <ErrorBoundary label={tx('tab Documentos')}>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="w-5 h-5" />
-                  Gestão de Documentos
+                  {tx('Gestão de Documentos')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -840,13 +840,13 @@ export default function PlayerDetail() {
           </TabsContent>
 
           <TabsContent value="seasons">
-            <ErrorBoundary label="tab Histórico Época">
+            <ErrorBoundary label={tx('tab Histórico Época')}>
             <PlayerSeasonHistoryTab playerId={player.id} canEdit={canEditFocus} />
             </ErrorBoundary>
           </TabsContent>
 
           <TabsContent value="history">
-            <ErrorBoundary label="tab Auditoria">
+            <ErrorBoundary label={tx('tab Auditoria')}>
             <PlayerHistory playerId={player.id} />
             </ErrorBoundary>
           </TabsContent>

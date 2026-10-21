@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { resolveBranding, themeCss, type Branding, type BrandingRow } from '@/lib/team-branding';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 export const BRANDING_KEY = 'team-branding';
 const NONE: Branding = { crestUrl: null, primary: null, accent: null, fromClub: { crest: false, colors: false } };
@@ -53,5 +54,5 @@ export function TeamThemeStyle() {
 /** The crest, or a plain shield when the team has none. */
 export function TeamCrest({ url, name, className }: { url: string | null | undefined; name?: string; className?: string }) {
   if (!url) return <Shield className={cn('shrink-0 text-muted-foreground', className)} aria-hidden />;
-  return <img src={url} alt={name ? `Símbolo de ${name}` : 'Símbolo da equipa'} className={cn('shrink-0 object-contain', className)} loading="lazy" />;
+  return <img src={url} alt={name ? tx('Símbolo de {{v0}}', { v0: name }) : tx('Símbolo da equipa')} className={cn('shrink-0 object-contain', className)} loading="lazy" />;
 }

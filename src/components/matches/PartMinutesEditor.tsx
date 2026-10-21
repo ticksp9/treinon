@@ -5,6 +5,7 @@
 import { Button } from '@/components/ui/button';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 export const formatParts = (parts: number[]) =>
   parts.length > 1 && parts.every((m) => m === parts[0]) ? `${parts.length}×${parts[0]}'` : parts.map((m) => `${m}'`).join(' + ');
@@ -32,16 +33,16 @@ export function PartMinutesEditor({ value, onChange, maxParts = 6, teamFormat, d
       <div className="flex flex-wrap gap-1.5">
         {presets.map((p) => (
           <Button key={p.join('-')} type="button" size="sm" variant={same(p, value) ? 'default' : 'outline'} className="h-7 px-2 text-xs" onClick={() => onChange([...p])}>
-            {teamFormat && same(p, teamFormat) ? `Equipa: ${formatParts(p)}` : formatParts(p)}
+            {teamFormat && same(p, teamFormat) ? tx('Equipa: {{v0}}', { v0: formatParts(p) }) : formatParts(p)}
           </Button>
         ))}
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1">
-          <span className="mr-1 text-sm">Partes</span>
-          <Button type="button" size="icon" variant="outline" className="h-8 w-8" onClick={() => setCount(Math.max(1, value.length - 1))} aria-label="Menos partes"><Minus className="h-3.5 w-3.5" /></Button>
+          <span className="mr-1 text-sm">{tx('Partes')}</span>
+          <Button type="button" size="icon" variant="outline" className="h-8 w-8" onClick={() => setCount(Math.max(1, value.length - 1))} aria-label={tx('Menos partes')}><Minus className="h-3.5 w-3.5" /></Button>
           <span className="w-6 text-center font-mono font-semibold">{value.length}</span>
-          <Button type="button" size="icon" variant="outline" className="h-8 w-8" onClick={() => setCount(Math.min(maxParts, value.length + 1))} aria-label="Mais partes"><Plus className="h-3.5 w-3.5" /></Button>
+          <Button type="button" size="icon" variant="outline" className="h-8 w-8" onClick={() => setCount(Math.min(maxParts, value.length + 1))} aria-label={tx('Mais partes')}><Plus className="h-3.5 w-3.5" /></Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {value.map((m, i) => (
@@ -51,13 +52,13 @@ export function PartMinutesEditor({ value, onChange, maxParts = 6, teamFormat, d
                 type="number" inputMode="numeric" min={1} max={90} value={m}
                 onChange={(e) => setPart(i, Number(e.target.value))}
                 className="w-12 bg-transparent text-center font-mono outline-none"
-                aria-label={`Minutos da ${i + 1}.ª parte`}
+                aria-label={tx('Minutos da {{v0}}.ª parte', { v0: i + 1 })}
               />
               <span className="text-xs text-muted-foreground">min</span>
             </label>
           ))}
         </div>
-        <span className="text-sm text-muted-foreground">Total <b className="font-mono text-foreground">{total}'</b></span>
+        <span className="text-sm text-muted-foreground">{tx('Total')}{' '}<b className="font-mono text-foreground">{total}'</b></span>
       </div>
     </div>
   );

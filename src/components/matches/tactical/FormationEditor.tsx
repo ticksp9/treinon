@@ -23,6 +23,7 @@ import { PitchCanvas } from './PitchCanvas';
 import { SlotToken, type SlotTokenPlayer } from './SlotToken';
 import { BenchList, type BenchPlayer } from './BenchList';
 import { FormationPicker } from './FormationPicker';
+import { tx } from '@/lib/i18n/ui';
 
 export interface EditorPlayer {
   player_id: string;
@@ -220,18 +221,18 @@ export function FormationEditor({
 
   // ── Validation ───────────────────────────────────────────────────
   const validation = useMemo(() => {
-    if (!formation) return { ok: false, error: 'Sem formação selecionada' };
+    if (!formation) return { ok: false, error: tx('Sem formação selecionada') };
     const filled = formation.slots.filter((s) => assignments[s.slot_id]).length;
     if (filled !== expected) {
-      return { ok: false, error: `Preencher ${expected} jogadores (${filled} preenchidos)` };
+      return { ok: false, error: tx('Preencher {{v0}} jogadores ({{v1}} preenchidos)', { v0: expected, v1: filled }) };
     }
     const goalkeeperSlot = formation.slots.find((s) => s.role === 'goalkeeper');
     if (!goalkeeperSlot || !assignments[goalkeeperSlot.slot_id]) {
-      return { ok: false, error: 'Tem de ter 1 guarda-redes' };
+      return { ok: false, error: tx('Tem de ter 1 guarda-redes') };
     }
     const ids = Object.values(assignments).filter(Boolean) as string[];
     if (new Set(ids).size !== ids.length) {
-      return { ok: false, error: 'Jogador duplicado em campo' };
+      return { ok: false, error: tx('Jogador duplicado em campo') };
     }
     return { ok: true, error: null as string | null };
   }, [assignments, expected, formation]);
@@ -253,7 +254,7 @@ export function FormationEditor({
   const handleConfirm = useCallback(async () => {
     if (readonly) return;
     if (!validation.ok || !formation) {
-      toast.error(validation.error ?? 'Formação inválida');
+      toast.error(validation.error ?? tx('Formação inválida'));
       return;
     }
     setSaving(true);
@@ -286,10 +287,10 @@ export function FormationEditor({
         });
         if (error) throw error;
       }
-      toast.success('Formação gravada');
+      toast.success(tx('Formação gravada'));
       onCommitted?.();
     } catch (e: any) {
-      toast.error(e?.message ?? 'Erro a gravar formação');
+      toast.error(e?.message ?? tx('Erro a gravar formação'));
     } finally {
       setSaving(false);
     }
@@ -312,7 +313,7 @@ export function FormationEditor({
     return (
       <Card>
         <CardContent className="py-6 text-sm text-muted-foreground">
-          Sem formações disponíveis para esta modalidade.
+          {tx('Sem formações disponíveis para esta modalidade.')}
         </CardContent>
       </Card>
     );
@@ -322,7 +323,7 @@ export function FormationEditor({
     <Card className="overflow-hidden">
       <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">
-          {mode === 'initial' ? 'Formação inicial' : mode === 'live' ? 'Alterar tática' : 'Corrigir formação'}
+          {mode === 'initial' ? tx('Formação inicial') : mode === 'live' ? tx('Alterar tática') : tx('Corrigir formação')}
         </CardTitle>
         <FormationPicker
           sportType={sportType}
@@ -377,12 +378,12 @@ export function FormationEditor({
           <div className="flex justify-end gap-2">
             {onCancel && (
               <Button variant="outline" size="sm" onClick={onCancel} disabled={saving}>
-                <X className="w-4 h-4 mr-1" /> Cancelar
+                <X className="w-4 h-4 mr-1" /> {tx('Cancelar')}
               </Button>
             )}
             <Button size="sm" onClick={handleConfirm} disabled={!validation.ok || saving}>
               {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
-              {mode === 'live' ? 'Aplicar' : 'Confirmar'}
+              {mode === 'live' ? tx('Aplicar') : tx('Confirmar')}
             </Button>
           </div>
         )}

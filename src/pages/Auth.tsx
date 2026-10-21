@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
 import { scopeFromModalities } from '@/lib/sport-scope';
+import { tx } from '@/lib/i18n/ui';
 
 const loginSchema = z.object({
   identifier: z.string().min(3, 'Email ou username inválido'),
@@ -99,12 +100,12 @@ export default function Auth() {
             },
           });
       if (error) {
-        toast.error('Erro ao reenviar email: ' + error.message);
+        toast.error(tx('Erro ao reenviar email: ') + error.message);
       } else {
-        toast.success('Email de confirmação reenviado!');
+        toast.success(tx('Email de confirmação reenviado!'));
       }
     } catch (err) {
-      toast.error('Erro ao reenviar email');
+      toast.error(tx('Erro ao reenviar email'));
     } finally {
       setResendingEmail(false);
     }
@@ -113,7 +114,7 @@ export default function Auth() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotPasswordEmail) {
-      toast.error('Insira o seu email');
+      toast.error(tx('Insira o seu email'));
       return;
     }
     setLoading(true);
@@ -122,14 +123,14 @@ export default function Auth() {
         redirectTo: `${window.location.origin}/auth#type=recovery`,
       });
       if (error) {
-        toast.error('Erro: ' + error.message);
+        toast.error(tx('Erro: ') + error.message);
       } else {
-        toast.success('Email de recuperação enviado! Verifique a sua caixa de correio.');
+        toast.success(tx('Email de recuperação enviado! Verifique a sua caixa de correio.'));
         setShowForgotPassword(false);
         setForgotPasswordEmail('');
       }
     } catch (err) {
-      toast.error('Erro ao enviar email');
+      toast.error(tx('Erro ao enviar email'));
     } finally {
       setLoading(false);
     }
@@ -138,26 +139,26 @@ export default function Auth() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword.length < 6) {
-      toast.error('A password deve ter pelo menos 6 caracteres');
+      toast.error(tx('A password deve ter pelo menos 6 caracteres'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('As passwords não coincidem');
+      toast.error(tx('As passwords não coincidem'));
       return;
     }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        toast.error('Erro: ' + error.message);
+        toast.error(tx('Erro: ') + error.message);
       } else {
-        toast.success('Password alterada com sucesso!');
+        toast.success(tx('Password alterada com sucesso!'));
         setShowResetPassword(false);
         window.location.hash = '';
         navigate('/dashboard');
       }
     } catch (err) {
-      toast.error('Erro ao alterar password');
+      toast.error(tx('Erro ao alterar password'));
     } finally {
       setLoading(false);
     }
@@ -197,12 +198,12 @@ export default function Auth() {
         // Email or username; for usernames the server resends without revealing the address
         setUnconfirmedEmail(identifier.trim());
       } else if (error.message.includes('Invalid login credentials')) {
-        toast.error('Credenciais inválidas. Verifique o email/username e password.');
+        toast.error(tx('Credenciais inválidas. Verifique o email/username e password.'));
       } else {
         toast.error(error.message);
       }
     } else {
-      toast.success('Bem-vindo de volta!');
+      toast.success(tx('Bem-vindo de volta!'));
       navigate(nextPath ?? '/dashboard');
     }
   };
@@ -228,7 +229,7 @@ export default function Auth() {
       });
       if (usernameCheck?.exists) {
         setLoading(false);
-        toast.error('Este username já está em uso. Escolha outro.');
+        toast.error(tx('Este username já está em uso. Escolha outro.'));
         return;
       }
     } catch {
@@ -242,7 +243,7 @@ export default function Auth() {
       });
       if (emailCheck?.exists) {
         setLoading(false);
-        toast.error('Este email já está registado. Tente fazer login.');
+        toast.error(tx('Este email já está registado. Tente fazer login.'));
         return;
       }
     } catch {
@@ -258,11 +259,11 @@ export default function Auth() {
     if (error) {
       setLoading(false);
       if (error.message.includes('User already registered')) {
-        toast.error('Este email já está registado. Tente fazer login.');
+        toast.error(tx('Este email já está registado. Tente fazer login.'));
       } else if (error.message.includes('username') || error.message.includes('duplicate')) {
-        toast.error('Este username já está em uso. Escolha outro.');
+        toast.error(tx('Este username já está em uso. Escolha outro.'));
       } else if (error.message.includes('Database error')) {
-        toast.error('Erro ao criar conta. Verifique se o username e email são únicos.');
+        toast.error(tx('Erro ao criar conta. Verifique se o username e email são únicos.'));
       } else {
         toast.error(error.message);
       }
@@ -309,7 +310,7 @@ export default function Auth() {
             });
         } else {
           console.error('Error creating club:', clubError);
-          toast.error('A conta foi criada, mas o clube não. Entre e crie o clube em Clube, ou contacte o apoio.');
+          toast.error(tx('A conta foi criada, mas o clube não. Entre e crie o clube em Clube, ou contacte o apoio.'));
         }
       }
     }
@@ -318,7 +319,7 @@ export default function Auth() {
     // Signed in straight away (no email confirmation needed on this server): go in.
     const { data: { session: newSession } } = await supabase.auth.getSession();
     if (newSession) {
-      toast.success(accountType === 'club' ? 'Clube criado. Bem-vindo ao TreinON!' : 'Conta criada. Bem-vindo ao TreinON!');
+      toast.success(accountType === 'club' ? tx('Clube criado. Bem-vindo ao TreinON!') : tx('Conta criada. Bem-vindo ao TreinON!'));
       navigate('/dashboard', { replace: true });
       return;
     }
@@ -335,15 +336,15 @@ export default function Auth() {
             <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
               <Mail className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-xl font-display">Conta criada com sucesso!</CardTitle>
+            <CardTitle className="text-xl font-display">{tx('Conta criada com sucesso!')}</CardTitle>
             <CardDescription className="text-base mt-2">
-              Confirme o seu email para entrar. Enviámos um email de confirmação para <strong>{email}</strong>.
+              {tx('Confirme o seu email para entrar. Enviámos um email de confirmação para')}{' '}<strong>{email}</strong>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
               <AlertDescription>
-                Verifique a sua caixa de correio (e a pasta de spam) e clique no link de confirmação.
+                {tx('Verifique a sua caixa de correio (e a pasta de spam) e clique no link de confirmação.')}
               </AlertDescription>
             </Alert>
             <Button 
@@ -358,7 +359,7 @@ export default function Auth() {
               }}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar ao login
+              {tx('Voltar ao login')}
             </Button>
           </CardContent>
         </Card>
@@ -372,19 +373,19 @@ export default function Auth() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-xl font-display">Recuperar palavra-passe</CardTitle>
+            <CardTitle className="text-xl font-display">{tx('Recuperar palavra-passe')}</CardTitle>
             <CardDescription>
-              Insira o seu email para receber um link de recuperação
+              {tx('Insira o seu email para receber um link de recuperação')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="forgotEmail">Email</Label>
+                <Label htmlFor="forgotEmail">{tx('Email')}</Label>
                 <Input
                   id="forgotEmail"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder={tx('seu@email.com')}
                   value={forgotPasswordEmail}
                   onChange={(e) => setForgotPasswordEmail(e.target.value)}
                   required
@@ -392,7 +393,7 @@ export default function Auth() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Enviar email de recuperação
+                {tx('Enviar email de recuperação')}
               </Button>
               <Button 
                 type="button" 
@@ -401,7 +402,7 @@ export default function Auth() {
                 onClick={() => setShowForgotPassword(false)}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
+                {tx('Voltar')}
               </Button>
             </form>
           </CardContent>
@@ -416,15 +417,15 @@ export default function Auth() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle className="text-xl font-display">Definir nova palavra-passe</CardTitle>
+            <CardTitle className="text-xl font-display">{tx('Definir nova palavra-passe')}</CardTitle>
             <CardDescription>
-              Escolha uma nova palavra-passe para a sua conta
+              {tx('Escolha uma nova palavra-passe para a sua conta')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="newPassword">Nova password</Label>
+                <Label htmlFor="newPassword">{tx('Nova password')}</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -435,7 +436,7 @@ export default function Auth() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar password</Label>
+                <Label htmlFor="confirmPassword">{tx('Confirmar password')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -447,7 +448,7 @@ export default function Auth() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Alterar password
+                {tx('Alterar password')}
               </Button>
             </form>
           </CardContent>
@@ -466,34 +467,34 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4">
             <Zap className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-display font-bold gradient-text">TreinON</h1>
-          <p className="text-muted-foreground mt-2">Gestão inteligente de futebol & futsal</p>
+          <h1 className="text-3xl font-display font-bold gradient-text">{tx('TreinON')}</h1>
+          <p className="text-muted-foreground mt-2">{tx('Gestão inteligente de futebol & futsal')}</p>
         </div>
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl font-display">Aceder à conta</CardTitle>
+            <CardTitle className="text-xl font-display">{tx('Aceder à conta')}</CardTitle>
             <CardDescription>
-              Entre ou crie uma conta para começar
+              {tx('Entre ou crie uma conta para começar')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={searchParams.get('tab') === 'signup' ? 'signup' : 'signin'} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Registar</TabsTrigger>
+                <TabsTrigger value="signin">{tx('Entrar')}</TabsTrigger>
+                <TabsTrigger value="signup">{tx('Registar')}</TabsTrigger>
               </TabsList>
 
               {/* Hint for invited users */}
               <Alert className="mb-4 border-primary/20 bg-primary/5">
                 <AlertDescription className="text-xs text-muted-foreground">
-                  Se recebeu um convite para entrar como encarregado, atleta, treinador ou staff, use o link ou código enviado para criar a sua conta.{' '}
+                  {tx('Se recebeu um convite para entrar como encarregado, atleta, treinador ou staff, use o link ou código enviado para criar a sua conta.')}{' '}
                   <button 
                     type="button" 
                     onClick={() => navigate('/accept-invite/code')} 
                     className="text-primary font-medium hover:underline"
                   >
-                    Inserir código de convite
+                    {tx('Inserir código de convite')}
                   </button>
                 </AlertDescription>
               </Alert>
@@ -505,8 +506,8 @@ export default function Auth() {
                       <Mail className="h-4 w-4 text-amber-600" />
                       <AlertDescription className="text-amber-700">
                         <div className="flex flex-col gap-3">
-                          <span className="font-medium">Confirma o teu email para entrares</span>
-                          <p className="text-sm">Verifique a sua caixa de correio (e a pasta de spam) e clique no link de confirmação.</p>
+                          <span className="font-medium">{tx('Confirma o teu email para entrares')}</span>
+                          <p className="text-sm">{tx('Verifique a sua caixa de correio (e a pasta de spam) e clique no link de confirmação.')}</p>
                           <Button 
                             type="button"
                             variant="outline" 
@@ -516,18 +517,18 @@ export default function Auth() {
                             className="w-full sm:w-auto"
                           >
                             {resendingEmail && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                            Reenviar email
+                            {tx('Reenviar email')}
                           </Button>
                         </div>
                       </AlertDescription>
                     </Alert>
                   )}
                   <div className="space-y-2">
-                    <Label htmlFor="identifier">Email ou Username</Label>
+                    <Label htmlFor="identifier">{tx('Email ou Username')}</Label>
                     <Input
                       id="identifier"
                       type="text"
-                      placeholder="seu@email.com ou username"
+                      placeholder={tx('seu@email.com ou username')}
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
                       required
@@ -535,13 +536,13 @@ export default function Auth() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <Label htmlFor="password">Password</Label>
+                      <Label htmlFor="password">{tx('Password')}</Label>
                       <button 
                         type="button"
                         onClick={() => setShowForgotPassword(true)}
                         className="text-xs text-primary hover:underline"
                       >
-                        Esqueci-me da palavra-passe
+                        {tx('Esqueci-me da palavra-passe')}
                       </button>
                     </div>
                     <Input
@@ -555,7 +556,7 @@ export default function Auth() {
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Entrar
+                    {tx('Entrar')}
                   </Button>
                 </form>
               </TabsContent>
@@ -563,7 +564,7 @@ export default function Auth() {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-3">
-                    <Label>Tipo de Conta</Label>
+                    <Label>{tx('Tipo de Conta')}</Label>
                     <RadioGroup 
                       value={accountType} 
                       onValueChange={(v) => setAccountType(v as 'individual_coach' | 'club')}
@@ -579,7 +580,7 @@ export default function Auth() {
                       >
                         <RadioGroupItem value="individual_coach" id="coach" className="sr-only" />
                         <User className="w-6 h-6" />
-                        <span className="text-sm font-medium">Treinador</span>
+                        <span className="text-sm font-medium">{tx('Treinador')}</span>
                       </Label>
                       <Label
                         htmlFor="club"
@@ -591,14 +592,14 @@ export default function Auth() {
                       >
                         <RadioGroupItem value="club" id="club" className="sr-only" />
                         <Building2 className="w-6 h-6" />
-                        <span className="text-sm font-medium">Clube</span>
+                        <span className="text-sm font-medium">{tx('Clube')}</span>
                       </Label>
                     </RadioGroup>
                   </div>
 
                   {accountType === 'individual_coach' ? (
                     <div className="space-y-3">
-                      <Label>Modalidade Principal</Label>
+                      <Label>{tx('Modalidade Principal')}</Label>
                       <RadioGroup 
                         value={preferredSport} 
                         onValueChange={(v) => setPreferredSport(v as 'football' | 'futsal' | 'both')}
@@ -614,8 +615,8 @@ export default function Auth() {
                         >
                           <RadioGroupItem value="football" id="football" className="sr-only" />
                           <span className="text-2xl">⚽</span>
-                          <span className="text-sm font-medium">Futebol</span>
-                          <span className="text-xs text-muted-foreground">5, 7, 9 ou 11</span>
+                          <span className="text-sm font-medium">{tx('Futebol')}</span>
+                          <span className="text-xs text-muted-foreground">{tx('5, 7, 9 ou 11')}</span>
                         </Label>
                         <Label
                           htmlFor="futsal"
@@ -627,8 +628,8 @@ export default function Auth() {
                         >
                           <RadioGroupItem value="futsal" id="futsal" className="sr-only" />
                           <span className="text-2xl">🏐</span>
-                          <span className="text-sm font-medium">Futsal</span>
-                          <span className="text-xs text-muted-foreground">5 jogadores</span>
+                          <span className="text-sm font-medium">{tx('Futsal')}</span>
+                          <span className="text-xs text-muted-foreground">{tx('5 jogadores')}</span>
                         </Label>
                         <Label
                           htmlFor="both"
@@ -640,17 +641,17 @@ export default function Auth() {
                         >
                           <RadioGroupItem value="both" id="both" className="sr-only" />
                           <span className="text-2xl">⚽🏐</span>
-                          <span className="text-sm font-medium">Os dois</span>
-                          <span className="text-xs text-muted-foreground">Futebol e futsal</span>
+                          <span className="text-sm font-medium">{tx('Os dois')}</span>
+                          <span className="text-xs text-muted-foreground">{tx('Futebol e futsal')}</span>
                         </Label>
                       </RadioGroup>
                       <p className="text-xs text-muted-foreground">
-                        Só verá a modalidade que escolher. Pode mudar depois nas Definições.
+                        {tx('Só verá a modalidade que escolher. Pode mudar depois nas Definições.')}
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <Label>Modalidades do Clube</Label>
+                      <Label>{tx('Modalidades do Clube')}</Label>
                       <div className="grid grid-cols-2 gap-3">
                         <label
                           className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
@@ -674,8 +675,8 @@ export default function Auth() {
                             className="sr-only"
                           />
                           <span className="text-2xl">⚽</span>
-                          <span className="text-sm font-medium">Futebol</span>
-                          <span className="text-xs text-muted-foreground">5, 7, 9 ou 11</span>
+                          <span className="text-sm font-medium">{tx('Futebol')}</span>
+                          <span className="text-xs text-muted-foreground">{tx('5, 7, 9 ou 11')}</span>
                         </label>
                         <label
                           className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
@@ -699,12 +700,12 @@ export default function Auth() {
                             className="sr-only"
                           />
                           <span className="text-2xl">🏐</span>
-                          <span className="text-sm font-medium">Futsal</span>
-                          <span className="text-xs text-muted-foreground">5 jogadores</span>
+                          <span className="text-sm font-medium">{tx('Futsal')}</span>
+                          <span className="text-xs text-muted-foreground">{tx('5 jogadores')}</span>
                         </label>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Selecione uma ou ambas as modalidades para o seu clube
+                        {tx('Selecione uma ou ambas as modalidades para o seu clube')}
                       </p>
                     </div>
                   )}
@@ -712,30 +713,30 @@ export default function Auth() {
                   {accountType === 'individual_coach' && (
                     <div className="space-y-2">
                       <p className="rounded-md border border-dashed p-2 text-xs text-muted-foreground">
-                        Foi convidado por um clube ou por um treinador?{' '}
+                        {tx('Foi convidado por um clube ou por um treinador?')}{' '}
                         <button type="button" className="font-medium text-primary hover:underline" onClick={() => navigate('/accept-invite/code')}>
-                          Use o link ou o código do convite
+                          {tx('Use o link ou o código do convite')}
                         </button>{' '}
-                        — assim entra logo na equipa certa.
+                        {tx('— assim entra logo na equipa certa.')}
                       </p>
                     </div>
                   )}
 
                   <div className="space-y-2">
                     <Label htmlFor="name">
-                      {accountType === 'club' ? 'Nome do Clube' : 'Nome completo'}
+                      {accountType === 'club' ? tx('Nome do Clube') : tx('Nome completo')}
                     </Label>
                     <Input
                       id="name"
                       type="text"
-                      placeholder={accountType === 'club' ? 'FC Exemplo' : 'João Silva'}
+                      placeholder={accountType === 'club' ? tx('FC Exemplo') : tx('João Silva')}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupUsername">Username</Label>
+                    <Label htmlFor="signupUsername">{tx('Username')}</Label>
                     <Input
                       id="signupUsername"
                       type="text"
@@ -746,18 +747,18 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupEmail">Email</Label>
+                    <Label htmlFor="signupEmail">{tx('Email')}</Label>
                     <Input
                       id="signupEmail"
                       type="email"
-                      placeholder="seu@email.com"
+                      placeholder={tx('seu@email.com')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signupPassword">Password</Label>
+                    <Label htmlFor="signupPassword">{tx('Password')}</Label>
                     <Input
                       id="signupPassword"
                       type="password"
@@ -769,7 +770,7 @@ export default function Auth() {
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar conta
+                    {tx('Criar conta')}
                   </Button>
                 </form>
               </TabsContent>
@@ -780,18 +781,18 @@ export default function Auth() {
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
           <div className="p-4 rounded-xl bg-card/50 border border-border/50">
             <Users className="w-6 h-6 mx-auto text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Gestão de Jogadores</p>
+            <p className="text-xs text-muted-foreground">{tx('Gestão de Jogadores')}</p>
           </div>
           <div className="p-4 rounded-xl bg-card/50 border border-border/50">
             <Calendar className="w-6 h-6 mx-auto text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Treinos & Jogos</p>
+            <p className="text-xs text-muted-foreground">{tx('Treinos & Jogos')}</p>
           </div>
           <div className="p-4 rounded-xl bg-card/50 border border-border/50">
             <Zap className="w-6 h-6 mx-auto text-primary mb-2" />
-            <p className="text-xs text-muted-foreground">Estatísticas</p>
+            <p className="text-xs text-muted-foreground">{tx('Estatísticas')}</p>
           </div>
         </div>
-        <p className="mt-6 text-center text-xs text-muted-foreground"><a href="/privacidade" className="hover:underline">Política de privacidade</a></p>
+        <p className="mt-6 text-center text-xs text-muted-foreground"><a href="/privacidade" className="hover:underline">{tx('Política de privacidade')}</a></p>
       </div>
     </div>
   );

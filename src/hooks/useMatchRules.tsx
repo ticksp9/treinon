@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from './useUserRole';
 import { toast } from 'sonner';
 import type { MatchRuleProfile } from '@/lib/match-rules-service';
+import { tx } from '@/lib/i18n/ui';
 
 export function useMatchRuleProfiles(modalityFilter?: string) {
   const { clubId } = useUserRole();
@@ -37,7 +38,7 @@ export function useMatchRuleProfileMutations() {
 
   const createProfile = useMutation({
     mutationFn: async (profile: Partial<MatchRuleProfile> & { modality_code: string; name: string; max_players_on_field: number }) => {
-      if (!clubId) throw new Error('Club ID required');
+      if (!clubId) throw new Error(tx('Club ID required'));
       const { data, error } = await supabase
         .from('match_rule_profiles')
         .insert({ ...profile, club_id: clubId, is_system_default: false })
@@ -48,7 +49,7 @@ export function useMatchRuleProfileMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['match-rule-profiles'] });
-      toast.success('Perfil de regras criado com sucesso');
+      toast.success(tx('Perfil de regras criado com sucesso'));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -66,7 +67,7 @@ export function useMatchRuleProfileMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['match-rule-profiles'] });
-      toast.success('Perfil de regras atualizado');
+      toast.success(tx('Perfil de regras atualizado'));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -81,7 +82,7 @@ export function useMatchRuleProfileMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['match-rule-profiles'] });
-      toast.success('Perfil de regras eliminado');
+      toast.success(tx('Perfil de regras eliminado'));
     },
     onError: (e: Error) => toast.error(e.message),
   });

@@ -26,6 +26,7 @@ import {
 import { format, addDays, isPast, isWithinInterval } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { INJURY_STATUSES, INJURY_SEVERITIES } from '@/lib/physio-constants';
+import { tx } from '@/lib/i18n/ui';
 
 export default function PhysioDashboard() {
   const { user } = useAuth();
@@ -162,9 +163,9 @@ export default function PhysioDashboard() {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para fisioterapeutas e administradores do clube.
+                {tx('Esta funcionalidade está disponível apenas para fisioterapeutas e administradores do clube.')}
               </p>
             </CardContent>
           </Card>
@@ -195,17 +196,17 @@ export default function PhysioDashboard() {
           <div>
             <h1 className="text-2xl font-display font-bold flex items-center gap-2">
               <Heart className="w-6 h-6 text-primary" />
-              Saúde & Fisioterapia
+              {tx('Saúde & Fisioterapia')}
             </h1>
-            <p className="text-muted-foreground">Gestão de lesões, avaliações e reabilitação</p>
+            <p className="text-muted-foreground">{tx('Gestão de lesões, avaliações e reabilitação')}</p>
           </div>
           <div className="flex gap-2">
             <Select value={teamFilter} onValueChange={setTeamFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por equipa" />
+                <SelectValue placeholder={tx('Filtrar por equipa')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as Equipas</SelectItem>
+                <SelectItem value="all">{tx('Todas as Equipas')}</SelectItem>
                 {teams?.map(team => (
                   <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                 ))}
@@ -213,7 +214,7 @@ export default function PhysioDashboard() {
             </Select>
             <Button onClick={() => navigate('/club/physio/injuries/new')}>
               <Plus className="w-4 h-4 mr-2" />
-              Nova Lesão
+              {tx('Nova Lesão')}
             </Button>
           </div>
         </div>
@@ -228,7 +229,7 @@ export default function PhysioDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{activeInjuries?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Lesões Ativas</p>
+                  <p className="text-xs text-muted-foreground">{tx('Lesões Ativas')}</p>
                 </div>
               </div>
             </CardContent>
@@ -242,7 +243,7 @@ export default function PhysioDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{restrictedPlayers?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Com Restrições</p>
+                  <p className="text-xs text-muted-foreground">{tx('Com Restrições')}</p>
                 </div>
               </div>
             </CardContent>
@@ -256,7 +257,7 @@ export default function PhysioDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{activeRehabPlans?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Planos Ativos</p>
+                  <p className="text-xs text-muted-foreground">{tx('Planos Ativos')}</p>
                 </div>
               </div>
             </CardContent>
@@ -270,7 +271,7 @@ export default function PhysioDashboard() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{upcomingReviews?.length || 0}</p>
-                  <p className="text-xs text-muted-foreground">Reavaliações (7d)</p>
+                  <p className="text-xs text-muted-foreground">{tx('Reavaliações (7d)')}</p>
                 </div>
               </div>
             </CardContent>
@@ -283,11 +284,11 @@ export default function PhysioDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
-                <CardTitle className="text-lg">Lesões Ativas</CardTitle>
-                <CardDescription>Casos que requerem acompanhamento</CardDescription>
+                <CardTitle className="text-lg">{tx('Lesões Ativas')}</CardTitle>
+                <CardDescription>{tx('Casos que requerem acompanhamento')}</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => navigate('/club/physio/injuries')}>
-                Ver todas
+                {tx('Ver todas')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </CardHeader>
@@ -299,7 +300,7 @@ export default function PhysioDashboard() {
               ) : activeInjuries?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Nenhuma lesão ativa</p>
+                  <p>{tx('Nenhuma lesão ativa')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -335,15 +336,15 @@ export default function PhysioDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
-                <CardTitle className="text-lg">Reavaliações Próximas</CardTitle>
-                <CardDescription>Próximos 7 dias</CardDescription>
+                <CardTitle className="text-lg">{tx('Reavaliações Próximas')}</CardTitle>
+                <CardDescription>{tx('Próximos 7 dias')}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
               {upcomingReviews?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Sem reavaliações agendadas</p>
+                  <p>{tx('Sem reavaliações agendadas')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -376,14 +377,14 @@ export default function PhysioDashboard() {
           {/* Players with Restrictions */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Jogadores com Restrições</CardTitle>
-              <CardDescription>Limitações para treino/jogo</CardDescription>
+              <CardTitle className="text-lg">{tx('Jogadores com Restrições')}</CardTitle>
+              <CardDescription>{tx('Limitações para treino/jogo')}</CardDescription>
             </CardHeader>
             <CardContent>
               {restrictedPlayers?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Todos os jogadores aptos</p>
+                  <p>{tx('Todos os jogadores aptos')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -400,7 +401,7 @@ export default function PhysioDashboard() {
                           </Badge>
                         </div>
                         <Badge variant="outline" className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">
-                          Restrito
+                          {tx('Restrito')}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{injury.restrictions}</p>
@@ -415,11 +416,11 @@ export default function PhysioDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
-                <CardTitle className="text-lg">Planos de Reabilitação</CardTitle>
-                <CardDescription>Planos ativos</CardDescription>
+                <CardTitle className="text-lg">{tx('Planos de Reabilitação')}</CardTitle>
+                <CardDescription>{tx('Planos ativos')}</CardDescription>
               </div>
               <Button variant="ghost" size="sm" onClick={() => navigate('/club/physio/rehab')}>
-                Ver todos
+                {tx('Ver todos')}
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </CardHeader>
@@ -427,7 +428,7 @@ export default function PhysioDashboard() {
               {activeRehabPlans?.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ClipboardList className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p>Sem planos ativos</p>
+                  <p>{tx('Sem planos ativos')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">

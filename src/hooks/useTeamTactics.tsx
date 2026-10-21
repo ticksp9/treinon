@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { parseTeamTactics, type TeamTacticsMap } from '@/lib/team-tactics';
 import { useFormationsVersion } from '@/lib/custom-formations';
 import { getFormation } from '@/lib/tactical-formations';
+import { tx } from '@/lib/i18n/ui';
 
 export function useTeamTactics(teamId: string | null | undefined) {
   const qc = useQueryClient();
@@ -40,7 +41,7 @@ export function useTeamTactics(teamId: string | null | undefined) {
     qc.setQueryData(['team-tactics', teamId], (old: unknown) => ({ ...(old as object ?? {}), tactics: next, ...(formation ? { formation } : {}) })); // the screen answers at once
     const { error } = await supabase.from('teams').update({ tactics: next, ...(formation ? { formation } : {}) } as never).eq('id', teamId);
     if (error) {
-      toast.error('Não foi possível guardar as táticas: ' + error.message);
+      toast.error(tx('Não foi possível guardar as táticas: ') + error.message);
       qc.invalidateQueries({ queryKey: ['team-tactics', teamId] });
       return false;
     }

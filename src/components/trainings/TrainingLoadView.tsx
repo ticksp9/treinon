@@ -15,6 +15,7 @@ import { pt } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -207,11 +208,11 @@ export function TrainingLoadView() {
         .upsert(records, { onConflict: 'session_id,player_id' });
 
       if (error) throw error;
-      toast.success('Carga registada com sucesso!');
+      toast.success(tx('Carga registada com sucesso!'));
       setShowInputDialog(false);
       fetchSessionsAndLoad();
     } catch (error: any) {
-      toast.error('Erro ao guardar carga: ' + error.message);
+      toast.error(tx('Erro ao guardar carga: ') + error.message);
     } finally {
       setSaving(false);
     }
@@ -223,7 +224,7 @@ export function TrainingLoadView() {
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">A carregar...</CardContent>
+        <CardContent className="py-8 text-center text-muted-foreground">{tx('A carregar...')}</CardContent>
       </Card>
     );
   }
@@ -233,8 +234,8 @@ export function TrainingLoadView() {
       <Card>
         <CardContent className="py-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem Equipas</h3>
-          <p className="text-muted-foreground">Crie uma equipa primeiro.</p>
+          <h3 className="text-lg font-semibold mb-2">{tx('Sem Equipas')}</h3>
+          <p className="text-muted-foreground">{tx('Crie uma equipa primeiro.')}</p>
         </CardContent>
       </Card>
     );
@@ -247,14 +248,14 @@ export function TrainingLoadView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5" />
-            Carga de Treino
+            {tx('Carga de Treino')}
           </CardTitle>
-          <CardDescription>Registo e monitorização da carga dos atletas</CardDescription>
+          <CardDescription>{tx('Registo e monitorização da carga dos atletas')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="space-y-1">
-              <Label className="text-xs">Equipa</Label>
+              <Label className="text-xs">{tx('Equipa')}</Label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger className="w-[200px]">
                   <SelectValue />
@@ -267,15 +268,15 @@ export function TrainingLoadView() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Período</Label>
+              <Label className="text-xs">{tx('Período')}</Label>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">7 dias</SelectItem>
-                  <SelectItem value="14">14 dias</SelectItem>
-                  <SelectItem value="30">30 dias</SelectItem>
+                  <SelectItem value="7">{tx('7 dias')}</SelectItem>
+                  <SelectItem value="14">{tx('14 dias')}</SelectItem>
+                  <SelectItem value="30">{tx('30 dias')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -289,7 +290,7 @@ export function TrainingLoadView() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-orange-600">
               <AlertTriangle className="w-4 h-4" />
-              Alertas ({warnings.length})
+              {tx('Alertas (')}{warnings.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -308,7 +309,7 @@ export function TrainingLoadView() {
       {sessions.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Registar Carga por Sessão</CardTitle>
+            <CardTitle className="text-sm">{tx('Registar Carga por Sessão')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -317,15 +318,15 @@ export function TrainingLoadView() {
                 return (
                   <div key={s.id} className="flex items-center justify-between p-2 rounded-lg border">
                     <div className="text-sm">
-                      <span className="font-medium">{s.title || 'Treino'}</span>
+                      <span className="font-medium">{s.title || tx('Treino')}</span>
                       <span className="text-muted-foreground ml-2">
                         {format(new Date(s.date), "dd/MM HH:mm", { locale: pt })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {hasLoad && <Badge variant="outline" className="text-green-600">Registado</Badge>}
+                      {hasLoad && <Badge variant="outline" className="text-green-600">{tx('Registado')}</Badge>}
                       <Button size="sm" variant={hasLoad ? 'ghost' : 'default'} onClick={() => openLoadInput(s.id)}>
-                        {hasLoad ? 'Editar' : 'Registar'}
+                        {hasLoad ? tx('Editar') : tx('Registar')}
                       </Button>
                     </div>
                   </div>
@@ -341,12 +342,12 @@ export function TrainingLoadView() {
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            Resumo por Atleta — últimos {period} dias
+            {tx('Resumo por Atleta — últimos')}{' '}{period} dias
           </CardTitle>
         </CardHeader>
         <CardContent>
           {summaries.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Sem dados de carga neste período.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{tx('Sem dados de carga neste período.')}</p>
           ) : (
             <div className="space-y-2">
               {summaries.map(s => (
@@ -361,7 +362,7 @@ export function TrainingLoadView() {
                     )}
                   </div>
                   <div className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap text-xs text-muted-foreground">
-                    <span>{s.sessionCount} sessões</span>
+                    <span>{s.sessionCount} {tx('sessões')}</span>
                     {s.avgRpe > 0 && <span>RPE {s.avgRpe}</span>}
                     <Badge variant="outline">
                       <Zap className="h-3 w-3 mr-1" />
@@ -379,9 +380,9 @@ export function TrainingLoadView() {
       <Dialog open={showInputDialog} onOpenChange={setShowInputDialog}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Registar Carga — RPE</DialogTitle>
+            <DialogTitle>{tx('Registar Carga — RPE')}</DialogTitle>
             <DialogDescription>
-              Indique o esforço percebido (1-10) de cada jogador
+              {tx('Indique o esforço percebido (1-10) de cada jogador')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -412,7 +413,7 @@ export function TrainingLoadView() {
           </div>
           <Button onClick={saveLoad} disabled={saving} className="w-full mt-4">
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'A guardar...' : 'Guardar Carga'}
+            {saving ? tx('A guardar...') : tx('Guardar Carga')}
           </Button>
         </DialogContent>
       </Dialog>

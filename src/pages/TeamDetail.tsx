@@ -34,6 +34,7 @@ import {
   listAvailablePlayersForTeam,
   removePlayerFromTeam,
 } from '@/lib/season-roster-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -184,20 +185,20 @@ export default function TeamDetail() {
     setPicked([]);
     setAddExistingOpen(false);
     refetchRoster();
-    if (ok > 0) toast.success(`${ok} jogador(es) adicionado(s) à equipa.`);
-    if (failed.length > 0) toast.error(`Falhou: ${failed.join(', ')}`);
+    if (ok > 0) toast.success(tx('{{v0}} jogador(es) adicionado(s) à equipa.', { v0: ok }));
+    if (failed.length > 0) toast.error(tx('Falhou: {{v0}}', { v0: failed.join(', ') }));
   };
 
   const handleRemoveFromTeam = async (playerId: string, name: string) => {
     if (!selectedSeasonId) return;
-    if (!window.confirm(`Remover ${name} desta equipa nesta época? O histórico é mantido.`)) return;
+    if (!window.confirm(tx('Remover {{v0}} desta equipa nesta época? O histórico é mantido.', { v0: name }))) return;
     try {
       await removePlayerFromTeam(selectedSeasonId, id as string, playerId);
-      toast.success(`${name} removido desta equipa.`);
+      toast.success(tx('{{v0}} removido desta equipa.', { v0: name }));
       refetchRoster();
     } catch (e: any) {
       console.error('[TeamDetail] removePlayerFromTeam falhou', e);
-      toast.error(e.message || 'Erro ao remover jogador');
+      toast.error(e.message || tx('Erro ao remover jogador'));
     }
   };
 
@@ -217,14 +218,14 @@ export default function TeamDetail() {
         await addPlayerToTeam(selectedSeasonId, id as string, inserted.id);
       }
 
-      toast.success('Jogador adicionado com sucesso');
+      toast.success(tx('Jogador adicionado com sucesso'));
       setDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ['team-players', id] });
       queryClient.invalidateQueries({ queryKey: ['season-enrollments'] });
       queryClient.invalidateQueries({ queryKey: ['players'] });
     } catch (error: any) {
       console.error('Error creating player:', error);
-      toast.error(error.message || 'Erro ao criar jogador');
+      toast.error(error.message || tx('Erro ao criar jogador'));
     } finally {
       setSaving(false);
     }
@@ -251,9 +252,9 @@ export default function TeamDetail() {
         <div>
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Equipa não encontrada</p>
+              <p className="text-muted-foreground">{tx('Equipa não encontrada')}</p>
               <Button variant="link" onClick={() => navigate('/teams')}>
-                Voltar à lista
+                {tx('Voltar à lista')}
               </Button>
             </CardContent>
           </Card>
@@ -298,11 +299,11 @@ export default function TeamDetail() {
                 {SPORT_TYPES[team.sport_type]?.label || team.sport_type}
               </Badge>
               <Badge variant={team.gender === 'female' ? 'default' : 'outline'}>
-                {genderInfo?.label || 'Masculino'}
+                {genderInfo?.label || tx('Masculino')}
               </Badge>
               {categoryInfo && (
                 <Badge variant="outline">
-                  {categoryInfo.label} ({categoryInfo.minAge}-{categoryInfo.maxAge} anos)
+                  {categoryInfo.label} ({categoryInfo.minAge}-{categoryInfo.maxAge} {tx('anos)')}
                 </Badge>
               )}
               {team.formation && (
@@ -311,16 +312,16 @@ export default function TeamDetail() {
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border bg-muted/40 p-3">
               <div>
-                <p className="text-sm font-medium">Formato de jogo</p>
+                <p className="text-sm font-medium">{tx('Formato de jogo')}</p>
                 <p className="font-mono text-sm text-muted-foreground">
                   {teamFormatParts
-                    ? `${teamFormatParts.map((m) => `${m}'`).join(' + ')} = ${teamFormatParts.reduce((s, m) => s + m, 0)} min`
-                    : 'Por definir — escolha os tempos do seu campeonato'}
+                    ? tx('{{v0}} = {{v1}} min', { v0: teamFormatParts.map((m) => `${m}'`).join(' + '), v1: teamFormatParts.reduce((s, m) => s + m, 0) })
+                    : tx('Por definir — escolha os tempos do seu campeonato')}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setFormatOpen(true)}>
                 <Timer className="w-4 h-4 mr-2" />
-                {teamFormatParts ? 'Alterar' : 'Definir formato'}
+                {teamFormatParts ? tx('Alterar') : tx('Definir formato')}
               </Button>
             </div>
           </CardContent>
@@ -329,14 +330,14 @@ export default function TeamDetail() {
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p className="text-sm font-medium">Equipa técnica</p>
+                <p className="text-sm font-medium">{tx('Equipa técnica')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {staffInviteTypes.includes('coach') ? 'Convide o treinador principal e os adjuntos desta equipa.' : 'Convide o seu treinador adjunto.'}
+                  {staffInviteTypes.includes('coach') ? tx('Convide o treinador principal e os adjuntos desta equipa.') : tx('Convide o seu treinador adjunto.')}
                 </p>
               </div>
               <Button size="sm" onClick={() => setStaffInviteOpen(true)}>
                 <UserPlus className="mr-2 h-4 w-4" />
-                {staffInviteTypes.includes('coach') ? 'Convidar treinador' : 'Convidar adjunto'}
+                {staffInviteTypes.includes('coach') ? tx('Convidar treinador') : tx('Convidar adjunto')}
               </Button>
             </CardContent>
           </Card>
@@ -360,10 +361,10 @@ export default function TeamDetail() {
           onConfirm={async ({ partMinutes }) => {
             const { error } = await supabase.from('teams').update({ match_format: { parts: partMinutes } } as never).eq('id', team.id);
             if (error) {
-              toast.error('Não foi possível guardar o formato: ' + error.message);
+              toast.error(tx('Não foi possível guardar o formato: ') + error.message);
               return;
             }
-            toast.success(`Formato guardado: ${partMinutes.map((m) => `${m}'`).join(' + ')}`);
+            toast.success(tx('Formato guardado: {{v0}}', { v0: partMinutes.map((m) => `${m}'`).join(' + ') }));
             queryClient.invalidateQueries({ queryKey: ['team', id] });
           }}
         />
@@ -373,26 +374,26 @@ export default function TeamDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-display font-semibold">Jogadores</h2>
+              <h2 className="text-xl font-display font-semibold">{tx('Jogadores')}</h2>
               <Badge variant="secondary">{players.length}</Badge>
             </div>
             <div className="flex items-center gap-2">
             {selectedSeasonId && (
               <Button variant="outline" onClick={() => setAddExistingOpen(true)}>
                 <UserPlus className="w-4 h-4 mr-2" />
-                Adicionar jogador existente
+                {tx('Adicionar jogador existente')}
               </Button>
             )}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Jogador
+                  {tx('Adicionar Jogador')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="font-display">Novo Jogador</DialogTitle>
+                  <DialogTitle className="font-display">{tx('Novo Jogador')}</DialogTitle>
                 </DialogHeader>
                 <PlayerForm
                   onSubmit={handleCreatePlayer}
@@ -407,13 +408,13 @@ export default function TeamDetail() {
           <Dialog open={addExistingOpen} onOpenChange={(o) => { setAddExistingOpen(o); if (!o) { setPicked([]); setSearch(''); } }}>
             <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="font-display">Adicionar jogador existente</DialogTitle>
+                <DialogTitle className="font-display">{tx('Adicionar jogador existente')}</DialogTitle>
               </DialogHeader>
-              <Input placeholder="Pesquisar jogador..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder={tx('Pesquisar jogador...')} value={search} onChange={(e) => setSearch(e.target.value)} />
               <div className="divide-y max-h-[45vh] overflow-y-auto">
-                {availableLoading && <p className="py-6 text-center text-sm text-muted-foreground">A carregar...</p>}
+                {availableLoading && <p className="py-6 text-center text-sm text-muted-foreground">{tx('A carregar...')}</p>}
                 {!availableLoading && availablePlayers.length === 0 && (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Sem jogadores disponíveis.</p>
+                  <p className="py-6 text-center text-sm text-muted-foreground">{tx('Sem jogadores disponíveis.')}</p>
                 )}
                 {availablePlayers
                   .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
@@ -429,18 +430,18 @@ export default function TeamDetail() {
                         <p className="text-sm font-medium truncate">{p.name}</p>
                         {p.also_in_team_ids.length > 0 && (
                           <p className="text-xs text-muted-foreground">
-                            também em: {p.also_in_team_ids.map(teamName).join(', ')}
+                            {tx('também em:')}{' '}{p.also_in_team_ids.map(teamName).join(', ')}
                           </p>
                         )}
                         {!p.birth_date && (
-                          <p className="text-xs text-amber-600">sem data de nascimento — confirmar elegibilidade</p>
+                          <p className="text-xs text-amber-600">{tx('sem data de nascimento — confirmar elegibilidade')}</p>
                         )}
                       </div>
                     </label>
                   ))}
               </div>
               <Button onClick={handleAddExisting} disabled={picked.length === 0 || addingExisting}>
-                {addingExisting ? 'A adicionar...' : `Adicionar ${picked.length || ''}`.trim()}
+                {addingExisting ? tx('A adicionar...') : `Adicionar ${picked.length || ''}`.trim()}
               </Button>
             </DialogContent>
           </Dialog>
@@ -459,13 +460,13 @@ export default function TeamDetail() {
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                   <User className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-display font-bold text-xl mb-2">Sem jogadores</h3>
+                <h3 className="font-display font-bold text-xl mb-2">{tx('Sem jogadores')}</h3>
                 <p className="text-muted-foreground max-w-md mb-6">
-                  Esta equipa ainda não tem jogadores. Adicione o primeiro jogador.
+                  {tx('Esta equipa ainda não tem jogadores. Adicione o primeiro jogador.')}
                 </p>
                 <Button onClick={() => setDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Jogador
+                  {tx('Adicionar Jogador')}
                 </Button>
               </CardContent>
             </Card>
@@ -514,7 +515,7 @@ export default function TeamDetail() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge variant="secondary" className="shrink-0">Partilhado</Badge>
+                                <Badge variant="secondary" className="shrink-0">{tx('Partilhado')}</Badge>
                               </TooltipTrigger>
                               <TooltipContent>
                                 {playerTeams(player.id).map(teamName).join(', ')}
@@ -524,7 +525,7 @@ export default function TeamDetail() {
                         )}
                         {!canPlay && (
                           <Badge variant="destructive" className="shrink-0">
-                            Inelegível
+                            {tx('Inelegível')}
                           </Badge>
                         )}
                         {selectedSeasonId && (
@@ -532,7 +533,7 @@ export default function TeamDetail() {
                             variant="ghost"
                             size="icon"
                             className="shrink-0"
-                            title="Remover da equipa"
+                            title={tx('Remover da equipa')}
                             onClick={(e) => { e.stopPropagation(); handleRemoveFromTeam(player.id, player.name); }}
                           >
                             <X className="w-4 h-4" />

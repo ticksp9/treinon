@@ -24,7 +24,7 @@ import { fitScore, type LiveTactics, tacticsFormation } from '@/lib/live-tactics
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
 import { ratingBg } from '@/lib/player-card';
-import { useT } from '@/lib/i18n/ui';
+import { useT, tx } from '@/lib/i18n/ui';
 
 const NEW_FORMATION = '__new__';
 
@@ -432,7 +432,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                 ) : (
                   <>
                     <span className={cn('font-mono text-[11px]', i === 0 ? 'font-semibold text-accent' : 'text-muted-foreground')}>
-                      {formatClock(p.seconds)}{i === 0 ? ' · menos' : ''}
+                      {formatClock(p.seconds)}{i === 0 ? tx(' · menos') : ''}
                     </span>
                     <span className="mt-1 h-1 w-full overflow-hidden rounded bg-muted">
                       <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />

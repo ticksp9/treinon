@@ -17,6 +17,7 @@ import { Megaphone, CheckCircle2, Eye, Clock, AlertTriangle, Loader2, Shield, Us
 import { announcementText, openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface AnnouncementsListProps {
   clubId: string | null;
@@ -24,15 +25,15 @@ interface AnnouncementsListProps {
 }
 
 const priorityConfig = {
-  important: { label: 'Importante', icon: AlertTriangle, variant: 'destructive' as const, className: 'border-destructive/30 bg-destructive/5' },
-  normal: { label: 'Normal', icon: Megaphone, variant: 'secondary' as const, className: '' },
+  important: { get label() { return tx('Importante'); }, icon: AlertTriangle, variant: 'destructive' as const, className: 'border-destructive/30 bg-destructive/5' },
+  normal: { get label() { return tx('Normal'); }, icon: Megaphone, variant: 'secondary' as const, className: '' },
 };
 
 const targetLabels: Record<string, { label: string; icon: typeof Users }> = {
-  channel: { label: 'Grupo', icon: Users },
-  team: { label: 'Equipa', icon: Users },
-  age_group: { label: 'Escalão', icon: Users },
-  role: { label: 'Função', icon: Shield },
+  channel: { get label() { return tx('Grupo'); }, icon: Users },
+  team: { get label() { return tx('Equipa'); }, icon: Users },
+  age_group: { get label() { return tx('Escalão'); }, icon: Users },
+  role: { get label() { return tx('Função'); }, icon: Shield },
 };
 
 export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
@@ -72,8 +73,8 @@ export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
         <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
           <Megaphone className="h-8 w-8 opacity-30" />
         </div>
-        <p className="text-sm font-medium">Nenhum anúncio</p>
-        <p className="text-xs mt-1 text-muted-foreground/70">Os anúncios do clube e da equipa aparecerão aqui</p>
+        <p className="text-sm font-medium">{tx('Nenhum anúncio')}</p>
+        <p className="text-xs mt-1 text-muted-foreground/70">{tx('Os anúncios do clube e da equipa aparecerão aqui')}</p>
       </div>
     );
   }
@@ -115,12 +116,12 @@ export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
                         <div className="flex shrink-0 items-center">
                           {a.created_by === user?.id && (
                             <>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Partilhar no WhatsApp" title="Partilhar no WhatsApp"
+                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={tx('Partilhar no WhatsApp')} title={tx('Partilhar no WhatsApp')}
                                 onClick={(e) => { e.stopPropagation(); openWhatsApp(announcementText(a)); }}>
                                 <MessageCircle className="h-4 w-4" />
                               </Button>
                               {a.channel_id && (
-                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Enviar por email" title="Enviar (de novo) por email" disabled={emailing === a.id}
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={tx('Enviar por email')} title={tx('Enviar (de novo) por email')} disabled={emailing === a.id}
                                   onClick={(e) => { e.stopPropagation(); emailAgain(a.id); }}>
                                   {emailing === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                                 </Button>
@@ -145,7 +146,7 @@ export function AnnouncementsList({ clubId, userId }: AnnouncementsListProps) {
                         </Badge>
                         {a.priority === 'important' && (
                           <Badge variant="destructive" className="text-[10px] h-5">
-                            Importante
+                            {tx('Importante')}
                           </Badge>
                         )}
                       </div>
@@ -217,10 +218,10 @@ function AnnouncementDetailDialog({
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-600" />
-              Confirmações de leitura ({reads.length})
+              {tx('Confirmações de leitura (')}{reads.length})
             </h4>
             {reads.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhuma leitura confirmada ainda</p>
+              <p className="text-xs text-muted-foreground">{tx('Nenhuma leitura confirmada ainda')}</p>
             ) : (
               <ScrollArea className="max-h-48">
                 <div className="space-y-1.5">

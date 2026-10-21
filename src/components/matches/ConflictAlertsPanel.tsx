@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, AlertCircle, ShieldAlert, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { ConsistencyIssue } from '@/lib/match-playing-time';
+import { tx } from '@/lib/i18n/ui';
 
 interface ConflictAlert {
   id: string;
@@ -27,9 +28,9 @@ interface ConflictAlertsPanelProps {
 }
 
 const SEVERITY_CONFIG = {
-  blocking: { icon: ShieldAlert, color: 'text-destructive', bg: 'bg-destructive/10', badge: 'destructive' as const, label: 'Bloqueante' },
-  error: { icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/5', badge: 'destructive' as const, label: 'Erro' },
-  warning: { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', badge: 'secondary' as const, label: 'Aviso' },
+  blocking: { icon: ShieldAlert, color: 'text-destructive', bg: 'bg-destructive/10', badge: 'destructive' as const, get label() { return tx('Bloqueante'); } },
+  error: { icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/5', badge: 'destructive' as const, get label() { return tx('Erro'); } },
+  warning: { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', badge: 'secondary' as const, get label() { return tx('Aviso'); } },
 };
 
 export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictAlertsPanelProps) {
@@ -66,7 +67,7 @@ export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictA
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground py-1">
         <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-        Sem conflitos
+        {tx('Sem conflitos')}
       </div>
     );
   }
@@ -98,7 +99,7 @@ export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictA
         <CardTitle className="text-sm flex items-center justify-between">
           <span className="flex items-center gap-2">
             <AlertTriangle className={`w-4 h-4 ${blockingCount > 0 ? 'text-destructive' : 'text-amber-500'}`} />
-            Conflitos ({totalCount})
+            {tx('Conflitos (')}{totalCount})
           </span>
           <div className="flex items-center gap-1">
             {blockingCount > 0 && (
@@ -124,9 +125,9 @@ export function ConflictAlertsPanel({ matchId, localIssues, compact }: ConflictA
         {totalCount > 3 && (
           <Button variant="ghost" size="sm" className="w-full text-xs h-7" onClick={() => setExpanded(!expanded)}>
             {expanded ? (
-              <><ChevronUp className="w-3 h-3 mr-1" />Mostrar menos</>
+              <><ChevronUp className="w-3 h-3 mr-1" />{tx('Mostrar menos')}</>
             ) : (
-              <><ChevronDown className="w-3 h-3 mr-1" />Ver todos ({totalCount})</>
+              <><ChevronDown className="w-3 h-3 mr-1" />{tx('Ver todos (')}{totalCount})</>
             )}
           </Button>
         )}

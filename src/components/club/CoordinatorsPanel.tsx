@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Compass, Save, UserMinus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 export interface Coordinator { user_id: string; name: string; area: string | null; team_ids: string[] }
 
@@ -35,12 +36,12 @@ function CoordinatorRow({ c, clubId, teams }: { c: Coordinator; clubId: string; 
 
   const save = async () => {
     const { error } = await supabase.rpc('set_coordinator_scope' as never, { _club: clubId, _user: c.user_id, _area: area, _team_ids: ids } as never);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
-    toast.success('Área do coordenador guardada.');
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
+    toast.success(tx('Área do coordenador guardada.'));
     qc.invalidateQueries({ queryKey: ['club-coordinators'] });
   };
   const remove = async () => {
-    if (!window.confirm(`Retirar a coordenação a ${c.name}? Continua no clube.`)) return;
+    if (!window.confirm(tx('Retirar a coordenação a {{v0}}? Continua no clube.', { v0: c.name }))) return;
     const { error } = await supabase.rpc('set_staff_role' as never, { _club: clubId, _user: c.user_id, _role: 'staff' } as never);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ['club-coordinators'] });
@@ -50,12 +51,12 @@ function CoordinatorRow({ c, clubId, teams }: { c: Coordinator; clubId: string; 
     <div className="space-y-2 rounded-md border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-semibold">{c.name}</span>
-        <Input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Área (ex.: Formação Sub-7 a Sub-13)" className="h-8 max-w-xs flex-1" />
-        <Button size="sm" onClick={save} disabled={!dirty}><Save className="mr-1.5 h-4 w-4" />Guardar</Button>
-        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={remove} aria-label="Retirar coordenação"><UserMinus className="h-4 w-4" /></Button>
+        <Input value={area} onChange={(e) => setArea(e.target.value)} placeholder={tx('Área (ex.: Formação Sub-7 a Sub-13)')} className="h-8 max-w-xs flex-1" />
+        <Button size="sm" onClick={save} disabled={!dirty}><Save className="mr-1.5 h-4 w-4" />{tx('Guardar')}</Button>
+        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={remove} aria-label={tx('Retirar coordenação')}><UserMinus className="h-4 w-4" /></Button>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <Button size="sm" variant={ids.length === 0 ? 'default' : 'outline'} className="h-7 px-2 text-xs" onClick={() => setIds([])}>Todas as equipas</Button>
+        <Button size="sm" variant={ids.length === 0 ? 'default' : 'outline'} className="h-7 px-2 text-xs" onClick={() => setIds([])}>{tx('Todas as equipas')}</Button>
         {teams.map((t) => {
           const on = ids.includes(t.id);
           return (
@@ -75,15 +76,14 @@ export function CoordinatorsPanel({ clubId, teams }: { clubId: string; teams: { 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg"><Compass className="h-5 w-5" />Coordenadores</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-lg"><Compass className="h-5 w-5" />{tx('Coordenadores')}</CardTitle>
         <CardDescription>
-          Pode ter vários: por exemplo um para a formação e outro para os seniores. Cada um gere o mapa de treinos e jogos,
-          os treinadores e os convites das suas equipas. Sem equipas escolhidas, coordena todas.
+          {tx('Pode ter vários: por exemplo um para a formação e outro para os seniores. Cada um gere o mapa de treinos e jogos, os treinadores e os convites das suas equipas. Sem equipas escolhidas, coordena todas.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {coordinators.length === 0 && (
-          <p className="text-sm text-muted-foreground">Ainda não há coordenadores. Convide com a função "Coordenador", ou use "Tornar coordenador" num treinador da lista abaixo.</p>
+          <p className="text-sm text-muted-foreground">{tx('Ainda não há coordenadores. Convide com a função "Coordenador", ou use "Tornar coordenador" num treinador da lista abaixo.')}</p>
         )}
         {coordinators.map((c) => <CoordinatorRow key={c.user_id} c={c} clubId={clubId} teams={teams} />)}
       </CardContent>

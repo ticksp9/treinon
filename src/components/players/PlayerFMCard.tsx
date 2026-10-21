@@ -13,6 +13,7 @@ import { abilityStars, computeForm, currentAbility, ratingBg, ratingTone } from 
 import { cn } from '@/lib/utils';
 import { getSeasonName } from '@/lib/constants';
 import { POSITIONS, FOOT_OPTIONS } from '@/lib/player-constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface EvalRow { evaluation_date: string; attributes: AttributeScores | null; overall_rating: number | null }
 interface RatingRow { rating: number; date: string; opponent: string | null }
@@ -156,7 +157,7 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   const Absences = absences.total > 0 && (
     <div>
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        Faltas a jogos ({absences.total}) · {absences.byReason.map(([r, n]) => `${r} ${n}`).join(' · ')}
+        {tx('Faltas a jogos (')}{absences.total}) · {absences.byReason.map(([r, n]) => `${r} ${n}`).join(' · ')}
       </p>
       <ul className="divide-y rounded-md border text-sm">
         {absences.list.slice(0, 8).map((a) => (
@@ -171,19 +172,19 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   );
   const HistoryTable = history.length > 0 && (
     <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Historial</p>
+      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Historial')}</p>
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-[11px] uppercase tracking-wide text-muted-foreground">
-              <th className="px-2 py-1.5 text-left font-medium">Época</th>
-              <th className="px-2 py-1.5 text-left font-medium">Equipa</th>
-              <th className="px-2 py-1.5 font-medium" title="Jogos (titular)">J (T)</th>
-              <th className="px-2 py-1.5 font-medium">Min</th>
-              <th className="px-2 py-1.5 font-medium">Golos</th>
-              <th className="px-2 py-1.5 font-medium" title="Assistências">Ass</th>
-              <th className="px-2 py-1.5 font-medium" title="Amarelos / vermelhos">Cartões</th>
-              <th className="px-2 py-1.5 font-medium" title="Nota média">Nota</th>
+              <th className="px-2 py-1.5 text-left font-medium">{tx('Época')}</th>
+              <th className="px-2 py-1.5 text-left font-medium">{tx('Equipa')}</th>
+              <th className="px-2 py-1.5 font-medium" title={tx('Jogos (titular)')}>J (T)</th>
+              <th className="px-2 py-1.5 font-medium">{tx('Min')}</th>
+              <th className="px-2 py-1.5 font-medium">{tx('Golos')}</th>
+              <th className="px-2 py-1.5 font-medium" title={tx('Assistências')}>{tx('Ass')}</th>
+              <th className="px-2 py-1.5 font-medium" title={tx('Amarelos / vermelhos')}>{tx('Cartões')}</th>
+              <th className="px-2 py-1.5 font-medium" title={tx('Nota média')}>{tx('Nota')}</th>
             </tr>
           </thead>
           <tbody>
@@ -213,11 +214,11 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   if (evals.length === 0 && ratings.length === 0) {
     return (
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Ficha do jogador</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-base">{tx('Ficha do jogador')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {Bio}
           {History}
-          <p className="text-sm text-muted-foreground">Faça uma avaliação e dê notas no fim dos jogos para ver aqui a nota, a forma e a evolução.</p>
+          <p className="text-sm text-muted-foreground">{tx('Faça uma avaliação e dê notas no fim dos jogos para ver aqui a nota, a forma e a evolução.')}</p>
         </CardContent>
       </Card>
     );
@@ -240,7 +241,7 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Ficha do jogador</CardTitle>
+        <CardTitle className="text-base">{tx('Ficha do jogador')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         {Bio}
@@ -251,24 +252,24 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
               {ability?.toFixed(1) ?? '—'}
             </span>
             <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Nota atual</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{tx('Nota atual')}</p>
               <Stars value={abilityStars(ability)} />
-              {latest && <p className="text-xs text-muted-foreground">Avaliado a {fmtDate(latest.evaluation_date)}</p>}
+              {latest && <p className="text-xs text-muted-foreground">{tx('Avaliado a')}{' '}{fmtDate(latest.evaluation_date)}</p>}
             </div>
           </div>
           <div className="rounded-md border p-3">
             <p className="flex items-center gap-1 text-xs uppercase tracking-wide text-muted-foreground">
-              Forma (últimos {form.last.length || 5} jogos)
+              {tx('Forma (últimos')}{' '}{form.last.length || 5} {tx('jogos)')}
               {form.trend === 'up' && <TrendingUp className="h-3.5 w-3.5 text-green-600" />}
               {form.trend === 'down' && <TrendingDown className="h-3.5 w-3.5 text-red-600" />}
               {form.trend === 'flat' && form.last.length > 0 && <Minus className="h-3.5 w-3.5" />}
             </p>
             <div className="mt-1.5 flex items-center gap-1">
-              {form.last.length === 0 && <span className="text-sm text-muted-foreground">Sem notas de jogo.</span>}
+              {form.last.length === 0 && <span className="text-sm text-muted-foreground">{tx('Sem notas de jogo.')}</span>}
               {form.last.map((r, i) => (
                 <span key={i} className={cn('w-9 rounded py-0.5 text-center font-mono text-xs font-bold', ratingBg(r))}>{r.toFixed(1)}</span>
               ))}
-              {form.average != null && <span className={cn('ml-2 font-mono text-sm font-semibold', ratingTone(form.average))}>média {form.average.toFixed(1)}</span>}
+              {form.average != null && <span className={cn('ml-2 font-mono text-sm font-semibold', ratingTone(form.average))}>{tx('média')}{' '}{form.average.toFixed(1)}</span>}
             </div>
           </div>
         </div>
@@ -306,14 +307,14 @@ export function PlayerFMCard({ playerId }: { playerId: string }) {
             })}
           </div>
         )}
-        {previous && <p className="text-[11px] text-muted-foreground">▲▼ = mudança desde a avaliação de {fmtDate(previous.evaluation_date)}.</p>}
+        {previous && <p className="text-[11px] text-muted-foreground">{tx('▲▼ = mudança desde a avaliação de')}{' '}{fmtDate(previous.evaluation_date)}.</p>}
 
         {History}
 
         {/* Evolution */}
         {timeline.length >= 2 && (
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Evolução</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Evolução')}</p>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={timeline} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>

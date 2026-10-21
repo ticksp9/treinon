@@ -8,25 +8,26 @@ import { AcademyDevelopmentTab } from '@/components/academy/AcademyDevelopmentTa
 import { AcademyPathwayTab } from '@/components/academy/AcademyPathwayTab';
 import { AcademyComplianceTab } from '@/components/academy/AcademyComplianceTab';
 import { AcademyStaffTab } from '@/components/academy/AcademyStaffTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function AcademyDashboard() {
   return (
     <AppLayout>
       <div className="space-y-6">
         <PageHeader
-          title="Formação & Academia"
-          description="Programa de formação, avaliações, desenvolvimento e pathway dos atletas"
+          title={tx('Formação & Academia')}
+          description={tx('Programa de formação, avaliações, desenvolvimento e pathway dos atletas')}
         />
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="athletes">Atletas</TabsTrigger>
-            <TabsTrigger value="assessments">Avaliações</TabsTrigger>
-            <TabsTrigger value="development">Desenvolvimento</TabsTrigger>
-            <TabsTrigger value="pathway">Pathway</TabsTrigger>
-            <TabsTrigger value="staff">Staff</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="overview">{tx('Visão Geral')}</TabsTrigger>
+            <TabsTrigger value="athletes">{tx('Atletas')}</TabsTrigger>
+            <TabsTrigger value="assessments">{tx('Avaliações')}</TabsTrigger>
+            <TabsTrigger value="development">{tx('Desenvolvimento')}</TabsTrigger>
+            <TabsTrigger value="pathway">{tx('Pathway')}</TabsTrigger>
+            <TabsTrigger value="staff">{tx('Staff')}</TabsTrigger>
+            <TabsTrigger value="compliance">{tx('Compliance')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview"><AcademyOverviewTab /></TabsContent>

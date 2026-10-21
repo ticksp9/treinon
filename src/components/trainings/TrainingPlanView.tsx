@@ -13,6 +13,7 @@ import { DrillDiagram } from '@/components/library/DrillDiagram';
 import { elementsAt, type DrillAnimation } from '@/lib/drill-library/animation';
 import type { DiagramEl } from '@/lib/drill-library/types';
 import { shareText } from '@/lib/share';
+import { tx } from '@/lib/i18n/ui';
 
 export interface PlanExercise {
   id: string;
@@ -38,7 +39,7 @@ const total = (t: PlanTraining) => t.exercises.reduce((s, e) => s + (e.duration 
 
 export function printTraining(t: PlanTraining) {
   const w = window.open('', '_blank');
-  if (!w) { toast.error('Permita janelas pop-up para imprimir.'); return; }
+  if (!w) { toast.error(tx('Permita janelas pop-up para imprimir.')); return; }
   const blocks = t.exercises.map((e, i) => `
     <section class="block">
       ${e.diagram?.length ? `<div class="diagram">${renderToStaticMarkup(<DrillDiagram elements={still(e)} />)}</div>` : e.image_url ? `<div class="diagram"><img src="${esc(e.image_url)}"/></div>` : ''}
@@ -86,16 +87,16 @@ export function TrainingPlanView({ training, open, onClose }: { training: PlanTr
             <DialogHeader>
               <DialogTitle>{training.name}</DialogTitle>
               <DialogDescription>
-                {training.training_date ? `${training.training_date} · ` : ''}{total(training)} min · {training.exercises.length} exercícios
+                {training.training_date ? `${training.training_date} · ` : ''}{total(training)} {tx('min ·')}{' '}{training.exercises.length} {tx('exercícios')}
               </DialogDescription>
             </DialogHeader>
-            {training.objectives && <p className="text-sm"><span className="font-semibold">Objetivos: </span>{training.objectives}</p>}
+            {training.objectives && <p className="text-sm"><span className="font-semibold">{tx('Objetivos:')}{' '}</span>{training.objectives}</p>}
             <ol className="space-y-5">
               {training.exercises.map((e, i) => (
                 <li key={e.id} className="space-y-2 border-b pb-4 last:border-0">
                   <div className="flex items-center gap-2">
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{i + 1}</span>
-                    <h3 className="flex-1 font-semibold">{e.name || 'Exercício'}</h3>
+                    <h3 className="flex-1 font-semibold">{e.name || tx('Exercício')}</h3>
                     <Badge variant="outline"><Clock className="mr-1 h-3 w-3" />{e.duration} min</Badge>
                   </div>
                   {e.diagram && e.diagram.length > 0 ? (
@@ -108,8 +109,8 @@ export function TrainingPlanView({ training, open, onClose }: { training: PlanTr
               ))}
             </ol>
             <div className="flex flex-wrap justify-end gap-2 border-t pt-3">
-              <Button variant="outline" onClick={() => shareText(trainingText(training), training.name)}><Share2 className="mr-1.5 h-4 w-4" />Partilhar</Button>
-              <Button onClick={() => printTraining(training)}><Printer className="mr-1.5 h-4 w-4" />Imprimir</Button>
+              <Button variant="outline" onClick={() => shareText(trainingText(training), training.name)}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
+              <Button onClick={() => printTraining(training)}><Printer className="mr-1.5 h-4 w-4" />{tx('Imprimir')}</Button>
             </div>
           </>
         )}

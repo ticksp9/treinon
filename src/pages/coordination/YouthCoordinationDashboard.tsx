@@ -30,6 +30,7 @@ import { ReportsTab } from "@/components/coordination/ReportsTab";
 import { SeasonTransitionTab } from "@/components/coordination/SeasonTransitionTab";
 import { NotificationsTab } from "@/components/coordination/NotificationsTab";
 import { HistoryTab } from "@/components/coordination/HistoryTab";
+import { tx } from '@/lib/i18n/ui';
 
 export default function YouthCoordinationDashboard() {
   const { t } = useTranslation();
@@ -95,7 +96,7 @@ export default function YouthCoordinationDashboard() {
           <Card>
             <CardContent className="p-8 text-center">
               <p className="text-muted-foreground">
-                Não foi possível carregar informações do clube.
+                {tx('Não foi possível carregar informações do clube.')}
               </p>
             </CardContent>
           </Card>
@@ -110,9 +111,9 @@ export default function YouthCoordinationDashboard() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Coordenação das Camadas Jovens</h1>
+            <h1 className="text-2xl font-bold">{tx('Coordenação das Camadas Jovens')}</h1>
             <p className="text-muted-foreground">
-              Gestão centralizada de escalões, equipas, horários e pagamentos
+              {tx('Gestão centralizada de escalões, equipas, horários e pagamentos')}
             </p>
           </div>
         </div>
@@ -121,7 +122,7 @@ export default function YouthCoordinationDashboard() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Escalões</CardTitle>
+              <CardTitle className="text-sm font-medium">{tx('Escalões')}</CardTitle>
               <Settings className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -131,7 +132,7 @@ export default function YouthCoordinationDashboard() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Equipas</CardTitle>
+              <CardTitle className="text-sm font-medium">{tx('Equipas')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -141,7 +142,7 @@ export default function YouthCoordinationDashboard() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Horários</CardTitle>
+              <CardTitle className="text-sm font-medium">{tx('Horários')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -151,7 +152,7 @@ export default function YouthCoordinationDashboard() {
           
           <Card className={stats?.overduePayments && stats.overduePayments > 0 ? "border-destructive" : ""}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pagamentos em Falta</CardTitle>
+              <CardTitle className="text-sm font-medium">{tx('Pagamentos em Falta')}</CardTitle>
               {stats?.overduePayments && stats.overduePayments > 0 ? (
                 <AlertTriangle className="h-4 w-4 text-destructive" />
               ) : (
@@ -171,39 +172,39 @@ export default function YouthCoordinationDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <span>Equipas</span>
+              <span>{tx('Equipas')}</span>
             </TabsTrigger>
             <TabsTrigger value="age-groups" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              <span>Escalões</span>
+              <span>{tx('Escalões')}</span>
             </TabsTrigger>
             <TabsTrigger value="schedule" className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>Horários</span>
+              <span>{tx('Horários')}</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span>Documentos</span>
+              <span>{tx('Documentos')}</span>
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              <span>Pagamentos</span>
+              <span>{tx('Pagamentos')}</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              <span>Alertas</span>
+              <span>{tx('Alertas')}</span>
             </TabsTrigger>
             <TabsTrigger value="transition" className="flex items-center gap-2">
               <ArrowRightLeft className="h-4 w-4" />
-              <span>Transição</span>
+              <span>{tx('Transição')}</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              <span>Relatórios</span>
+              <span>{tx('Relatórios')}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
-              <span>Histórico</span>
+              <span>{tx('Histórico')}</span>
             </TabsTrigger>
           </TabsList>
 

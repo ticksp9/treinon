@@ -15,7 +15,7 @@ import { ReportReviewScreen } from './ReportReviewScreen';
 import { getHalfDurationForCategory } from '@/lib/constants';
 import { isEditableReportStatus, REPORT_STATUS_LABELS, type ReportStatus } from '@/lib/match-report-service';
 import { useTeamBranding } from '@/hooks/useTeamBranding';
-import { dateLocale, useT } from '@/lib/i18n/ui';
+import { dateLocale, useT, tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -295,7 +295,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="w-5 h-5" />Relatório do Jogo
+              <Trophy className="w-5 h-5" />{tx('Relatório do Jogo')}
               {selectedMatch && (
                 <Button size="sm" variant="outline" className="ml-auto mr-6" onClick={() => setQuickEntryId(selectedMatch.id)} title={t('Corrigir minutos, golos e cartões de forma simples')}>
                   {t('Registo rápido')}

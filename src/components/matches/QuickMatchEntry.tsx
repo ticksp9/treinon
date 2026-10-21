@@ -13,6 +13,7 @@ import { Loader2, Minus, Plus, Save, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerRow {
   player_id: string;
@@ -185,12 +186,12 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
         part_regulation_minutes: partMinutes, parts_count: partMinutes.length,
       } as never).eq('id', matchId);
       if (mErr) throw mErr;
-      toast.success('Jogo registado. Os minutos já contam nas estatísticas.');
-      if (assistsPlan.unassigned > 0) toast.warning(`${assistsPlan.unassigned} assistência(s) sem golo correspondente não foram guardadas.`);
+      toast.success(tx('Jogo registado. Os minutos já contam nas estatísticas.'));
+      if (assistsPlan.unassigned > 0) toast.warning(tx('{{v0}} assistência(s) sem golo correspondente não foram guardadas.', { v0: assistsPlan.unassigned }));
       onSaved?.();
       onClose();
     } catch (e) {
-      toast.error('Não foi possível guardar: ' + (e as Error).message);
+      toast.error(tx('Não foi possível guardar: ') + (e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -198,9 +199,9 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
 
   const Stepper = ({ value, onChange, max = 20 }: { value: number; onChange: (v: number) => void; max?: number }) => (
     <div className="flex items-center">
-      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => onChange(Math.max(0, value - 1))} aria-label="Menos"><Minus className="h-3.5 w-3.5" /></Button>
+      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => onChange(Math.max(0, value - 1))} aria-label={tx('Menos')}><Minus className="h-3.5 w-3.5" /></Button>
       <span className="w-5 text-center font-mono text-sm">{value}</span>
-      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => onChange(Math.min(max, value + 1))} aria-label="Mais"><Plus className="h-3.5 w-3.5" /></Button>
+      <Button type="button" size="icon" variant="ghost" className="h-7 w-7" onClick={() => onChange(Math.min(max, value + 1))} aria-label={tx('Mais')}><Plus className="h-3.5 w-3.5" /></Button>
     </div>
   );
 
@@ -208,10 +209,9 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[94vh] max-w-4xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Registo depois do jogo {title}</DialogTitle>
+          <DialogTitle>{tx('Registo depois do jogo')}{' '}{title}</DialogTitle>
           <DialogDescription>
-            Para quando não deu para usar o jogo ao vivo. Partes: {partMinutes.map((m) => `${m}'`).join(' + ')} = {matchTotal} min.
-            Toque numa parte para marcar "jogou a parte toda"; escreva os minutos se jogou só um bocado.
+            {tx('Para quando não deu para usar o jogo ao vivo. Partes:')}{' '}{partMinutes.map((m) => `${m}'`).join(' + ')} = {matchTotal} {tx('min. Toque numa parte para marcar "jogou a parte toda"; escreva os minutos se jogou só um bocado.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -221,24 +221,24 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-4 rounded-lg border bg-muted/40 p-3">
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Nós</p>
+                <p className="text-xs text-muted-foreground">{tx('Nós')}</p>
                 <Input type="number" min={0} value={shownFor} onChange={(e) => { setScoreTouched(true); setGoalsFor(clampInt(Number(e.target.value), 0, 99)); }} className="h-12 w-20 text-center text-2xl font-bold" />
               </div>
               <span className="text-2xl font-bold">–</span>
               <div className="text-center">
-                <p className="text-xs text-muted-foreground">Adversário</p>
+                <p className="text-xs text-muted-foreground">{tx('Adversário')}</p>
                 <Input type="number" min={0} value={goalsAgainst} onChange={(e) => setGoalsAgainst(clampInt(Number(e.target.value), 0, 99))} className="h-12 w-20 text-center text-2xl font-bold" />
               </div>
             </div>
-            {shownFor < ourGoals && <p className="text-center text-xs text-amber-600">Há {ourGoals} golos marcados nos jogadores mas o resultado diz {shownFor}.</p>}
+            {shownFor < ourGoals && <p className="text-center text-xs text-amber-600">{tx('Há')}{' '}{ourGoals} {tx('golos marcados nos jogadores mas o resultado diz')}{' '}{shownFor}.</p>}
 
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="text-muted-foreground">{playedCount} jogaram</span>
-              <Button size="sm" variant="outline" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: true, parts: [...partMinutes] })))}>Todos jogaram tudo</Button>
-              <Button size="sm" variant="ghost" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: false, parts: partMinutes.map(() => 0) })))}>Limpar</Button>
+              <Button size="sm" variant="outline" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: true, parts: [...partMinutes] })))}>{tx('Todos jogaram tudo')}</Button>
+              <Button size="sm" variant="ghost" onClick={() => setRows((rs) => rs.map((r) => ({ ...r, played: false, parts: partMinutes.map(() => 0) })))}>{tx('Limpar')}</Button>
               {others.length > 0 && (
-                <select className="ml-auto h-9 rounded-md border bg-background px-2 text-sm" value="" onChange={(e) => e.target.value && addPlayer(e.target.value)} aria-label="Juntar jogador">
-                  <option value="">+ Juntar jogador do plantel…</option>
+                <select className="ml-auto h-9 rounded-md border bg-background px-2 text-sm" value="" onChange={(e) => e.target.value && addPlayer(e.target.value)} aria-label={tx('Juntar jogador')}>
+                  <option value="">{tx('+ Juntar jogador do plantel…')}</option>
                   {others.map((o) => <option key={o.id} value={o.id}>{o.number ? `${o.number}. ` : ''}{o.name}</option>)}
                 </select>
               )}
@@ -246,7 +246,7 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
 
             {rows.length === 0 && (
               <p className="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                <UserPlus className="h-4 w-4" />Sem convocados: junte os jogadores que foram ao jogo.
+                <UserPlus className="h-4 w-4" />{tx('Sem convocados: junte os jogadores que foram ao jogo.')}
               </p>
             )}
 
@@ -254,7 +254,7 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
               {rows.map((r) => (
                 <div key={r.player_id} className={cn('rounded-md border p-2', !r.played && 'opacity-60')}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Checkbox checked={r.played} onCheckedChange={(v) => update(r.player_id, { played: !!v, parts: v ? (totalOf(r) > 0 ? r.parts : [...partMinutes]) : partMinutes.map(() => 0) })} aria-label="Jogou" />
+                    <Checkbox checked={r.played} onCheckedChange={(v) => update(r.player_id, { played: !!v, parts: v ? (totalOf(r) > 0 ? r.parts : [...partMinutes]) : partMinutes.map(() => 0) })} aria-label={tx('Jogou')} />
                     <span className="w-6 text-center font-mono text-xs text-muted-foreground">{r.number ?? '–'}</span>
                     <span className="min-w-[8rem] flex-1 truncate font-medium">{r.name}</span>
                     <span className="font-mono text-sm font-semibold">{r.played ? totalOf(r) : 0}'</span>
@@ -266,7 +266,7 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
                           const full = r.parts[i] >= pm;
                           return (
                             <div key={i} className={cn('flex items-center overflow-hidden rounded-md border', full ? 'border-primary bg-primary/10' : r.parts[i] > 0 ? 'border-amber-500/60' : '')}>
-                              <button type="button" className="px-2 py-1 text-xs font-medium" onClick={() => setPart(r, i, full ? 0 : pm)} title={full ? 'Não jogou esta parte' : 'Jogou a parte toda'}>
+                              <button type="button" className="px-2 py-1 text-xs font-medium" onClick={() => setPart(r, i, full ? 0 : pm)} title={full ? tx('Não jogou esta parte') : tx('Jogou a parte toda')}>
                                 {i + 1}.ª
                               </button>
                               <input
@@ -274,29 +274,29 @@ export function QuickMatchEntry({ matchId, open, onClose, onSaved }: Props) {
                                 value={r.parts[i]}
                                 onChange={(e) => setPart(r, i, Number(e.target.value))}
                                 className="h-7 w-11 border-l bg-transparent text-center text-sm outline-none"
-                                aria-label={`Minutos na parte ${i + 1}`}
+                                aria-label={tx('Minutos na parte {{v0}}', { v0: i + 1 })}
                               />
                             </div>
                           );
                         })}
                       </div>
                       <div className="flex items-center gap-1 text-xs"><span>⚽</span><Stepper value={r.goals} onChange={(v) => update(r.player_id, { goals: v })} /></div>
-                      <div className="flex items-center gap-1 text-xs"><span title="Assistências">🅰️</span><Stepper value={r.assists} onChange={(v) => update(r.player_id, { assists: v })} /></div>
-                      <button type="button" className={cn('h-6 w-4 rounded-sm border', r.yellow > 0 ? 'bg-yellow-400 border-yellow-500' : 'border-muted-foreground/40')} onClick={() => update(r.player_id, { yellow: (r.yellow + 1) % 3 })} title="Amarelos (toque para mudar)">
+                      <div className="flex items-center gap-1 text-xs"><span title={tx('Assistências')}>🅰️</span><Stepper value={r.assists} onChange={(v) => update(r.player_id, { assists: v })} /></div>
+                      <button type="button" className={cn('h-6 w-4 rounded-sm border', r.yellow > 0 ? 'bg-yellow-400 border-yellow-500' : 'border-muted-foreground/40')} onClick={() => update(r.player_id, { yellow: (r.yellow + 1) % 3 })} title={tx('Amarelos (toque para mudar)')}>
                         {r.yellow > 1 && <span className="text-[9px] font-bold">2</span>}
                       </button>
-                      <button type="button" className={cn('h-6 w-4 rounded-sm border', r.red ? 'bg-red-600 border-red-700' : 'border-muted-foreground/40')} onClick={() => update(r.player_id, { red: !r.red })} title="Vermelho" />
+                      <button type="button" className={cn('h-6 w-4 rounded-sm border', r.red ? 'bg-red-600 border-red-700' : 'border-muted-foreground/40')} onClick={() => update(r.player_id, { red: !r.red })} title={tx('Vermelho')} />
                     </div>
                   )}
                 </div>
               ))}
             </div>
 
-            <p className="text-xs text-muted-foreground">Ao guardar, os golos e cartões deste jogo passam a ser os daqui (as substituições registadas ao vivo mantêm-se).</p>
+            <p className="text-xs text-muted-foreground">{tx('Ao guardar, os golos e cartões deste jogo passam a ser os daqui (as substituições registadas ao vivo mantêm-se).')}</p>
             <div className="flex justify-end gap-2 border-t pt-3">
-              <Button variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
               <Button onClick={save} disabled={saving}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar jogo
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{tx('Guardar jogo')}
               </Button>
             </div>
           </div>

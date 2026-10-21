@@ -13,6 +13,7 @@ import { ArrowRight, Users, Calendar, AlertTriangle, CheckCircle2 } from 'lucide
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AGE_CATEGORIES, Gender, CURRENT_SEASONS, getSportingAge, getSeasonStartYear, parseSeasonStartYear } from '@/lib/constants';
 import { differenceInYears } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -189,7 +190,7 @@ export default function SeasonTransition() {
     const selectedPromotions = promotions.filter(p => p.selected && p.suggestedTeamId);
     
     if (selectedPromotions.length === 0) {
-      toast.error('Selecione pelo menos um jogador para promover');
+      toast.error(tx('Selecione pelo menos um jogador para promover'));
       return;
     }
 
@@ -206,13 +207,13 @@ export default function SeasonTransition() {
         if (error) throw error;
       }
 
-      toast.success(`${selectedPromotions.length} jogador(es) promovido(s) com sucesso!`);
+      toast.success(tx('{{v0}} jogador(es) promovido(s) com sucesso!', { v0: selectedPromotions.length }));
       queryClient.invalidateQueries({ queryKey: ['all-players-for-transition'] });
       queryClient.invalidateQueries({ queryKey: ['players'] });
       queryClient.invalidateQueries({ queryKey: ['team-players'] });
     } catch (error: any) {
       console.error('Error promoting players:', error);
-      toast.error('Erro ao promover jogadores: ' + error.message);
+      toast.error(tx('Erro ao promover jogadores: ') + error.message);
     } finally {
       setProcessing(false);
     }
@@ -237,9 +238,9 @@ export default function SeasonTransition() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-bold">Transição de Época</h1>
+            <h1 className="text-2xl font-display font-bold">{tx('Transição de Época')}</h1>
             <p className="text-muted-foreground">
-              Promova jogadores para os escalões adequados à nova época
+              {tx('Promova jogadores para os escalões adequados à nova época')}
             </p>
           </div>
           <Select value={selectedSeason} onValueChange={setSelectedSeason}>
@@ -265,7 +266,7 @@ export default function SeasonTransition() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{players?.length || 0}</p>
-                  <p className="text-sm text-muted-foreground">Jogadores ativos</p>
+                  <p className="text-sm text-muted-foreground">{tx('Jogadores ativos')}</p>
                 </div>
               </div>
             </CardContent>
@@ -278,7 +279,7 @@ export default function SeasonTransition() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{playersNeedingPromotion.length}</p>
-                  <p className="text-sm text-muted-foreground">Precisam de promoção</p>
+                  <p className="text-sm text-muted-foreground">{tx('Precisam de promoção')}</p>
                 </div>
               </div>
             </CardContent>
@@ -291,7 +292,7 @@ export default function SeasonTransition() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{playersWithTarget.length}</p>
-                  <p className="text-sm text-muted-foreground">Com equipa disponível</p>
+                  <p className="text-sm text-muted-foreground">{tx('Com equipa disponível')}</p>
                 </div>
               </div>
             </CardContent>
@@ -304,17 +305,17 @@ export default function SeasonTransition() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Promoções Automáticas</CardTitle>
+                  <CardTitle className="text-lg">{tx('Promoções Automáticas')}</CardTitle>
                   <CardDescription>
-                    Jogadores que podem ser movidos para equipas existentes
+                    {tx('Jogadores que podem ser movidos para equipas existentes')}
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={selectAll}>
-                    Selecionar todos
+                    {tx('Selecionar todos')}
                   </Button>
                   <Button variant="outline" size="sm" onClick={deselectAll}>
-                    Limpar seleção
+                    {tx('Limpar seleção')}
                   </Button>
                 </div>
               </div>
@@ -339,7 +340,7 @@ export default function SeasonTransition() {
                         )}
                         <span className="font-medium truncate">{promo.player.name}</span>
                         <span className="text-sm text-muted-foreground">
-                          ({promo.playerAge} anos)
+                          ({promo.playerAge} {tx('anos)')}
                         </span>
                       </div>
                     </div>
@@ -359,7 +360,7 @@ export default function SeasonTransition() {
                   onClick={handleProcessPromotions}
                   disabled={processing || promotions.filter(p => p.selected).length === 0}
                 >
-                  {processing ? 'A processar...' : 'Processar Promoções'}
+                  {processing ? tx('A processar...') : tx('Processar Promoções')}
                 </Button>
               </div>
             </CardContent>
@@ -372,11 +373,10 @@ export default function SeasonTransition() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
-                Sem Equipa Disponível
+                {tx('Sem Equipa Disponível')}
               </CardTitle>
               <CardDescription>
-                Estes jogadores precisam de promoção mas não existe equipa com o escalão adequado.
-                Crie as equipas necessárias primeiro.
+                {tx('Estes jogadores precisam de promoção mas não existe equipa com o escalão adequado. Crie as equipas necessárias primeiro.')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -393,7 +393,7 @@ export default function SeasonTransition() {
                         )}
                         <span className="font-medium truncate">{promo.player.name}</span>
                         <span className="text-sm text-muted-foreground">
-                          ({promo.playerAge} anos)
+                          ({promo.playerAge} {tx('anos)')}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -404,7 +404,7 @@ export default function SeasonTransition() {
                       <Badge variant="outline">{promo.currentCategory}</Badge>
                       <ArrowRight className="w-4 h-4 text-muted-foreground" />
                       <Badge variant="outline" className="border-amber-500 text-amber-600">
-                        {promo.suggestedCategory} (sem equipa)
+                        {promo.suggestedCategory} {tx('(sem equipa)')}
                       </Badge>
                     </div>
                   </div>
@@ -418,9 +418,9 @@ export default function SeasonTransition() {
           <Card>
             <CardContent className="py-12 text-center">
               <CheckCircle2 className="w-12 h-12 mx-auto text-green-500 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Tudo em ordem!</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Tudo em ordem!')}</h3>
               <p className="text-muted-foreground">
-                Todos os jogadores estão nos escalões corretos para a época {selectedSeason}.
+                {tx('Todos os jogadores estão nos escalões corretos para a época')}{' '}{selectedSeason}.
               </p>
             </CardContent>
           </Card>

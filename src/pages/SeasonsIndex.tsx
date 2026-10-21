@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Lock, Repeat, FileDown } from 'lucide-react';
 import { useSeasonsList } from '@/hooks/useSeasonContext';
 import { generateSeasonReportPdf } from '@/lib/generateSeasonReportPdf';
+import { tx } from '@/lib/i18n/ui';
 
 export default function SeasonsIndex() {
   const nav = useNavigate();
@@ -14,16 +15,16 @@ export default function SeasonsIndex() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Épocas Desportivas</h1>
+        <h1 className="text-2xl font-semibold">{tx('Épocas Desportivas')}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => nav('/seasons/transition')}><Repeat className="w-4 h-4 mr-1" /> Transição</Button>
-          <Button variant="outline" onClick={() => nav('/seasons/close')}><Lock className="w-4 h-4 mr-1" /> Fechar atual</Button>
-          <Button onClick={() => nav('/seasons/new')}><Plus className="w-4 h-4 mr-1" /> Nova época</Button>
+          <Button variant="outline" onClick={() => nav('/seasons/transition')}><Repeat className="w-4 h-4 mr-1" /> {tx('Transição')}</Button>
+          <Button variant="outline" onClick={() => nav('/seasons/close')}><Lock className="w-4 h-4 mr-1" /> {tx('Fechar atual')}</Button>
+          <Button onClick={() => nav('/seasons/new')}><Plus className="w-4 h-4 mr-1" /> {tx('Nova época')}</Button>
         </div>
       </div>
       <div className="space-y-2">
         {seasons.length === 0 && (
-          <Card><CardContent className="py-10 text-center text-muted-foreground">Sem épocas registadas.</CardContent></Card>
+          <Card><CardContent className="py-10 text-center text-muted-foreground">{tx('Sem épocas registadas.')}</CardContent></Card>
         )}
         {seasons.map((s) => (
           <Card key={s.id}>
@@ -40,7 +41,7 @@ export default function SeasonsIndex() {
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
               {s.start_date} → {s.end_date}
-              {s.reference_date && <> · ref: {s.reference_date}</>}
+              {s.reference_date && <> {tx('· ref:')}{' '}{s.reference_date}</>}
             </CardContent>
           </Card>
         ))}

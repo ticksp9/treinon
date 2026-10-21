@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 // ---- Types ----
 
@@ -132,7 +133,7 @@ export function useCreateAttendanceRequest(clubId: string | null) {
       related_training_id?: string;
       notes?: string;
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { error } = await supabase.from('attendance_requests').insert({
         club_id: clubId || null,
         created_by: user.id,
@@ -157,7 +158,7 @@ export function useRespondAttendance() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: { requestId: string; response: string; comment?: string; playerId?: string }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase.from('attendance_responses').upsert(
         {
           request_id: data.requestId,
@@ -219,7 +220,7 @@ export function useCreateTemplate(clubId: string | null) {
       scope?: string;
       placeholders?: string[];
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { error } = await supabase.from('communication_templates').insert({
         club_id: clubId || null,
         created_by: user.id,
@@ -273,7 +274,7 @@ export function usePinMessage() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: { channelId: string; messageId: string }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error: pinError } = await supabase.from('communication_pins').insert({
         channel_id: data.channelId,
         message_id: data.messageId,
@@ -352,7 +353,7 @@ export function useCreateAutomationRule(clubId: string | null) {
       template_id?: string;
       team_id?: string;
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { error } = await supabase.from('communication_automation_rules').insert({
         club_id: clubId || null,
         created_by: user.id,

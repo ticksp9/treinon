@@ -15,6 +15,7 @@ import { useNotificationsFeed, useUnreadNotificationCount, useMarkNotificationRe
 import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 function usePlayerData(playerId: string | null) {
   return useQuery({
@@ -107,7 +108,7 @@ function useMarkContentRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['player-technical-content'] });
-      toast.success('Conteúdo marcado como lido');
+      toast.success(tx('Conteúdo marcado como lido'));
     },
   });
 }
@@ -159,7 +160,7 @@ function PlayerCommunicationTab({ playerId, teamId }: { playerId: string | null;
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <BellRing className="h-4 w-4 text-primary" />
-              <span className="font-semibold text-sm">{notifCount} notificação(ões) por ler</span>
+              <span className="font-semibold text-sm">{notifCount} {tx('notificação(ões) por ler')}</span>
             </div>
             <div className="space-y-1.5">
               {unreadNotifs.slice(0, 5).map(n => (
@@ -185,9 +186,9 @@ function PlayerCommunicationTab({ playerId, teamId }: { playerId: string | null;
       )}
 
       {/* Announcements */}
-      <h3 className="text-sm font-semibold text-muted-foreground">Anúncios da Equipa</h3>
+      <h3 className="text-sm font-semibold text-muted-foreground">{tx('Anúncios da Equipa')}</h3>
       {announcements.length === 0 ? (
-        <EmptyState icon={<Megaphone className="h-8 w-8" />} title="Sem anúncios" description="Não há anúncios para a tua equipa." />
+        <EmptyState icon={<Megaphone className="h-8 w-8" />} title={tx('Sem anúncios')} description={tx('Não há anúncios para a tua equipa.')} />
       ) : (
         <div className="space-y-3">
           {announcements.map((a: any) => (
@@ -197,8 +198,8 @@ function PlayerCommunicationTab({ playerId, teamId }: { playerId: string | null;
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-semibold text-sm">{a.title}</span>
-                      {a.priority === 'urgent' && <Badge variant="destructive" className="text-[10px]">Urgente</Badge>}
-                      {a.priority === 'important' && <Badge className="text-[10px]">Importante</Badge>}
+                      {a.priority === 'urgent' && <Badge variant="destructive" className="text-[10px]">{tx('Urgente')}</Badge>}
+                      {a.priority === 'important' && <Badge className="text-[10px]">{tx('Importante')}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.content}</p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -206,7 +207,7 @@ function PlayerCommunicationTab({ playerId, teamId }: { playerId: string | null;
                     </p>
                   </div>
                   <Button size="sm" variant="ghost" onClick={() => markAnnouncementRead.mutate(a.id)}>
-                    <Eye className="h-3 w-3 mr-1" /> Lido
+                    <Eye className="h-3 w-3 mr-1" /> {tx('Lido')}
                   </Button>
                 </div>
               </CardContent>
@@ -236,7 +237,7 @@ export default function PlayerPortal() {
   useRealtimeNotifications();
 
   if (roleLoading || playerLoading) {
-    return <AppLayout><div className="container py-8"><PageLoading message="A carregar portal do jogador..." /></div></AppLayout>;
+    return <AppLayout><div className="container py-8"><PageLoading message={tx('A carregar portal do jogador...')} /></div></AppLayout>;
   }
 
   if (!playerId || !playerData) {
@@ -245,8 +246,8 @@ export default function PlayerPortal() {
         <div className="container py-8">
           <EmptyState
             icon={<Trophy className="h-10 w-10" />}
-            title="Portal do Jogador"
-            description="Não foi encontrado um perfil de jogador associado à sua conta."
+            title={tx('Portal do Jogador')}
+            description={tx('Não foi encontrado um perfil de jogador associado à sua conta.')}
           />
         </div>
       </AppLayout>
@@ -268,13 +269,13 @@ export default function PlayerPortal() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">Portal do Jogador</h1>
+              <h1 className="text-2xl font-bold">{tx('Portal do Jogador')}</h1>
               {notifCount > 0 && (
                 <Badge className="text-xs">{notifCount} nova{notifCount > 1 ? 's' : ''}</Badge>
               )}
             </div>
             <p className="text-muted-foreground text-sm">
-              {playerData.name} · {(playerData as any).teams?.name || 'Sem equipa'}
+              {playerData.name} · {(playerData as any).teams?.name || tx('Sem equipa')}
               {playerData.position && <Badge variant="outline" className="ml-2 text-xs">{playerData.position}</Badge>}
             </p>
           </div>
@@ -282,19 +283,19 @@ export default function PlayerPortal() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>Início</span></TabsTrigger>
-            <TabsTrigger value="jogos"><Trophy className="h-4 w-4 mr-1" /><span>Jogos</span></TabsTrigger>
-            <TabsTrigger value="treinos"><Calendar className="h-4 w-4 mr-1" /><span>Treinos</span></TabsTrigger>
+            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>{tx('Início')}</span></TabsTrigger>
+            <TabsTrigger value="jogos"><Trophy className="h-4 w-4 mr-1" /><span>{tx('Jogos')}</span></TabsTrigger>
+            <TabsTrigger value="treinos"><Calendar className="h-4 w-4 mr-1" /><span>{tx('Treinos')}</span></TabsTrigger>
             <TabsTrigger value="comunicacao" className="flex items-center gap-1">
               <Megaphone className="h-4 w-4" />
-              <span>Comunicação</span>
+              <span>{tx('Comunicação')}</span>
               {notifCount > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {notifCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="conteudo"><BookOpen className="h-4 w-4 mr-1" /><span>Conteúdo Técnico</span></TabsTrigger>
+            <TabsTrigger value="conteudo"><BookOpen className="h-4 w-4 mr-1" /><span>{tx('Conteúdo Técnico')}</span></TabsTrigger>
           </TabsList>
 
           {/* HOME */}
@@ -302,26 +303,26 @@ export default function PlayerPortal() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Card><CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-primary">{upcomingMatches.length}</div>
-                <p className="text-xs text-muted-foreground">Próximos Jogos</p>
+                <p className="text-xs text-muted-foreground">{tx('Próximos Jogos')}</p>
               </CardContent></Card>
               <Card><CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-primary">{callups.length}</div>
-                <p className="text-xs text-muted-foreground">Convocatórias</p>
+                <p className="text-xs text-muted-foreground">{tx('Convocatórias')}</p>
               </CardContent></Card>
               <Card><CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-primary">{upcomingTrainings.length}</div>
-                <p className="text-xs text-muted-foreground">Próximos Treinos</p>
+                <p className="text-xs text-muted-foreground">{tx('Próximos Treinos')}</p>
               </CardContent></Card>
               <Card className={notifCount > 0 ? 'border-primary/30' : ''}><CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-primary">{notifCount}</div>
-                <p className="text-xs text-muted-foreground">Notificações</p>
+                <p className="text-xs text-muted-foreground">{tx('Notificações')}</p>
               </CardContent></Card>
             </div>
 
             {/* Next match */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Próximo Jogo</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm">{tx('Próximo Jogo')}</CardTitle></CardHeader>
                 <CardContent>
                   {upcomingMatches[0] ? (
                     <div className="space-y-1">
@@ -334,14 +335,14 @@ export default function PlayerPortal() {
                         <p className="text-sm text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" /> {upcomingMatches[0].location}</p>
                       )}
                       <Badge variant={upcomingMatches[0].is_home ? 'default' : 'secondary'} className="text-xs mt-1">
-                        {upcomingMatches[0].is_home ? 'Casa' : 'Fora'}
+                        {upcomingMatches[0].is_home ? tx('Casa') : tx('Fora')}
                       </Badge>
                     </div>
-                  ) : <p className="text-sm text-muted-foreground">Sem jogos agendados</p>}
+                  ) : <p className="text-sm text-muted-foreground">{tx('Sem jogos agendados')}</p>}
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Próximo Treino</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-sm">{tx('Próximo Treino')}</CardTitle></CardHeader>
                 <CardContent>
                   {upcomingTrainings[0] ? (
                     <div className="space-y-1">
@@ -353,7 +354,7 @@ export default function PlayerPortal() {
                         </p>
                       )}
                     </div>
-                  ) : <p className="text-sm text-muted-foreground">Sem treinos agendados</p>}
+                  ) : <p className="text-sm text-muted-foreground">{tx('Sem treinos agendados')}</p>}
                 </CardContent>
               </Card>
             </div>
@@ -363,7 +364,7 @@ export default function PlayerPortal() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <BookOpen className="h-4 w-4 text-primary" />
-                    <span className="font-semibold text-sm">Conteúdo para rever</span>
+                    <span className="font-semibold text-sm">{tx('Conteúdo para rever')}</span>
                   </div>
                   {mandatoryUnread.slice(0, 3).map((c: any) => (
                     <div key={c.id} className="flex items-center justify-between p-2 bg-muted/50 rounded mb-1">
@@ -374,7 +375,7 @@ export default function PlayerPortal() {
                       <Button size="sm" variant="outline" onClick={() => {
                         if (playerId) markRead.mutate({ contentId: c.id, playerId });
                       }}>
-                        <Eye className="h-3 w-3 mr-1" /> Marcar lido
+                        <Eye className="h-3 w-3 mr-1" /> {tx('Marcar lido')}
                       </Button>
                     </div>
                   ))}
@@ -385,9 +386,9 @@ export default function PlayerPortal() {
 
           {/* GAMES */}
           <TabsContent value="jogos" className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground">Próximos Jogos</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">{tx('Próximos Jogos')}</h3>
             {upcomingMatches.length === 0 ? (
-              <EmptyState icon={<Trophy className="h-8 w-8" />} title="Sem jogos agendados" description="Não existem jogos futuros." />
+              <EmptyState icon={<Trophy className="h-8 w-8" />} title={tx('Sem jogos agendados')} description={tx('Não existem jogos futuros.')} />
             ) : (
               <div className="space-y-3">
                 {upcomingMatches.map((m: any) => (
@@ -396,7 +397,7 @@ export default function PlayerPortal() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant={m.is_home ? 'default' : 'secondary'} className="text-xs">{m.is_home ? 'CASA' : 'FORA'}</Badge>
+                            <Badge variant={m.is_home ? 'default' : 'secondary'} className="text-xs">{m.is_home ? tx('CASA') : tx('FORA')}</Badge>
                             <span className="font-semibold text-sm">{m.opponent_name}</span>
                           </div>
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -406,7 +407,7 @@ export default function PlayerPortal() {
                           {m.location && <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><MapPin className="h-3 w-3" /> {m.location}</p>}
                           {m.competition && <p className="text-xs text-muted-foreground mt-0.5">{m.competition}</p>}
                         </div>
-                        <Badge variant="outline" className="text-xs">{m.status === 'scheduled' ? 'Agendado' : m.status}</Badge>
+                        <Badge variant="outline" className="text-xs">{m.status === 'scheduled' ? tx('Agendado') : m.status}</Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -416,7 +417,7 @@ export default function PlayerPortal() {
 
             {completedMatches.length > 0 && (
               <>
-                <h3 className="text-sm font-semibold text-muted-foreground mt-6">Resultados Recentes</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground mt-6">{tx('Resultados Recentes')}</h3>
                 <div className="space-y-2">
                   {completedMatches.map((m: any) => (
                     <Card key={m.id}>
@@ -444,7 +445,7 @@ export default function PlayerPortal() {
           {/* TRAININGS */}
           <TabsContent value="treinos" className="space-y-4">
             {trainings.length === 0 ? (
-              <EmptyState icon={<Calendar className="h-8 w-8" />} title="Sem treinos" description="Não há treinos registados." />
+              <EmptyState icon={<Calendar className="h-8 w-8" />} title={tx('Sem treinos')} description={tx('Não há treinos registados.')} />
             ) : (
               <div className="space-y-3">
                 {trainings.slice(0, 15).map((t: any) => (
@@ -461,7 +462,7 @@ export default function PlayerPortal() {
                           )}
                           {t.objectives && <p className="text-xs text-muted-foreground mt-1">{t.objectives}</p>}
                         </div>
-                        <Badge variant="outline" className="text-xs">{t.status || 'Planeado'}</Badge>
+                        <Badge variant="outline" className="text-xs">{t.status || tx('Planeado')}</Badge>
                       </div>
                     </CardContent>
                   </Card>
@@ -478,7 +479,7 @@ export default function PlayerPortal() {
           {/* TECHNICAL CONTENT */}
           <TabsContent value="conteudo" className="space-y-4">
             {technicalContent.length === 0 ? (
-              <EmptyState icon={<BookOpen className="h-8 w-8" />} title="Sem conteúdo" description="Ainda não tens conteúdo técnico atribuído." />
+              <EmptyState icon={<BookOpen className="h-8 w-8" />} title={tx('Sem conteúdo')} description={tx('Ainda não tens conteúdo técnico atribuído.')} />
             ) : (
               <div className="space-y-3">
                 {technicalContent.map((c: any) => (
@@ -488,19 +489,19 @@ export default function PlayerPortal() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-sm">{c.title}</span>
-                            {c.is_mandatory_read && <Badge variant="default" className="text-xs">Obrigatório</Badge>}
+                            {c.is_mandatory_read && <Badge variant="default" className="text-xs">{tx('Obrigatório')}</Badge>}
                           </div>
                           <Badge variant="outline" className="text-xs mb-1">{
-                            c.content_type === 'note' ? 'Nota' :
-                            c.content_type === 'tactical_correction' ? 'Correção Tática' :
-                            c.content_type === 'position_instruction' ? 'Instrução por Posição' :
-                            c.content_type === 'play_instruction' ? 'Jogada/Situação' :
+                            c.content_type === 'note' ? tx('Nota') :
+                            c.content_type === 'tactical_correction' ? tx('Correção Tática') :
+                            c.content_type === 'position_instruction' ? tx('Instrução por Posição') :
+                            c.content_type === 'play_instruction' ? tx('Jogada/Situação') :
                             c.content_type
                           }</Badge>
                           {c.body && <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{c.body}</p>}
                           {c.attachment_url && (
                             <a href={c.attachment_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1 mt-1">
-                              <FileText className="h-3 w-3" /> {c.attachment_name || 'Ver anexo'}
+                              <FileText className="h-3 w-3" /> {c.attachment_name || tx('Ver anexo')}
                             </a>
                           )}
                           <p className="text-xs text-muted-foreground mt-1">
@@ -509,7 +510,7 @@ export default function PlayerPortal() {
                         </div>
                         {c.is_mandatory_read && playerId && (
                           <Button size="sm" variant="outline" onClick={() => markRead.mutate({ contentId: c.id, playerId })}>
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> Lido
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> {tx('Lido')}
                           </Button>
                         )}
                       </div>

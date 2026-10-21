@@ -28,6 +28,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { shareText } from '@/lib/share';
+import { tx } from '@/lib/i18n/ui';
 
 const AGE_TO_TRAINING_GROUP: Record<AgeBand, string> = {
   sub7: 'sub-7', sub9: 'sub-9', sub11: 'sub-11', sub13: 'sub-13',
@@ -35,9 +36,9 @@ const AGE_TO_TRAINING_GROUP: Record<AgeBand, string> = {
 };
 
 const INTENSITY: Record<Drill['intensity'], { label: string; className: string }> = {
-  baixa: { label: 'Intensidade baixa', className: 'bg-sky-500/10 text-sky-700 dark:text-sky-300' },
-  media: { label: 'Intensidade média', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
-  alta: { label: 'Intensidade alta', className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300' },
+  baixa: { get label() { return tx('Intensidade baixa'); }, className: 'bg-sky-500/10 text-sky-700 dark:text-sky-300' },
+  media: { get label() { return tx('Intensidade média'); }, className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
+  alta: { get label() { return tx('Intensidade alta'); }, className: 'bg-rose-500/10 text-rose-700 dark:text-rose-300' },
 };
 
 type Picked = { drill: AnyDrill; minutes: number; note?: string };
@@ -56,7 +57,7 @@ function agesLabel(ages: AgeBand[]) {
 function printPlan(title: string, subtitle: string, items: Picked[]) {
   const w = window.open('', '_blank');
   if (!w) {
-    toast.error('Permita janelas pop-up para imprimir.');
+    toast.error(tx('Permita janelas pop-up para imprimir.'));
     return;
   }
   const blocks = items.map(({ drill, minutes, note }, i) => `
@@ -146,8 +147,8 @@ export function LibraryBrowser() {
 
   const openCreate = (title: string, items: Picked[], planAge?: AgeBand) => {
     if (!user) {
-      toast.info('Crie uma conta gratuita para guardar treinos. Pode imprimir ou partilhar sem conta.', {
-        action: { label: 'Criar conta', onClick: () => navigate('/auth?tab=signup&next=/biblioteca') },
+      toast.info(tx('Crie uma conta gratuita para guardar treinos. Pode imprimir ou partilhar sem conta.'), {
+        action: { label: tx('Criar conta'), onClick: () => navigate('/auth?tab=signup&next=/biblioteca') },
       });
       printPlan(title, 'Plano de treino', items);
       return;
@@ -167,7 +168,7 @@ export function LibraryBrowser() {
         coach_id: user.id,
         owner_id: user.id,
         name: trainingName || createFor.title,
-        description: 'Criado a partir da Biblioteca TreinON',
+        description: tx('Criado a partir da Biblioteca TreinON'),
         age_group: trainingAge ? AGE_TO_TRAINING_GROUP[trainingAge] : null,
         objectives: [...new Set(createFor.items.map((i) => i.drill.objective))].slice(0, 3).join(' '),
         exercises: JSON.parse(JSON.stringify(exercises)),
@@ -178,13 +179,13 @@ export function LibraryBrowser() {
         status: 'draft',
       });
       if (error) throw error;
-      toast.success('Treino guardado nos teus treinos', {
-        action: { label: 'Abrir', onClick: () => navigate('/training') },
+      toast.success(tx('Treino guardado nos teus treinos'), {
+        action: { label: tx('Abrir'), onClick: () => navigate('/training') },
       });
       setCreateFor(null);
       if (createFor.items === picked) setPicked([]);
     } catch (e) {
-      toast.error('Não foi possível guardar: ' + (e as Error).message);
+      toast.error(tx('Não foi possível guardar: ') + (e as Error).message);
     } finally {
       setSaving(false);
     }
@@ -200,15 +201,14 @@ export function LibraryBrowser() {
               <BookOpen className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h2 className="font-display text-2xl font-bold">Biblioteca do treinador</h2>
+              <h2 className="font-display text-2xl font-bold">{tx('Biblioteca do treinador')}</h2>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                {DRILLS.length} exercícios com esquema{custom.length > 0 ? ` + ${custom.length} seus e do clube` : ''}, {SESSION_PLANS.length} treinos completos e um guia por escalão.
-                Crie os seus exercícios animados: jogadores e bola a mexer passo a passo.
+                {DRILLS.length} {tx('exercícios com esquema')}{custom.length > 0 ? tx(' + {{v0}} seus e do clube', { v0: custom.length }) : ''}, {SESSION_PLANS.length} {tx('treinos completos e um guia por escalão. Crie os seus exercícios animados: jogadores e bola a mexer passo a passo.')}
               </p>
             </div>
             {user && (
               <Button className="shrink-0 self-start sm:ml-auto" onClick={() => setEditing(emptyDrill())}>
-                <PenTool className="mr-1.5 h-4 w-4" />Novo exercício
+                <PenTool className="mr-1.5 h-4 w-4" />{tx('Novo exercício')}
               </Button>
             )}
           </div>
@@ -218,27 +218,27 @@ export function LibraryBrowser() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Procurar exercício…" className="pl-9" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tx('Procurar exercício…')} className="pl-9" />
           </div>
           <Select value={age} onValueChange={(v) => setAge(v as AgeBand | 'all')}>
-            <SelectTrigger className="md:w-56"><SelectValue placeholder="Escalão" /></SelectTrigger>
+            <SelectTrigger className="md:w-56"><SelectValue placeholder={tx('Escalão')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os escalões</SelectItem>
+              <SelectItem value="all">{tx('Todos os escalões')}</SelectItem>
               {AGE_BANDS.map((a) => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}
             </SelectContent>
           </Select>
           <label className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
             <Switch checked={lowResource} onCheckedChange={setLowResource} />
             <Package className="h-4 w-4 text-muted-foreground" />
-            Só bolas e cones
+            {tx('Só bolas e cones')}
           </label>
         </div>
 
         <Tabs defaultValue="drills">
           <TabsList className="w-full justify-start overflow-x-auto">
-            <TabsTrigger value="drills" className="gap-1.5"><Dumbbell className="h-4 w-4" />Exercícios</TabsTrigger>
-            <TabsTrigger value="plans" className="gap-1.5"><ListChecks className="h-4 w-4" />Treinos prontos</TabsTrigger>
-            <TabsTrigger value="guide" className="gap-1.5"><GraduationCap className="h-4 w-4" />Guia por escalão</TabsTrigger>
+            <TabsTrigger value="drills" className="gap-1.5"><Dumbbell className="h-4 w-4" />{tx('Exercícios')}</TabsTrigger>
+            <TabsTrigger value="plans" className="gap-1.5"><ListChecks className="h-4 w-4" />{tx('Treinos prontos')}</TabsTrigger>
+            <TabsTrigger value="guide" className="gap-1.5"><GraduationCap className="h-4 w-4" />{tx('Guia por escalão')}</TabsTrigger>
           </TabsList>
 
           {/* ─── Drills ─── */}
@@ -253,7 +253,7 @@ export function LibraryBrowser() {
               </div>
             )}
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <Button size="sm" variant={category === 'all' ? 'default' : 'outline'} onClick={() => setCategory('all')} className="rounded-full">Todos</Button>
+              <Button size="sm" variant={category === 'all' ? 'default' : 'outline'} onClick={() => setCategory('all')} className="rounded-full">{tx('Todos')}</Button>
               {DRILL_CATEGORIES.map((c) => (
                 <Button key={c.value} size="sm" variant={category === c.value ? 'default' : 'outline'} onClick={() => setCategory(c.value)} className="shrink-0 rounded-full">
                   {c.label}
@@ -263,8 +263,8 @@ export function LibraryBrowser() {
 
             {drills.length === 0 ? (
               <Card><CardContent className="space-y-3 py-12 text-center text-muted-foreground">
-                <p>{source === 'mine' ? 'Ainda não criou exercícios.' : 'Nenhum exercício com estes filtros.'}</p>
-                {user && source === 'mine' && <Button onClick={() => setEditing(emptyDrill())}><PenTool className="mr-1.5 h-4 w-4" />Criar o primeiro</Button>}
+                <p>{source === 'mine' ? tx('Ainda não criou exercícios.') : tx('Nenhum exercício com estes filtros.')}</p>
+                {user && source === 'mine' && <Button onClick={() => setEditing(emptyDrill())}><PenTool className="mr-1.5 h-4 w-4" />{tx('Criar o primeiro')}</Button>}
               </CardContent></Card>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -274,8 +274,8 @@ export function LibraryBrowser() {
                       <div className="relative">
                         <DrillDiagram elements={stillOf(d)} title={d.name} className="w-full bg-[hsl(var(--field-dark))]" />
                         <div className="absolute left-2 top-2 flex gap-1">
-                          {d.source !== 'library' && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">{d.source === 'mine' ? 'Meu' : 'Do clube'}</span>}
-                          {isAnimated(d) && <span className="flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white"><Film className="h-3 w-3" />Animado</span>}
+                          {d.source !== 'library' && <span className="rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white">{d.source === 'mine' ? tx('Meu') : tx('Do clube')}</span>}
+                          {isAnimated(d) && <span className="flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white"><Film className="h-3 w-3" />{tx('Animado')}</span>}
                         </div>
                       </div>
                       <div className="space-y-2 p-4">
@@ -288,13 +288,13 @@ export function LibraryBrowser() {
                           <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5"><Clock className="h-3 w-3" />{d.minutes} min</span>
                           <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5"><Users className="h-3 w-3" />{d.players.min}–{d.players.max}</span>
                           <span className="rounded-md bg-muted px-2 py-0.5">{agesLabel(d.ages)}</span>
-                          {isLowResource(d) && <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary">Pouco material</span>}
+                          {isLowResource(d) && <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary">{tx('Pouco material')}</span>}
                         </div>
                       </div>
                     </button>
                     <div className="border-t px-4 py-2">
                       <Button variant={isPicked(d) ? 'secondary' : 'ghost'} size="sm" className="w-full" onClick={() => togglePick(d)}>
-                        {isPicked(d) ? <><Check className="mr-1 h-4 w-4" />No treino</> : <><Plus className="mr-1 h-4 w-4" />Adicionar ao treino</>}
+                        {isPicked(d) ? <><Check className="mr-1 h-4 w-4" />{tx('No treino')}</> : <><Plus className="mr-1 h-4 w-4" />{tx('Adicionar ao treino')}</>}
                       </Button>
                     </div>
                   </Card>
@@ -330,9 +330,9 @@ export function LibraryBrowser() {
                       ))}
                     </ol>
                     <div className="mt-auto flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => openCreate(p.name, items, p.ages[0])}><Sparkles className="mr-1 h-4 w-4" />Usar este treino</Button>
-                      <Button size="sm" variant="outline" onClick={() => printPlan(p.name, p.theme, items)}><Printer className="mr-1 h-4 w-4" />Imprimir</Button>
-                      <Button size="sm" variant="outline" onClick={() => shareText(shareablePlan(p.name, items), p.name)}><Share2 className="mr-1 h-4 w-4" />Partilhar</Button>
+                      <Button size="sm" onClick={() => openCreate(p.name, items, p.ages[0])}><Sparkles className="mr-1 h-4 w-4" />{tx('Usar este treino')}</Button>
+                      <Button size="sm" variant="outline" onClick={() => printPlan(p.name, p.theme, items)}><Printer className="mr-1 h-4 w-4" />{tx('Imprimir')}</Button>
+                      <Button size="sm" variant="outline" onClick={() => shareText(shareablePlan(p.name, items), p.name)}><Share2 className="mr-1 h-4 w-4" />{tx('Partilhar')}</Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -350,11 +350,11 @@ export function LibraryBrowser() {
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="mb-2 text-sm font-semibold text-primary">Prioridades</p>
+                    <p className="mb-2 text-sm font-semibold text-primary">{tx('Prioridades')}</p>
                     <ul className="space-y-1 text-sm">{g.priorities.map((x) => <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
                   </div>
                   <div>
-                    <p className="mb-2 text-sm font-semibold text-destructive">Evitar</p>
+                    <p className="mb-2 text-sm font-semibold text-destructive">{tx('Evitar')}</p>
                     <ul className="space-y-1 text-sm">{g.avoid.map((x) => <li key={x} className="flex gap-2"><X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />{x}</li>)}</ul>
                   </div>
                 </CardContent>
@@ -369,11 +369,11 @@ export function LibraryBrowser() {
         <div className="fixed inset-x-0 bottom-16 z-30 px-4 md:bottom-4 md:left-[var(--sidebar-width,0px)]">
           <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-lg border bg-card p-3 shadow-xl">
             <div className="flex-1 text-sm">
-              <p className="font-semibold">{picked.length} exercício{picked.length > 1 ? 's' : ''} · {pickedMinutes} min</p>
+              <p className="font-semibold">{picked.length} {tx('exercício')}{picked.length > 1 ? 's' : ''} · {pickedMinutes} min</p>
               <p className="truncate text-xs text-muted-foreground">{picked.map((p) => p.drill.name).join(' → ')}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setPicked([])}>Limpar</Button>
-            <Button size="sm" onClick={() => openCreate('O meu treino', picked)}>Criar treino</Button>
+            <Button variant="ghost" size="sm" onClick={() => setPicked([])}>{tx('Limpar')}</Button>
+            <Button size="sm" onClick={() => openCreate('O meu treino', picked)}>{tx('Criar treino')}</Button>
           </div>
         </div>
       )}
@@ -397,19 +397,19 @@ export function LibraryBrowser() {
                 <span className={`rounded-md px-2 py-0.5 ${INTENSITY[open.intensity].className}`}>{INTENSITY[open.intensity].label}</span>
               </div>
               <div className="space-y-4 text-sm">
-                <p><span className="font-semibold">Organização: </span>{open.setup} <span className="text-muted-foreground">({open.space})</span></p>
-                <p><span className="font-semibold">Material: </span>{open.equipment.map((e) => EQUIPMENT_LABELS[e]).join(', ')}</p>
+                <p><span className="font-semibold">{tx('Organização:')}{' '}</span>{open.setup} <span className="text-muted-foreground">({open.space})</span></p>
+                <p><span className="font-semibold">{tx('Material:')}{' '}</span>{open.equipment.map((e) => EQUIPMENT_LABELS[e]).join(', ')}</p>
                 <div>
-                  <p className="mb-1 font-semibold">Como jogar</p>
+                  <p className="mb-1 font-semibold">{tx('Como jogar')}</p>
                   <ol className="list-decimal space-y-1 pl-5">{open.howTo.map((s) => <li key={s}>{s}</li>)}</ol>
                 </div>
                 <div className="rounded-lg bg-primary/5 p-3">
-                  <p className="mb-1 font-semibold text-primary">Pontos-chave para o treinador</p>
+                  <p className="mb-1 font-semibold text-primary">{tx('Pontos-chave para o treinador')}</p>
                   <ul className="space-y-1">{open.coachingPoints.map((s) => <li key={s} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{s}</li>)}</ul>
                 </div>
                 {open.progressions && (
                   <div>
-                    <p className="mb-1 font-semibold">Progressões</p>
+                    <p className="mb-1 font-semibold">{tx('Progressões')}</p>
                     <ul className="list-disc space-y-1 pl-5">{open.progressions.map((s) => <li key={s}>{s}</li>)}</ul>
                   </div>
                 )}
@@ -418,21 +418,21 @@ export function LibraryBrowser() {
                 {user && open.source === 'mine' && (
                   <>
                     <Button variant="ghost" className="text-destructive" onClick={async () => {
-                      if (!open.rowId || !window.confirm(`Apagar "${open.name}"?`)) return;
-                      try { await deleteDrill.mutateAsync(open.rowId); setOpen(null); toast.success('Exercício apagado.'); }
-                      catch (e) { toast.error('Não foi possível apagar: ' + (e as Error).message); }
-                    }}><Trash2 className="mr-1 h-4 w-4" />Apagar</Button>
-                    <Button variant="outline" onClick={() => { setEditing(open); setOpen(null); }}><Pencil className="mr-1 h-4 w-4" />Editar</Button>
+                      if (!open.rowId || !window.confirm(tx('Apagar "{{v0}}"?', { v0: open.name }))) return;
+                      try { await deleteDrill.mutateAsync(open.rowId); setOpen(null); toast.success(tx('Exercício apagado.')); }
+                      catch (e) { toast.error(tx('Não foi possível apagar: ') + (e as Error).message); }
+                    }}><Trash2 className="mr-1 h-4 w-4" />{tx('Apagar')}</Button>
+                    <Button variant="outline" onClick={() => { setEditing(open); setOpen(null); }}><Pencil className="mr-1 h-4 w-4" />{tx('Editar')}</Button>
                   </>
                 )}
                 {user && open.source !== 'mine' && (
-                  <Button variant="outline" onClick={() => { setEditing(copyAsMine(open)); setOpen(null); }}><Copy className="mr-1 h-4 w-4" />Copiar e adaptar</Button>
+                  <Button variant="outline" onClick={() => { setEditing(copyAsMine(open)); setOpen(null); }}><Copy className="mr-1 h-4 w-4" />{tx('Copiar e adaptar')}</Button>
                 )}
                 <Button variant="outline" onClick={() => shareText(`⚽ *${open.name}*\n\n${drillToText(open)}\n\nFeito com TreinON`, open.name)}>
-                  <Share2 className="mr-1 h-4 w-4" />Partilhar
+                  <Share2 className="mr-1 h-4 w-4" />{tx('Partilhar')}
                 </Button>
                 <Button onClick={() => { togglePick(open); setOpen(null); }}>
-                  {isPicked(open) ? 'Retirar do treino' : <><Plus className="mr-1 h-4 w-4" />Adicionar ao treino</>}
+                  {isPicked(open) ? tx('Retirar do treino') : <><Plus className="mr-1 h-4 w-4" />{tx('Adicionar ao treino')}</>}
                 </Button>
               </DialogFooter>
             </>
@@ -448,25 +448,25 @@ export function LibraryBrowser() {
       <Dialog open={!!createFor} onOpenChange={(v) => !v && setCreateFor(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Guardar nos meus treinos</DialogTitle>
+            <DialogTitle>{tx('Guardar nos meus treinos')}</DialogTitle>
             <DialogDescription>
-              {createFor?.items.length} exercícios · {createFor?.items.reduce((s, i) => s + i.minutes, 0)} min. Depois podes editar tudo em Treinos.
+              {createFor?.items.length} {tx('exercícios ·')}{' '}{createFor?.items.reduce((s, i) => s + i.minutes, 0)} {tx('min. Depois podes editar tudo em Treinos.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="lib-name">Nome</Label>
+              <Label htmlFor="lib-name">{tx('Nome')}</Label>
               <Input id="lib-name" value={trainingName} onChange={(e) => setTrainingName(e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="lib-date">Data (opcional)</Label>
+                <Label htmlFor="lib-date">{tx('Data (opcional)')}</Label>
                 <Input id="lib-date" type="date" value={trainingDate} onChange={(e) => setTrainingDate(e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label>Escalão</Label>
+                <Label>{tx('Escalão')}</Label>
                 <Select value={trainingAge} onValueChange={(v) => setTrainingAge(v as AgeBand)}>
-                  <SelectTrigger><SelectValue placeholder="Escolher" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Escolher')} /></SelectTrigger>
                   <SelectContent>{AGE_BANDS.map((a) => <SelectItem key={a.value} value={a.value}>{a.short}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
@@ -474,9 +474,9 @@ export function LibraryBrowser() {
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => createFor && printPlan(trainingName || createFor.title, 'Plano de treino', createFor.items)}>
-              <Printer className="mr-1 h-4 w-4" />Imprimir
+              <Printer className="mr-1 h-4 w-4" />{tx('Imprimir')}
             </Button>
-            <Button onClick={saveTraining} disabled={saving}>{saving ? 'A guardar…' : 'Guardar treino'}</Button>
+            <Button onClick={saveTraining} disabled={saving}>{saving ? tx('A guardar…') : tx('Guardar treino')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

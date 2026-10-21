@@ -33,6 +33,7 @@ function windowForCurrentSeason<T extends { name: string; min_birth_year: number
 }
 import { UserPlus, UserMinus, AlertTriangle, Ban } from "lucide-react";
 import { useOverduePlayersBlock } from "@/hooks/useOverduePlayersBlock";
+import { tx } from '@/lib/i18n/ui';
 
 interface TeamPlayersDialogProps {
   open: boolean;
@@ -242,11 +243,11 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
       queryClient.invalidateQueries({ queryKey: ['lower-group-players'] });
       queryClient.invalidateQueries({ queryKey: ['youth-teams', team.club_id] });
       queryClient.invalidateQueries({ queryKey: ['coordination-history', team.club_id] });
-      toast.success("Jogadores adicionados com sucesso");
+      toast.success(tx('Jogadores adicionados com sucesso'));
       setSelectedPlayers([]);
     },
     onError: (error: any) => {
-      toast.error(`Erro ao adicionar jogadores: ${error.message}`);
+      toast.error(tx('Erro ao adicionar jogadores: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -276,10 +277,10 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
       queryClient.invalidateQueries({ queryKey: ['youth-team-players', team.id] });
       queryClient.invalidateQueries({ queryKey: ['youth-teams', team.club_id] });
       queryClient.invalidateQueries({ queryKey: ['coordination-history', team.club_id] });
-      toast.success("Jogador removido da equipa");
+      toast.success(tx('Jogador removido da equipa'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao remover jogador: ${error.message}`);
+      toast.error(tx('Erro ao remover jogador: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -293,7 +294,7 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
 
   const handleAddPlayers = (isFromLower: boolean) => {
     if (selectedPlayers.length === 0) {
-      toast.warning("Selecione pelo menos um jogador");
+      toast.warning(tx('Selecione pelo menos um jogador'));
       return;
     }
     
@@ -325,36 +326,36 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>
-            Gerir Jogadores - {team.youth_age_groups.name} / {team.name}
+            {tx('Gerir Jogadores -')}{' '}{team.youth_age_groups.name} / {team.name}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="current">
-              Jogadores Atuais ({currentPlayers?.length || 0})
+              {tx('Jogadores Atuais (')}{currentPlayers?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="eligible">
-              Elegíveis ({eligiblePlayers?.length || 0})
+              {tx('Elegíveis (')}{eligiblePlayers?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="lower" disabled={!lowerAgeGroup}>
-              Escalão Inferior ({lowerGroupPlayers?.length || 0})
+              {tx('Escalão Inferior (')}{lowerGroupPlayers?.length || 0})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="current">
             <ScrollArea className="h-[400px]">
               {loadingCurrent ? (
-                <p className="text-center py-8 text-muted-foreground">A carregar...</p>
+                <p className="text-center py-8 text-muted-foreground">{tx('A carregar...')}</p>
               ) : currentPlayers && currentPlayers.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Idade</TableHead>
-                      <TableHead>Posição</TableHead>
-                      <TableHead>Origem</TableHead>
-                      <TableHead>Estado</TableHead>
+                      <TableHead>{tx('Nome')}</TableHead>
+                      <TableHead>{tx('Idade')}</TableHead>
+                      <TableHead>{tx('Posição')}</TableHead>
+                      <TableHead>{tx('Origem')}</TableHead>
+                      <TableHead>{tx('Estado')}</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -369,9 +370,9 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                         <TableCell>{tp.players.position || "-"}</TableCell>
                         <TableCell>
                           {tp.is_from_lower_age_group ? (
-                            <Badge variant="secondary">Escalão Inferior</Badge>
+                            <Badge variant="secondary">{tx('Escalão Inferior')}</Badge>
                           ) : (
-                            <Badge>Escalão Natural</Badge>
+                            <Badge>{tx('Escalão Natural')}</Badge>
                           )}
                         </TableCell>
                         <TableCell>
@@ -381,22 +382,22 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                                 <TooltipTrigger>
                                   <Badge variant="destructive" className="flex items-center gap-1">
                                     <Ban className="h-3 w-3" />
-                                    Bloqueado
+                                    {tx('Bloqueado')}
                                   </Badge>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Pagamentos em atraso há mais de 2 meses</p>
-                                  <p className="text-xs">Não pode ser convocado</p>
+                                  <p>{tx('Pagamentos em atraso há mais de 2 meses')}</p>
+                                  <p className="text-xs">{tx('Não pode ser convocado')}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
                           ) : tp.status === 'blocked' ? (
                             <Badge variant="destructive" className="flex items-center gap-1">
                               <AlertTriangle className="h-3 w-3" />
-                              {tp.blocked_reason === 'payment_overdue' ? 'Pagamento em falta' : tp.blocked_reason}
+                              {tp.blocked_reason === 'payment_overdue' ? tx('Pagamento em falta') : tp.blocked_reason}
                             </Badge>
                           ) : (
-                            <Badge variant="outline">Ativo</Badge>
+                            <Badge variant="outline">{tx('Ativo')}</Badge>
                           )}
                         </TableCell>
                         <TableCell>
@@ -418,7 +419,7 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                 </Table>
               ) : (
                 <p className="text-center py-8 text-muted-foreground">
-                  Nenhum jogador nesta equipa.
+                  {tx('Nenhum jogador nesta equipa.')}
                 </p>
               )}
             </ScrollArea>
@@ -428,28 +429,28 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
-                  Jogadores nascidos entre {teamWindow.min_birth_year} e {teamWindow.max_birth_year} (época {getCurrentSeasonName()})
+                  {tx('Jogadores nascidos entre')}{' '}{teamWindow.min_birth_year} e {teamWindow.max_birth_year} {tx('(época')}{' '}{getCurrentSeasonName()})
                 </p>
                 <Button
                   onClick={() => handleAddPlayers(false)}
                   disabled={selectedPlayers.length === 0 || addPlayersMutation.isPending}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Adicionar Selecionados ({selectedPlayers.length})
+                  {tx('Adicionar Selecionados (')}{selectedPlayers.length})
                 </Button>
               </div>
               <ScrollArea className="h-[350px]">
                 {loadingEligible ? (
-                  <p className="text-center py-8 text-muted-foreground">A carregar...</p>
+                  <p className="text-center py-8 text-muted-foreground">{tx('A carregar...')}</p>
                 ) : eligiblePlayers && eligiblePlayers.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12"></TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Idade</TableHead>
-                        <TableHead>Equipa Atual</TableHead>
-                        <TableHead>Posição</TableHead>
+                        <TableHead>{tx('Nome')}</TableHead>
+                        <TableHead>{tx('Idade')}</TableHead>
+                        <TableHead>{tx('Equipa Atual')}</TableHead>
+                        <TableHead>{tx('Posição')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -471,7 +472,7 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                   </Table>
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
-                    Nenhum jogador elegível disponível.
+                    {tx('Nenhum jogador elegível disponível.')}
                   </p>
                 )}
               </ScrollArea>
@@ -483,10 +484,10 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    Jogadores do escalão {lowerAgeGroup?.name} que podem subir
+                    {tx('Jogadores do escalão')}{' '}{lowerAgeGroup?.name} {tx('que podem subir')}
                   </p>
                   <p className="text-xs text-amber-600">
-                    ⚠️ Estes jogadores ficam disponíveis para ambos os escalões
+                    {tx('⚠️ Estes jogadores ficam disponíveis para ambos os escalões')}
                   </p>
                 </div>
                 <Button
@@ -494,21 +495,21 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                   disabled={selectedPlayers.length === 0 || addPlayersMutation.isPending}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Adicionar Selecionados ({selectedPlayers.length})
+                  {tx('Adicionar Selecionados (')}{selectedPlayers.length})
                 </Button>
               </div>
               <ScrollArea className="h-[350px]">
                 {loadingLower ? (
-                  <p className="text-center py-8 text-muted-foreground">A carregar...</p>
+                  <p className="text-center py-8 text-muted-foreground">{tx('A carregar...')}</p>
                 ) : lowerGroupPlayers && lowerGroupPlayers.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12"></TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Idade</TableHead>
-                        <TableHead>Equipa Atual</TableHead>
-                        <TableHead>Posição</TableHead>
+                        <TableHead>{tx('Nome')}</TableHead>
+                        <TableHead>{tx('Idade')}</TableHead>
+                        <TableHead>{tx('Equipa Atual')}</TableHead>
+                        <TableHead>{tx('Posição')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -531,8 +532,8 @@ export function TeamPlayersDialog({ open, onOpenChange, team }: TeamPlayersDialo
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
                     {lowerAgeGroup 
-                      ? "Nenhum jogador do escalão inferior disponível."
-                      : "Este é o escalão mais baixo."
+                      ? tx('Nenhum jogador do escalão inferior disponível.')
+                      : tx('Este é o escalão mais baixo.')
                     }
                   </p>
                 )}

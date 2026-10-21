@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { TeamPlayersDialog } from "./TeamPlayersDialog";
 import { TeamCoachesDialog } from "./TeamCoachesDialog";
 import { getCurrentSeasonName } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface TeamsTabProps {
   clubId: string;
@@ -60,10 +61,10 @@ interface Team {
 }
 
 const SPORT_VARIANTS = [
-  { value: 'football_7', label: 'Futebol 7' },
-  { value: 'football_9', label: 'Futebol 9' },
-  { value: 'football_11', label: 'Futebol 11' },
-  { value: 'futsal', label: 'Futsal' },
+  { value: 'football_7', get label() { return tx('Futebol 7'); } },
+  { value: 'football_9', get label() { return tx('Futebol 9'); } },
+  { value: 'football_11', get label() { return tx('Futebol 11'); } },
+  { value: 'futsal', get label() { return tx('Futsal'); } },
 ];
 
 export function TeamsTab({ clubId }: TeamsTabProps) {
@@ -152,11 +153,11 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-teams', clubId] });
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-stats', clubId] });
-      toast.success("Equipa criada com sucesso");
+      toast.success(tx('Equipa criada com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar equipa: ${error.message}`);
+      toast.error(tx('Erro ao criar equipa: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -176,11 +177,11 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-teams', clubId] });
-      toast.success("Equipa atualizada com sucesso");
+      toast.success(tx('Equipa atualizada com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao atualizar equipa: ${error.message}`);
+      toast.error(tx('Erro ao atualizar equipa: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -196,10 +197,10 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-teams', clubId] });
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-stats', clubId] });
-      toast.success("Equipa eliminada com sucesso");
+      toast.success(tx('Equipa eliminada com sucesso'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao eliminar equipa: ${error.message}`);
+      toast.error(tx('Erro ao eliminar equipa: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -243,30 +244,30 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Equipas</CardTitle>
+          <CardTitle>{tx('Equipas')}</CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingTeam(null); resetForm(); }} disabled={!ageGroups?.length}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Equipa
+                {tx('Nova Equipa')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingTeam ? "Editar Equipa" : "Nova Equipa"}
+                  {editingTeam ? tx('Editar Equipa') : tx('Nova Equipa')}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="age_group">Escalão</Label>
+                  <Label htmlFor="age_group">{tx('Escalão')}</Label>
                   <Select
                     value={formData.age_group_id}
                     onValueChange={(value) => setFormData({ ...formData, age_group_id: value })}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar escalão" />
+                      <SelectValue placeholder={tx('Selecionar escalão')} />
                     </SelectTrigger>
                     <SelectContent>
                       {ageGroups?.map((group) => (
@@ -279,18 +280,18 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome da Equipa</Label>
+                  <Label htmlFor="name">{tx('Nome da Equipa')}</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Iniciados A, Infantis B"
+                    placeholder={tx('Ex: Iniciados A, Infantis B')}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="sport_variant">Variante</Label>
+                  <Label htmlFor="sport_variant">{tx('Variante')}</Label>
                   <Select
                     value={formData.sport_variant}
                     onValueChange={(value) => setFormData({ ...formData, sport_variant: value })}
@@ -309,7 +310,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="season">Época</Label>
+                  <Label htmlFor="season">{tx('Época')}</Label>
                   <Input
                     id="season"
                     value={formData.season}
@@ -321,10 +322,10 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancelar
+                    {tx('Cancelar')}
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {editingTeam ? "Guardar" : "Criar"}
+                    {editingTeam ? tx('Guardar') : tx('Criar')}
                   </Button>
                 </div>
               </form>
@@ -335,22 +336,22 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
           {!ageGroups?.length ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Primeiro crie os escalões no separador "Escalões".
+                {tx('Primeiro crie os escalões no separador "Escalões".')}
               </p>
             </div>
           ) : isLoading ? (
-            <p className="text-muted-foreground text-center py-8">A carregar...</p>
+            <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
           ) : teams && teams.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Equipa</TableHead>
-                  <TableHead>Escalão</TableHead>
-                  <TableHead>Variante</TableHead>
-                  <TableHead>Jogadores</TableHead>
-                  <TableHead>Treinadores</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{tx('Equipa')}</TableHead>
+                  <TableHead>{tx('Escalão')}</TableHead>
+                  <TableHead>{tx('Variante')}</TableHead>
+                  <TableHead>{tx('Jogadores')}</TableHead>
+                  <TableHead>{tx('Treinadores')}</TableHead>
+                  <TableHead>{tx('Estado')}</TableHead>
+                  <TableHead className="text-right">{tx('Ações')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -370,7 +371,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                     <TableCell>{team._count?.coaches || 0}</TableCell>
                     <TableCell>
                       <Badge variant={team.is_active ? "default" : "secondary"}>
-                        {team.is_active ? "Ativa" : "Inativa"}
+                        {team.is_active ? tx('Ativa') : tx('Inativa')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -378,7 +379,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          title="Gerir jogadores"
+                          title={tx('Gerir jogadores')}
                           onClick={() => setSelectedTeamForPlayers(team)}
                         >
                           <UserPlus className="h-4 w-4" />
@@ -386,7 +387,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          title="Gerir treinadores"
+                          title={tx('Gerir treinadores')}
                           onClick={() => setSelectedTeamForCoaches(team)}
                         >
                           <UserCog className="h-4 w-4" />
@@ -402,7 +403,7 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            if (confirm("Tem a certeza que quer eliminar esta equipa?")) {
+                            if (confirm(tx('Tem a certeza que quer eliminar esta equipa?'))) {
                               deleteMutation.mutate(team.id);
                             }
                           }}
@@ -418,10 +419,10 @@ export function TeamsTab({ clubId }: TeamsTabProps) {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">
-                Ainda não tem equipas criadas.
+                {tx('Ainda não tem equipas criadas.')}
               </p>
               <p className="text-sm text-muted-foreground">
-                Crie equipas como "Iniciados A", "Infantis B", etc.
+                {tx('Crie equipas como "Iniciados A", "Infantis B", etc.')}
               </p>
             </div>
           )}

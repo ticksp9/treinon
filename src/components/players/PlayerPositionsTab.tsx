@@ -10,6 +10,7 @@ import {
 } from '@/lib/player-position-stats';
 import { roleLabel } from '@/lib/tactical-formations';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   playerId: string;
@@ -58,9 +59,9 @@ export function PlayerPositionsTab({ playerId, declaredPosition, secondaryPositi
       <Card>
         <CardContent className="py-10 text-center text-muted-foreground">
           <Target className="w-10 h-10 mx-auto mb-2" />
-          <p>Ainda sem minutos por posição registados.</p>
+          <p>{tx('Ainda sem minutos por posição registados.')}</p>
           <p className="text-xs mt-1">
-            Configure a formação tática no início do jogo para começar a registar.
+            {tx('Configure a formação tática no início do jogo para começar a registar.')}
           </p>
         </CardContent>
       </Card>
@@ -80,13 +81,13 @@ export function PlayerPositionsTab({ playerId, declaredPosition, secondaryPositi
     <div className="space-y-4">
       {selectedSeasonId && seasonStats && seasonStats.totalMinutes > 0 && (
         <StatsBlock
-          title="Época selecionada"
+          title={tx('Época selecionada')}
           stats={seasonStats}
         />
       )}
       {!selectedSeasonId && allTimeStats && allTimeStats.totalMinutes > 0 && (
         <StatsBlock
-          title="Todas as épocas"
+          title={tx('Todas as épocas')}
           stats={allTimeStats}
         />
       )}
@@ -97,7 +98,7 @@ export function PlayerPositionsTab({ playerId, declaredPosition, secondaryPositi
             {declaredVsStat}
             {secondaryPositions && secondaryPositions.length > 0 && (
               <span className="text-muted-foreground">
-                · Secundárias: {secondaryPositions.join(', ')}
+                {tx('· Secundárias:')}{' '}{secondaryPositions.join(', ')}
               </span>
             )}
           </CardContent>
@@ -139,7 +140,7 @@ function StatsBlock({ title, stats }: { title: string; stats: PositionStatsResul
         </div>
         {formationsSorted.length > 0 && (
           <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground mb-1">Formações utilizadas</p>
+            <p className="text-xs text-muted-foreground mb-1">{tx('Formações utilizadas')}</p>
             <div className="flex flex-wrap gap-1">
               {formationsSorted.map(([code, mins]) => (
                 <Badge key={code} variant="outline" className="text-xs">

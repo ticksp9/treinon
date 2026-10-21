@@ -5,6 +5,7 @@ import { Users, FileText, Wallet, AlertTriangle, TrendingUp, Clock } from 'lucid
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import type { PersonRegistry, EmploymentContract, PayrollEntry, StatutoryObligation, ContractAlert } from '@/hooks/useWorkforce';
 import { computePayrollTotals, computeObligationAging } from '@/hooks/useWorkforce';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   people: PersonRegistry[];
@@ -48,7 +49,7 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Staff Ativo</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Staff Ativo')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -59,14 +60,14 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Contratos Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Contratos Ativos')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeContracts}</div>
             {expiringContracts > 0 && (
               <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {expiringContracts} a expirar em 90 dias
+                <Clock className="h-3 w-3" /> {expiringContracts} {tx('a expirar em 90 dias')}
               </p>
             )}
           </CardContent>
@@ -74,18 +75,18 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Custo Total Mensal</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Custo Total Mensal')}</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{fmt(payrollTotals.totalCost)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Bruto + encargos patronais</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('Bruto + encargos patronais')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overdue Total</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Overdue Total')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -93,7 +94,7 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
               {fmt(overdueTotal)}
             </div>
             {criticalAlerts > 0 && (
-              <p className="text-xs text-destructive mt-1">{criticalAlerts} alertas críticos</p>
+              <p className="text-xs text-destructive mt-1">{criticalAlerts} {tx('alertas críticos')}</p>
             )}
           </CardContent>
         </Card>
@@ -103,21 +104,21 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Decomposição Salarial</CardTitle>
+            <CardTitle className="text-lg">{tx('Decomposição Salarial')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between"><span className="text-muted-foreground">Bruto</span><span className="font-semibold">{fmt(payrollTotals.gross)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Descontos</span><span className="font-semibold text-destructive">-{fmt(payrollTotals.deductions)}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Encargos Patronais</span><span className="font-semibold">{fmt(payrollTotals.employerCharges)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tx('Bruto')}</span><span className="font-semibold">{fmt(payrollTotals.gross)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tx('Descontos')}</span><span className="font-semibold text-destructive">-{fmt(payrollTotals.deductions)}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">{tx('Encargos Patronais')}</span><span className="font-semibold">{fmt(payrollTotals.employerCharges)}</span></div>
             <hr className="border-border" />
-            <div className="flex justify-between"><span className="font-semibold">Líquido</span><span className="font-bold">{fmt(payrollTotals.net)}</span></div>
-            <div className="flex justify-between"><span className="font-semibold">Custo Total Empregador</span><span className="font-bold text-primary">{fmt(payrollTotals.totalCost)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold">{tx('Líquido')}</span><span className="font-bold">{fmt(payrollTotals.net)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold">{tx('Custo Total Empregador')}</span><span className="font-bold text-primary">{fmt(payrollTotals.totalCost)}</span></div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Aging de Obrigações</CardTitle>
+            <CardTitle className="text-lg">{tx('Aging de Obrigações')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={220}>
@@ -137,7 +138,7 @@ export function WorkforceOverviewTab({ people, contracts, payrollEntries, obliga
       {alerts.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Alertas Ativos</CardTitle>
+            <CardTitle className="text-lg">{tx('Alertas Ativos')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

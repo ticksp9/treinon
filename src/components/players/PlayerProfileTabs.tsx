@@ -31,6 +31,7 @@ import {
   Target,
   TrendingUp,
 } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 // ─────────────────────────────────────────── Resumo
 
@@ -51,22 +52,22 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           icon={<Trophy className="w-5 h-5 text-emerald-500" />}
-          label="Jogos"
+          label={tx('Jogos')}
           value={seasonStats?.matchesPlayed ?? 0}
         />
         <StatCard
           icon={<CalendarClock className="w-5 h-5 text-sky-500" />}
-          label="Minutos"
+          label={tx('Minutos')}
           value={`${seasonStats?.minutesPlayed ?? 0}'`}
         />
         <StatCard
           icon={<Dumbbell className="w-5 h-5 text-orange-500" />}
-          label="Treinos"
+          label={tx('Treinos')}
           value={`${seasonStats?.trainingAttendance ?? 0}/${seasonStats?.trainingSessions ?? 0}`}
         />
         <StatCard
           icon={<Star className="w-5 h-5 text-amber-500" />}
-          label="Avaliação"
+          label={tx('Avaliação')}
           value={latestEval?.overall_rating ? `${latestEval.overall_rating}/10` : '—'}
         />
       </div>
@@ -77,7 +78,7 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Última avaliação por dimensão
+              {tx('Última avaliação por dimensão')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -101,7 +102,7 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
           {latestEval?.strengths && (
             <Card>
               <CardHeader className="pb-1">
-                <CardTitle className="text-sm">Pontos Fortes</CardTitle>
+                <CardTitle className="text-sm">{tx('Pontos Fortes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm whitespace-pre-wrap">{latestEval.strengths}</p>
@@ -111,7 +112,7 @@ export function PlayerSummaryTab({ player, seasonStats, latestEval }: SummaryPro
           {latestEval?.weaknesses && (
             <Card>
               <CardHeader className="pb-1">
-                <CardTitle className="text-sm">Pontos a Melhorar</CardTitle>
+                <CardTitle className="text-sm">{tx('Pontos a Melhorar')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm whitespace-pre-wrap">{latestEval.weaknesses}</p>
@@ -138,9 +139,9 @@ export function KindSplit({ totals }: { totals: KindTotals[] }) {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
                 <p className="font-mono text-xl font-bold tabular-nums">{t.minutes}'</p>
               </div>
-              <p className="text-xs text-muted-foreground">{t.played} {t.played === 1 ? 'jogo' : 'jogos'} com minutos de {t.matches} {t.matches === 1 ? 'convocatória' : 'convocatórias'} · {t.starts} titular</p>
+              <p className="text-xs text-muted-foreground">{t.played} {t.played === 1 ? 'jogo' : 'jogos'} {tx('com minutos de')}{' '}{t.matches} {t.matches === 1 ? tx('convocatória') : tx('convocatórias')} · {t.starts} titular</p>
               <p className="text-xs"><span className="font-semibold">{t.goals}</span> {t.goals === 1 ? 'golo' : 'golos'} · <span className="font-semibold">{t.yellow}</span> {t.yellow === 1 ? 'amarelo' : 'amarelos'} · <span className="font-semibold">{t.red}</span> {t.red === 1 ? 'vermelho' : 'vermelhos'}</p>
-              {all > 0 && <Progress value={(t.minutes / all) * 100} className="h-1.5" aria-label={`${label}: ${Math.round((t.minutes / all) * 100)}% dos minutos`} />}
+              {all > 0 && <Progress value={(t.minutes / all) * 100} className="h-1.5" aria-label={tx('{{v0}}: {{v1}}% dos minutos', { v0: label, v1: Math.round((t.minutes / all) * 100) })} />}
             </CardContent>
           </Card>
         );
@@ -203,7 +204,7 @@ export function PlayerEvolutionTab({ playerId }: { playerId: string }) {
       <Card>
         <CardContent className="py-10 text-center text-muted-foreground">
           <TrendingUp className="w-10 h-10 mx-auto mb-2" />
-          <p>Sem dados de evolução. Cria avaliações para começar.</p>
+          <p>{tx('Sem dados de evolução. Cria avaliações para começar.')}</p>
         </CardContent>
       </Card>
     );
@@ -212,7 +213,7 @@ export function PlayerEvolutionTab({ playerId }: { playerId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Evolução por dimensão</CardTitle>
+        <CardTitle className="text-base">{tx('Evolução por dimensão')}</CardTitle>
       </CardHeader>
       <CardContent style={{ height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
@@ -269,7 +270,7 @@ export function PlayerTrainingsTab({ playerId }: { playerId: string }) {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm">Presença ({present}/{total})</span>
+            <span className="text-sm">{tx('Presença (')}{present}/{total})</span>
             <span className="text-sm font-semibold">{pct}%</span>
           </div>
           <Progress value={pct} className="h-2" />
@@ -284,14 +285,14 @@ export function PlayerTrainingsTab({ playerId }: { playerId: string }) {
                   <p className="text-sm font-medium">
                     {row.session?.date
                       ? format(new Date(row.session.date), "d MMM yyyy", { locale: pt })
-                      : 'Sessão'}
+                      : tx('Sessão')}
                   </p>
                   {(row.session?.title || row.session?.session_type) && (
                     <p className="text-xs text-muted-foreground">{row.session.title || row.session.session_type}</p>
                   )}
                 </div>
                 <Badge variant={row.present ? 'default' : 'secondary'}>
-                  {row.status || (row.present ? 'Presente' : 'Faltou')}
+                  {row.status || (row.present ? tx('Presente') : tx('Faltou'))}
                 </Badge>
               </div>
             ))}
@@ -300,7 +301,7 @@ export function PlayerTrainingsTab({ playerId }: { playerId: string }) {
       ) : (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Sem registos de treino.
+            {tx('Sem registos de treino.')}
           </CardContent>
         </Card>
       )}
@@ -338,7 +339,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          Ainda sem jogos registados.
+          {tx('Ainda sem jogos registados.')}
         </CardContent>
       </Card>
     );
@@ -347,8 +348,8 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
   const shown = kind === 'all' ? data : data.filter((r: any) => kindOf(r.match) === kind);
   return (
     <div className="space-y-2">
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Tipo de jogo">
-      {([{ key: 'all', label: 'Todos' }, ...MATCH_KINDS] as { key: MatchKind | 'all'; label: string }[]).map((k) => {
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label={tx('Tipo de jogo')}>
+      {([{ key: 'all', label: tx('Todos') }, ...MATCH_KINDS] as { key: MatchKind | 'all'; label: string }[]).map((k) => {
         const n = k.key === 'all' ? data.length : data.filter((r: any) => kindOf(r.match) === k.key).length;
         return (
           <button key={k.key} type="button" onClick={() => setKind(k.key)} aria-pressed={kind === k.key}
@@ -364,7 +365,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
           <div key={row.id} className="p-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">
-                {row.match?.opponent_name || 'Adversário'}{' '}
+                {row.match?.opponent_name || tx('Adversário')}{' '}
                 {row.match?.goals_for != null && row.match?.goals_against != null && (
                   <span className="text-muted-foreground">
                     ({row.match.goals_for}-{row.match.goals_against})
@@ -380,7 +381,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-[11px]">{MATCH_KINDS.find((k) => k.key === kindOf(row.match))!.short}</Badge>
-              {row.is_starter && <Badge variant="outline">Titular</Badge>}
+              {row.is_starter && <Badge variant="outline">{tx('Titular')}</Badge>}
               <Badge>{row.minutes_played ?? 0}'</Badge>
               {row.rating != null && (
                 <Badge className="gap-1">
@@ -443,17 +444,17 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={<CalendarClock className="w-5 h-5 text-sky-500" />} label="Total Min." value={`${totalMinutes}'`} />
-        <StatCard icon={<Trophy className="w-5 h-5 text-emerald-500" />} label="Titular" value={starts} />
-        <StatCard icon={<Target className="w-5 h-5 text-amber-500" />} label="Suplente" value={subs} />
-        <StatCard icon={<Star className="w-5 h-5 text-zinc-500" />} label="Não jogou" value={dnp} />
+        <StatCard icon={<CalendarClock className="w-5 h-5 text-sky-500" />} label={tx('Total Min.')} value={`${totalMinutes}'`} />
+        <StatCard icon={<Trophy className="w-5 h-5 text-emerald-500" />} label={tx('Titular')} value={starts} />
+        <StatCard icon={<Target className="w-5 h-5 text-amber-500" />} label={tx('Suplente')} value={subs} />
+        <StatCard icon={<Star className="w-5 h-5 text-zinc-500" />} label={tx('Não jogou')} value={dnp} />
       </div>
       <KindSplit totals={minutesByKind((data || []) as never, kindEvents as never)} />
       {utilizationPct != null && (
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between mb-2 text-sm">
-              <span>Utilização vs. minutos da equipa</span>
+              <span>{tx('Utilização vs. minutos da equipa')}</span>
               <span className="font-semibold">{utilizationPct}%</span>
             </div>
             <Progress value={utilizationPct} className="h-2" />
@@ -462,7 +463,7 @@ export function PlayerMinutesTab({ playerId, totalSeasonMinutes }: { playerId: s
       )}
       {series.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Minutos por jogo</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{tx('Minutos por jogo')}</CardTitle></CardHeader>
           <CardContent style={{ height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={series}>
@@ -525,7 +526,7 @@ export function PlayerAvailabilityTab({ playerId }: { playerId: string }) {
     <div className="space-y-3">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Próximos jogos</CardTitle>
+          <CardTitle className="text-base">{tx('Próximos jogos')}</CardTitle>
         </CardHeader>
         <CardContent>
           {upcoming && upcoming.length > 0 ? (
@@ -541,14 +542,14 @@ export function PlayerAvailabilityTab({ playerId }: { playerId: string }) {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Sem jogos agendados.
+              {tx('Sem jogos agendados.')}
             </p>
           )}
         </CardContent>
       </Card>
       <Card>
         <CardContent className="py-6 text-center text-sm text-muted-foreground">
-          Confirmação de presença e RSVP detalhado disponível em breve.
+          {tx('Confirmação de presença e RSVP detalhado disponível em breve.')}
         </CardContent>
       </Card>
     </div>

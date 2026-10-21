@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const TYPE_LABELS: Record<string, string> = {
   inbound: 'Entrada', outbound: 'Saída', transfer: 'Transferência', adjustment: 'Ajuste',
@@ -18,18 +19,18 @@ export function MovementsTab({ movements }: Props) {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Movimentos de Stock ({movements.length})</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{tx('Movimentos de Stock (')}{movements.length})</CardTitle></CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead><TableHead>Tipo</TableHead>
-              <TableHead>Quantidade</TableHead><TableHead>Custo Total</TableHead><TableHead>Notas</TableHead>
+              <TableHead>{tx('Data')}</TableHead><TableHead>{tx('Tipo')}</TableHead>
+              <TableHead>{tx('Quantidade')}</TableHead><TableHead>{tx('Custo Total')}</TableHead><TableHead>{tx('Notas')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {movements.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem movimentos</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{tx('Sem movimentos')}</TableCell></TableRow>
             ) : movements.slice(0, 100).map(m => (
               <TableRow key={m.id}>
                 <TableCell className="text-sm">{m.movement_date ? format(new Date(m.movement_date), 'dd/MM/yyyy') : '—'}</TableCell>

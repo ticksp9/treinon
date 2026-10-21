@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Save, Upload, User, X } from 'lucide-react';
 import { FORMATIONS, SPECIALIZATIONS } from '@/lib/coach-constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface CoachDetails {
   id?: string;
@@ -106,12 +107,12 @@ export function CoachProfileForm() {
         .from('coach-documents')
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      if (signedError || !signed?.signedUrl) throw signedError ?? new Error('Falha ao assinar URL');
+      if (signedError || !signed?.signedUrl) throw signedError ?? new Error(tx('Falha ao assinar URL'));
 
       setProfile(prev => ({ ...prev, photo_url: signed.signedUrl }));
-      toast.success('Foto atualizada!');
+      toast.success(tx('Foto atualizada!'));
     } catch (error: any) {
-      toast.error('Erro ao carregar foto: ' + error.message);
+      toast.error(tx('Erro ao carregar foto: ') + error.message);
     } finally {
       setUploading(false);
     }
@@ -159,9 +160,9 @@ export function CoachProfileForm() {
         .upsert(data, { onConflict: 'user_id' });
 
       if (error) throw error;
-      toast.success('Perfil guardado com sucesso!');
+      toast.success(tx('Perfil guardado com sucesso!'));
     } catch (error: any) {
-      toast.error('Erro ao guardar perfil: ' + error.message);
+      toast.error(tx('Erro ao guardar perfil: ') + error.message);
     } finally {
       setSaving(false);
     }
@@ -171,7 +172,7 @@ export function CoachProfileForm() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -200,20 +201,20 @@ export function CoachProfileForm() {
                 />
                 <Button variant="outline" size="sm" disabled={uploading}>
                   <Upload className="w-4 h-4 mr-2" />
-                  {uploading ? 'A carregar...' : 'Alterar Foto'}
+                  {uploading ? tx('A carregar...') : tx('Alterar Foto')}
                 </Button>
               </div>
             </div>
             
             <div className="flex-1 space-y-4">
               <div>
-                <h2 className="text-2xl font-bold">{userProfile?.full_name || 'Sem nome'}</h2>
+                <h2 className="text-2xl font-bold">{userProfile?.full_name || tx('Sem nome')}</h2>
                 <p className="text-muted-foreground">{userProfile?.email}</p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Telefone</Label>
+                  <Label>{tx('Telefone')}</Label>
                   <Input
                     value={profile.phone || ''}
                     onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
@@ -221,15 +222,15 @@ export function CoachProfileForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nacionalidade</Label>
+                  <Label>{tx('Nacionalidade')}</Label>
                   <Input
                     value={profile.nationality || ''}
                     onChange={(e) => setProfile(prev => ({ ...prev, nationality: e.target.value }))}
-                    placeholder="Portuguesa"
+                    placeholder={tx('Portuguesa')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Data de Nascimento</Label>
+                  <Label>{tx('Data de Nascimento')}</Label>
                   <Input
                     type="date"
                     value={profile.birth_date || ''}
@@ -237,7 +238,7 @@ export function CoachProfileForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Anos de Experiência</Label>
+                  <Label>{tx('Anos de Experiência')}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -248,11 +249,11 @@ export function CoachProfileForm() {
               </div>
               
               <div className="space-y-2">
-                <Label>Morada</Label>
+                <Label>{tx('Morada')}</Label>
                 <Input
                   value={profile.address || ''}
                   onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Rua, Cidade, Código Postal"
+                  placeholder={tx('Rua, Cidade, Código Postal')}
                 />
               </div>
             </div>
@@ -263,25 +264,25 @@ export function CoachProfileForm() {
       {/* Bio & Philosophy */}
       <Card>
         <CardHeader>
-          <CardTitle>Sobre Mim</CardTitle>
-          <CardDescription>Apresente-se e descreva a sua filosofia de treino</CardDescription>
+          <CardTitle>{tx('Sobre Mim')}</CardTitle>
+          <CardDescription>{tx('Apresente-se e descreva a sua filosofia de treino')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Biografia</Label>
+            <Label>{tx('Biografia')}</Label>
             <Textarea
               value={profile.bio || ''}
               onChange={(e) => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-              placeholder="Escreva uma breve biografia sobre a sua carreira..."
+              placeholder={tx('Escreva uma breve biografia sobre a sua carreira...')}
               rows={4}
             />
           </div>
           <div className="space-y-2">
-            <Label>Filosofia de Treino</Label>
+            <Label>{tx('Filosofia de Treino')}</Label>
             <Textarea
               value={profile.coaching_philosophy || ''}
               onChange={(e) => setProfile(prev => ({ ...prev, coaching_philosophy: e.target.value }))}
-              placeholder="Descreva a sua abordagem ao treino, valores e métodos..."
+              placeholder={tx('Descreva a sua abordagem ao treino, valores e métodos...')}
               rows={4}
             />
           </div>
@@ -291,12 +292,12 @@ export function CoachProfileForm() {
       {/* Formations & Specializations */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferências Táticas</CardTitle>
-          <CardDescription>Selecione as formações e áreas de especialização</CardDescription>
+          <CardTitle>{tx('Preferências Táticas')}</CardTitle>
+          <CardDescription>{tx('Selecione as formações e áreas de especialização')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
-            <Label>Formações Preferidas</Label>
+            <Label>{tx('Formações Preferidas')}</Label>
             <div className="flex flex-wrap gap-2">
               {FORMATIONS.map((f) => (
                 <Badge
@@ -315,7 +316,7 @@ export function CoachProfileForm() {
           </div>
           
           <div className="space-y-3">
-            <Label>Especializações</Label>
+            <Label>{tx('Especializações')}</Label>
             <div className="flex flex-wrap gap-2">
               {SPECIALIZATIONS.map((s) => (
                 <Badge
@@ -338,7 +339,7 @@ export function CoachProfileForm() {
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
-          {saving ? 'A guardar...' : 'Guardar Perfil'}
+          {saving ? tx('A guardar...') : tx('Guardar Perfil')}
         </Button>
       </div>
     </div>

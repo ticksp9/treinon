@@ -51,6 +51,7 @@ import { MatchStatusBadge } from './MatchStatusBadge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
 import type { PendingSubstitution } from '@/lib/substitution-batch-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -92,11 +93,11 @@ interface PostGameStepperProps {
 }
 
 const STEPS = [
-  { key: 'result', label: 'Resultado', icon: Target, short: '1' },
-  { key: 'lineup', label: 'Escalação', icon: Users, short: '2' },
-  { key: 'substitutions', label: 'Substituições', icon: ArrowRightLeft, short: '3' },
-  { key: 'events', label: 'Eventos', icon: Clock, short: '4' },
-  { key: 'review', label: 'Revisão', icon: ListChecks, short: '5' },
+  { key: 'result', get label() { return tx('Resultado'); }, icon: Target, short: '1' },
+  { key: 'lineup', get label() { return tx('Escalação'); }, icon: Users, short: '2' },
+  { key: 'substitutions', get label() { return tx('Substituições'); }, icon: ArrowRightLeft, short: '3' },
+  { key: 'events', get label() { return tx('Eventos'); }, icon: Clock, short: '4' },
+  { key: 'review', get label() { return tx('Revisão'); }, icon: ListChecks, short: '5' },
 ] as const;
 
 type StepKey = typeof STEPS[number]['key'];
@@ -319,12 +320,12 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     if (!user || !isEditable) return;
     const starterCount = lineups.filter(l => l.is_starter).length;
     if (!currentIsStarter && starterCount >= maxOnField) {
-      toast.error(`Máximo de ${maxOnField} titulares atingido.`);
+      toast.error(tx('Máximo de {{v0}} titulares atingido.', { v0: maxOnField }));
       return;
     }
     await supabase.from('match_lineups').update({ is_starter: !currentIsStarter }).eq('id', lineupId);
     await logReportAudit(matchId, null, user.id, 'lineup_change', { player_id: playerId, was_starter: currentIsStarter }, { player_id: playerId, is_starter: !currentIsStarter });
-    toast.success(!currentIsStarter ? 'Jogador definido como titular.' : 'Jogador movido para suplentes.');
+    toast.success(!currentIsStarter ? tx('Jogador definido como titular.') : tx('Jogador movido para suplentes.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -334,12 +335,12 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     if (!user || !isEditable) return;
     const playerEvents = events.filter(e => e.player_id === playerId);
     if (playerEvents.length > 0) {
-      toast.error('Não é possível remover: o jogador tem eventos no relatório. Remova os eventos primeiro.');
+      toast.error(tx('Não é possível remover: o jogador tem eventos no relatório. Remova os eventos primeiro.'));
       return;
     }
     await supabase.from('match_lineups').delete().eq('id', lineupId);
     await logReportAudit(matchId, null, user.id, 'player_removed', { player_id: playerId }, null);
-    toast.success('Jogador removido do relatório.');
+    toast.success(tx('Jogador removido do relatório.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -348,10 +349,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   const handleAddPlayerToLineup = async (playerId: string) => {
     if (!user || !isEditable) return;
     const exists = lineups.find(l => l.player_id === playerId);
-    if (exists) { toast.error('Jogador já está na escalação.'); return; }
+    if (exists) { toast.error(tx('Jogador já está na escalação.')); return; }
     await supabase.from('match_lineups').insert({ match_id: matchId, player_id: playerId, is_starter: false, owner_id: user.id });
     await logReportAudit(matchId, null, user.id, 'player_added', null, { player_id: playerId });
-    toast.success('Jogador adicionado à escalação.');
+    toast.success(tx('Jogador adicionado à escalação.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -370,7 +371,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       await supabase.from('match_events').delete().eq('id', ev.id);
     }
     await logReportAudit(matchId, null, user.id, 'player_marked_unused', { player_id: playerId }, null);
-    toast.success('Jogador marcado como não utilizado.');
+    toast.success(tx('Jogador marcado como não utilizado.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -382,9 +383,9 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     const starterCount = lineups.filter(l => l.is_starter).length;
     if (starterCount < maxOnField) {
       await supabase.from('match_lineups').update({ is_starter: true }).eq('id', lineupId);
-      toast.success('Jogador reativado como titular.');
+      toast.success(tx('Jogador reativado como titular.'));
     } else {
-      toast.success('Jogador reativado. Adicione uma substituição para registar a entrada.');
+      toast.success(tx('Jogador reativado. Adicione uma substituição para registar a entrada.'));
     }
     await logReportAudit(matchId, null, user.id, 'player_reactivated', { player_id: playerId }, null);
     setIsDirty(true);
@@ -400,7 +401,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       updated.delete(playerId);
     } else {
       if (updated.size >= maxOnField) {
-        toast.error(`Máximo de ${maxOnField} titulares da 2.ª parte atingido.`);
+        toast.error(tx('Máximo de {{v0}} titulares da 2.ª parte atingido.', { v0: maxOnField }));
         return;
       }
       updated.add(playerId);
@@ -421,11 +422,11 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       } as any)
       .eq('id', matchId);
     if (error) {
-      toast.error('Não foi possível guardar os titulares da 2.ª parte.');
+      toast.error(tx('Não foi possível guardar os titulares da 2.ª parte.'));
       return;
     }
     await logReportAudit(matchId, null, user.id, 'second_half_starters_updated', null, { ids });
-    toast.success('Titulares da 2.ª parte atualizados.');
+    toast.success(tx('Titulares da 2.ª parte atualizados.'));
   };
 
   // ─── Substitution batch (commit) ───
@@ -458,8 +459,8 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
 
       toast.success(
         subs.length === 1
-          ? (editingSubPairIds ? 'Substituição editada com sucesso.' : 'Substituição guardada com sucesso.')
-          : `${subs.length} substituições guardadas com sucesso.`,
+          ? (editingSubPairIds ? tx('Substituição editada com sucesso.') : tx('Substituição guardada com sucesso.'))
+          : tx('{{v0}} substituições guardadas com sucesso.', { v0: subs.length }),
       );
       setShowSubDialog(false);
       setEditingSubPairIds(null);
@@ -468,7 +469,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       await fetchData();
       onDataChanged?.();
     } catch {
-      toast.error('Erro ao guardar substituições.');
+      toast.error(tx('Erro ao guardar substituições.'));
     }
   };
 
@@ -477,7 +478,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     if (outId) await supabase.from('match_events').delete().eq('id', outId);
     if (inId) await supabase.from('match_events').delete().eq('id', inId);
     await logReportAudit(matchId, null, user.id, 'substitution_deleted', { outId, inId }, null);
-    toast.success('Substituição removida com sucesso.');
+    toast.success(tx('Substituição removida com sucesso.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -509,7 +510,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
         }).eq('id', editingEventId);
         await logReportAudit(matchId, null, user.id, 'event_edited', { id: editingEventId }, { event_type: newEvent.event_type, minute: newEvent.minute });
         const eventTypeLabel = newEvent.event_type.includes('goal') ? 'Golo atualizado' : newEvent.event_type.includes('card') ? 'Cartão atualizado' : 'Evento editado';
-        toast.success(`${eventTypeLabel} com sucesso.`);
+        toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
       } else {
         await supabase.from('match_events').insert([{
           match_id: matchId, event_type: newEvent.event_type as any, minute: newEvent.minute, second: 0,
@@ -519,7 +520,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
         }]);
         await logReportAudit(matchId, null, user.id, 'event_added', null, { event_type: newEvent.event_type, minute: newEvent.minute });
         const eventTypeLabel = newEvent.event_type.includes('goal') ? 'Golo adicionado' : newEvent.event_type.includes('card') ? 'Cartão adicionado' : 'Evento adicionado';
-        toast.success(`${eventTypeLabel} com sucesso.`);
+        toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
       }
 
       // Update match goals if goal event was added/edited
@@ -541,7 +542,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       setIsDirty(true);
       await fetchData();
       onDataChanged?.();
-    } catch { toast.error('Erro ao guardar evento.'); }
+    } catch { toast.error(tx('Erro ao guardar evento.')); }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
@@ -551,7 +552,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     await logReportAudit(matchId, null, user.id, 'event_deleted', { event_type: ev?.event_type, minute: ev?.minute }, null);
 
     const eventTypeLabel = ev?.event_type?.includes('goal') ? 'Golo removido' : ev?.event_type?.includes('card') ? 'Cartão removido' : 'Evento removido';
-    toast.success(`${eventTypeLabel} com sucesso.`);
+    toast.success(tx('{{v0}} com sucesso.', { v0: eventTypeLabel }));
 
     // Re-count goals if goal was deleted
     if (ev?.event_type === 'goal' || ev?.event_type === 'own_goal') {
@@ -592,20 +593,20 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   // ─── Minutes override ───
   const handleSaveMinuteOverride = (playerId: string) => {
     if (!minuteOverrideReason.trim()) {
-      toast.error('Ajuste manual de minutos requer motivo obrigatório.');
+      toast.error(tx('Ajuste manual de minutos requer motivo obrigatório.'));
       return;
     }
     setMinuteOverrides(prev => ({ ...prev, [playerId]: { value: minuteOverrideValue, reason: minuteOverrideReason } }));
     setEditingMinutesPlayerId(null);
     setMinuteOverrideReason('');
     setIsDirty(true);
-    toast.success('Ajuste manual aplicado.');
+    toast.success(tx('Ajuste manual aplicado.'));
   };
 
   const handleRecalculateAll = () => {
     setMinuteOverrides({});
     setManual2ndHalfStarters(null);
-    toast.success('Minutos recalculados com sucesso.');
+    toast.success(tx('Minutos recalculados com sucesso.'));
   };
 
   // ─── Save / Finalize ───
@@ -614,7 +615,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     setSaving(true);
     try {
       const report = await getOrCreateMatchReport(matchId, user.id, null);
-      if (!report) throw new Error('REPORT_CREATE_FAILED');
+      if (!report) throw new Error(tx('REPORT_CREATE_FAILED'));
 
       await supabase.from('matches').update({ goals_for: goalsFor, goals_against: goalsAgainst, part_elapsed_seconds: partElapsed.length > 0 ? partElapsed : null }).eq('id', matchId);
       await supabase.from('match_reports').update({ notes, updated_by: user.id }).eq('id', report.id);
@@ -642,7 +643,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
         onStatusChange('pending_completion');
       }
       setIsDirty(false);
-      toast.success('Alterações guardadas com sucesso.');
+      toast.success(tx('Alterações guardadas com sucesso.'));
       await fetchData();
       onDataChanged?.();
     } catch (error) {
@@ -657,7 +658,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     setSaving(true);
     try {
       const report = await getOrCreateMatchReport(matchId, user.id, null);
-      if (!report) throw new Error('REPORT_CREATE_FAILED');
+      if (!report) throw new Error(tx('REPORT_CREATE_FAILED'));
 
       const stats = recalculateMinutes();
       for (const stat of stats) {
@@ -680,7 +681,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       await updateReportStatus(matchId, nextStatus, user.id);
       onStatusChange(nextStatus);
       setIsDirty(false);
-      toast.success(nextStatus === 'finalized' ? 'Relatório finalizado com sucesso.' : 'Nova versão do relatório guardada com sucesso.');
+      toast.success(nextStatus === 'finalized' ? tx('Relatório finalizado com sucesso.') : tx('Nova versão do relatório guardada com sucesso.'));
       await fetchData();
       onDataChanged?.();
     } catch (error) {
@@ -691,12 +692,12 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   };
 
   const handleReopen = async () => {
-    if (!user || !reopenReason.trim()) { toast.error('Informe o motivo da reabertura.'); return; }
+    if (!user || !reopenReason.trim()) { toast.error(tx('Informe o motivo da reabertura.')); return; }
     await updateReportStatus(matchId, 'reopened', user.id, reopenReason);
     onStatusChange('reopened');
     setShowReopenDialog(false);
     setReopenReason('');
-    toast.success('Relatório reaberto com sucesso. Já pode corrigir.');
+    toast.success(tx('Relatório reaberto com sucesso. Já pode corrigir.'));
     await fetchData();
   };
 
@@ -750,7 +751,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-        <p className="text-muted-foreground">A carregar dados do relatório...</p>
+        <p className="text-muted-foreground">{tx('A carregar dados do relatório...')}</p>
       </div>
     );
   }
@@ -760,13 +761,13 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       {/* Status banner for non-editable states */}
       {!isEditable && reportStatus === 'finalized' && (
         <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-          <span className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Este relatório está finalizado. Reabra para corrigir.</span>
-          <Button size="sm" variant="outline" onClick={() => setShowReopenDialog(true)}><RotateCcw className="w-4 h-4 mr-1" /> Reabrir relatório</Button>
+          <span className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> {tx('Este relatório está finalizado. Reabra para corrigir.')}</span>
+          <Button size="sm" variant="outline" onClick={() => setShowReopenDialog(true)}><RotateCcw className="w-4 h-4 mr-1" /> {tx('Reabrir relatório')}</Button>
         </div>
       )}
       {!isEditable && reportStatus === 'locked' && (
         <div className="flex items-center p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-          <span className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-destructive" /> Este relatório está bloqueado e não pode ser editado.</span>
+          <span className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-destructive" /> {tx('Este relatório está bloqueado e não pode ser editado.')}</span>
         </div>
       )}
 
@@ -774,7 +775,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       {isDirty && isEditable && (
         <div className="flex items-center p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <span className="text-xs text-amber-700 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" /> Alterações pendentes — guarde o rascunho antes de sair.
+            <AlertTriangle className="w-3 h-3" /> {tx('Alterações pendentes — guarde o rascunho antes de sair.')}
           </span>
         </div>
       )}
@@ -788,7 +789,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           <Button variant="ghost" size="sm" onClick={loadHistory}><History className="w-4 h-4" /></Button>
           {canReopen && (
             <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)}>
-              <RotateCcw className="w-4 h-4 mr-1" /> Reabrir
+              <RotateCcw className="w-4 h-4 mr-1" /> {tx('Reabrir')}
             </Button>
           )}
         </div>
@@ -797,7 +798,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       {/* Stepper progress */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Passo {currentStep + 1} de {STEPS.length}: {STEPS[currentStep].label}</span>
+          <span>{tx('Passo')}{' '}{currentStep + 1} de {STEPS.length}: {STEPS[currentStep].label}</span>
         </div>
         <Progress value={((currentStep + 1) / STEPS.length) * 100} className="h-2" />
         <div className="flex justify-between">
@@ -833,28 +834,28 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
         {/* STEP 1: Result */}
         {currentStep === 0 && (
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Target className="w-4 h-4" /> Resultado</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Target className="w-4 h-4" /> {tx('Resultado')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Golos a Favor</Label>
+                  <Label>{tx('Golos a Favor')}</Label>
                   <Input type="number" min={0} value={goalsFor} onChange={e => { setGoalsFor(parseInt(e.target.value) || 0); setIsDirty(true); }} disabled={!isEditable} className="text-center text-2xl h-14" />
                 </div>
                 <div>
-                  <Label>Golos Contra</Label>
+                  <Label>{tx('Golos Contra')}</Label>
                   <Input type="number" min={0} value={goalsAgainst} onChange={e => { setGoalsAgainst(parseInt(e.target.value) || 0); setIsDirty(true); }} disabled={!isEditable} className="text-center text-2xl h-14" />
                 </div>
               </div>
               <div>
-                <Label>Notas do jogo</Label>
-                <Textarea value={notes} onChange={e => { setNotes(e.target.value); setIsDirty(true); }} placeholder="Observações sobre o jogo..." disabled={!isEditable} rows={3} />
+                <Label>{tx('Notas do jogo')}</Label>
+                <Textarea value={notes} onChange={e => { setNotes(e.target.value); setIsDirty(true); }} placeholder={tx('Observações sobre o jogo...')} disabled={!isEditable} rows={3} />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Duração real por parte (minutos)</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Duração real por parte (minutos)')}</Label>
                 <div className="flex gap-2 mt-1">
                   {(partElapsed.length > 0 ? partElapsed : [partDuration * 60, partDuration * 60]).map((sec, i) => (
                     <div key={i} className="flex-1">
-                      <Label className="text-xs">{i + 1}.ª Parte</Label>
+                      <Label className="text-xs">{i + 1}{tx('.ª Parte')}</Label>
                       <Input
                         type="number" min={0}
                         value={Math.floor(sec / 60)}
@@ -882,11 +883,11 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> Escalação ({lineups.length})</span>
+                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> {tx('Escalação (')}{lineups.length})</span>
                 {isEditable && availableToAdd.length > 0 && (
                   <Select onValueChange={handleAddPlayerToLineup}>
                     <SelectTrigger className="w-auto h-8 text-xs gap-1">
-                      <Plus className="w-3 h-3" /><span>Adicionar jogador</span>
+                      <Plus className="w-3 h-3" /><span>{tx('Adicionar jogador')}</span>
                     </SelectTrigger>
                     <SelectContent>
                       {availableToAdd.map(p => (
@@ -901,15 +902,15 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               {lineups.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-sm">Ainda não definiu a escalação.</p>
+                  <p className="text-muted-foreground text-sm">{tx('Ainda não definiu a escalação.')}</p>
                   {isEditable && availableToAdd.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-1">Use &quot;Adicionar jogador&quot; acima para começar.</p>
+                    <p className="text-xs text-muted-foreground mt-1">{tx('Use "Adicionar jogador" acima para começar.')}</p>
                   )}
                 </div>
               ) : (
                 <div className="space-y-1">
                   {/* Titulares da 1ª Parte */}
-                  <div className="text-sm font-medium mb-2">Titulares da 1.ª Parte ({lineups.filter(l => l.is_starter).length}/{maxOnField})</div>
+                  <div className="text-sm font-medium mb-2">{tx('Titulares da 1.ª Parte (')}{lineups.filter(l => l.is_starter).length}/{maxOnField})</div>
                   {lineups.filter(l => l.is_starter).map(l => (
                     <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-primary/5">
                       <Badge variant="secondary" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
@@ -918,16 +919,16 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                       {secondHalfStarters.has(l.player_id) && <Badge variant="outline" className="text-[10px]">2.ªP</Badge>}
                       {isEditable && (
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Mover para suplentes" onClick={() => handleToggleStarter(l.id, l.player_id, true)}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={tx('Mover para suplentes')} onClick={() => handleToggleStarter(l.id, l.player_id, true)}>
                             <ArrowDown className="w-3 h-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={secondHalfStarters.has(l.player_id) ? 'Remover da 2.ª Parte' : 'Definir como titular da 2.ª Parte'} onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={secondHalfStarters.has(l.player_id) ? tx('Remover da 2.ª Parte') : tx('Definir como titular da 2.ª Parte')} onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
                             <span className="text-[9px] font-bold">2P</span>
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-600" title="Marcar como não utilizado" onClick={() => handleMarkUnused(l.id, l.player_id)}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-600" title={tx('Marcar como não utilizado')} onClick={() => handleMarkUnused(l.id, l.player_id)}>
                             <UserMinus className="w-3 h-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title="Remover do relatório" onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title={tx('Remover do relatório')} onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
                             <X className="w-3 h-3" />
                           </Button>
                         </div>
@@ -942,14 +943,14 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                     if (hasDiff && secondHalfStarters.size > 0) {
                       return (
                         <>
-                          <div className="text-sm font-medium mt-4 mb-2">Titulares da 2.ª Parte ({secondHalfStarters.size})</div>
+                          <div className="text-sm font-medium mt-4 mb-2">{tx('Titulares da 2.ª Parte (')}{secondHalfStarters.size})</div>
                           {lineups.filter(l => secondHalfStarters.has(l.player_id)).map(l => (
                             <div key={`2h-${l.id}`} className="flex items-center gap-2 py-1.5 px-2 rounded bg-accent/30">
                               <Badge variant="secondary" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
                               <span className="text-sm flex-1">{l.player.name}</span>
-                              {!l.is_starter && <Badge variant="outline" className="text-[10px]">Entrou na 1.ªP</Badge>}
+                              {!l.is_starter && <Badge variant="outline" className="text-[10px]">{tx('Entrou na 1.ªP')}</Badge>}
                               {isEditable && (
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Remover da 2.ª Parte" onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
+                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={tx('Remover da 2.ª Parte')} onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
                                   <X className="w-3 h-3" />
                                 </Button>
                               )}
@@ -964,7 +965,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                   {/* Suplentes Utilizados */}
                   {usedSubstitutes.length > 0 && (
                     <>
-                      <div className="text-sm font-medium mt-4 mb-2">Suplentes Utilizados ({usedSubstitutes.length})</div>
+                      <div className="text-sm font-medium mt-4 mb-2">{tx('Suplentes Utilizados (')}{usedSubstitutes.length})</div>
                       {usedSubstitutes.map(l => (
                         <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded">
                           <Badge variant="outline" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
@@ -973,13 +974,13 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                           {secondHalfStarters.has(l.player_id) && <Badge variant="outline" className="text-[10px]">2.ªP</Badge>}
                           {isEditable && (
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Mover para titulares" onClick={() => handleToggleStarter(l.id, l.player_id, false)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={tx('Mover para titulares')} onClick={() => handleToggleStarter(l.id, l.player_id, false)}>
                                 <ArrowUp className="w-3 h-3" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={secondHalfStarters.has(l.player_id) ? 'Remover da 2.ª Parte' : 'Definir como titular da 2.ª Parte'} onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={secondHalfStarters.has(l.player_id) ? tx('Remover da 2.ª Parte') : tx('Definir como titular da 2.ª Parte')} onClick={() => handleToggle2ndHalfStarter(l.player_id)}>
                                 <span className="text-[9px] font-bold">2P</span>
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title="Remover do relatório" onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title={tx('Remover do relatório')} onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -992,18 +993,18 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                   {/* Não Utilizados */}
                   {unusedPlayers.length > 0 && (
                     <>
-                      <div className="text-sm font-medium mt-4 mb-2 text-muted-foreground">Não Utilizados ({unusedPlayers.length})</div>
+                      <div className="text-sm font-medium mt-4 mb-2 text-muted-foreground">{tx('Não Utilizados (')}{unusedPlayers.length})</div>
                       {unusedPlayers.map(l => (
                         <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded opacity-60">
                           <Badge variant="outline" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
                           <span className="text-sm flex-1">{l.player.name}</span>
-                          <Badge variant="outline" className="text-[10px]">0 min</Badge>
+                          <Badge variant="outline" className="text-[10px]">{tx('0 min')}</Badge>
                           {isEditable && (
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Reativar no relatório" onClick={() => handleReactivatePlayer(l.id, l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={tx('Reativar no relatório')} onClick={() => handleReactivatePlayer(l.id, l.player_id)}>
                                 <UserPlus className="w-3 h-3" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title="Remover do relatório" onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title={tx('Remover do relatório')} onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -1016,20 +1017,20 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                   {/* Plain suplentes fallback */}
                   {usedSubstitutes.length === 0 && unusedPlayers.length === 0 && lineups.filter(l => !l.is_starter).length > 0 && (
                     <>
-                      <div className="text-sm font-medium mt-4 mb-2">Suplentes ({lineups.filter(l => !l.is_starter).length})</div>
+                      <div className="text-sm font-medium mt-4 mb-2">{tx('Suplentes (')}{lineups.filter(l => !l.is_starter).length})</div>
                       {lineups.filter(l => !l.is_starter).map(l => (
                         <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded">
                           <Badge variant="outline" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
                           <span className="text-sm flex-1">{l.player.name}</span>
                           {isEditable && (
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Mover para titulares" onClick={() => handleToggleStarter(l.id, l.player_id, false)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title={tx('Mover para titulares')} onClick={() => handleToggleStarter(l.id, l.player_id, false)}>
                                 <ArrowUp className="w-3 h-3" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-600" title="Marcar como não utilizado" onClick={() => handleMarkUnused(l.id, l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-amber-600" title={tx('Marcar como não utilizado')} onClick={() => handleMarkUnused(l.id, l.player_id)}>
                                 <UserMinus className="w-3 h-3" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title="Remover do relatório" onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" title={tx('Remover do relatório')} onClick={() => handleRemoveFromLineup(l.id, l.player_id)}>
                                 <X className="w-3 h-3" />
                               </Button>
                             </div>
@@ -1049,10 +1050,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> Substituições</span>
+                <span className="flex items-center gap-2"><ArrowRightLeft className="w-4 h-4" /> {tx('Substituições')}</span>
                 {isEditable && (
                   <Button size="sm" variant="outline" onClick={() => { setSubMinute(0); setEditingSubPairIds(null); setSubBatchInitial(null); setShowSubDialog(true); }}>
-                    <Plus className="w-4 h-4 mr-1" /> Adicionar
+                    <Plus className="w-4 h-4 mr-1" /> {tx('Adicionar')}
                   </Button>
                 )}
               </CardTitle>
@@ -1061,8 +1062,8 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               {subPairs.length === 0 ? (
                 <div className="text-center py-8">
                   <ArrowRightLeft className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-sm">Ainda não adicionou substituições.</p>
-                  {isEditable && <Button size="sm" className="mt-3" onClick={() => { setSubMinute(0); setEditingSubPairIds(null); setSubBatchInitial(null); setShowSubDialog(true); }}><Plus className="w-4 h-4 mr-1" /> Adicionar substituição</Button>}
+                  <p className="text-muted-foreground text-sm">{tx('Ainda não adicionou substituições.')}</p>
+                  {isEditable && <Button size="sm" className="mt-3" onClick={() => { setSubMinute(0); setEditingSubPairIds(null); setSubBatchInitial(null); setShowSubDialog(true); }}><Plus className="w-4 h-4 mr-1" /> {tx('Adicionar substituição')}</Button>}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1070,10 +1071,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                     <div key={idx} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="font-mono">{p.minute}'</Badge>
-                        {p.outPlayer && <span className="text-sm">Saiu: {p.outPlayer.name}</span>}
+                        {p.outPlayer && <span className="text-sm">{tx('Saiu:')}{' '}{p.outPlayer.name}</span>}
                         {p.outPlayer && p.inPlayer && <span className="text-muted-foreground">→</span>}
-                        {p.inPlayer && <span className="text-sm">Entrou: {p.inPlayer.name}</span>}
-                        {!p.outPlayer && p.inPlayer && <Badge variant="destructive" className="text-[10px]">Sem saída</Badge>}
+                        {p.inPlayer && <span className="text-sm">{tx('Entrou:')}{' '}{p.inPlayer.name}</span>}
+                        {!p.outPlayer && p.inPlayer && <Badge variant="destructive" className="text-[10px]">{tx('Sem saída')}</Badge>}
                       </div>
                       {isEditable && (
                         <div className="flex gap-1">
@@ -1094,10 +1095,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> Eventos ({otherEvents.length})</span>
+                <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {tx('Eventos (')}{otherEvents.length})</span>
                 {isEditable && (
                   <Button size="sm" variant="outline" onClick={openNewEvent}>
-                    <Plus className="w-4 h-4 mr-1" /> Adicionar
+                    <Plus className="w-4 h-4 mr-1" /> {tx('Adicionar')}
                   </Button>
                 )}
               </CardTitle>
@@ -1106,8 +1107,8 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               {otherEvents.length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-sm">Ainda não adicionou eventos.</p>
-                  {isEditable && <Button size="sm" className="mt-3" onClick={openNewEvent}><Plus className="w-4 h-4 mr-1" /> Adicionar evento</Button>}
+                  <p className="text-muted-foreground text-sm">{tx('Ainda não adicionou eventos.')}</p>
+                  {isEditable && <Button size="sm" className="mt-3" onClick={openNewEvent}><Plus className="w-4 h-4 mr-1" /> {tx('Adicionar evento')}</Button>}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1116,8 +1117,8 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="font-mono">{event.minute}'</Badge>
                         <span className="text-sm font-medium">{eventLabel(event.event_type)}</span>
-                        <span className="text-sm text-muted-foreground">{event.is_opponent ? '(Adversário)' : event.player?.name || ''}</span>
-                        {event.assist_player && <span className="text-xs text-muted-foreground">(Ast: {event.assist_player.name})</span>}
+                        <span className="text-sm text-muted-foreground">{event.is_opponent ? tx('(Adversário)') : event.player?.name || ''}</span>
+                        {event.assist_player && <span className="text-xs text-muted-foreground">{tx('(Ast:')}{' '}{event.assist_player.name})</span>}
                         {event.notes && <span className="text-xs text-muted-foreground italic">— {event.notes}</span>}
                       </div>
                       {isEditable && (
@@ -1141,9 +1142,9 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               <CardContent className="py-4">
                 <div className="text-center text-3xl font-bold mb-2">{goalsFor} - {goalsAgainst}</div>
                 <div className="flex justify-center gap-4 text-sm text-muted-foreground">
-                  <span>Titulares: {lineups.filter(l => l.is_starter).length}</span>
-                  <span>Suplentes: {lineups.filter(l => !l.is_starter).length}</span>
-                  <span>Eventos: {events.length}</span>
+                  <span>{tx('Titulares:')}{' '}{lineups.filter(l => l.is_starter).length}</span>
+                  <span>{tx('Suplentes:')}{' '}{lineups.filter(l => !l.is_starter).length}</span>
+                  <span>{tx('Eventos:')}{' '}{events.length}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1151,10 +1152,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span className="text-sm flex items-center gap-2"><Clock className="w-4 h-4" /> Minutos Jogados</span>
+                  <span className="text-sm flex items-center gap-2"><Clock className="w-4 h-4" /> {tx('Minutos Jogados')}</span>
                   {isEditable && (
                     <Button variant="outline" size="sm" onClick={handleRecalculateAll}>
-                      <RefreshCw className="w-3 h-3 mr-1" /> Recalcular
+                      <RefreshCw className="w-3 h-3 mr-1" /> {tx('Recalcular')}
                     </Button>
                   )}
                 </CardTitle>
@@ -1188,12 +1189,12 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                                     </span>
                                   )}
                                 </div>
-                                {override && <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700">Ajuste manual</Badge>}
+                                {override && <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700">{tx('Ajuste manual')}</Badge>}
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="flex flex-col items-end">
                                   <span className="text-sm font-medium">{displayMinutes}'</span>
-                                  {override && <span className="text-[10px] text-muted-foreground">calc: {stat?.totalMinutes || 0}'</span>}
+                                  {override && <span className="text-[10px] text-muted-foreground">{tx('calc:')}{' '}{stat?.totalMinutes || 0}'</span>}
                                 </div>
                                 <div className="flex gap-1">
                                   {stat?.annotations.map((ann, i) => (
@@ -1214,24 +1215,24 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                             {isEditingThis && (
                               <div className="mt-2 flex flex-col gap-2 pl-10">
                                 <div className="flex items-center gap-2">
-                                  <Label className="text-xs w-20">Minutos:</Label>
+                                  <Label className="text-xs w-20">{tx('Minutos:')}</Label>
                                   <Input type="number" min={0} className="h-7 w-20 text-xs" value={minuteOverrideValue} onChange={e => setMinuteOverrideValue(parseInt(e.target.value) || 0)} />
-                                  <span className="text-xs text-muted-foreground">(calc: {stat?.totalMinutes || 0}')</span>
+                                  <span className="text-xs text-muted-foreground">{tx('(calc:')}{' '}{stat?.totalMinutes || 0}')</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Label className="text-xs w-20">Motivo:</Label>
-                                  <Input className="h-7 text-xs flex-1" placeholder="Motivo obrigatório" value={minuteOverrideReason} onChange={e => setMinuteOverrideReason(e.target.value)} />
+                                  <Label className="text-xs w-20">{tx('Motivo:')}</Label>
+                                  <Input className="h-7 text-xs flex-1" placeholder={tx('Motivo obrigatório')} value={minuteOverrideReason} onChange={e => setMinuteOverrideReason(e.target.value)} />
                                 </div>
                                 <div className="flex gap-2 justify-end">
-                                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingMinutesPlayerId(null)}>Cancelar</Button>
+                                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditingMinutesPlayerId(null)}>{tx('Cancelar')}</Button>
                                   {override && (
                                     <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => {
                                       setMinuteOverrides(prev => { const n = { ...prev }; delete n[lineup.player_id]; return n; });
                                       setEditingMinutesPlayerId(null);
-                                      toast.success('Ajuste manual removido. Valor automático restaurado.');
-                                    }}>Restaurar automático</Button>
+                                      toast.success(tx('Ajuste manual removido. Valor automático restaurado.'));
+                                    }}>{tx('Restaurar automático')}</Button>
                                   )}
-                                  <Button size="sm" className="h-7 text-xs" onClick={() => handleSaveMinuteOverride(lineup.player_id)}>Guardar ajuste</Button>
+                                  <Button size="sm" className="h-7 text-xs" onClick={() => handleSaveMinuteOverride(lineup.player_id)}>{tx('Guardar ajuste')}</Button>
                                 </div>
                               </div>
                             )}
@@ -1252,24 +1253,24 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       <div className="flex items-center justify-between pt-2 border-t">
         <Button variant="ghost" onClick={currentStep === 0 ? onClose : goBack} size={isMobile ? 'sm' : 'default'}>
           <ChevronLeft className="w-4 h-4 mr-1" />
-          {currentStep === 0 ? 'Fechar' : 'Anterior'}
+          {currentStep === 0 ? tx('Fechar') : tx('Anterior')}
         </Button>
 
         <div className="flex gap-2">
           {isEditable && (
             <Button variant="secondary" size="sm" onClick={handleSaveDraft} disabled={saving}>
               <Save className="w-4 h-4 mr-1" />
-              {saving ? 'A guardar...' : isCorrectionFlow ? 'Guardar correção' : 'Guardar rascunho'}
+              {saving ? tx('A guardar...') : isCorrectionFlow ? tx('Guardar correção') : tx('Guardar rascunho')}
             </Button>
           )}
           {currentStep < STEPS.length - 1 ? (
             <Button onClick={goNext} size={isMobile ? 'sm' : 'default'}>
-              Seguinte <ChevronRight className="w-4 h-4 ml-1" />
+              {tx('Seguinte')}{' '}<ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           ) : isEditable && canFinalize ? (
-            <Button onClick={handleFinalize} disabled={saving || hasBlockingIssues} title={hasBlockingIssues ? 'Resolva os conflitos bloqueantes' : ''}>
+            <Button onClick={handleFinalize} disabled={saving || hasBlockingIssues} title={hasBlockingIssues ? tx('Resolva os conflitos bloqueantes') : ''}>
               <CheckCircle className="w-4 h-4 mr-1" />
-              {saving ? 'A finalizar...' : isCorrectionFlow ? 'Finalizar nova versão' : 'Finalizar relatório'}
+              {saving ? tx('A finalizar...') : isCorrectionFlow ? tx('Finalizar nova versão') : tx('Finalizar relatório')}
             </Button>
           ) : null}
         </div>
@@ -1279,35 +1280,35 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       <Dialog open={showAddEventDialog} onOpenChange={v => { if (!v) { setShowAddEventDialog(false); setEditingEventId(null); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingEventId ? 'Editar Evento' : 'Adicionar Evento'}</DialogTitle>
-            <DialogDescription>{editingEventId ? 'Corrija os dados do evento.' : 'Adicione um evento ao relatório do jogo.'}</DialogDescription>
+            <DialogTitle>{editingEventId ? tx('Editar Evento') : tx('Adicionar Evento')}</DialogTitle>
+            <DialogDescription>{editingEventId ? tx('Corrija os dados do evento.') : tx('Adicione um evento ao relatório do jogo.')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Tipo</Label>
+              <Label>{tx('Tipo')}</Label>
               <Select value={newEvent.event_type} onValueChange={v => setNewEvent(prev => ({ ...prev, event_type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="goal">Golo</SelectItem>
-                  <SelectItem value="own_goal">Auto-golo</SelectItem>
-                  <SelectItem value="yellow_card">Cartão Amarelo</SelectItem>
-                  <SelectItem value="red_card">Cartão Vermelho</SelectItem>
+                  <SelectItem value="goal">{tx('Golo')}</SelectItem>
+                  <SelectItem value="own_goal">{tx('Auto-golo')}</SelectItem>
+                  <SelectItem value="yellow_card">{tx('Cartão Amarelo')}</SelectItem>
+                  <SelectItem value="red_card">{tx('Cartão Vermelho')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Minuto</Label>
+              <Label>{tx('Minuto')}</Label>
               <Input type="number" min={0} value={newEvent.minute} onChange={e => setNewEvent(prev => ({ ...prev, minute: parseInt(e.target.value) || 0 }))} />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={newEvent.is_opponent} onCheckedChange={v => setNewEvent(prev => ({ ...prev, is_opponent: v }))} />
-              <Label>Golo/evento do adversário</Label>
+              <Label>{tx('Golo/evento do adversário')}</Label>
             </div>
             {!newEvent.is_opponent && (
               <div>
-                <Label>Jogador</Label>
+                <Label>{tx('Jogador')}</Label>
                 <Select value={newEvent.player_id} onValueChange={v => setNewEvent(prev => ({ ...prev, player_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar jogador" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar jogador')} /></SelectTrigger>
                   <SelectContent>
                     {allPlayers.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} - ` : ''}{p.name}</SelectItem>
@@ -1318,11 +1319,11 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
             )}
             {(newEvent.event_type === 'goal' && !newEvent.is_opponent) && (
               <div>
-                <Label>Assistência</Label>
+                <Label>{tx('Assistência')}</Label>
                 <Select value={newEvent.assist_player_id} onValueChange={v => setNewEvent(prev => ({ ...prev, assist_player_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar (opcional)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar (opcional)')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
+                    <SelectItem value="none">{tx('Nenhuma')}</SelectItem>
                     {allPlayers.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} - ` : ''}{p.name}</SelectItem>
                     ))}
@@ -1331,13 +1332,13 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               </div>
             )}
             <div>
-              <Label>Notas</Label>
-              <Input value={newEvent.notes} onChange={e => setNewEvent(prev => ({ ...prev, notes: e.target.value }))} placeholder="Opcional" />
+              <Label>{tx('Notas')}</Label>
+              <Input value={newEvent.notes} onChange={e => setNewEvent(prev => ({ ...prev, notes: e.target.value }))} placeholder={tx('Opcional')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAddEventDialog(false); setEditingEventId(null); }}>Cancelar</Button>
-            <Button onClick={handleAddEvent}>{editingEventId ? 'Guardar alterações' : 'Adicionar'}</Button>
+            <Button variant="outline" onClick={() => { setShowAddEventDialog(false); setEditingEventId(null); }}>{tx('Cancelar')}</Button>
+            <Button onClick={handleAddEvent}>{editingEventId ? tx('Guardar alterações') : tx('Adicionar')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1346,16 +1347,16 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reabrir Relatório</DialogTitle>
-            <DialogDescription>Indique o motivo para reabrir o relatório finalizado.</DialogDescription>
+            <DialogTitle>{tx('Reabrir Relatório')}</DialogTitle>
+            <DialogDescription>{tx('Indique o motivo para reabrir o relatório finalizado.')}</DialogDescription>
           </DialogHeader>
           <div>
-            <Label>Motivo da reabertura</Label>
-            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder="Ex: Corrigir substituição registada incorretamente" rows={3} />
+            <Label>{tx('Motivo da reabertura')}</Label>
+            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder={tx('Ex: Corrigir substituição registada incorretamente')} rows={3} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>Cancelar</Button>
-            <Button onClick={handleReopen}>Confirmar Reabertura</Button>
+            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>{tx('Cancelar')}</Button>
+            <Button onClick={handleReopen}>{tx('Confirmar Reabertura')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1364,34 +1365,34 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico do Relatório</DialogTitle>
-            <DialogDescription>Versões e alterações registadas.</DialogDescription>
+            <DialogTitle>{tx('Histórico do Relatório')}</DialogTitle>
+            <DialogDescription>{tx('Versões e alterações registadas.')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">Versões ({versions.length})</h4>
+              <h4 className="font-semibold mb-2">{tx('Versões (')}{versions.length})</h4>
               {versions.map((v: any) => (
                 <div key={v.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Versão {v.version_no}</span>
+                    <span>{tx('Versão')}{' '}{v.version_no}</span>
                     <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString('pt-PT')}</span>
                   </div>
                 </div>
               ))}
-              {versions.length === 0 && <p className="text-sm text-muted-foreground">Sem versões guardadas</p>}
+              {versions.length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem versões guardadas')}</p>}
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Auditoria ({auditLogs.length})</h4>
+              <h4 className="font-semibold mb-2">{tx('Auditoria (')}{auditLogs.length})</h4>
               {auditLogs.map((log: any) => (
                 <div key={log.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium">{log.action}</span>
                     <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString('pt-PT')}</span>
                   </div>
-                  {log.reason && <p className="text-muted-foreground text-xs mt-1">Motivo: {log.reason}</p>}
+                  {log.reason && <p className="text-muted-foreground text-xs mt-1">{tx('Motivo:')}{' '}{log.reason}</p>}
                 </div>
               ))}
-              {auditLogs.length === 0 && <p className="text-sm text-muted-foreground">Sem registos de auditoria</p>}
+              {auditLogs.length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem registos de auditoria')}</p>}
             </div>
           </div>
         </DialogContent>
@@ -1416,7 +1417,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           : events) as any}
         sportType={sportType}
         onCommit={handleCommitSubBatch}
-        title={editingSubPairIds ? 'Editar substituição' : 'Substituições'}
+        title={editingSubPairIds ? tx('Editar substituição') : tx('Substituições')}
         initialSubstitutions={subBatchInitial ?? undefined}
       />
     </div>

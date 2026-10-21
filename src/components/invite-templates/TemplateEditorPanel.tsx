@@ -31,19 +31,20 @@ import {
   type DeliveryChannel,
   type ProfileType,
 } from '@/lib/template-engine';
+import { tx } from '@/lib/i18n/ui';
 
 const PROFILE_OPTIONS = [
-  { value: 'guardian', label: 'Encarregado' },
-  { value: 'player', label: 'Atleta' },
-  { value: 'coach', label: 'Treinador' },
-  { value: 'assistant_coach', label: 'Adjunto' },
-  { value: 'staff', label: 'Staff' },
+  { value: 'guardian', get label() { return tx('Encarregado'); } },
+  { value: 'player', get label() { return tx('Atleta'); } },
+  { value: 'coach', get label() { return tx('Treinador'); } },
+  { value: 'assistant_coach', get label() { return tx('Adjunto'); } },
+  { value: 'staff', get label() { return tx('Staff'); } },
 ];
 
 const CHANNEL_OPTIONS = [
-  { value: 'email', label: 'Email', icon: Mail },
+  { value: 'email', get label() { return tx('Email'); }, icon: Mail },
   { value: 'sms', label: 'SMS', icon: Phone },
-  { value: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+  { value: 'whatsapp', get label() { return tx('WhatsApp'); }, icon: MessageCircle },
 ];
 
 interface Props {
@@ -145,10 +146,10 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
   };
 
   const handleSave = async (publish: boolean) => {
-    if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
-    if (!body.trim()) { toast.error('Corpo da mensagem é obrigatório'); return; }
+    if (!name.trim()) { toast.error(tx('Nome é obrigatório')); return; }
+    if (!body.trim()) { toast.error(tx('Corpo da mensagem é obrigatório')); return; }
     if (publish && validation.errors.length > 0) {
-      toast.error('Corrija os erros antes de publicar: ' + validation.errors[0]);
+      toast.error(tx('Corrija os erros antes de publicar: ') + validation.errors[0]);
       return;
     }
 
@@ -167,7 +168,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
           body_template: body.trim(),
           status: publish ? 'published' : 'draft',
         });
-        toast.success(publish ? 'Template criado e publicado' : 'Template criado como rascunho');
+        toast.success(publish ? tx('Template criado e publicado') : tx('Template criado como rascunho'));
       } else if (template) {
         await updateTemplate.mutateAsync({
           id: template.id,
@@ -179,12 +180,12 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
           status: publish ? 'published' : template.status,
           change_notes: changeNotes.trim() || undefined,
         });
-        toast.success('Template atualizado');
+        toast.success(tx('Template atualizado'));
       }
       setIsDirty(false);
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao guardar template');
+      toast.error(err.message || tx('Erro ao guardar template'));
     }
   };
 
@@ -194,16 +195,16 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
       await rollbackTemplate.mutateAsync({ templateId: template.id, version: rollbackConfirm });
       setBody(rollbackConfirm.body_template);
       setSubject(rollbackConfirm.subject_template || '');
-      toast.success(`Rollback para v${rollbackConfirm.version_number} aplicado`);
+      toast.success(tx('Rollback para v{{v0}} aplicado', { v0: rollbackConfirm.version_number }));
       setRollbackConfirm(null);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao fazer rollback');
+      toast.error(err.message || tx('Erro ao fazer rollback'));
     }
   };
 
   const handleClose = () => {
     if (isDirty) {
-      if (!confirm('Tem alterações não guardadas. Deseja sair sem guardar?')) return;
+      if (!confirm(tx('Tem alterações não guardadas. Deseja sair sem guardar?'))) return;
     }
     onClose();
   };
@@ -211,7 +212,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
   if (!isCreating && !template) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p className="text-sm">Selecione um template para editar ou crie um novo.</p>
+        <p className="text-sm">{tx('Selecione um template para editar ou crie um novo.')}</p>
       </div>
     );
   }
@@ -222,10 +223,10 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" onClick={handleClose}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+          <ArrowLeft className="h-4 w-4 mr-1" /> {tx('Voltar')}
         </Button>
-        <h3 className="font-semibold text-sm">{isCreating ? 'Novo Template' : `Editar: ${name}`}</h3>
-        {isDirty && <Badge variant="secondary" className="text-[10px]">Alterações não guardadas</Badge>}
+        <h3 className="font-semibold text-sm">{isCreating ? tx('Novo Template') : tx('Editar: {{v0}}', { v0: name })}</h3>
+        {isDirty && <Badge variant="secondary" className="text-[10px]">{tx('Alterações não guardadas')}</Badge>}
       </div>
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-4">
@@ -236,23 +237,23 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
               {/* Meta fields */}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Nome *</Label>
-                  <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Convite guardian email PT" />
+                  <Label className="text-xs">{tx('Nome *')}</Label>
+                  <Input value={name} onChange={e => setName(e.target.value)} placeholder={tx('Ex: Convite guardian email PT')} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Chave interna</Label>
+                  <Label className="text-xs">{tx('Chave interna')}</Label>
                   <Input value={templateKey} onChange={e => setTemplateKey(e.target.value)} placeholder="auto-gerada" disabled={!isCreating} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Descrição</Label>
-                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição breve do template" />
+                <Label className="text-xs">{tx('Descrição')}</Label>
+                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder={tx('Descrição breve do template')} />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Perfil *</Label>
+                  <Label className="text-xs">{tx('Perfil *')}</Label>
                   <Select value={profileType} onValueChange={v => setProfileType(v as ProfileType)} disabled={!isCreating}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -261,7 +262,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Canal *</Label>
+                  <Label className="text-xs">{tx('Canal *')}</Label>
                   <Select value={channel} onValueChange={v => setChannel(v as DeliveryChannel)} disabled={!isCreating}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -270,14 +271,14 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Idioma</Label>
+                  <Label className="text-xs">{tx('Idioma')}</Label>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pt">Português</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                      <SelectItem value="fr">Français</SelectItem>
+                      <SelectItem value="pt">{tx('Português')}</SelectItem>
+                      <SelectItem value="en">{tx('English')}</SelectItem>
+                      <SelectItem value="es">{tx('Español')}</SelectItem>
+                      <SelectItem value="fr">{tx('Français')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -286,18 +287,18 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
               {/* Subject (email only) */}
               {channel === 'email' && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Assunto do email</Label>
-                  <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Assunto do email..." />
+                  <Label className="text-xs">{tx('Assunto do email')}</Label>
+                  <Input value={subject} onChange={e => setSubject(e.target.value)} placeholder={tx('Assunto do email...')} />
                 </div>
               )}
 
               {/* Body */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs">Corpo da mensagem *</Label>
+                  <Label className="text-xs">{tx('Corpo da mensagem *')}</Label>
                   {channel === 'sms' && (
                     <span className={`text-[10px] ${smsInfo.chars > 160 ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                      {smsInfo.chars} chars · {smsInfo.segments} segmento(s)
+                      {smsInfo.chars} {tx('chars ·')}{' '}{smsInfo.segments} {tx('segmento(s)')}
                     </span>
                   )}
                 </div>
@@ -305,7 +306,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                   ref={bodyRef}
                   value={body}
                   onChange={e => setBody(e.target.value)}
-                  placeholder="Escreva o template aqui. Use {{variavel}} para inserir dados dinâmicos."
+                  placeholder={tx('Escreva o template aqui. Use {{variavel}} para inserir dados dinâmicos.')}
                   rows={10}
                   className="font-mono text-sm"
                 />
@@ -313,7 +314,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
 
               {/* Variable chips */}
               <div>
-                <Label className="text-xs text-muted-foreground">Inserir variável:</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Inserir variável:')}</Label>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {VARIABLE_CATALOG.filter(v =>
                     v.supportedChannels.includes(channel) &&
@@ -356,9 +357,9 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                   <div className="text-[10px] text-muted-foreground">
-                    <span className="font-medium text-foreground">{parsed.variablesFound.length}</span> variáveis válidas encontradas
+                    <span className="font-medium text-foreground">{parsed.variablesFound.length}</span> {tx('variáveis válidas encontradas')}
                     {bodyPreview.variablesWithFallback.length > 0 && (
-                      <span className="ml-1">· {bodyPreview.variablesWithFallback.length} com fallback</span>
+                      <span className="ml-1">· {bodyPreview.variablesWithFallback.length} {tx('com fallback')}</span>
                     )}
                   </div>
                 </div>
@@ -367,21 +368,21 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
               {/* Change notes on edit */}
               {!isCreating && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Notas da alteração</Label>
-                  <Input value={changeNotes} onChange={e => setChangeNotes(e.target.value)} placeholder="Ex: Corrigido texto do assunto" />
+                  <Label className="text-xs">{tx('Notas da alteração')}</Label>
+                  <Input value={changeNotes} onChange={e => setChangeNotes(e.target.value)} placeholder={tx('Ex: Corrigido texto do assunto')} />
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={handleClose} disabled={isPending}>Cancelar</Button>
+                <Button variant="outline" onClick={handleClose} disabled={isPending}>{tx('Cancelar')}</Button>
                 <Button variant="secondary" onClick={() => handleSave(false)} disabled={isPending}>
                   {isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                  <Save className="h-4 w-4 mr-1" /> Guardar rascunho
+                  <Save className="h-4 w-4 mr-1" /> {tx('Guardar rascunho')}
                 </Button>
                 <Button onClick={() => handleSave(true)} disabled={isPending || validation.errors.length > 0}>
                   {isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                  <CheckCircle2 className="h-4 w-4 mr-1" /> Publicar
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> {tx('Publicar')}
                 </Button>
               </div>
             </CardContent>
@@ -392,24 +393,24 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
         <div className="space-y-4">
           <Tabs value={editorTab} onValueChange={setEditorTab}>
             <TabsList className="w-full">
-              <TabsTrigger value="preview" className="flex-1">Preview</TabsTrigger>
-              <TabsTrigger value="history" className="flex-1">Histórico</TabsTrigger>
+              <TabsTrigger value="preview" className="flex-1">{tx('Preview')}</TabsTrigger>
+              <TabsTrigger value="history" className="flex-1">{tx('Histórico')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="preview">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    Preview — {channel.toUpperCase()}
-                    <Badge variant="outline" className="text-[9px] ml-auto">Motor seguro</Badge>
+                    {tx('Preview —')}{' '}{channel.toUpperCase()}
+                    <Badge variant="outline" className="text-[9px] ml-auto">{tx('Motor seguro')}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
                   {channel === 'email' ? (
                     <div className="border rounded-lg overflow-hidden">
                       <div className="bg-muted/50 px-3 py-2 border-b">
-                        <p className="text-[10px] text-muted-foreground">De: TreinON</p>
-                        <p className="text-xs font-medium">{subjectPreview || '(sem assunto)'}</p>
+                        <p className="text-[10px] text-muted-foreground">{tx('De: TreinON')}</p>
+                        <p className="text-xs font-medium">{subjectPreview || tx('(sem assunto)')}</p>
                       </div>
                       <div className="p-3">
                         <pre className="whitespace-pre-wrap text-xs font-sans leading-relaxed">{bodyPreview.renderedText}</pre>
@@ -426,7 +427,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                     <div className="bg-muted/50 rounded-lg p-3">
                       <pre className="whitespace-pre-wrap text-xs font-sans">{bodyPreview.renderedText}</pre>
                       <p className="text-[10px] text-muted-foreground mt-2">
-                        {smsInfo.chars} caracteres · {smsInfo.segments} segmento(s)
+                        {smsInfo.chars} {tx('caracteres ·')}{' '}{smsInfo.segments} {tx('segmento(s)')}
                       </p>
                     </div>
                   )}
@@ -447,14 +448,14 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                     <div className="mt-3 border-t pt-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
-                          <GitCompare className="h-3 w-3" /> Comparação com v{compareVersion.version_number}
+                          <GitCompare className="h-3 w-3" /> {tx('Comparação com v')}{compareVersion.version_number}
                         </span>
                         <Button variant="ghost" size="sm" className="h-5 text-[10px]" onClick={() => setCompareVersion(null)}>
-                          Fechar
+                          {tx('Fechar')}
                         </Button>
                       </div>
                       <div className="bg-muted/30 rounded p-2 text-xs">
-                        <p className="text-[10px] font-medium text-muted-foreground mb-1">Conteúdo v{compareVersion.version_number}:</p>
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1">{tx('Conteúdo v')}{compareVersion.version_number}:</p>
                         <pre className="whitespace-pre-wrap text-xs font-mono text-muted-foreground">{compareVersion.body_template}</pre>
                       </div>
                     </div>
@@ -463,7 +464,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                   {/* Preview data editor */}
                   <details className="mt-3">
                     <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
-                      Editar dados de teste
+                      {tx('Editar dados de teste')}
                     </summary>
                     <div className="mt-2 space-y-1.5 max-h-[250px] overflow-y-auto">
                       {VARIABLE_CATALOG.map(v => (
@@ -486,7 +487,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                         className="text-[10px] h-6 mt-1"
                         onClick={() => setPreviewData({ ...DEFAULT_PREVIEW_DATA })}
                       >
-                        Repor dados padrão
+                        {tx('Repor dados padrão')}
                       </Button>
                     </div>
                   </details>
@@ -498,20 +499,20 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
               <Card>
                 <CardContent className="p-4">
                   {!template ? (
-                    <p className="text-xs text-muted-foreground">Histórico disponível após guardar.</p>
+                    <p className="text-xs text-muted-foreground">{tx('Histórico disponível após guardar.')}</p>
                   ) : (
                     <ScrollArea className="max-h-[500px]">
                       <div className="space-y-4">
                         {versions.length > 0 && (
                           <div>
-                            <h4 className="text-xs font-semibold mb-2">Versões ({versions.length})</h4>
+                            <h4 className="text-xs font-semibold mb-2">{tx('Versões (')}{versions.length})</h4>
                             <div className="space-y-2">
                               {versions.map(v => (
                                 <div key={v.id} className="text-xs border rounded p-2.5">
                                   <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-1.5">
                                       <Badge variant="outline" className="text-[10px]">v{v.version_number}</Badge>
-                                      {v.is_published && <Badge className="text-[9px]">Publicado</Badge>}
+                                      {v.is_published && <Badge className="text-[9px]">{tx('Publicado')}</Badge>}
                                     </div>
                                     <span className="text-[10px] text-muted-foreground">
                                       {new Date(v.created_at).toLocaleString('pt-PT')}
@@ -528,7 +529,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                                       onClick={() => setCompareVersion(compareVersion?.id === v.id ? null : v)}
                                     >
                                       <GitCompare className="h-3 w-3" />
-                                      {compareVersion?.id === v.id ? 'A comparar' : 'Comparar'}
+                                      {compareVersion?.id === v.id ? tx('A comparar') : tx('Comparar')}
                                     </Button>
                                     {v.version_number !== template.version_number && (
                                       <Button
@@ -537,7 +538,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                                         className="h-6 text-[10px] gap-1 text-amber-600 hover:text-amber-700"
                                         onClick={() => setRollbackConfirm(v)}
                                       >
-                                        <RotateCcw className="h-3 w-3" /> Rollback
+                                        <RotateCcw className="h-3 w-3" /> {tx('Rollback')}
                                       </Button>
                                     )}
                                   </div>
@@ -549,7 +550,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
 
                         {events.length > 0 && (
                           <div>
-                            <h4 className="text-xs font-semibold mb-2">Eventos</h4>
+                            <h4 className="text-xs font-semibold mb-2">{tx('Eventos')}</h4>
                             <div className="space-y-1">
                               {events.map(ev => (
                                 <div key={ev.id} className="text-[11px] flex items-center gap-2">
@@ -564,7 +565,7 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
                         )}
 
                         {versions.length === 0 && events.length === 0 && (
-                          <p className="text-xs text-muted-foreground">Sem histórico disponível.</p>
+                          <p className="text-xs text-muted-foreground">{tx('Sem histórico disponível.')}</p>
                         )}
                       </div>
                     </ScrollArea>
@@ -580,15 +581,14 @@ export function TemplateEditorPanel({ template, isCreating, onClose }: Props) {
       <AlertDialog open={!!rollbackConfirm} onOpenChange={(open) => { if (!open) setRollbackConfirm(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar rollback</AlertDialogTitle>
+            <AlertDialogTitle>{tx('Confirmar rollback')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Reverter para o conteúdo da versão {rollbackConfirm?.version_number}?
-              Uma nova versão será criada com o conteúdo antigo. O histórico existente será preservado.
+              {tx('Reverter para o conteúdo da versão')}{' '}{rollbackConfirm?.version_number}{tx('? Uma nova versão será criada com o conteúdo antigo. O histórico existente será preservado.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRollback}>Aplicar Rollback</AlertDialogAction>
+            <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRollback}>{tx('Aplicar Rollback')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

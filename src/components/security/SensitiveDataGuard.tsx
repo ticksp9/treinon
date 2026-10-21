@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Shield, Lock, AlertTriangle } from 'lucide-react';
 import { useSecurityPin } from '@/hooks/useSecurityPin';
 import { PinDialog } from './PinDialog';
+import { tx } from '@/lib/i18n/ui';
 
 interface SensitiveDataGuardProps {
   children: ReactNode;
@@ -47,10 +48,9 @@ export function SensitiveDataGuard({
                 <AlertTriangle className="w-8 h-8 text-warning" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Dados Sensíveis Não Protegidos</h3>
+                <h3 className="font-semibold text-lg">{tx('Dados Sensíveis Não Protegidos')}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Configure um PIN de segurança para proteger os dados pessoais dos jogadores
-                  (morada, contactos, documentos).
+                  {tx('Configure um PIN de segurança para proteger os dados pessoais dos jogadores (morada, contactos, documentos).')}
                 </p>
               </div>
               <Button onClick={() => {
@@ -58,7 +58,7 @@ export function SensitiveDataGuard({
                 setShowPinDialog(true);
               }}>
                 <Shield className="w-4 h-4 mr-2" />
-                Configurar PIN de Segurança
+                {tx('Configurar PIN de Segurança')}
               </Button>
             </div>
           </CardContent>
@@ -85,9 +85,9 @@ export function SensitiveDataGuard({
                 <Lock className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Dados Protegidos</h3>
+                <h3 className="font-semibold text-lg">{tx('Dados Protegidos')}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Introduza o PIN de segurança para ver os dados pessoais.
+                  {tx('Introduza o PIN de segurança para ver os dados pessoais.')}
                 </p>
               </div>
               <Button onClick={() => {
@@ -95,12 +95,12 @@ export function SensitiveDataGuard({
                 setShowPinDialog(true);
               }}>
                 <Lock className="w-4 h-4 mr-2" />
-                Desbloquear
+                {tx('Desbloquear')}
               </Button>
               {fallback && (
                 <div className="w-full mt-4 pt-4 border-t">
                   <p className="text-xs text-muted-foreground mb-2">
-                    Dados visíveis sem PIN:
+                    {tx('Dados visíveis sem PIN:')}
                   </p>
                   {fallback}
                 </div>

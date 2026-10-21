@@ -6,6 +6,7 @@ import { useAcademy } from '@/hooks/useAcademy';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { computeGoalSummary } from '@/hooks/useAcademy';
+import { tx } from '@/lib/i18n/ui';
 
 const PLAN_STATUS: Record<string, string> = {
   draft: 'Rascunho',
@@ -43,30 +44,30 @@ export function AcademyDevelopmentTab() {
     <div className="space-y-4">
       {/* Goal Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <SummaryCard label="Total Objetivos" value={summary.total} />
-        <SummaryCard label="Abertos" value={summary.open} />
-        <SummaryCard label="Em Progresso" value={summary.in_progress} />
-        <SummaryCard label="Atingidos" value={summary.achieved} />
-        <SummaryCard label="Progresso Médio" value={`${summary.avgProgress.toFixed(0)}%`} />
+        <SummaryCard label={tx('Total Objetivos')} value={summary.total} />
+        <SummaryCard label={tx('Abertos')} value={summary.open} />
+        <SummaryCard label={tx('Em Progresso')} value={summary.in_progress} />
+        <SummaryCard label={tx('Atingidos')} value={summary.achieved} />
+        <SummaryCard label={tx('Progresso Médio')} value={`${summary.avgProgress.toFixed(0)}%`} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Planos de Desenvolvimento Individual</CardTitle>
+          <CardTitle>{tx('Planos de Desenvolvimento Individual')}</CardTitle>
         </CardHeader>
         <CardContent>
           {plans.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum PDI criado.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhum PDI criado.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Jogador ID</TableHead>
-                  <TableHead>Época</TableHead>
-                  <TableHead>Versão</TableHead>
-                  <TableHead>Objetivos</TableHead>
-                  <TableHead>Progresso</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{tx('Jogador ID')}</TableHead>
+                  <TableHead>{tx('Época')}</TableHead>
+                  <TableHead>{tx('Versão')}</TableHead>
+                  <TableHead>{tx('Objetivos')}</TableHead>
+                  <TableHead>{tx('Progresso')}</TableHead>
+                  <TableHead>{tx('Status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

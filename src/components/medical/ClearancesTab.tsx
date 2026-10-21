@@ -17,6 +17,7 @@ import { Plus, Shield, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { CLEARANCE_STATUSES } from '@/hooks/useMedical';
+import { tx } from '@/lib/i18n/ui';
 
 export function ClearancesTab() {
   const { user } = useAuth();
@@ -60,9 +61,9 @@ export function ClearancesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medical-clearances'] });
       setShowDialog(false);
-      toast.success('Aptidão registada!');
+      toast.success(tx('Aptidão registada!'));
     },
-    onError: () => toast.error('Erro ao registar aptidão'),
+    onError: () => toast.error(tx('Erro ao registar aptidão')),
   });
 
   const getStatusBadge = (status: string) => {
@@ -83,35 +84,35 @@ export function ClearancesTab() {
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Pesquisar atleta..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+          <Input placeholder={tx('Pesquisar atleta...')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nova Aptidão</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />{tx('Nova Aptidão')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registar Aptidão Desportiva</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Registar Aptidão Desportiva')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{players?.map(p => <SelectItem key={p.id} value={p.id}>#{p.number} {p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Tipo</Label>
+                  <Label>{tx('Tipo')}</Label>
                   <Select value={form.clearance_type} onValueChange={v => setForm({...form, clearance_type: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="global">Global</SelectItem>
-                      <SelectItem value="training">Treino</SelectItem>
-                      <SelectItem value="match">Jogo</SelectItem>
-                      <SelectItem value="partial">Parcial</SelectItem>
+                      <SelectItem value="global">{tx('Global')}</SelectItem>
+                      <SelectItem value="training">{tx('Treino')}</SelectItem>
+                      <SelectItem value="match">{tx('Jogo')}</SelectItem>
+                      <SelectItem value="partial">{tx('Parcial')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Estado *</Label>
+                  <Label>{tx('Estado *')}</Label>
                   <Select value={form.clearance_status} onValueChange={v => setForm({...form, clearance_status: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{CLEARANCE_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
@@ -119,12 +120,12 @@ export function ClearancesTab() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Válido De</Label><Input type="date" value={form.valid_from} onChange={e => setForm({...form, valid_from: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Válido Até</Label><Input type="date" value={form.valid_to} onChange={e => setForm({...form, valid_to: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Válido De')}</Label><Input type="date" value={form.valid_from} onChange={e => setForm({...form, valid_from: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Válido Até')}</Label><Input type="date" value={form.valid_to} onChange={e => setForm({...form, valid_to: e.target.value})} /></div>
               </div>
-              <div className="space-y-2"><Label>Restrições</Label><Textarea placeholder="Restrições aplicáveis..." value={form.restrictions} onChange={e => setForm({...form, restrictions: e.target.value})} rows={2} /></div>
-              <div className="space-y-2"><Label>Notas Clínicas</Label><Textarea placeholder="Observações..." value={form.clinical_notes} onChange={e => setForm({...form, clinical_notes: e.target.value})} rows={2} /></div>
-              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || createMutation.isPending}>Registar</Button>
+              <div className="space-y-2"><Label>{tx('Restrições')}</Label><Textarea placeholder={tx('Restrições aplicáveis...')} value={form.restrictions} onChange={e => setForm({...form, restrictions: e.target.value})} rows={2} /></div>
+              <div className="space-y-2"><Label>{tx('Notas Clínicas')}</Label><Textarea placeholder={tx('Observações...')} value={form.clinical_notes} onChange={e => setForm({...form, clinical_notes: e.target.value})} rows={2} /></div>
+              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || createMutation.isPending}>{tx('Registar')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -135,18 +136,18 @@ export function ClearancesTab() {
           {isLoading ? (
             <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
           ) : filtered?.length === 0 ? (
-            <div className="text-center py-12"><Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">Nenhuma aptidão registada</p></div>
+            <div className="text-center py-12"><Shield className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">{tx('Nenhuma aptidão registada')}</p></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Válido De</TableHead>
-                    <TableHead>Válido Até</TableHead>
-                    <TableHead>Restrições</TableHead>
+                    <TableHead>{tx('Atleta')}</TableHead>
+                    <TableHead>{tx('Tipo')}</TableHead>
+                    <TableHead>{tx('Estado')}</TableHead>
+                    <TableHead>{tx('Válido De')}</TableHead>
+                    <TableHead>{tx('Válido Até')}</TableHead>
+                    <TableHead>{tx('Restrições')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

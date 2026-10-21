@@ -8,6 +8,7 @@ import { TemplateListPanel } from '@/components/invite-templates/TemplateListPan
 import { TemplateEditorPanel } from '@/components/invite-templates/TemplateEditorPanel';
 import { TemplateVariablesCatalog } from '@/components/invite-templates/TemplateVariablesCatalog';
 import type { InviteTemplate } from '@/hooks/useInviteTemplatesAdmin';
+import { tx } from '@/lib/i18n/ui';
 
 export default function InviteTemplatesAdmin() {
   const [selectedTemplate, setSelectedTemplate] = useState<InviteTemplate | null>(null);
@@ -39,29 +40,29 @@ export default function InviteTemplatesAdmin() {
   };
 
   return (
-    <AppLayout title="Templates de Convite">
+    <AppLayout title={tx('Templates de Convite')}>
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
-            title="Templates de Convite"
-            description="Gerir templates para envio automático de convites"
+            title={tx('Templates de Convite')}
+            description={tx('Gerir templates para envio automático de convites')}
             icon={<FileText className="w-6 h-6 text-primary" />}
           />
           <Button onClick={handleCreate} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Novo Template
+            <Plus className="h-4 w-4 mr-1" /> {tx('Novo Template')}
           </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="list" className="gap-1.5">
-              <List className="h-4 w-4" /> Listagem
+              <List className="h-4 w-4" /> {tx('Listagem')}
             </TabsTrigger>
             <TabsTrigger value="editor" className="gap-1.5">
-              <FileText className="h-4 w-4" /> Editor
+              <FileText className="h-4 w-4" /> {tx('Editor')}
             </TabsTrigger>
             <TabsTrigger value="variables" className="gap-1.5">
-              <BookOpen className="h-4 w-4" /> Variáveis
+              <BookOpen className="h-4 w-4" /> {tx('Variáveis')}
             </TabsTrigger>
           </TabsList>
 

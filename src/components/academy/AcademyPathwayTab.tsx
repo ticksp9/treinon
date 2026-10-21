@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAcademy } from '@/hooks/useAcademy';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const DECISION_LABELS: Record<string, string> = {
   promote: 'Promover',
@@ -33,21 +34,21 @@ export function AcademyPathwayTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Revisões de Promoção & Retenção</CardTitle>
+          <CardTitle>{tx('Revisões de Promoção & Retenção')}</CardTitle>
         </CardHeader>
         <CardContent>
           {reviews.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhuma revisão de progressão registada.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhuma revisão de progressão registada.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Jogador ID</TableHead>
-                  <TableHead>De</TableHead>
-                  <TableHead>Para</TableHead>
-                  <TableHead>Decisão</TableHead>
-                  <TableHead>Época</TableHead>
+                  <TableHead>{tx('Data')}</TableHead>
+                  <TableHead>{tx('Jogador ID')}</TableHead>
+                  <TableHead>{tx('De')}</TableHead>
+                  <TableHead>{tx('Para')}</TableHead>
+                  <TableHead>{tx('Decisão')}</TableHead>
+                  <TableHead>{tx('Época')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

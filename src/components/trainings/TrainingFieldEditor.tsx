@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { tx } from '@/lib/i18n/ui';
 
 interface TrainingFieldEditorProps {
   sportType?: "football" | "futsal";
@@ -61,7 +62,7 @@ const toolLabels: Record<ToolType, string> = {
   "goal-small": "Baliza",
   arrow: "Seta",
   zone: "Zona",
-  text: "Texto",
+  get text() { return tx('Texto'); },
 };
 
 export function TrainingFieldEditor({ sportType = "football", onSave }: TrainingFieldEditorProps) {
@@ -533,7 +534,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
     });
     fabricCanvas.renderAll();
     saveState(fabricCanvas);
-    toast.success("Campo limpo");
+    toast.success(tx('Campo limpo'));
   };
 
   const exportImage = () => {
@@ -542,7 +543,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
 
     if (onSave) {
       onSave(dataUrl);
-      toast.success("Diagrama guardado");
+      toast.success(tx('Diagrama guardado'));
       return;
     }
 
@@ -550,7 +551,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
     link.download = `treino-${Date.now()}.png`;
     link.href = dataUrl;
     link.click();
-    toast.success("Imagem exportada");
+    toast.success(tx('Imagem exportada'));
   };
 
   const undo = () => {
@@ -582,7 +583,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
     <Card className="w-full">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center flex-wrap gap-2">
-          <CardTitle className="text-lg">Editor Visual de Treino</CardTitle>
+          <CardTitle className="text-lg">{tx('Editor Visual de Treino')}</CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex <= 0}>
               <Undo2 className="w-4 h-4" />
@@ -598,7 +599,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
             </Button>
             <Button size="sm" onClick={exportImage}>
               <Download className="w-4 h-4 mr-1" />
-              Guardar
+              {tx('Guardar')}
             </Button>
           </div>
         </div>
@@ -608,7 +609,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
         <div className="space-y-3 p-3 bg-muted rounded-lg">
           {/* Players */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium w-20">Jogador:</span>
+            <span className="text-sm font-medium w-20">{tx('Jogador:')}</span>
             <div className="flex gap-2">
               {(Object.keys(PLAYER_COLORS) as PlayerColor[]).map((key) => {
                 const isSelected = activeTool === "player" && playerColor === key;
@@ -624,7 +625,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
                       isSelected ? "ring-2 ring-offset-2 ring-primary scale-110" : "hover:scale-105"
                     }`}
                     style={{ backgroundColor: PLAYER_COLORS[key] }}
-                    title={`Jogador ${key}`}
+                    title={tx('Jogador {{v0}}', { v0: key })}
                   >
                     <span className="text-white text-xs font-bold">J</span>
                   </button>
@@ -635,7 +636,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
 
           {/* Cones */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-medium w-20">Cone:</span>
+            <span className="text-sm font-medium w-20">{tx('Cone:')}</span>
             <div className="flex gap-2">
               {(Object.keys(CONE_COLORS) as ConeColor[]).map((key) => {
                 const isSelected = activeTool === "cone" && coneColor === key;
@@ -651,7 +652,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
                       isSelected ? "ring-2 ring-offset-2 ring-primary scale-110" : "hover:scale-105"
                     }`}
                     style={{ backgroundColor: CONE_COLORS[key] }}
-                    title={`Cone ${key}`}
+                    title={tx('Cone {{v0}}', { v0: key })}
                   >
                     <Square className="w-3.5 h-3.5 text-white" />
                   </button>
@@ -669,7 +670,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <CircleIcon className="w-4 h-4" />
-              <span className="text-xs">Bola</span>
+              <span className="text-xs">{tx('Bola')}</span>
             </Button>
 
             <Button
@@ -679,7 +680,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Square className="w-4 h-4" />
-              <span className="text-xs">Escada</span>
+              <span className="text-xs">{tx('Escada')}</span>
             </Button>
 
             <Button
@@ -689,7 +690,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Square className="w-4 h-4" />
-              <span className="text-xs">Barreira</span>
+              <span className="text-xs">{tx('Barreira')}</span>
             </Button>
 
             <Button
@@ -699,7 +700,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <CircleIcon className="w-4 h-4" />
-              <span className="text-xs">Poste</span>
+              <span className="text-xs">{tx('Poste')}</span>
             </Button>
 
             <Button
@@ -709,7 +710,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Target className="w-4 h-4" />
-              <span className="text-xs">Baliza</span>
+              <span className="text-xs">{tx('Baliza')}</span>
             </Button>
 
             <Button
@@ -719,7 +720,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <ArrowRight className="w-4 h-4" />
-              <span className="text-xs">Seta</span>
+              <span className="text-xs">{tx('Seta')}</span>
             </Button>
 
             <Button
@@ -729,7 +730,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Square className="w-4 h-4" />
-              <span className="text-xs">Zona</span>
+              <span className="text-xs">{tx('Zona')}</span>
             </Button>
 
             <Button
@@ -745,13 +746,13 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
               className="flex flex-col gap-1 h-auto py-2 px-3"
             >
               <Type className="w-4 h-4" />
-              <span className="text-xs">Texto</span>
+              <span className="text-xs">{tx('Texto')}</span>
             </Button>
           </div>
 
           {activeTool === "text" && (
             <div className="flex items-center gap-2 pt-2 border-t">
-              <span className="text-sm font-medium">Texto:</span>
+              <span className="text-sm font-medium">{tx('Texto:')}</span>
               <Input
                 value={textInput}
                 onChange={(e) => {
@@ -759,7 +760,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
                   textInputRef.current = v;
                   setTextInput(v);
                 }}
-                placeholder="Digite o texto..."
+                placeholder={tx('Digite o texto...')}
                 className="max-w-xs"
               />
             </div>
@@ -768,7 +769,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
 
         {selectedLabel && (
           <p className="text-sm text-muted-foreground text-center">
-            Clique no campo para adicionar: <strong>{selectedLabel}</strong>
+            {tx('Clique no campo para adicionar:')}{' '}<strong>{selectedLabel}</strong>
           </p>
         )}
 
@@ -776,7 +777,7 @@ export function TrainingFieldEditor({ sportType = "football", onSave }: Training
           <canvas ref={canvasRef} className="rounded shadow-lg cursor-crosshair" />
         </div>
 
-        <p className="text-xs text-muted-foreground text-center">Arraste os elementos para os posicionar. Selecione um elemento e pressione Delete para remover.</p>
+        <p className="text-xs text-muted-foreground text-center">{tx('Arraste os elementos para os posicionar. Selecione um elemento e pressione Delete para remover.')}</p>
       </CardContent>
     </Card>
   );

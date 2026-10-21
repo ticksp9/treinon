@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { DiagramEl, Pt } from '@/lib/drill-library/types';
+import { tx } from '@/lib/i18n/ui';
 
 const W = 100;
 const H = 64;
@@ -56,7 +57,7 @@ export function DrillDiagram({ elements, className, title }: { elements: Diagram
       viewBox={`-2 -2 ${W + 4} ${H + 4}`}
       className={className}
       role="img"
-      aria-label={title ? `Esquema: ${title}` : 'Esquema do exercício'}
+      aria-label={title ? tx('Esquema: {{v0}}', { v0: title }) : tx('Esquema do exercício')}
     >
       <defs>
         <marker id={`${id}-arrow`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
@@ -123,9 +124,9 @@ export function DiagramLegend() {
       {item('hsl(217 85% 50%)', 'Equipa A')}
       {item('hsl(14 90% 52%)', 'Equipa B')}
       {item('hsl(45 95% 48%)', 'Joker')}
-      <span>— passe</span>
-      <span>- - - movimento</span>
-      <span>··· condução</span>
+      <span>{tx('— passe')}</span>
+      <span>{tx('- - - movimento')}</span>
+      <span>{tx('··· condução')}</span>
     </div>
   );
 }

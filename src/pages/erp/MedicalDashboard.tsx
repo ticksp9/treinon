@@ -11,6 +11,7 @@ import { InjuryCasesTab } from '@/components/medical/InjuryCasesTab';
 import { PhysioSessionsTab } from '@/components/medical/PhysioSessionsTab';
 import { ReturnToPlayTab } from '@/components/medical/ReturnToPlayTab';
 import { MedicalComplianceTab } from '@/components/medical/MedicalComplianceTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function MedicalDashboard() {
   const { hasPhysioAccess, loading } = usePhysioAccess();
@@ -33,9 +34,9 @@ export default function MedicalDashboard() {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Módulo disponível apenas para staff médico e administradores.
+                {tx('Módulo disponível apenas para staff médico e administradores.')}
               </p>
             </CardContent>
           </Card>
@@ -50,22 +51,22 @@ export default function MedicalDashboard() {
         <div>
           <h1 className="text-2xl font-display font-bold flex items-center gap-2">
             <Heart className="w-6 h-6 text-primary" />
-            Saúde & Medicina Desportiva
+            {tx('Saúde & Medicina Desportiva')}
           </h1>
           <p className="text-muted-foreground">
-            Gestão de saúde, exames, aptidão, lesões, fisioterapia e compliance médico
+            {tx('Gestão de saúde, exames, aptidão, lesões, fisioterapia e compliance médico')}
           </p>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="exams">Exames</TabsTrigger>
-            <TabsTrigger value="clearances">Aptidão</TabsTrigger>
-            <TabsTrigger value="injuries">Lesões</TabsTrigger>
-            <TabsTrigger value="physio">Fisioterapia</TabsTrigger>
-            <TabsTrigger value="rtp">Retorno</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="overview">{tx('Visão Geral')}</TabsTrigger>
+            <TabsTrigger value="exams">{tx('Exames')}</TabsTrigger>
+            <TabsTrigger value="clearances">{tx('Aptidão')}</TabsTrigger>
+            <TabsTrigger value="injuries">{tx('Lesões')}</TabsTrigger>
+            <TabsTrigger value="physio">{tx('Fisioterapia')}</TabsTrigger>
+            <TabsTrigger value="rtp">{tx('Retorno')}</TabsTrigger>
+            <TabsTrigger value="compliance">{tx('Compliance')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview"><MedicalOverviewTab /></TabsContent>

@@ -7,14 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  open: { label: 'Aberta', variant: 'destructive' },
-  scheduled: { label: 'Agendada', variant: 'outline' },
-  in_progress: { label: 'Em Curso', variant: 'default' },
-  waiting_parts: { label: 'Aguardar Peças', variant: 'secondary' },
-  completed: { label: 'Concluída', variant: 'default' },
-  cancelled: { label: 'Cancelada', variant: 'secondary' },
+  open: { get label() { return tx('Aberta'); }, variant: 'destructive' },
+  scheduled: { get label() { return tx('Agendada'); }, variant: 'outline' },
+  in_progress: { get label() { return tx('Em Curso'); }, variant: 'default' },
+  waiting_parts: { get label() { return tx('Aguardar Peças'); }, variant: 'secondary' },
+  completed: { get label() { return tx('Concluída'); }, variant: 'default' },
+  cancelled: { get label() { return tx('Cancelada'); }, variant: 'secondary' },
 };
 
 interface Props {
@@ -39,17 +40,17 @@ export function MaintenanceTab({ workOrders, facilities, onCreateWorkOrder }: Pr
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Ordens de Trabalho ({workOrders.length})</h3>
+        <h3 className="font-semibold">{tx('Ordens de Trabalho (')}{workOrders.length})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Ordem de Trabalho</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />{tx('Ordem de Trabalho')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Ordem de Trabalho</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Ordem de Trabalho')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Instalação</Label><Select value={form.facility_id} onValueChange={v => setForm(p => ({ ...p, facility_id: v }))}><SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger><SelectContent>{facilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select></div>
-              <div><Label>Título</Label><Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
-              <div><Label>Tipo</Label><Select value={form.work_order_type} onValueChange={v => setForm(p => ({ ...p, work_order_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="preventive">Preventiva</SelectItem><SelectItem value="corrective">Corretiva</SelectItem><SelectItem value="inspection">Inspeção</SelectItem></SelectContent></Select></div>
-              <div><Label>Prioridade</Label><Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="low">Baixa</SelectItem><SelectItem value="medium">Média</SelectItem><SelectItem value="high">Alta</SelectItem><SelectItem value="critical">Crítica</SelectItem></SelectContent></Select></div>
-              <Button onClick={handleCreate} className="w-full">Criar</Button>
+              <div><Label>{tx('Instalação')}</Label><Select value={form.facility_id} onValueChange={v => setForm(p => ({ ...p, facility_id: v }))}><SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger><SelectContent>{facilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{tx('Título')}</Label><Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
+              <div><Label>{tx('Tipo')}</Label><Select value={form.work_order_type} onValueChange={v => setForm(p => ({ ...p, work_order_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="preventive">{tx('Preventiva')}</SelectItem><SelectItem value="corrective">{tx('Corretiva')}</SelectItem><SelectItem value="inspection">{tx('Inspeção')}</SelectItem></SelectContent></Select></div>
+              <div><Label>{tx('Prioridade')}</Label><Select value={form.priority} onValueChange={v => setForm(p => ({ ...p, priority: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="low">{tx('Baixa')}</SelectItem><SelectItem value="medium">{tx('Média')}</SelectItem><SelectItem value="high">{tx('Alta')}</SelectItem><SelectItem value="critical">{tx('Crítica')}</SelectItem></SelectContent></Select></div>
+              <Button onClick={handleCreate} className="w-full">{tx('Criar')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -63,14 +64,14 @@ export function MaintenanceTab({ workOrders, facilities, onCreateWorkOrder }: Pr
               <CardContent className="py-3 flex items-center justify-between">
                 <div>
                   <p className="font-medium text-sm">{wo.title}</p>
-                  <p className="text-xs text-muted-foreground">{getFacName(wo.facility_id)} • {wo.work_order_type} • Prioridade: {wo.priority}</p>
+                  <p className="text-xs text-muted-foreground">{getFacName(wo.facility_id)} • {wo.work_order_type} {tx('• Prioridade:')}{' '}{wo.priority}</p>
                 </div>
                 <Badge variant={st.variant} className="text-xs">{st.label}</Badge>
               </CardContent>
             </Card>
           );
         })}
-        {workOrders.length === 0 && <Card><CardContent className="py-6 text-center text-muted-foreground">Nenhuma ordem de trabalho</CardContent></Card>}
+        {workOrders.length === 0 && <Card><CardContent className="py-6 text-center text-muted-foreground">{tx('Nenhuma ordem de trabalho')}</CardContent></Card>}
       </div>
     </div>
   );

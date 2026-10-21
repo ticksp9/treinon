@@ -10,14 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { PlusCircle, CheckCircle, Clock, FileText, Archive } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCurrentSeasonName, getSeasonStartYear } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  draft: { label: 'Rascunho', variant: 'secondary' },
-  under_review: { label: 'Em Revisão', variant: 'outline' },
-  approved: { label: 'Aprovado', variant: 'default' },
-  revised: { label: 'Revisto', variant: 'outline' },
-  archived: { label: 'Arquivado', variant: 'secondary' },
-  superseded: { label: 'Substituído', variant: 'secondary' },
+  draft: { get label() { return tx('Rascunho'); }, variant: 'secondary' },
+  under_review: { get label() { return tx('Em Revisão'); }, variant: 'outline' },
+  approved: { get label() { return tx('Aprovado'); }, variant: 'default' },
+  revised: { get label() { return tx('Revisto'); }, variant: 'outline' },
+  archived: { get label() { return tx('Arquivado'); }, variant: 'secondary' },
+  superseded: { get label() { return tx('Substituído'); }, variant: 'secondary' },
 };
 
 export function BudgetCycleManager({ clubId }: { clubId: string }) {
@@ -32,47 +33,47 @@ export function BudgetCycleManager({ clubId }: { clubId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Ciclos Orçamentais</h3>
+        <h3 className="text-lg font-semibold">{tx('Ciclos Orçamentais')}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><PlusCircle className="w-4 h-4 mr-2" />Novo Ciclo</Button>
+            <Button size="sm"><PlusCircle className="w-4 h-4 mr-2" />{tx('Novo Ciclo')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Criar Ciclo Orçamental</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Criar Ciclo Orçamental')}</DialogTitle></DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <Label>Nome</Label>
-                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder={`Orçamento ${getCurrentSeasonName()}`} />
+                <Label>{tx('Nome')}</Label>
+                <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder={tx('Orçamento {{v0}}', { v0: getCurrentSeasonName() })} />
               </div>
               <div>
-                <Label>Época</Label>
+                <Label>{tx('Época')}</Label>
                 <Input value={form.season} onChange={e => setForm(p => ({ ...p, season: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Início</Label>
+                  <Label>{tx('Início')}</Label>
                   <Input type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} />
                 </div>
                 <div>
-                  <Label>Fim</Label>
+                  <Label>{tx('Fim')}</Label>
                   <Input type="date" value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} />
                 </div>
               </div>
               <div>
-                <Label>Âmbito</Label>
+                <Label>{tx('Âmbito')}</Label>
                 <Select value={form.budget_scope} onValueChange={v => setForm(p => ({ ...p, budget_scope: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="club">Clube</SelectItem>
-                    <SelectItem value="youth_program">Formação</SelectItem>
-                    <SelectItem value="team">Equipa</SelectItem>
-                    <SelectItem value="department">Departamento</SelectItem>
-                    <SelectItem value="consolidated">Consolidado</SelectItem>
+                    <SelectItem value="club">{tx('Clube')}</SelectItem>
+                    <SelectItem value="youth_program">{tx('Formação')}</SelectItem>
+                    <SelectItem value="team">{tx('Equipa')}</SelectItem>
+                    <SelectItem value="department">{tx('Departamento')}</SelectItem>
+                    <SelectItem value="consolidated">{tx('Consolidado')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Button onClick={handleCreate} disabled={!form.name || createCycle.isPending} className="w-full">
-                {createCycle.isPending ? 'A criar...' : 'Criar Ciclo'}
+                {createCycle.isPending ? tx('A criar...') : tx('Criar Ciclo')}
               </Button>
             </div>
           </DialogContent>
@@ -97,7 +98,7 @@ export function BudgetCycleManager({ clubId }: { clubId: string }) {
                 <div className="flex gap-2">
                   {cycle.status === 'draft' && (
                     <Button size="sm" variant="outline" onClick={() => approveCycle.mutate(cycle.id)}>
-                      <CheckCircle className="w-4 h-4 mr-1" />Aprovar
+                      <CheckCircle className="w-4 h-4 mr-1" />{tx('Aprovar')}
                     </Button>
                   )}
                 </div>
@@ -108,7 +109,7 @@ export function BudgetCycleManager({ clubId }: { clubId: string }) {
         {!cycles.data?.length && !cycles.isLoading && (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              Nenhum ciclo orçamental criado. Crie o primeiro para começar.
+              {tx('Nenhum ciclo orçamental criado. Crie o primeiro para começar.')}
             </CardContent>
           </Card>
         )}

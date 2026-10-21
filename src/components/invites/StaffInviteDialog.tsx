@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCreateInvite, useRevokeInvite, useResendInvite, useEmailStatus, type InviteType } from '@/hooks/useAccessInvites';
 import { shareText, copyText } from '@/lib/share';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 export type StaffInviteType = Extract<InviteType, 'coach' | 'assistant_coach' | 'staff' | 'coordinator'>;
 
@@ -83,9 +84,9 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
   }, [open]);
 
   const submit = async () => {
-    if (name.trim().length < 2) return toast.error('Indique o nome da pessoa.');
-    if (!teamId) return toast.error('Escolha a equipa.');
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) return toast.error('Email inválido.');
+    if (name.trim().length < 2) return toast.error(tx('Indique o nome da pessoa.'));
+    if (!teamId) return toast.error(tx('Escolha a equipa.'));
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) return toast.error(tx('Email inválido.'));
     try {
       const r = await create.mutateAsync({ team_id: teamId, invite_type: type, recipient_name: name.trim(), email: email.trim() || undefined });
       const link = inviteLink(r.token);
@@ -93,7 +94,7 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
       setResult({ link, code: r.code, message: inviteMessage({ name, type, team, link, code: r.code }), email: email.trim() || undefined, emailSent: r.email_sent, emailError: r.email_error });
       qc.invalidateQueries({ queryKey: ['staff-invites'] });
     } catch (e) {
-      toast.error((e as Error).message || 'Não foi possível criar o convite');
+      toast.error((e as Error).message || tx('Não foi possível criar o convite'));
     }
   };
 
@@ -101,18 +102,18 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Convidar para a equipa técnica</DialogTitle>
-          <DialogDescription>Cria um link e um código para enviar por WhatsApp.</DialogDescription>
+          <DialogTitle>{tx('Convidar para a equipa técnica')}</DialogTitle>
+          <DialogDescription>{tx('Cria um link e um código para enviar por WhatsApp.')}</DialogDescription>
         </DialogHeader>
 
         {!result ? (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="inv-name">Nome *</Label>
-              <Input id="inv-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: João Silva" />
+              <Label htmlFor="inv-name">{tx('Nome *')}</Label>
+              <Input id="inv-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={tx('Ex.: João Silva')} />
             </div>
             <div className="space-y-1.5">
-              <Label>Função</Label>
+              <Label>{tx('Função')}</Label>
               <div className="grid gap-1.5">
                 {allowedTypes.map((t) => (
                   <button key={t} type="button" onClick={() => setType(t)}
@@ -124,24 +125,24 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>{type === 'staff' || type === 'coordinator' ? 'Equipa de referência' : 'Equipa'}</Label>
+              <Label>{type === 'staff' || type === 'coordinator' ? tx('Equipa de referência') : tx('Equipa')}</Label>
               <Select value={teamId} onValueChange={setTeamId}>
-                <SelectTrigger><SelectValue placeholder="Escolher equipa" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Escolher equipa')} /></SelectTrigger>
                 <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
               </Select>
-              {teams.length === 0 && <p className="text-xs text-amber-600">Crie primeiro uma equipa.</p>}
+              {teams.length === 0 && <p className="text-xs text-amber-600">{tx('Crie primeiro uma equipa.')}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="inv-email">Email (opcional)</Label>
-              <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="treinador@email.com" />
+              <Label htmlFor="inv-email">{tx('Email (opcional)')}</Label>
+              <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tx('treinador@email.com')} />
               <p className="text-xs text-muted-foreground">
                 {emailReady
-                  ? 'O convite segue também por email. Só quem usar este email o pode aceitar.'
-                  : 'Se indicar, só quem usar este email pode aceitar o convite. (O envio por email ainda não está ligado: envie pelo WhatsApp.)'}
+                  ? tx('O convite segue também por email. Só quem usar este email o pode aceitar.')
+                  : tx('Se indicar, só quem usar este email pode aceitar o convite. (O envio por email ainda não está ligado: envie pelo WhatsApp.)')}
               </p>
             </div>
             <Button className="w-full" onClick={submit} disabled={create.isPending || teams.length === 0}>
-              {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}{emailReady && email.trim() ? 'Criar e enviar por email' : 'Criar convite'}
+              {create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}{emailReady && email.trim() ? tx('Criar e enviar por email') : tx('Criar convite')}
             </Button>
           </div>
         ) : (
@@ -151,30 +152,30 @@ export function StaffInviteDialog({ open, onClose, teams, allowedTypes, defaultT
                 {result.emailSent ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />}
                 <span>
                   {result.emailSent
-                    ? <>Email enviado para <b>{result.email}</b>. Peça para ver também a pasta de spam.</>
-                    : <>O email não foi enviado{result.emailError ? ` (${result.emailError})` : ''}. Envie pelo WhatsApp.</>}
+                    ? <>{tx('Email enviado para')}{' '}<b>{result.email}</b>{tx('. Peça para ver também a pasta de spam.')}</>
+                    : <>{tx('O email não foi enviado')}{result.emailError ? ` (${result.emailError})` : ''}{tx('. Envie pelo WhatsApp.')}</>}
                 </span>
               </div>
             )}
             <div className="rounded-lg bg-secondary p-4 text-center">
-              <p className="text-xs text-muted-foreground">Código</p>
+              <p className="text-xs text-muted-foreground">{tx('Código')}</p>
               <p className="font-mono text-3xl font-bold tracking-[0.3em]">{result.code}</p>
             </div>
             <div className="flex items-center gap-2 rounded-md border p-2">
               <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="flex-1 truncate font-mono text-xs">{result.link}</span>
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={async () => { if (await copyText(result.link)) toast.success('Link copiado'); }}>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={async () => { if (await copyText(result.link)) toast.success(tx('Link copiado')); }}>
                 <Copy className="h-3.5 w-3.5" />
               </Button>
             </div>
             <Button className="w-full" onClick={() => shareText(result.message, 'Convite TreinON')}>
-              <Share2 className="mr-2 h-4 w-4" />Enviar por WhatsApp
+              <Share2 className="mr-2 h-4 w-4" />{tx('Enviar por WhatsApp')}
             </Button>
-            <Button variant="outline" className="w-full" onClick={async () => { if (await copyText(result.message)) toast.success('Mensagem copiada'); }}>
-              <Copy className="mr-2 h-4 w-4" />Copiar mensagem
+            <Button variant="outline" className="w-full" onClick={async () => { if (await copyText(result.message)) toast.success(tx('Mensagem copiada')); }}>
+              <Copy className="mr-2 h-4 w-4" />{tx('Copiar mensagem')}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">O link só aparece agora. Se o perder, cancele e crie outro convite.</p>
-            <Button variant="ghost" className="w-full" onClick={onClose}>Fechar</Button>
+            <p className="text-center text-xs text-muted-foreground">{tx('O link só aparece agora. Se o perder, cancele e crie outro convite.')}</p>
+            <Button variant="ghost" className="w-full" onClick={onClose}>{tx('Fechar')}</Button>
           </div>
         )}
       </DialogContent>
@@ -209,7 +210,7 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base"><Clock className="h-4 w-4" />Convites por aceitar</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base"><Clock className="h-4 w-4" />{tx('Convites por aceitar')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {invites.map((i) => (
@@ -217,30 +218,30 @@ export function PendingStaffInvites({ teamIds }: { teamIds: string[] }) {
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{i.recipient_name}</p>
               <p className="truncate text-xs text-muted-foreground">
-                {STAFF_ROLE_LABELS[i.invite_type]} · {i.teams?.name} · código <span className="font-mono">{i.invite_code}</span>
+                {STAFF_ROLE_LABELS[i.invite_type]} · {i.teams?.name} {tx('· código')}{' '}<span className="font-mono">{i.invite_code}</span>
                 {' · '}expira {new Date(i.expires_at).toLocaleDateString('pt-PT')}
               </p>
             </div>
-            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Copiar código"
-              onClick={async () => { if (await copyText(`${window.location.origin}/accept-invite — código ${i.invite_code}`)) toast.success('Código copiado'); }}>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={tx('Copiar código')}
+              onClick={async () => { if (await copyText(`${window.location.origin}/accept-invite — código ${i.invite_code}`)) toast.success(tx('Código copiado')); }}>
               <Copy className="h-4 w-4" />
             </Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={i.email ? 'Reenviar por email' : 'Novo link'}
-              title={i.email ? 'Reenviar (novo link, também por email)' : 'Gerar novo link para enviar'}
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={i.email ? tx('Reenviar por email') : tx('Novo link')}
+              title={i.email ? tx('Reenviar (novo link, também por email)') : tx('Gerar novo link para enviar')}
               onClick={async () => {
                 try {
                   const r = await resend.mutateAsync(i.id);
                   const link = inviteLink(r.token);
-                  if (r.email_sent) toast.success(`Reenviado para ${i.email}`);
+                  if (r.email_sent) toast.success(tx('Reenviado para {{v0}}', { v0: i.email }));
                   else await shareText(inviteMessage({ name: i.recipient_name, type: i.invite_type, team: i.teams?.name, link, code: r.code }), 'Convite TreinON');
                   qc.invalidateQueries({ queryKey: ['staff-invites'] });
                 } catch (e) { toast.error((e as Error).message); }
               }}>
               {i.email ? <Mail className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Cancelar convite"
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label={tx('Cancelar convite')}
               onClick={async () => {
-                try { await revoke.mutateAsync(i.id); toast.success('Convite cancelado'); qc.invalidateQueries({ queryKey: ['staff-invites'] }); }
+                try { await revoke.mutateAsync(i.id); toast.success(tx('Convite cancelado')); qc.invalidateQueries({ queryKey: ['staff-invites'] }); }
                 catch (e) { toast.error((e as Error).message); }
               }}>
               <Trash2 className="h-4 w-4" />

@@ -20,6 +20,7 @@ import {
 } from '@/lib/player-import';
 import { BirthYearRules } from './BirthYearRules';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   open: boolean;
@@ -70,14 +71,14 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
     setBusy(true);
     try {
       const r = await readFile(file);
-      if (!r.length) throw new Error('O ficheiro está vazio.');
+      if (!r.length) throw new Error(tx('O ficheiro está vazio.'));
       const d = detectHeader(r);
       setRows(r); setHeaderIndex(d.headerIndex); setMapping(d.mapping); setFileName(file.name);
       const { data } = await supabase.from('players').select('name, birth_date');
       setExisting((data ?? []) as { name: string; birth_date: string | null }[]);
       setStep('check');
     } catch (e) {
-      toast.error('Não consegui ler o ficheiro: ' + (e as Error).message);
+      toast.error(tx('Não consegui ler o ficheiro: ') + (e as Error).message);
     } finally { setBusy(false); }
   };
 
@@ -89,10 +90,10 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
 
   const runImport = async () => {
     if (!user) return;
-    if (mode === 'team' && !teamId) return toast.error('Escolha a equipa.');
+    if (mode === 'team' && !teamId) return toast.error(tx('Escolha a equipa.'));
     const plan = toImport.map((p) => ({ p, dest: destinationsOf(p) }));
     const missing = plan.filter((x) => x.dest.length === 0).length;
-    if (missing) return toast.error(`${missing} jogador(es) sem equipa: escolha a equipa para quem não tem ano.`);
+    if (missing) return toast.error(tx('{{v0}} jogador(es) sem equipa: escolha a equipa para quem não tem ano.', { v0: missing }));
     setBusy(true);
     const perTeam: Record<string, number> = {};
     let created = 0;
@@ -131,7 +132,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
       qc.invalidateQueries({ queryKey: ['team-players'] });
       qc.invalidateQueries({ queryKey: ['season-enrollment-counts'] });
     } catch (e) {
-      toast.error(`Parou ao fim de ${created} jogadores: ${(e as Error).message}`);
+      toast.error(tx('Parou ao fim de {{v0}} jogadores: {{v1}}', { v0: created, v1: (e as Error).message }));
       if (created) setResult({ created, skipped: 0, perTeam });
     } finally { setBusy(false); setProgress(''); }
   };
@@ -142,20 +143,20 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
       <DialogContent className="max-h-[94vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" />Importar jogadores do Excel</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="h-5 w-5" />{tx('Importar jogadores do Excel')}</DialogTitle>
           <DialogDescription>
-            {step === 'file' && 'Escolha o ficheiro (.xlsx ou .csv). Basta uma coluna com o nome; data de nascimento, número, posição, pé e contactos do encarregado são lidos se existirem.'}
-            {step === 'check' && `${fileName}: ${players.length} jogadores encontrados.`}
-            {step === 'dest' && 'Para onde vão os jogadores?'}
-            {step === 'done' && 'Importação concluída.'}
+            {step === 'file' && tx('Escolha o ficheiro (.xlsx ou .csv). Basta uma coluna com o nome; data de nascimento, número, posição, pé e contactos do encarregado são lidos se existirem.')}
+            {step === 'check' && tx('{{v0}}: {{v1}} jogadores encontrados.', { v0: fileName, v1: players.length })}
+            {step === 'dest' && tx('Para onde vão os jogadores?')}
+            {step === 'done' && tx('Importação concluída.')}
           </DialogDescription>
         </DialogHeader>
 
         {step === 'file' && (
           <label className={cn('flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center hover:border-primary', busy && 'opacity-60')}>
             {busy ? <Loader2 className="h-8 w-8 animate-spin" /> : <Upload className="h-8 w-8 text-muted-foreground" />}
-            <span className="font-medium">Escolher ficheiro</span>
-            <span className="text-xs text-muted-foreground">Excel (.xlsx) ou CSV. Linhas de título no topo não fazem mal.</span>
+            <span className="font-medium">{tx('Escolher ficheiro')}</span>
+            <span className="text-xs text-muted-foreground">{tx('Excel (.xlsx) ou CSV. Linhas de título no topo não fazem mal.')}</span>
             <input type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" className="hidden" disabled={busy}
               onChange={(e) => onFile(e.target.files?.[0])} />
           </label>
@@ -165,7 +166,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
           <div className="space-y-4">
             <div className="rounded-md border p-3">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Colunas {headerIndex >= 0 ? `(cabeçalho na linha ${headerIndex + 1})` : '(sem cabeçalho: lista de nomes)'}
+                {tx('Colunas')}{' '}{headerIndex >= 0 ? tx('(cabeçalho na linha {{v0}})', { v0: headerIndex + 1 }) : tx('(sem cabeçalho: lista de nomes)')}
               </p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {IMPORT_FIELDS.filter((f) => mapping[f.key] !== undefined || ['name', 'birth_date', 'number', 'position'].includes(f.key)).map((f) => (
@@ -175,8 +176,8 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
                       onValueChange={(v) => setMapping((m) => { const n = { ...m }; if (v === NONE) delete n[f.key as FieldKey]; else n[f.key as FieldKey] = Number(v); return n; })}>
                       <SelectTrigger className="h-8 w-44"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={NONE}>— não tem —</SelectItem>
-                        {headers.map((h, i) => <SelectItem key={i} value={String(i)}>{h instanceof Date ? h.toLocaleDateString('pt-PT') : String(h ?? `Coluna ${i + 1}`) || `Coluna ${i + 1}`}</SelectItem>)}
+                        <SelectItem value={NONE}>{tx('— não tem —')}</SelectItem>
+                        {headers.map((h, i) => <SelectItem key={i} value={String(i)}>{h instanceof Date ? h.toLocaleDateString('pt-PT') : String(h ?? `Coluna ${i + 1}`) || tx('Coluna {{v0}}', { v0: i + 1 })}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </label>
@@ -189,11 +190,11 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
                 <thead className="sticky top-0 bg-card">
                   <tr className="border-b text-[11px] uppercase tracking-wide text-muted-foreground">
                     <th className="w-8 py-1.5" />
-                    <th className="py-1.5 text-left font-medium">Nome</th>
-                    <th className="py-1.5 font-medium">Nascimento</th>
+                    <th className="py-1.5 text-left font-medium">{tx('Nome')}</th>
+                    <th className="py-1.5 font-medium">{tx('Nascimento')}</th>
                     <th className="py-1.5 font-medium">Nº</th>
-                    <th className="py-1.5 font-medium">Pos</th>
-                    <th className="py-1.5 text-left font-medium">Estado</th>
+                    <th className="py-1.5 font-medium">{tx('Pos')}</th>
+                    <th className="py-1.5 text-left font-medium">{tx('Estado')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,7 +210,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
                         <td className="py-1 text-center font-mono text-xs">{p.birth_date ? (p.birth_year_only ? p.birth_year : p.birth_date.split('-').reverse().join('/')) : '—'}</td>
                         <td className="py-1 text-center font-mono text-xs">{p.number ?? '—'}</td>
                         <td className="py-1 text-center text-xs">{p.position ?? '—'}</td>
-                        <td className="py-1 text-xs">{isDup ? 'Já existe' : skip.has(p.line) ? 'Não importar' : 'Novo'}</td>
+                        <td className="py-1 text-xs">{isDup ? tx('Já existe') : skip.has(p.line) ? tx('Não importar') : tx('Novo')}</td>
                       </tr>
                     );
                   })}
@@ -217,8 +218,8 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
               </table>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <Button variant="ghost" onClick={reset}>Outro ficheiro</Button>
-              <Button onClick={() => setStep('dest')} disabled={toImport.length === 0}>Continuar ({toImport.length} novos)</Button>
+              <Button variant="ghost" onClick={reset}>{tx('Outro ficheiro')}</Button>
+              <Button onClick={() => setStep('dest')} disabled={toImport.length === 0}>{tx('Continuar (')}{toImport.length} {tx('novos)')}</Button>
             </div>
           </div>
         )}
@@ -227,20 +228,20 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
           <div className="space-y-4">
             <div className="grid gap-2 sm:grid-cols-2">
               <button type="button" onClick={() => setMode('team')} className={cn('rounded-md border p-3 text-left text-sm', mode === 'team' && 'border-primary bg-primary/5')}>
-                <b>Todos para uma equipa</b>
-                <span className="block text-xs text-muted-foreground">Ex.: a lista de nomes de uma equipa.</span>
+                <b>{tx('Todos para uma equipa')}</b>
+                <span className="block text-xs text-muted-foreground">{tx('Ex.: a lista de nomes de uma equipa.')}</span>
               </button>
               <button type="button" onClick={() => setMode('years')} className={cn('rounded-md border p-3 text-left text-sm', mode === 'years' && 'border-primary bg-primary/5')}>
-                <b>Por ano de nascimento</b>
-                <span className="block text-xs text-muted-foreground">{withYear} de {toImport.length} têm ano. Ex.: 2013 e 2014 → Sub-13.</span>
+                <b>{tx('Por ano de nascimento')}</b>
+                <span className="block text-xs text-muted-foreground">{withYear} de {toImport.length} {tx('têm ano. Ex.: 2013 e 2014 → Sub-13.')}</span>
               </button>
             </div>
 
             {mode === 'team' ? (
               <div className="flex items-center gap-3 text-sm">
-                <span>Equipa</span>
+                <span>{tx('Equipa')}</span>
                 <Select value={teamId} onValueChange={setTeamId}>
-                  <SelectTrigger className="w-56"><SelectValue placeholder="Escolher" /></SelectTrigger>
+                  <SelectTrigger className="w-56"><SelectValue placeholder={tx('Escolher')} /></SelectTrigger>
                   <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
@@ -248,7 +249,7 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
               <div className="space-y-3">
                 <BirthYearRules teams={teams} seasonStartYear={seasonStartYear} onChange={setTeams} />
                 <div className="flex flex-wrap items-center gap-3 text-sm">
-                  <span>Sem ano ou ano sem equipa →</span>
+                  <span>{tx('Sem ano ou ano sem equipa →')}</span>
                   <Select value={fallbackTeam} onValueChange={setFallbackTeam}>
                     <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
                     <SelectContent>{teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
@@ -264,9 +265,9 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
             )}
 
             <div className="flex items-center justify-between gap-2 border-t pt-3">
-              <Button variant="ghost" onClick={() => setStep('check')}>Voltar</Button>
+              <Button variant="ghost" onClick={() => setStep('check')}>{tx('Voltar')}</Button>
               <Button onClick={runImport} disabled={busy}>
-                {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{progress || 'A importar…'}</> : `Importar ${toImport.length} jogadores`}
+                {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{progress || tx('A importar…')}</> : tx('Importar {{v0}} jogadores', { v0: toImport.length })}
               </Button>
             </div>
           </div>
@@ -274,12 +275,12 @@ export function PlayerImportDialog({ open, onClose, teams: teamsIn, seasonId, se
 
         {step === 'done' && result && (
           <div className="space-y-3">
-            <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-5 w-5 text-green-600" /><b>{result.created}</b> jogadores importados{result.skipped ? `, ${result.skipped} ignorados (já existiam ou desmarcados)` : ''}.</p>
+            <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="h-5 w-5 text-green-600" /><b>{result.created}</b> {tx('jogadores importados')}{result.skipped ? tx(', {{v0}} ignorados (já existiam ou desmarcados)', { v0: result.skipped }) : ''}.</p>
             <div className="flex flex-wrap gap-2 text-sm">
               {Object.entries(result.perTeam).map(([t, n]) => <span key={t} className="rounded bg-muted px-2 py-1">{teamName(t)}: <b>{n}</b></span>)}
             </div>
-            <p className="text-xs text-muted-foreground">Pode completar os dados de cada jogador na sua ficha (data de nascimento, posição, encarregado…).</p>
-            <div className="flex justify-end"><Button onClick={close}>Fechar</Button></div>
+            <p className="text-xs text-muted-foreground">{tx('Pode completar os dados de cada jogador na sua ficha (data de nascimento, posição, encarregado…).')}</p>
+            <div className="flex justify-end"><Button onClick={close}>{tx('Fechar')}</Button></div>
           </div>
         )}
       </DialogContent>

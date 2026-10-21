@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, X, FileDown } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerFeesProps {
   clubId: string;
@@ -100,7 +101,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
 
   const togglePayment = useMutation({
     mutationFn: async ({ playerId, month, isPaid }: { playerId: string; month: number; isPaid: boolean }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
 
       // Check if fee record exists
       const { data: existing } = await supabase
@@ -139,7 +140,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
       queryClient.invalidateQueries({ queryKey: ['player-fees'] });
     },
     onError: (error: any) => {
-      toast.error('Erro ao atualizar pagamento: ' + error.message);
+      toast.error(tx('Erro ao atualizar pagamento: ') + error.message);
     },
   });
 
@@ -163,7 +164,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
     a.download = `mensalidades-${selectedYear}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Ficheiro exportado!');
+    toast.success(tx('Ficheiro exportado!'));
   };
 
   if (isLoading) {
@@ -175,16 +176,16 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle>Mensalidades dos Jogadores</CardTitle>
-            <CardDescription>Controle de pagamentos por escalão</CardDescription>
+            <CardTitle>{tx('Mensalidades dos Jogadores')}</CardTitle>
+            <CardDescription>{tx('Controle de pagamentos por escalão')}</CardDescription>
           </div>
           <div className="flex gap-2">
             <Select value={selectedTeam} onValueChange={setSelectedTeam}>
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Equipa" />
+                <SelectValue placeholder={tx('Equipa')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="all">{tx('Todas')}</SelectItem>
                 {teams?.map(team => (
                   <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                 ))}
@@ -211,8 +212,8 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b">
-                <th className="text-left p-2 font-medium">Jogador</th>
-                <th className="text-left p-2 font-medium">Equipa</th>
+                <th className="text-left p-2 font-medium">{tx('Jogador')}</th>
+                <th className="text-left p-2 font-medium">{tx('Equipa')}</th>
                 {MONTHS.map((month, idx) => (
                   <th key={month} className="text-center p-2 font-medium text-xs">
                     {month.substring(0, 3)}
@@ -256,7 +257,7 @@ export function PlayerFees({ clubId }: PlayerFeesProps) {
           
           {(!playersWithFees || playersWithFees.length === 0) && (
             <p className="text-center text-muted-foreground py-8">
-              Nenhum jogador encontrado
+              {tx('Nenhum jogador encontrado')}
             </p>
           )}
         </div>

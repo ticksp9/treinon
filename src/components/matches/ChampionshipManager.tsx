@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { FPFImport } from './FPFImport';
 import { getCurrentSeasonName } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -290,7 +291,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
         owner_id: user.id
       });
 
-      toast.success('Campeonato criado');
+      toast.success(tx('Campeonato criado'));
       setNewChampName('');
       setNewChampSeries('');
       setShowNewChampionship(false);
@@ -298,7 +299,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
       fetchChampionships();
     } catch (error) {
       console.error('Error creating championship:', error);
-      toast.error('Erro ao criar campeonato');
+      toast.error(tx('Erro ao criar campeonato'));
     }
   };
 
@@ -313,24 +314,24 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
         owner_id: user.id
       });
 
-      toast.success('Equipa adicionada');
+      toast.success(tx('Equipa adicionada'));
       setNewTeamName('');
       setShowAddTeam(false);
       fetchChampionshipData();
     } catch (error) {
       console.error('Error adding team:', error);
-      toast.error('Erro ao adicionar equipa');
+      toast.error(tx('Erro ao adicionar equipa'));
     }
   };
 
   const removeTeam = async (teamId: string) => {
     try {
       await supabase.from('championship_teams').delete().eq('id', teamId);
-      toast.success('Equipa removida');
+      toast.success(tx('Equipa removida'));
       fetchChampionshipData();
     } catch (error) {
       console.error('Error removing team:', error);
-      toast.error('Erro ao remover equipa');
+      toast.error(tx('Erro ao remover equipa'));
     }
   };
 
@@ -349,13 +350,13 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
         owner_id: user.id
       });
 
-      toast.success('Resultado adicionado');
+      toast.success(tx('Resultado adicionado'));
       setNewResult({ homeTeamId: '', awayTeamId: '', homeGoals: '', awayGoals: '', matchday: '' });
       setShowAddResult(false);
       fetchChampionshipData();
     } catch (error) {
       console.error('Error adding result:', error);
-      toast.error('Erro ao adicionar resultado');
+      toast.error(tx('Erro ao adicionar resultado'));
     }
   };
 
@@ -370,11 +371,11 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
         })
         .eq('id', resultId);
 
-      toast.success('Resultado atualizado');
+      toast.success(tx('Resultado atualizado'));
       fetchChampionshipData();
     } catch (error) {
       console.error('Error updating result:', error);
-      toast.error('Erro ao atualizar resultado');
+      toast.error(tx('Erro ao atualizar resultado'));
     }
   };
 
@@ -383,12 +384,12 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
 
     try {
       await supabase.from('championships').delete().eq('id', selectedChampionship.id);
-      toast.success('Campeonato eliminado');
+      toast.success(tx('Campeonato eliminado'));
       setSelectedChampionship(null);
       fetchChampionships();
     } catch (error) {
       console.error('Error deleting championship:', error);
-      toast.error('Erro ao eliminar campeonato');
+      toast.error(tx('Erro ao eliminar campeonato'));
     }
   };
 
@@ -410,30 +411,30 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />
-              Campeonato
+              {tx('Campeonato')}
             </div>
             <Dialog open={showNewChampionship} onOpenChange={setShowNewChampionship}>
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-1" />
-                  Novo Campeonato
+                  {tx('Novo Campeonato')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Criar Campeonato</DialogTitle>
+                  <DialogTitle>{tx('Criar Campeonato')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Nome do Campeonato</Label>
+                    <Label>{tx('Nome do Campeonato')}</Label>
                     <Input
                       value={newChampName}
                       onChange={(e) => setNewChampName(e.target.value)}
-                      placeholder="Ex: Campeonato Distrital"
+                      placeholder={tx('Ex: Campeonato Distrital')}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Época</Label>
+                    <Label>{tx('Época')}</Label>
                     <Input
                       value={newChampSeason}
                       onChange={(e) => setNewChampSeason(e.target.value)}
@@ -441,16 +442,16 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Série (opcional)</Label>
+                    <Label>{tx('Série (opcional)')}</Label>
                     <Input
                       value={newChampSeries}
                       onChange={(e) => setNewChampSeries(e.target.value)}
-                      placeholder="Ex: Série A"
+                      placeholder={tx('Ex: Série A')}
                     />
                   </div>
                   <Button onClick={createChampionship} className="w-full">
                     <Save className="w-4 h-4 mr-2" />
-                    Criar Campeonato
+                    {tx('Criar Campeonato')}
                   </Button>
                 </div>
               </DialogContent>
@@ -460,7 +461,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
         <CardContent>
           {championships.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
-              Nenhum campeonato criado. Crie um para gerir a classificação.
+              {tx('Nenhum campeonato criado. Crie um para gerir a classificação.')}
             </p>
           ) : (
             <Select
@@ -471,7 +472,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um campeonato" />
+                <SelectValue placeholder={tx('Selecione um campeonato')} />
               </SelectTrigger>
               <SelectContent>
                 {championships.map(c => (
@@ -491,12 +492,12 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
-              Classificação Oficial (FPF)
+              {tx('Classificação Oficial (FPF)')}
             </div>
             <FPFImport onImportStandings={handleFPFImport} />
           </CardTitle>
           <CardDescription>
-            Importar automaticamente a classificação do site da FPF/Associação Distrital
+            {tx('Importar automaticamente a classificação do site da FPF/Associação Distrital')}
           </CardDescription>
         </CardHeader>
         {showFpfStandings && fpfStandings.length > 0 && (
@@ -506,14 +507,14 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
-                    <TableHead>Equipa</TableHead>
+                    <TableHead>{tx('Equipa')}</TableHead>
                     <TableHead className="text-center">J</TableHead>
                     <TableHead className="text-center">V</TableHead>
                     <TableHead className="text-center">E</TableHead>
                     <TableHead className="text-center">D</TableHead>
                     <TableHead className="text-center">GM</TableHead>
                     <TableHead className="text-center">GS</TableHead>
-                    <TableHead className="text-center font-bold">Pts</TableHead>
+                    <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -528,7 +529,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {s.teamName}
-                            {isOwnTeam && <Badge variant="outline" className="text-xs">Nós</Badge>}
+                            {isOwnTeam && <Badge variant="outline" className="text-xs">{tx('Nós')}</Badge>}
                           </div>
                         </TableCell>
                         <TableCell className="text-center">{s.played}</TableCell>
@@ -553,15 +554,15 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
           <TabsList>
             <TabsTrigger value="standings" className="flex items-center gap-2">
               <TableIcon className="w-4 h-4" />
-              Classificação Manual
+              {tx('Classificação Manual')}
             </TabsTrigger>
             <TabsTrigger value="teams" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Equipas ({championshipTeams.length})
+              {tx('Equipas (')}{championshipTeams.length})
             </TabsTrigger>
             <TabsTrigger value="results" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Resultados ({results.length})
+              {tx('Resultados (')}{results.length})
             </TabsTrigger>
           </TabsList>
 
@@ -570,10 +571,10 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TableIcon className="w-5 h-5" />
-                  Tabela Classificativa (Calculada)
+                  {tx('Tabela Classificativa (Calculada)')}
                 </CardTitle>
                 <CardDescription>
-                  {selectedChampionship.name} {selectedChampionship.series && `- ${selectedChampionship.series}`} - Baseada nos resultados inseridos
+                  {selectedChampionship.name} {selectedChampionship.series && `- ${selectedChampionship.series}`} {tx('- Baseada nos resultados inseridos')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -582,7 +583,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">#</TableHead>
-                        <TableHead>Equipa</TableHead>
+                        <TableHead>{tx('Equipa')}</TableHead>
                         <TableHead className="text-center">J</TableHead>
                         <TableHead className="text-center">V</TableHead>
                         <TableHead className="text-center">E</TableHead>
@@ -590,7 +591,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                         <TableHead className="text-center">GM</TableHead>
                         <TableHead className="text-center">GS</TableHead>
                         <TableHead className="text-center">DG</TableHead>
-                        <TableHead className="text-center font-bold">Pts</TableHead>
+                        <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -603,7 +604,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {s.teamName}
-                              {s.isOwnTeam && <Badge variant="outline" className="text-xs">Nós</Badge>}
+                              {s.isOwnTeam && <Badge variant="outline" className="text-xs">{tx('Nós')}</Badge>}
                             </div>
                           </TableCell>
                           <TableCell className="text-center">{s.played}</TableCell>
@@ -629,31 +630,31 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Equipas da Série
+                    {tx('Equipas da Série')}
                   </div>
                   <Dialog open={showAddTeam} onOpenChange={setShowAddTeam}>
                     <DialogTrigger asChild>
                       <Button size="sm">
                         <Plus className="w-4 h-4 mr-1" />
-                        Adicionar Equipa
+                        {tx('Adicionar Equipa')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Adicionar Equipa</DialogTitle>
+                        <DialogTitle>{tx('Adicionar Equipa')}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Nome da Equipa</Label>
+                          <Label>{tx('Nome da Equipa')}</Label>
                           <Input
                             value={newTeamName}
                             onChange={(e) => setNewTeamName(e.target.value)}
-                            placeholder="Ex: FC Porto Sub-15"
+                            placeholder={tx('Ex: FC Porto Sub-15')}
                           />
                         </div>
                         <Button onClick={addTeam} className="w-full">
                           <Save className="w-4 h-4 mr-2" />
-                          Adicionar
+                          {tx('Adicionar')}
                         </Button>
                       </div>
                     </DialogContent>
@@ -669,7 +670,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                     >
                       <div className="flex items-center gap-2">
                         <span>{t.team_name}</span>
-                        {t.is_own_team && <Badge variant="outline" className="text-xs">A minha equipa</Badge>}
+                        {t.is_own_team && <Badge variant="outline" className="text-xs">{tx('A minha equipa')}</Badge>}
                       </div>
                       {!t.is_own_team && (
                         <Button
@@ -693,37 +694,37 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5" />
-                    Resultados
+                    {tx('Resultados')}
                   </div>
                   <Dialog open={showAddResult} onOpenChange={setShowAddResult}>
                     <DialogTrigger asChild>
                       <Button size="sm">
                         <Plus className="w-4 h-4 mr-1" />
-                        Adicionar Resultado
+                        {tx('Adicionar Resultado')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Adicionar Resultado</DialogTitle>
+                        <DialogTitle>{tx('Adicionar Resultado')}</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Jornada (opcional)</Label>
+                          <Label>{tx('Jornada (opcional)')}</Label>
                           <Input
                             type="number"
                             value={newResult.matchday}
                             onChange={(e) => setNewResult({ ...newResult, matchday: e.target.value })}
-                            placeholder="Ex: 1"
+                            placeholder={tx('Ex: 1')}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Equipa Casa</Label>
+                          <Label>{tx('Equipa Casa')}</Label>
                           <Select
                             value={newResult.homeTeamId}
                             onValueChange={(val) => setNewResult({ ...newResult, homeTeamId: val })}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
+                              <SelectValue placeholder={tx('Selecione')} />
                             </SelectTrigger>
                             <SelectContent>
                               {championshipTeams.map(t => (
@@ -734,7 +735,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Golos Casa</Label>
+                            <Label>{tx('Golos Casa')}</Label>
                             <Input
                               type="number"
                               min="0"
@@ -743,7 +744,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>Golos Fora</Label>
+                            <Label>{tx('Golos Fora')}</Label>
                             <Input
                               type="number"
                               min="0"
@@ -753,13 +754,13 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <Label>Equipa Fora</Label>
+                          <Label>{tx('Equipa Fora')}</Label>
                           <Select
                             value={newResult.awayTeamId}
                             onValueChange={(val) => setNewResult({ ...newResult, awayTeamId: val })}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
+                              <SelectValue placeholder={tx('Selecione')} />
                             </SelectTrigger>
                             <SelectContent>
                               {championshipTeams.filter(t => t.id !== newResult.homeTeamId).map(t => (
@@ -770,7 +771,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                         </div>
                         <Button onClick={addResult} className="w-full">
                           <Save className="w-4 h-4 mr-2" />
-                          Guardar Resultado
+                          {tx('Guardar Resultado')}
                         </Button>
                       </div>
                     </DialogContent>
@@ -781,7 +782,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                 <div className="space-y-2">
                   {results.length === 0 ? (
                     <p className="text-muted-foreground text-center py-4">
-                      Nenhum resultado registado.
+                      {tx('Nenhum resultado registado.')}
                     </p>
                   ) : (
                     results.map(r => {
@@ -807,7 +808,7 @@ export function ChampionshipManager({ teamId, team }: ChampionshipManagerProps) 
                             </div>
                           </div>
                           {!r.is_played && (
-                            <Badge variant="secondary">Por jogar</Badge>
+                            <Badge variant="secondary">{tx('Por jogar')}</Badge>
                           )}
                         </div>
                       );

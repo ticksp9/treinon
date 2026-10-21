@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { computeCostsByFacility, computeCostsByTeam } from '@/hooks/useFacilities';
+import { tx } from '@/lib/i18n/ui';
 
 const COST_TYPES: Record<string, string> = {
   utilities: 'Utilidades', cleaning: 'Limpeza', maintenance: 'Manutenção', rental: 'Aluguer',
@@ -25,11 +26,11 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle className="text-base">Total: €{total.toLocaleString('pt-PT')}</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{tx('Total: €')}{total.toLocaleString('pt-PT')}</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-medium mb-3 text-sm">Por Instalação</h4>
+              <h4 className="font-medium mb-3 text-sm">{tx('Por Instalação')}</h4>
               <div className="space-y-2">
                 {Object.entries(byFacility).sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
                   <div key={id} className="flex justify-between items-center text-sm">
@@ -37,11 +38,11 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                     <Badge variant="outline">€{amount.toLocaleString('pt-PT')}</Badge>
                   </div>
                 ))}
-                {Object.keys(byFacility).length === 0 && <p className="text-sm text-muted-foreground">Sem dados</p>}
+                {Object.keys(byFacility).length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem dados')}</p>}
               </div>
             </div>
             <div>
-              <h4 className="font-medium mb-3 text-sm">Por Equipa</h4>
+              <h4 className="font-medium mb-3 text-sm">{tx('Por Equipa')}</h4>
               <div className="space-y-2">
                 {Object.entries(byTeam).sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
                   <div key={id} className="flex justify-between items-center text-sm">
@@ -49,7 +50,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                     <Badge variant="outline">€{amount.toLocaleString('pt-PT')}</Badge>
                   </div>
                 ))}
-                {Object.keys(byTeam).length === 0 && <p className="text-sm text-muted-foreground">Sem dados</p>}
+                {Object.keys(byTeam).length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem dados')}</p>}
               </div>
             </div>
           </div>
@@ -57,7 +58,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Detalhes</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{tx('Detalhes')}</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2">
             {operationalCosts.slice(0, 50).map((c: any) => (
@@ -69,7 +70,7 @@ export function CostsTab({ operationalCosts, facilities, teams }: Props) {
                 <span className="font-medium">€{Number(c.amount).toLocaleString('pt-PT')}</span>
               </div>
             ))}
-            {operationalCosts.length === 0 && <p className="text-center text-muted-foreground">Nenhum custo operacional registado</p>}
+            {operationalCosts.length === 0 && <p className="text-center text-muted-foreground">{tx('Nenhum custo operacional registado')}</p>}
           </div>
         </CardContent>
       </Card>

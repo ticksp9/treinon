@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
 import { PIPELINE_STAGES, PIPELINE_STAGE_LABELS } from '@/hooks/useScouting';
+import { tx } from '@/lib/i18n/ui';
 
 export function PipelineTab() {
   const { clubId } = useUserRole();
@@ -39,13 +40,13 @@ export function PipelineTab() {
 
   return (
     <div className="space-y-4 mt-4">
-      <h3 className="text-lg font-semibold">Pipeline de Recrutamento</h3>
+      <h3 className="text-lg font-semibold">{tx('Pipeline de Recrutamento')}</h3>
 
       {activeStages.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
           <ArrowRight className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p>Nenhum prospect no pipeline.</p>
-          <p className="text-xs mt-1">Adicione prospects e mova-os através das etapas.</p>
+          <p>{tx('Nenhum prospect no pipeline.')}</p>
+          <p className="text-xs mt-1">{tx('Adicione prospects e mova-os através das etapas.')}</p>
         </CardContent></Card>
       ) : (
         <div className="space-y-4">
@@ -66,7 +67,7 @@ export function PipelineTab() {
                     </div>
                     {entry.risk_level && (
                       <Badge variant={entry.risk_level === 'high' ? 'destructive' : 'outline'} className="text-xs">
-                        Risco: {entry.risk_level}
+                        {tx('Risco:')}{' '}{entry.risk_level}
                       </Badge>
                     )}
                   </div>

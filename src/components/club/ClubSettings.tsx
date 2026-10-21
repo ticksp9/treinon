@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Shield, UserPlus, Trash2, Crown, Users } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface ClubSettingsProps {
   clubId: string;
@@ -92,7 +93,7 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
         .maybeSingle();
 
       if (profileError || !profile) {
-        throw new Error('Utilizador não encontrado com este email');
+        throw new Error(tx('Utilizador não encontrado com este email'));
       }
 
       // Add as club staff with admin role
@@ -109,14 +110,14 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
 
       if (error) {
         if (error.code === '23505') {
-          throw new Error('Este utilizador já é membro do staff');
+          throw new Error(tx('Este utilizador já é membro do staff'));
         }
         throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-admins', clubId] });
-      toast.success('Administrador adicionado!');
+      toast.success(tx('Administrador adicionado!'));
       setAddAdminDialog(false);
       setNewAdminEmail('');
     },
@@ -135,7 +136,7 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-admins', clubId] });
-      toast.success('Administrador removido');
+      toast.success(tx('Administrador removido'));
     },
   });
 
@@ -146,28 +147,28 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
-              <CardTitle>Administradores</CardTitle>
+              <CardTitle>{tx('Administradores')}</CardTitle>
             </div>
             <Dialog open={addAdminDialog} onOpenChange={setAddAdminDialog}>
               <DialogTrigger asChild>
                 <Button size="sm">
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Adicionar
+                  {tx('Adicionar')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Administrador</DialogTitle>
+                  <DialogTitle>{tx('Adicionar Administrador')}</DialogTitle>
                   <DialogDescription>
-                    O utilizador deve já ter uma conta na aplicação.
+                    {tx('O utilizador deve já ter uma conta na aplicação.')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Email do utilizador</Label>
+                    <Label>{tx('Email do utilizador')}</Label>
                     <Input
                       type="email"
-                      placeholder="email@exemplo.com"
+                      placeholder={tx('email@exemplo.com')}
                       value={newAdminEmail}
                       onChange={(e) => setNewAdminEmail(e.target.value)}
                     />
@@ -177,14 +178,14 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
                     onClick={() => addAdmin.mutate(newAdminEmail)}
                     disabled={addAdmin.isPending || !newAdminEmail}
                   >
-                    Adicionar Administrador
+                    {tx('Adicionar Administrador')}
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
           <CardDescription>
-            Gerir quem pode administrar o clube
+            {tx('Gerir quem pode administrar o clube')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -197,11 +198,11 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
                     <Crown className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">{ownerProfile.full_name || 'Proprietário'}</p>
+                    <p className="font-medium">{ownerProfile.full_name || tx('Proprietário')}</p>
                     <p className="text-sm text-muted-foreground">{ownerProfile.email}</p>
                   </div>
                 </div>
-                <Badge variant="default">Proprietário</Badge>
+                <Badge variant="default">{tx('Proprietário')}</Badge>
               </div>
             )}
 
@@ -224,7 +225,7 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Admin</Badge>
+                    <Badge variant="secondary">{tx('Admin')}</Badge>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -238,7 +239,7 @@ export function ClubSettings({ clubId }: ClubSettingsProps) {
               ))
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum administrador adicional
+                {tx('Nenhum administrador adicional')}
               </p>
             )}
           </div>

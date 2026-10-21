@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, startOfYear, endOfYear } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface ClubFinanceChartProps {
   clubId: string;
@@ -105,7 +106,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Receitas {selectedYear}</p>
+                <p className="text-sm text-muted-foreground">{tx('Receitas')}{' '}{selectedYear}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {totals.income.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
                 </p>
@@ -120,7 +121,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Despesas {selectedYear}</p>
+                <p className="text-sm text-muted-foreground">{tx('Despesas')}{' '}{selectedYear}</p>
                 <p className="text-2xl font-bold text-red-600">
                   {totals.expense.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
                 </p>
@@ -135,7 +136,7 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Balanço {selectedYear}</p>
+                <p className="text-sm text-muted-foreground">{tx('Balanço')}{' '}{selectedYear}</p>
                 <p className={`text-2xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {balance.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}
                 </p>
@@ -153,8 +154,8 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle>Evolução Financeira</CardTitle>
-              <CardDescription>Comparação mensal entre anos</CardDescription>
+              <CardTitle>{tx('Evolução Financeira')}</CardTitle>
+              <CardDescription>{tx('Comparação mensal entre anos')}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -213,8 +214,8 @@ export function ClubFinanceChart({ clubId }: ClubFinanceChartProps) {
       {/* Balance Line Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Balanço Mensal</CardTitle>
-          <CardDescription>Receitas - Despesas por mês</CardDescription>
+          <CardTitle>{tx('Balanço Mensal')}</CardTitle>
+          <CardDescription>{tx('Receitas - Despesas por mês')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">

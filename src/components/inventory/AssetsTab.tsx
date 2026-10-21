@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
   in_stock: 'Em Stock', assigned: 'Atribuído', in_use: 'Em Uso', maintenance: 'Manutenção',
@@ -41,29 +42,29 @@ export function AssetsTab({ assets, onCreateAsset }: Props) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Ativos ({filtered.length})</CardTitle>
+        <CardTitle className="text-base">{tx('Ativos (')}{filtered.length})</CardTitle>
         <div className="flex gap-2">
-          <div className="relative"><Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-8 w-48" placeholder="Pesquisar..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+          <div className="relative"><Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-8 w-48" placeholder={tx('Pesquisar...')} value={search} onChange={e => setSearch(e.target.value)} /></div>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Novo Ativo</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />{tx('Novo Ativo')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Novo Ativo</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Novo Ativo')}</DialogTitle></DialogHeader>
               <div className="grid gap-3">
-                <div><Label>Código</Label><Input value={form.asset_code} onChange={e => setForm(f => ({ ...f, asset_code: e.target.value }))} /></div>
-                <div><Label>Nome</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+                <div><Label>{tx('Código')}</Label><Input value={form.asset_code} onChange={e => setForm(f => ({ ...f, asset_code: e.target.value }))} /></div>
+                <div><Label>{tx('Nome')}</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div><Label>Marca</Label><Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} /></div>
-                  <div><Label>Modelo</Label><Input value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} /></div>
+                  <div><Label>{tx('Marca')}</Label><Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} /></div>
+                  <div><Label>{tx('Modelo')}</Label><Input value={form.model} onChange={e => setForm(f => ({ ...f, model: e.target.value }))} /></div>
                 </div>
-                <div><Label>Nº Série</Label><Input value={form.serial_number} onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))} /></div>
-                <div><Label>Custo Aquisição (€)</Label><Input type="number" value={form.acquisition_cost} onChange={e => setForm(f => ({ ...f, acquisition_cost: e.target.value }))} /></div>
-                <div><Label>Estado</Label>
+                <div><Label>{tx('Nº Série')}</Label><Input value={form.serial_number} onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))} /></div>
+                <div><Label>{tx('Custo Aquisição (€)')}</Label><Input type="number" value={form.acquisition_cost} onChange={e => setForm(f => ({ ...f, acquisition_cost: e.target.value }))} /></div>
+                <div><Label>{tx('Estado')}</Label>
                   <Select value={form.asset_status} onValueChange={v => setForm(f => ({ ...f, asset_status: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(STATUS_MAP).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleSubmit}>Criar Ativo</Button>
+                <Button onClick={handleSubmit}>{tx('Criar Ativo')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -73,13 +74,13 @@ export function AssetsTab({ assets, onCreateAsset }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Código</TableHead><TableHead>Nome</TableHead><TableHead>Marca/Modelo</TableHead>
-              <TableHead>Nº Série</TableHead><TableHead>Custo</TableHead><TableHead>Estado</TableHead>
+              <TableHead>{tx('Código')}</TableHead><TableHead>{tx('Nome')}</TableHead><TableHead>{tx('Marca/Modelo')}</TableHead>
+              <TableHead>{tx('Nº Série')}</TableHead><TableHead>{tx('Custo')}</TableHead><TableHead>{tx('Estado')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem ativos registados</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{tx('Sem ativos registados')}</TableCell></TableRow>
             ) : filtered.slice(0, 50).map(a => (
               <TableRow key={a.id}>
                 <TableCell className="font-mono text-xs">{a.asset_code}</TableCell>

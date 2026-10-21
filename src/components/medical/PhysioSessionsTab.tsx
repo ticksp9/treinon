@@ -17,6 +17,7 @@ import { Plus, Stethoscope, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { PHYSIO_MODALITIES } from '@/hooks/useMedical';
+import { tx } from '@/lib/i18n/ui';
 
 export function PhysioSessionsTab() {
   const { user } = useAuth();
@@ -61,9 +62,9 @@ export function PhysioSessionsTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['physio-sessions-list'] });
       setShowDialog(false);
-      toast.success('Sessão registada!');
+      toast.success(tx('Sessão registada!'));
     },
-    onError: () => toast.error('Erro ao registar sessão'),
+    onError: () => toast.error(tx('Erro ao registar sessão')),
   });
 
   const filtered = sessions?.filter(s => {
@@ -77,37 +78,37 @@ export function PhysioSessionsTab() {
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Pesquisar atleta..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+          <Input placeholder={tx('Pesquisar atleta...')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Nova Sessão</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />{tx('Nova Sessão')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registar Sessão de Fisioterapia</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Registar Sessão de Fisioterapia')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{players?.map(p => <SelectItem key={p.id} value={p.id}>#{p.number} {p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Modalidade *</Label>
+                  <Label>{tx('Modalidade *')}</Label>
                   <Select value={form.modality} onValueChange={v => setForm({...form, modality: v})}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{PHYSIO_MODALITIES.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2"><Label>Data</Label><Input type="date" value={form.session_date} onChange={e => setForm({...form, session_date: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Data')}</Label><Input type="date" value={form.session_date} onChange={e => setForm({...form, session_date: e.target.value})} /></div>
               </div>
               <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2"><Label>Duração (min)</Label><Input type="number" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Dor Antes (0-10)</Label><Input type="number" min="0" max="10" value={form.pain_before} onChange={e => setForm({...form, pain_before: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Dor Depois (0-10)</Label><Input type="number" min="0" max="10" value={form.pain_after} onChange={e => setForm({...form, pain_after: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Duração (min)')}</Label><Input type="number" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Dor Antes (0-10)')}</Label><Input type="number" min="0" max="10" value={form.pain_before} onChange={e => setForm({...form, pain_before: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Dor Depois (0-10)')}</Label><Input type="number" min="0" max="10" value={form.pain_after} onChange={e => setForm({...form, pain_after: e.target.value})} /></div>
               </div>
-              <div className="space-y-2"><Label>Evolução / Notas</Label><Textarea value={form.evolution_notes} onChange={e => setForm({...form, evolution_notes: e.target.value})} rows={3} /></div>
-              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || !form.modality || createMutation.isPending}>Registar</Button>
+              <div className="space-y-2"><Label>{tx('Evolução / Notas')}</Label><Textarea value={form.evolution_notes} onChange={e => setForm({...form, evolution_notes: e.target.value})} rows={3} /></div>
+              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || !form.modality || createMutation.isPending}>{tx('Registar')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -118,19 +119,19 @@ export function PhysioSessionsTab() {
           {isLoading ? (
             <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
           ) : filtered?.length === 0 ? (
-            <div className="text-center py-12"><Stethoscope className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">Nenhuma sessão registada</p></div>
+            <div className="text-center py-12"><Stethoscope className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">{tx('Nenhuma sessão registada')}</p></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Modalidade</TableHead>
-                    <TableHead>Duração</TableHead>
-                    <TableHead>Dor Antes</TableHead>
-                    <TableHead>Dor Depois</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>{tx('Atleta')}</TableHead>
+                    <TableHead>{tx('Data')}</TableHead>
+                    <TableHead>{tx('Modalidade')}</TableHead>
+                    <TableHead>{tx('Duração')}</TableHead>
+                    <TableHead>{tx('Dor Antes')}</TableHead>
+                    <TableHead>{tx('Dor Depois')}</TableHead>
+                    <TableHead>{tx('Estado')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -145,7 +146,7 @@ export function PhysioSessionsTab() {
                         <TableCell>{s.duration_minutes ? `${s.duration_minutes} min` : '-'}</TableCell>
                         <TableCell>{s.pain_before != null ? `${s.pain_before}/10` : '-'}</TableCell>
                         <TableCell>{s.pain_after != null ? `${s.pain_after}/10` : '-'}</TableCell>
-                        <TableCell><Badge variant="outline">{s.attendance_status === 'completed' ? 'Realizada' : s.attendance_status}</Badge></TableCell>
+                        <TableCell><Badge variant="outline">{s.attendance_status === 'completed' ? tx('Realizada') : s.attendance_status}</Badge></TableCell>
                       </TableRow>
                     );
                   })}

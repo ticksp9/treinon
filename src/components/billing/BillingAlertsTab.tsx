@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBillingAlerts } from '@/hooks/useBilling';
 import { Bell } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -15,9 +16,9 @@ export function BillingAlertsTab({ clubId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div><h3 className="font-semibold">Alertas de Cobrança</h3><p className="text-sm text-muted-foreground">Histórico de notificações enviadas</p></div>
+      <div><h3 className="font-semibold">{tx('Alertas de Cobrança')}</h3><p className="text-sm text-muted-foreground">{tx('Histórico de notificações enviadas')}</p></div>
       {(!alerts || alerts.length === 0) ? (
-        <Card><CardContent className="py-12 text-center"><Bell className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">Sem alertas registados</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><Bell className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">{tx('Sem alertas registados')}</p></CardContent></Card>
       ) : (
         <div className="space-y-2">
           {alerts.map((a: any) => (
@@ -25,16 +26,16 @@ export function BillingAlertsTab({ clubId }: Props) {
               <CardContent className="flex items-center justify-between py-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{(a.players as any)?.name || 'N/A'}</span>
+                    <span className="font-medium text-sm">{(a.players as any)?.name || tx('N/A')}</span>
                     <Badge variant="outline">{a.alert_type}</Badge>
                     <Badge variant={a.status === 'sent' ? 'default' : 'secondary'}>{a.status}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {(a.charges as any)?.description || ''}
-                    {(a.charges as any)?.balance_due && ` · ${fmt((a.charges as any).balance_due)} em aberto`}
+                    {(a.charges as any)?.balance_due && tx(' · {{v0}} em aberto', { v0: fmt((a.charges as any).balance_due) })}
                   </p>
                 </div>
-                <div className="text-xs text-muted-foreground">{a.sent_at ? format(new Date(a.sent_at), 'dd/MM/yyyy HH:mm') : 'Pendente'}</div>
+                <div className="text-xs text-muted-foreground">{a.sent_at ? format(new Date(a.sent_at), 'dd/MM/yyyy HH:mm') : tx('Pendente')}</div>
               </CardContent>
             </Card>
           ))}

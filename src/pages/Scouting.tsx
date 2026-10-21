@@ -19,6 +19,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { OpponentFormDialog, formToRow, type OpponentForm } from '@/components/scouting/OpponentFormDialog';
 import { ScoutPlayersTab } from '@/components/scouting/ScoutPlayersTab';
 import { normalizeTeamName, sheetSummary, sportLabel, type Opponent } from '@/lib/opponent-scouting';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -78,18 +79,18 @@ export default function Scouting() {
 
   const create = async (form: OpponentForm) => {
     const { data, error } = await db.from('scout_opponents').insert({ ...formToRow(form), owner_id: user!.id, club_id: clubId ?? null }).select('id').single();
-    if (error) { toast.error('Não foi possível criar a ficha: ' + error.message); throw error; }
+    if (error) { toast.error(tx('Não foi possível criar a ficha: ') + error.message); throw error; }
     qc.invalidateQueries({ queryKey: ['scout-opponents'] });
-    toast.success('Ficha criada.');
+    toast.success(tx('Ficha criada.'));
     navigate(`/scouting/adversarios/${data.id}`);
   };
 
   const count = (r: Row, k: 'players' | 'schemes' | 'observations') => r[k]?.[0]?.count ?? 0;
 
   return (
-    <AppLayout title="Scouting">
+    <AppLayout title={tx('Scouting')}>
       <div className="mx-auto max-w-4xl space-y-4">
-        <div className="inline-flex rounded-md border bg-muted/40 p-1" role="tablist" aria-label="Scouting">
+        <div className="inline-flex rounded-md border bg-muted/40 p-1" role="tablist" aria-label={tx('Scouting')}>
           {([['adversarios', 'Adversários', Shield], ['jogadores', 'Jogadores', UserSearch]] as const).map(([key, label, Icon]) => (
             <Button key={key} role="tab" aria-selected={tab === key} size="sm" variant={tab === key ? 'default' : 'ghost'} className="h-9" onClick={() => setParams(key === 'adversarios' ? {} : { tab: key }, { replace: true })}>
               <Icon className="mr-1.5 h-4 w-4" />{label}
@@ -100,16 +101,16 @@ export default function Scouting() {
         {tab === 'jogadores' ? <ScoutPlayersTab /> : (<>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-2 text-xl font-semibold"><Shield className="h-5 w-5 text-primary" />Adversários</h1>
-            <p className="text-sm text-muted-foreground">Uma ficha por equipa: como jogam, o plantel e o que foi visto em cada jogo.{clubId ? ' Partilhado com a equipa técnica do clube.' : ' Partilhado com os seus adjuntos.'}</p>
+            <h1 className="flex items-center gap-2 text-xl font-semibold"><Shield className="h-5 w-5 text-primary" />{tx('Adversários')}</h1>
+            <p className="text-sm text-muted-foreground">{tx('Uma ficha por equipa: como jogam, o plantel e o que foi visto em cada jogo.')}{clubId ? tx(' Partilhado com a equipa técnica do clube.') : tx(' Partilhado com os seus adjuntos.')}</p>
           </div>
-          <Button onClick={() => setDialog({})}><Plus className="mr-1.5 h-4 w-4" />Novo adversário</Button>
+          <Button onClick={() => setDialog({})}><Plus className="mr-1.5 h-4 w-4" />{tx('Novo adversário')}</Button>
         </div>
 
         {suggestions.length > 0 && (
           <Card>
             <CardContent className="space-y-2 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Do calendário, ainda sem ficha</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Do calendário, ainda sem ficha')}</p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((m) => (
                   <Button key={m.opponent_name} size="sm" variant="outline" className="h-9"
@@ -126,18 +127,18 @@ export default function Scouting() {
         {opponents.length > 5 && (
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Procurar equipa, escalão ou competição" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input className="pl-9" placeholder={tx('Procurar equipa, escalão ou competição')} value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         )}
 
         {isLoading ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">A carregar…</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">{tx('A carregar…')}</p>
         ) : opponents.length === 0 ? (
           <Card>
             <CardContent className="space-y-2 py-12 text-center">
               <Shield className="mx-auto h-10 w-10 text-muted-foreground/50" />
-              <p className="font-medium">Ainda não há adversários</p>
-              <p className="mx-auto max-w-md text-sm text-muted-foreground">Crie a ficha da próxima equipa que vai defrontar e desenhe como ela ataca e defende. A ficha fica guardada para os jogos seguintes.</p>
+              <p className="font-medium">{tx('Ainda não há adversários')}</p>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">{tx('Crie a ficha da próxima equipa que vai defrontar e desenhe como ela ataca e defende. A ficha fica guardada para os jogos seguintes.')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -162,7 +163,7 @@ export default function Scouting() {
                 </Card>
               </Link>
             ))}
-            {shown.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma equipa com esse nome.</p>}
+            {shown.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{tx('Nenhuma equipa com esse nome.')}</p>}
           </div>
         )}
         </>)}

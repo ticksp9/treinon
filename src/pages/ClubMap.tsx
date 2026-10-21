@@ -26,6 +26,7 @@ import { shareText } from '@/lib/share';
 import { addDays, findClashes, fixturesText, hhmm, timetableText, weekStart, WEEKDAYS, type MapMatch, type MatchLogistics, type TrainingSlot } from '@/lib/club-map';
 import { cn } from '@/lib/utils';
 import { useClubCoordinators } from '@/components/club/CoordinatorsPanel';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team { id: string; name: string; category: string | null }
 
@@ -102,16 +103,16 @@ export default function ClubMap() {
   // ── training slots ──
   const saveSlot = async () => {
     const f = slotForm!;
-    if (!f.team_id || !f.start_time || !f.end_time) return toast.error('Escolha a equipa e as horas.');
-    if (f.end_time <= f.start_time) return toast.error('A hora de fim tem de ser depois do início.');
+    if (!f.team_id || !f.start_time || !f.end_time) return toast.error(tx('Escolha a equipa e as horas.'));
+    if (f.end_time <= f.start_time) return toast.error(tx('A hora de fim tem de ser depois do início.'));
     const base = { team_id: f.team_id, start_time: f.start_time, end_time: f.end_time, location: f.location?.trim() || null, notes: f.notes?.trim() || null };
     const days = f.id ? [f.weekday!] : (f.days?.length ? f.days : []);
-    if (days.length === 0) return toast.error('Escolha pelo menos um dia.');
+    if (days.length === 0) return toast.error(tx('Escolha pelo menos um dia.'));
     const q = supabase.from('team_training_slots' as never);
     const { error } = f.id
       ? await q.update({ ...base, weekday: f.weekday } as never).eq('id', f.id)
       : await q.insert(days.map((weekday) => ({ ...base, weekday })) as never);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
     setSlotForm(null);
     qc.invalidateQueries({ queryKey: ['map-slots'] });
   };
@@ -125,7 +126,7 @@ export default function ClubMap() {
   // ── matches ──
   const saveMatch = async () => {
     const f = matchForm!;
-    if (!f.team_id || !f.date || !f.time || !f.opponent.trim()) return toast.error('Preencha equipa, data, hora e adversário.');
+    if (!f.team_id || !f.date || !f.time || !f.opponent.trim()) return toast.error(tx('Preencha equipa, data, hora e adversário.'));
     const logistics: MatchLogistics = {};
     (['meet_time', 'meet_place', 'transport', 'kit', 'info'] as const).forEach((k) => { if (f[k]?.trim()) logistics[k] = f[k]!.trim(); });
     const payload = {
@@ -136,8 +137,8 @@ export default function ClubMap() {
     const { error } = f.id
       ? await supabase.from('matches').update(payload as never).eq('id', f.id)
       : await supabase.from('matches').insert({ ...payload, owner_id: user!.id, status: 'scheduled', report_status: 'draft' } as never);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
-    toast.success(f.id ? 'Jogo atualizado.' : 'Jogo marcado. Os treinadores da equipa já o veem.');
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
+    toast.success(f.id ? tx('Jogo atualizado.') : tx('Jogo marcado. Os treinadores da equipa já o veem.'));
     setMatchForm(null);
     qc.invalidateQueries({ queryKey: ['map-matches'] });
   };
@@ -146,11 +147,11 @@ export default function ClubMap() {
   const isThisWeek = dayKey(week) === dayKey(weekStart(new Date()));
 
   return (
-    <AppLayout title="Mapa do clube">
+    <AppLayout title={tx('Mapa do clube')}>
       <div className="space-y-6">
         <PageHeader
-          title="Mapa do clube"
-          description={canEdit ? 'Treinos e jogos de todas as equipas. O que marcar aqui, os treinadores veem.' : `Treinos e jogos de todas as equipas de ${clubName}.`}
+          title={tx('Mapa do clube')}
+          description={canEdit ? tx('Treinos e jogos de todas as equipas. O que marcar aqui, os treinadores veem.') : tx('Treinos e jogos de todas as equipas de {{v0}}.', { v0: clubName })}
           icon={<CalendarDays className="w-6 h-6 text-primary" />}
         />
 
@@ -158,38 +159,38 @@ export default function ClubMap() {
           <div className="flex flex-wrap gap-2 text-xs">
             {coordinators.map((c) => (
               <span key={c.user_id} className="rounded-md border bg-card px-2 py-1">
-                <b>{c.area || 'Coordenação'}</b> · {c.name}
-                <span className="text-muted-foreground"> — {c.team_ids.length ? c.team_ids.map(teamName).join(', ') : 'todas as equipas'}</span>
+                <b>{c.area || tx('Coordenação')}</b> · {c.name}
+                <span className="text-muted-foreground"> — {c.team_ids.length ? c.team_ids.map(teamName).join(', ') : tx('todas as equipas')}</span>
               </span>
             ))}
           </div>
         )}
 
         {teams.length === 0 ? (
-          <Card><CardContent className="py-10 text-center text-muted-foreground">Ainda não há equipas. Crie as equipas primeiro.</CardContent></Card>
+          <Card><CardContent className="py-10 text-center text-muted-foreground">{tx('Ainda não há equipas. Crie as equipas primeiro.')}</CardContent></Card>
         ) : (
           <Tabs defaultValue="matches">
             <TabsList>
-              <TabsTrigger value="matches" className="gap-1.5"><Trophy className="h-4 w-4" />Jogos da semana</TabsTrigger>
-              <TabsTrigger value="trainings" className="gap-1.5"><Dumbbell className="h-4 w-4" />Mapa de treinos</TabsTrigger>
+              <TabsTrigger value="matches" className="gap-1.5"><Trophy className="h-4 w-4" />{tx('Jogos da semana')}</TabsTrigger>
+              <TabsTrigger value="trainings" className="gap-1.5"><Dumbbell className="h-4 w-4" />{tx('Mapa de treinos')}</TabsTrigger>
             </TabsList>
 
             {/* ─── Fixtures ─── */}
             <TabsContent value="matches" className="mt-4 space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, -7))} aria-label="Semana anterior"><ChevronLeft className="h-4 w-4" /></Button>
+                <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, -7))} aria-label={tx('Semana anterior')}><ChevronLeft className="h-4 w-4" /></Button>
                 <span className="min-w-[11rem] text-center text-sm font-semibold">
                   {week.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })} – {addDays(week, 6).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
-                <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, 7))} aria-label="Semana seguinte"><ChevronRight className="h-4 w-4" /></Button>
-                {!isThisWeek && <Button size="sm" variant="ghost" onClick={() => setWeek(weekStart(new Date()))}>Esta semana</Button>}
+                <Button size="icon" variant="outline" onClick={() => setWeek(addDays(week, 7))} aria-label={tx('Semana seguinte')}><ChevronRight className="h-4 w-4" /></Button>
+                {!isThisWeek && <Button size="sm" variant="ghost" onClick={() => setWeek(weekStart(new Date()))}>{tx('Esta semana')}</Button>}
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => shareText(fixturesText(clubName, week, matches), 'Jogos da semana')}><Share2 className="mr-1.5 h-4 w-4" />Partilhar</Button>
-                  {canEdit && <Button size="sm" onClick={() => setMatchForm(newMatchDraft((editableTeams[0] ?? teams[0]).id, addDays(week, 5)))}><Plus className="mr-1.5 h-4 w-4" />Marcar jogo</Button>}
+                  <Button size="sm" variant="outline" onClick={() => shareText(fixturesText(clubName, week, matches), 'Jogos da semana')}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
+                  {canEdit && <Button size="sm" onClick={() => setMatchForm(newMatchDraft((editableTeams[0] ?? teams[0]).id, addDays(week, 5)))}><Plus className="mr-1.5 h-4 w-4" />{tx('Marcar jogo')}</Button>}
                 </div>
               </div>
 
-              {matches.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">Sem jogos marcados nesta semana.</CardContent></Card>}
+              {matches.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">{tx('Sem jogos marcados nesta semana.')}</CardContent></Card>}
               {days.map((d) => {
                 const list = matches.filter((m) => dayKey(new Date(m.match_date)) === dayKey(d));
                 if (list.length === 0) return null;
@@ -207,10 +208,10 @@ export default function ClubMap() {
                             <div className="min-w-[12rem] flex-1">
                               <p className="font-semibold">{m.team_name} <span className="font-normal text-muted-foreground">{m.is_home ? 'vs' : '@'}</span> {m.opponent_name}</p>
                               <p className="flex flex-wrap items-center gap-x-3 text-xs text-muted-foreground">
-                                <Badge variant="outline" className="text-[10px]">{MATCH_TYPES[m.match_type ?? ''] ?? m.competition ?? 'Jogo'}</Badge>
-                                <span>{m.is_home ? 'Casa' : 'Fora'}</span>
+                                <Badge variant="outline" className="text-[10px]">{MATCH_TYPES[m.match_type ?? ''] ?? m.competition ?? tx('Jogo')}</Badge>
+                                <span>{m.is_home ? tx('Casa') : tx('Fora')}</span>
                                 {m.location && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{m.location}</span>}
-                                {l.meet_time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Concentração {l.meet_time}{l.meet_place ? ` · ${l.meet_place}` : ''}</span>}
+                                {l.meet_time && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{tx('Concentração')}{' '}{l.meet_time}{l.meet_place ? ` · ${l.meet_place}` : ''}</span>}
                                 {l.transport && <span className="flex items-center gap-1"><Bus className="h-3 w-3" />{l.transport}</span>}
                                 {l.kit && <span>👕 {l.kit}</span>}
                               </p>
@@ -218,7 +219,7 @@ export default function ClubMap() {
                             </div>
                             {done && <span className="font-mono text-lg font-bold">{m.goals_for ?? 0}–{m.goals_against ?? 0}</span>}
                             {canEditTeam(m.team_id) && !done && (
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setMatchForm(draftFromMatch(m))} aria-label="Editar jogo"><Pencil className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setMatchForm(draftFromMatch(m))} aria-label={tx('Editar jogo')}><Pencil className="h-4 w-4" /></Button>
                             )}
                           </div>
                         );
@@ -234,12 +235,12 @@ export default function ClubMap() {
               <div className="flex flex-wrap items-center gap-2">
                 {clashes.size > 0 && (
                   <span className="flex items-center gap-1.5 rounded-md border border-red-500/50 bg-red-500/10 px-2 py-1 text-sm text-red-700 dark:text-red-300">
-                    <AlertTriangle className="h-4 w-4" />{clashes.size} treinos no mesmo campo à mesma hora
+                    <AlertTriangle className="h-4 w-4" />{clashes.size} {tx('treinos no mesmo campo à mesma hora')}
                   </span>
                 )}
                 <div className="ml-auto flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => shareText(timetableText(clubName, slots, teamName), 'Mapa de treinos')}><Share2 className="mr-1.5 h-4 w-4" />Partilhar</Button>
-                  {canEdit && <Button size="sm" onClick={() => setSlotForm({ team_id: (editableTeams[0] ?? teams[0]).id, days: [], start_time: '18:30', end_time: '20:00', location: '' })}><Plus className="mr-1.5 h-4 w-4" />Horário de treino</Button>}
+                  <Button size="sm" variant="outline" onClick={() => shareText(timetableText(clubName, slots, teamName), 'Mapa de treinos')}><Share2 className="mr-1.5 h-4 w-4" />{tx('Partilhar')}</Button>
+                  {canEdit && <Button size="sm" onClick={() => setSlotForm({ team_id: (editableTeams[0] ?? teams[0]).id, days: [], start_time: '18:30', end_time: '20:00', location: '' })}><Plus className="mr-1.5 h-4 w-4" />{tx('Horário de treino')}</Button>}
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
@@ -262,7 +263,7 @@ export default function ClubMap() {
                             <p className="text-sm font-semibold">{teamName(s.team_id)}</p>
                             {s.location && <p className="flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{s.location}</p>}
                             {s.notes && <p className="text-muted-foreground">{s.notes}</p>}
-                            {clashes.has(s.id) && <p className="font-semibold text-red-600">Campo ocupado</p>}
+                            {clashes.has(s.id) && <p className="font-semibold text-red-600">{tx('Campo ocupado')}</p>}
                           </button>
                         ))}
                       </div>
@@ -279,20 +280,20 @@ export default function ClubMap() {
       <Dialog open={!!slotForm} onOpenChange={(v) => !v && setSlotForm(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{slotForm?.id ? 'Editar horário' : 'Novo horário de treino'}</DialogTitle>
-            <DialogDescription>Repete-se todas as semanas.</DialogDescription>
+            <DialogTitle>{slotForm?.id ? tx('Editar horário') : tx('Novo horário de treino')}</DialogTitle>
+            <DialogDescription>{tx('Repete-se todas as semanas.')}</DialogDescription>
           </DialogHeader>
           {slotForm && (
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label>Equipa</Label>
+                <Label>{tx('Equipa')}</Label>
                 <Select value={slotForm.team_id} onValueChange={(v) => setSlotForm({ ...slotForm, team_id: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{editableTeams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>{slotForm.id ? 'Dia' : 'Dias'}</Label>
+                <Label>{slotForm.id ? tx('Dia') : tx('Dias')}</Label>
                 <div className="flex flex-wrap gap-1">
                   {WEEKDAYS.map((label, i) => {
                     const day = i + 1;
@@ -307,14 +308,14 @@ export default function ClubMap() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Início</Label><Input type="time" value={slotForm.start_time ?? ''} onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Fim</Label><Input type="time" value={slotForm.end_time ?? ''} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Início')}</Label><Input type="time" value={slotForm.start_time ?? ''} onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Fim')}</Label><Input type="time" value={slotForm.end_time ?? ''} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Campo / local</Label><Input value={slotForm.location ?? ''} onChange={(e) => setSlotForm({ ...slotForm, location: e.target.value })} placeholder="Ex.: Campo 1 (metade)" /></div>
-              <div className="space-y-1.5"><Label>Notas</Label><Input value={slotForm.notes ?? ''} onChange={(e) => setSlotForm({ ...slotForm, notes: e.target.value })} placeholder="Opcional" /></div>
+              <div className="space-y-1.5"><Label>{tx('Campo / local')}</Label><Input value={slotForm.location ?? ''} onChange={(e) => setSlotForm({ ...slotForm, location: e.target.value })} placeholder={tx('Ex.: Campo 1 (metade)')} /></div>
+              <div className="space-y-1.5"><Label>{tx('Notas')}</Label><Input value={slotForm.notes ?? ''} onChange={(e) => setSlotForm({ ...slotForm, notes: e.target.value })} placeholder={tx('Opcional')} /></div>
               <div className="flex justify-between gap-2 pt-1">
-                {slotForm.id ? <Button variant="ghost" className="text-destructive" onClick={() => deleteSlot(slotForm.id!)}><Trash2 className="mr-1.5 h-4 w-4" />Apagar</Button> : <span />}
-                <Button onClick={saveSlot}>Guardar</Button>
+                {slotForm.id ? <Button variant="ghost" className="text-destructive" onClick={() => deleteSlot(slotForm.id!)}><Trash2 className="mr-1.5 h-4 w-4" />{tx('Apagar')}</Button> : <span />}
+                <Button onClick={saveSlot}>{tx('Guardar')}</Button>
               </div>
             </div>
           )}
@@ -325,21 +326,21 @@ export default function ClubMap() {
       <Dialog open={!!matchForm} onOpenChange={(v) => !v && setMatchForm(null)}>
         <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{matchForm?.id ? 'Editar jogo' : 'Marcar jogo'}</DialogTitle>
-            <DialogDescription>Os treinadores da equipa veem o jogo e a logística nos seus jogos.</DialogDescription>
+            <DialogTitle>{matchForm?.id ? tx('Editar jogo') : tx('Marcar jogo')}</DialogTitle>
+            <DialogDescription>{tx('Os treinadores da equipa veem o jogo e a logística nos seus jogos.')}</DialogDescription>
           </DialogHeader>
           {matchForm && (
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Equipa</Label>
+                  <Label>{tx('Equipa')}</Label>
                   <Select value={matchForm.team_id} onValueChange={(v) => setMatchForm({ ...matchForm, team_id: v })} disabled={!!matchForm.id}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{editableTeams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Tipo</Label>
+                  <Label>{tx('Tipo')}</Label>
                   <Select value={matchForm.match_type} onValueChange={(v) => setMatchForm({ ...matchForm, match_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{Object.entries(MATCH_TYPES).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
@@ -347,27 +348,27 @@ export default function ClubMap() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Data</Label><Input type="date" value={matchForm.date} onChange={(e) => setMatchForm({ ...matchForm, date: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Hora do jogo</Label><Input type="time" value={matchForm.time} onChange={(e) => setMatchForm({ ...matchForm, time: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Data')}</Label><Input type="date" value={matchForm.date} onChange={(e) => setMatchForm({ ...matchForm, date: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Hora do jogo')}</Label><Input type="time" value={matchForm.time} onChange={(e) => setMatchForm({ ...matchForm, time: e.target.value })} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Adversário</Label><Input value={matchForm.opponent} onChange={(e) => setMatchForm({ ...matchForm, opponent: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Adversário')}</Label><Input value={matchForm.opponent} onChange={(e) => setMatchForm({ ...matchForm, opponent: e.target.value })} /></div>
               <div className="grid grid-cols-[auto_1fr] items-end gap-3">
                 <div className="flex gap-1">
-                  <Button type="button" size="sm" variant={matchForm.is_home ? 'default' : 'outline'} onClick={() => setMatchForm({ ...matchForm, is_home: true })}>Casa</Button>
-                  <Button type="button" size="sm" variant={!matchForm.is_home ? 'default' : 'outline'} onClick={() => setMatchForm({ ...matchForm, is_home: false })}>Fora</Button>
+                  <Button type="button" size="sm" variant={matchForm.is_home ? 'default' : 'outline'} onClick={() => setMatchForm({ ...matchForm, is_home: true })}>{tx('Casa')}</Button>
+                  <Button type="button" size="sm" variant={!matchForm.is_home ? 'default' : 'outline'} onClick={() => setMatchForm({ ...matchForm, is_home: false })}>{tx('Fora')}</Button>
                 </div>
-                <div className="space-y-1.5"><Label>Campo / local</Label><Input value={matchForm.location} onChange={(e) => setMatchForm({ ...matchForm, location: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Campo / local')}</Label><Input value={matchForm.location} onChange={(e) => setMatchForm({ ...matchForm, location: e.target.value })} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Competição (opcional)</Label><Input value={matchForm.competition} onChange={(e) => setMatchForm({ ...matchForm, competition: e.target.value })} placeholder="Ex.: Campeonato Distrital Sub-13" /></div>
-              <p className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Logística</p>
+              <div className="space-y-1.5"><Label>{tx('Competição (opcional)')}</Label><Input value={matchForm.competition} onChange={(e) => setMatchForm({ ...matchForm, competition: e.target.value })} placeholder={tx('Ex.: Campeonato Distrital Sub-13')} /></div>
+              <p className="pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Logística')}</p>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5"><Label>Hora de concentração</Label><Input type="time" value={matchForm.meet_time ?? ''} onChange={(e) => setMatchForm({ ...matchForm, meet_time: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Local de concentração</Label><Input value={matchForm.meet_place ?? ''} onChange={(e) => setMatchForm({ ...matchForm, meet_place: e.target.value })} placeholder="Ex.: Sede" /></div>
-                <div className="space-y-1.5"><Label>Transporte</Label><Input value={matchForm.transport ?? ''} onChange={(e) => setMatchForm({ ...matchForm, transport: e.target.value })} placeholder="Ex.: Carrinha do clube" /></div>
-                <div className="space-y-1.5"><Label>Equipamento</Label><Input value={matchForm.kit ?? ''} onChange={(e) => setMatchForm({ ...matchForm, kit: e.target.value })} placeholder="Ex.: Principal" /></div>
+                <div className="space-y-1.5"><Label>{tx('Hora de concentração')}</Label><Input type="time" value={matchForm.meet_time ?? ''} onChange={(e) => setMatchForm({ ...matchForm, meet_time: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label>{tx('Local de concentração')}</Label><Input value={matchForm.meet_place ?? ''} onChange={(e) => setMatchForm({ ...matchForm, meet_place: e.target.value })} placeholder={tx('Ex.: Sede')} /></div>
+                <div className="space-y-1.5"><Label>{tx('Transporte')}</Label><Input value={matchForm.transport ?? ''} onChange={(e) => setMatchForm({ ...matchForm, transport: e.target.value })} placeholder={tx('Ex.: Carrinha do clube')} /></div>
+                <div className="space-y-1.5"><Label>{tx('Equipamento')}</Label><Input value={matchForm.kit ?? ''} onChange={(e) => setMatchForm({ ...matchForm, kit: e.target.value })} placeholder={tx('Ex.: Principal')} /></div>
               </div>
-              <div className="space-y-1.5"><Label>Outras informações</Label><Textarea rows={2} value={matchForm.info ?? ''} onChange={(e) => setMatchForm({ ...matchForm, info: e.target.value })} /></div>
-              <div className="flex justify-end pt-1"><Button onClick={saveMatch}>{matchForm.id ? 'Guardar' : 'Marcar jogo'}</Button></div>
+              <div className="space-y-1.5"><Label>{tx('Outras informações')}</Label><Textarea rows={2} value={matchForm.info ?? ''} onChange={(e) => setMatchForm({ ...matchForm, info: e.target.value })} /></div>
+              <div className="flex justify-end pt-1"><Button onClick={saveMatch}>{matchForm.id ? tx('Guardar') : tx('Marcar jogo')}</Button></div>
             </div>
           )}
         </DialogContent>

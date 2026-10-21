@@ -10,16 +10,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Search } from 'lucide-react';
 import type { PersonRegistry } from '@/hooks/useWorkforce';
+import { tx } from '@/lib/i18n/ui';
 
 const PERSON_TYPES = [
-  { value: 'employee', label: 'Funcionário' },
-  { value: 'contractor', label: 'Prestador' },
-  { value: 'coach', label: 'Treinador' },
-  { value: 'medical', label: 'Staff Médico' },
-  { value: 'operational', label: 'Operacional' },
-  { value: 'director', label: 'Dirigente' },
-  { value: 'volunteer', label: 'Voluntário' },
-  { value: 'other', label: 'Outro' },
+  { value: 'employee', get label() { return tx('Funcionário'); } },
+  { value: 'contractor', get label() { return tx('Prestador'); } },
+  { value: 'coach', get label() { return tx('Treinador'); } },
+  { value: 'medical', get label() { return tx('Staff Médico'); } },
+  { value: 'operational', get label() { return tx('Operacional'); } },
+  { value: 'director', get label() { return tx('Dirigente'); } },
+  { value: 'volunteer', get label() { return tx('Voluntário'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 interface Props {
@@ -52,26 +53,26 @@ export function StaffTab({ people, isLoading, onAddPerson }: Props) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Pessoas Registadas</CardTitle>
+        <CardTitle>{tx('Pessoas Registadas')}</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nova Pessoa</Button>
+            <Button size="sm"><Plus className="h-4 w-4 mr-1" /> {tx('Nova Pessoa')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registar Pessoa</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Registar Pessoa')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Nome Completo *</Label><Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} /></div>
+              <div><Label>{tx('Nome Completo *')}</Label><Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} /></div>
               <div>
-                <Label>Tipo</Label>
+                <Label>{tx('Tipo')}</Label>
                 <Select value={form.person_type} onValueChange={v => setForm(f => ({ ...f, person_type: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{PERSON_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div><Label>NIF</Label><Input value={form.tax_id} onChange={e => setForm(f => ({ ...f, tax_id: e.target.value }))} /></div>
-              <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
-              <div><Label>Telefone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
-              <Button onClick={handleAdd} className="w-full">Guardar</Button>
+              <div><Label>{tx('Email')}</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
+              <div><Label>{tx('Telefone')}</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
+              <Button onClick={handleAdd} className="w-full">{tx('Guardar')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -80,12 +81,12 @@ export function StaffTab({ people, isLoading, onAddPerson }: Props) {
         <div className="flex gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Pesquisar..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder={tx('Pesquisar...')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder={tx('Tipo')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{tx('Todos')}</SelectItem>
               {PERSON_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -93,16 +94,16 @@ export function StaffTab({ people, isLoading, onAddPerson }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Tipo</TableHead>
+              <TableHead>{tx('Nome')}</TableHead>
+              <TableHead>{tx('Tipo')}</TableHead>
               <TableHead>NIF</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Estado</TableHead>
+              <TableHead>{tx('Email')}</TableHead>
+              <TableHead>{tx('Estado')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem registos</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{tx('Sem registos')}</TableCell></TableRow>
             ) : filtered.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.full_name}</TableCell>

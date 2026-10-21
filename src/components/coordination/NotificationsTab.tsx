@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format, differenceInDays, addDays } from "date-fns";
 import { pt } from "date-fns/locale";
+import { tx } from '@/lib/i18n/ui';
 
 interface NotificationsTabProps {
   clubId: string;
@@ -195,7 +196,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            Notificações e Alertas
+            {tx('Notificações e Alertas')}
             {totalAlerts > 0 && (
               <Badge variant="destructive">{totalAlerts}</Badge>
             )}
@@ -203,12 +204,12 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">A carregar...</p>
+            <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
           ) : totalAlerts === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Não há alertas ativos.</p>
+              <p className="text-muted-foreground">{tx('Não há alertas ativos.')}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Os alertas aparecem quando há documentos a expirar ou pagamentos em atraso.
+                {tx('Os alertas aparecem quando há documentos a expirar ou pagamentos em atraso.')}
               </p>
             </div>
           ) : (
@@ -217,7 +218,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
               {expiredMedical.length > 0 && (
                 <Alert variant="destructive">
                   <FileWarning className="h-4 w-4" />
-                  <AlertTitle>Atestados Médicos Expirados ({expiredMedical.length})</AlertTitle>
+                  <AlertTitle>{tx('Atestados Médicos Expirados (')}{expiredMedical.length})</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 space-y-1">
                       {expiredMedical.map(alert => (
@@ -241,7 +242,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
               {expiringMedical.length > 0 && (
                 <Alert>
                   <Calendar className="h-4 w-4" />
-                  <AlertTitle>Atestados Médicos a Expirar ({expiringMedical.length})</AlertTitle>
+                  <AlertTitle>{tx('Atestados Médicos a Expirar (')}{expiringMedical.length})</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 space-y-1">
                       {expiringMedical.map(alert => (
@@ -254,9 +255,9 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
                             )}
                           </span>
                           <span>
-                            {alert.days_until === 0 ? 'Expira hoje' :
-                             alert.days_until === 1 ? 'Expira amanhã' :
-                             `Expira em ${alert.days_until} dias`}
+                            {alert.days_until === 0 ? tx('Expira hoje') :
+                             alert.days_until === 1 ? tx('Expira amanhã') :
+                             tx('Expira em {{v0}} dias', { v0: alert.days_until })}
                           </span>
                         </div>
                       ))}
@@ -269,7 +270,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
               {expiredDocs.length > 0 && (
                 <Alert variant="destructive">
                   <FileWarning className="h-4 w-4" />
-                  <AlertTitle>Documentos de Identificação Expirados ({expiredDocs.length})</AlertTitle>
+                  <AlertTitle>{tx('Documentos de Identificação Expirados (')}{expiredDocs.length})</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 space-y-1">
                       {expiredDocs.map(alert => (
@@ -293,7 +294,7 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
               {expiringDocs.length > 0 && (
                 <Alert>
                   <Calendar className="h-4 w-4" />
-                  <AlertTitle>Documentos a Expirar ({expiringDocs.length})</AlertTitle>
+                  <AlertTitle>{tx('Documentos a Expirar (')}{expiringDocs.length})</AlertTitle>
                   <AlertDescription>
                     <div className="mt-2 space-y-1">
                       {expiringDocs.map(alert => (
@@ -306,9 +307,9 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
                             )}
                           </span>
                           <span>
-                            {alert.days_until === 0 ? 'Expira hoje' :
-                             alert.days_until === 1 ? 'Expira amanhã' :
-                             `Expira em ${alert.days_until} dias`}
+                            {alert.days_until === 0 ? tx('Expira hoje') :
+                             alert.days_until === 1 ? tx('Expira amanhã') :
+                             tx('Expira em {{v0}} dias', { v0: alert.days_until })}
                           </span>
                         </div>
                       ))}
@@ -322,11 +323,11 @@ export function NotificationsTab({ clubId }: NotificationsTabProps) {
                 <Alert variant="destructive">
                   <CreditCard className="h-4 w-4" />
                   <AlertTitle>
-                    Pagamentos em Atraso - Bloqueio de Convocatórias ({overduePayments.length})
+                    {tx('Pagamentos em Atraso - Bloqueio de Convocatórias (')}{overduePayments.length})
                   </AlertTitle>
                   <AlertDescription>
                     <p className="text-sm mb-2">
-                      Estes jogadores têm mensalidades em atraso há mais de 2 meses e estão bloqueados para convocatórias.
+                      {tx('Estes jogadores têm mensalidades em atraso há mais de 2 meses e estão bloqueados para convocatórias.')}
                     </p>
                     <div className="mt-2 space-y-1">
                       {overduePayments.map(alert => (

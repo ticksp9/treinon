@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 // ─── Types ────────────────────────────────────────────
 export interface PersonRegistry {
@@ -290,9 +291,9 @@ export function useWorkforce(clubId: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workforce-people', clubId] });
-      toast.success('Pessoa registada');
+      toast.success(tx('Pessoa registada'));
     },
-    onError: () => toast.error('Erro ao registar pessoa'),
+    onError: () => toast.error(tx('Erro ao registar pessoa')),
   });
 
   const addContract = useMutation({
@@ -311,9 +312,9 @@ export function useWorkforce(clubId: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workforce-contracts', clubId] });
-      toast.success('Contrato criado');
+      toast.success(tx('Contrato criado'));
     },
-    onError: () => toast.error('Erro ao criar contrato'),
+    onError: () => toast.error(tx('Erro ao criar contrato')),
   });
 
   const addPayrollCycle = useMutation({
@@ -331,9 +332,9 @@ export function useWorkforce(clubId: string | null) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workforce-payroll-cycles', clubId] });
-      toast.success('Ciclo de payroll criado');
+      toast.success(tx('Ciclo de payroll criado'));
     },
-    onError: () => toast.error('Erro ao criar ciclo'),
+    onError: () => toast.error(tx('Erro ao criar ciclo')),
   });
 
   // Audit helper

@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Mail, RefreshCw, XCircle, Users, Copy } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   playerId: string;
@@ -34,8 +35,8 @@ export function InvitesList({ playerId }: Props) {
   const handleRevoke = async (id: string) => {
     try {
       await revokeInvite.mutateAsync(id);
-      toast.success('Convite revogado');
-    } catch { toast.error('Erro ao revogar'); }
+      toast.success(tx('Convite revogado'));
+    } catch { toast.error(tx('Erro ao revogar')); }
   };
 
   const handleResend = async (id: string) => {
@@ -43,8 +44,8 @@ export function InvitesList({ playerId }: Props) {
       const result = await resendInvite.mutateAsync(id);
       const link = `${window.location.origin}/accept-invite?token=${result.token}`;
       navigator.clipboard.writeText(link);
-      toast.success('Convite reenviado! Link copiado.');
-    } catch { toast.error('Erro ao reenviar'); }
+      toast.success(tx('Convite reenviado! Link copiado.'));
+    } catch { toast.error(tx('Erro ao reenviar')); }
   };
 
   if (isLoading) return null;
@@ -52,8 +53,8 @@ export function InvitesList({ playerId }: Props) {
     return (
       <EmptyState
         icon={<Users className="h-8 w-8" />}
-        title="Sem convites"
-        description="Ainda não foram enviados convites para este atleta."
+        title={tx('Sem convites')}
+        description={tx('Ainda não foram enviados convites para este atleta.')}
       />
     );
   }
@@ -70,18 +71,18 @@ export function InvitesList({ playerId }: Props) {
                   {statusLabels[inv.status] || inv.status}
                 </Badge>
                 <Badge variant="outline" className="text-xs">
-                  {inv.invite_type === 'guardian' ? 'Encarregado' : 'Atleta'}
+                  {inv.invite_type === 'guardian' ? tx('Encarregado') : tx('Atleta')}
                 </Badge>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                 {inv.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inv.email}</span>}
-                <span>Criado {format(new Date(inv.created_at), "d MMM yyyy", { locale: pt })}</span>
+                <span>{tx('Criado')}{' '}{format(new Date(inv.created_at), "d MMM yyyy", { locale: pt })}</span>
                 {inv.invite_code && (
                   <button
                     className="flex items-center gap-1 hover:text-foreground"
                     onClick={() => {
                       navigator.clipboard.writeText(inv.invite_code!);
-                      toast.success('Código copiado');
+                      toast.success(tx('Código copiado'));
                     }}
                   >
                     <Copy className="h-3 w-3" /> {inv.invite_code}
@@ -91,10 +92,10 @@ export function InvitesList({ playerId }: Props) {
             </div>
             {inv.status === 'pending' && (
               <div className="flex gap-1">
-                <Button size="sm" variant="ghost" onClick={() => handleResend(inv.id)} title="Reenviar">
+                <Button size="sm" variant="ghost" onClick={() => handleResend(inv.id)} title={tx('Reenviar')}>
                   <RefreshCw className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRevoke(inv.id)} title="Revogar">
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRevoke(inv.id)} title={tx('Revogar')}>
                   <XCircle className="h-3.5 w-3.5" />
                 </Button>
               </div>

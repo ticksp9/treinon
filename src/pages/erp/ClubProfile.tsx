@@ -26,6 +26,7 @@ import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
 import { PublicPageSettings } from '@/components/club/PublicPageSettings';
+import { tx } from '@/lib/i18n/ui';
 
 export default function ClubProfile() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
@@ -80,9 +81,9 @@ export default function ClubProfile() {
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para administradores de clubes.
+                {tx('Esta funcionalidade está disponível apenas para administradores de clubes.')}
               </p>
             </CardContent>
           </Card>
@@ -107,9 +108,9 @@ export default function ClubProfile() {
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-display font-bold">{club?.name || 'Perfil do Clube'}</h1>
+            <h1 className="text-2xl font-display font-bold">{club?.name || tx('Perfil do Clube')}</h1>
             <p className="text-muted-foreground">
-              Gerir informações e documentos do clube
+              {tx('Gerir informações e documentos do clube')}
             </p>
           </div>
         </div>
@@ -118,19 +119,19 @@ export default function ClubProfile() {
           <TabsList>
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <Building2 className="w-4 h-4" />
-              Perfil
+              {tx('Perfil')}
             </TabsTrigger>
             <TabsTrigger value="historia" className="flex items-center gap-2">
               <History className="w-4 h-4" />
-              História
+              {tx('História')}
             </TabsTrigger>
             <TabsTrigger value="publica" className="flex items-center gap-2">
               <Globe className="w-4 h-4" />
-              Página pública
+              {tx('Página pública')}
             </TabsTrigger>
             <TabsTrigger value="documentos" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Documentos
+              {tx('Documentos')}
             </TabsTrigger>
           </TabsList>
 
@@ -183,24 +184,24 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-profile', clubId] });
-      toast.success('Perfil do clube atualizado');
+      toast.success(tx('Perfil do clube atualizado'));
     },
     onError: () => {
-      toast.error('Erro ao atualizar perfil');
+      toast.error(tx('Erro ao atualizar perfil'));
     },
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informações do Clube</CardTitle>
-        <CardDescription>Dados gerais e contactos</CardDescription>
+        <CardTitle>{tx('Informações do Clube')}</CardTitle>
+        <CardDescription>{tx('Dados gerais e contactos')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate(formData); }} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Clube</Label>
+              <Label htmlFor="name">{tx('Nome do Clube')}</Label>
               <Input 
                 id="name" 
                 value={formData.name} 
@@ -208,7 +209,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="founded_year">Ano de Fundação</Label>
+              <Label htmlFor="founded_year">{tx('Ano de Fundação')}</Label>
               <Input 
                 id="founded_year" 
                 type="number"
@@ -217,7 +218,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tx('Email')}</Label>
               <Input 
                 id="email" 
                 type="email"
@@ -226,7 +227,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">{tx('Telefone')}</Label>
               <Input 
                 id="phone" 
                 value={formData.phone} 
@@ -234,7 +235,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address">Morada</Label>
+              <Label htmlFor="address">{tx('Morada')}</Label>
               <Input 
                 id="address" 
                 value={formData.address} 
@@ -250,7 +251,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="iban">IBAN</Label>
+              <Label htmlFor="iban">{tx('IBAN')}</Label>
               <Input 
                 id="iban" 
                 value={formData.iban} 
@@ -260,10 +261,10 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-4">Cores do Clube</h4>
+            <h4 className="font-medium mb-4">{tx('Cores do Clube')}</h4>
             <div className="flex gap-4">
               <div className="space-y-2">
-                <Label htmlFor="primary_color">Cor Principal</Label>
+                <Label htmlFor="primary_color">{tx('Cor Principal')}</Label>
                 <div className="flex gap-2">
                   <Input 
                     id="primary_color" 
@@ -280,7 +281,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="secondary_color">Cor Secundária</Label>
+                <Label htmlFor="secondary_color">{tx('Cor Secundária')}</Label>
                 <div className="flex gap-2">
                   <Input 
                     id="secondary_color" 
@@ -300,10 +301,10 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <h4 className="font-medium mb-4">Redes Sociais</h4>
+            <h4 className="font-medium mb-4">{tx('Redes Sociais')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="website_url">Website</Label>
+                <Label htmlFor="website_url">{tx('Website')}</Label>
                 <Input 
                   id="website_url" 
                   placeholder="https://"
@@ -312,7 +313,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="facebook_url">Facebook</Label>
+                <Label htmlFor="facebook_url">{tx('Facebook')}</Label>
                 <Input 
                   id="facebook_url" 
                   placeholder="https://facebook.com/..."
@@ -321,7 +322,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="instagram_url">Instagram</Label>
+                <Label htmlFor="instagram_url">{tx('Instagram')}</Label>
                 <Input 
                   id="instagram_url" 
                   placeholder="https://instagram.com/..."
@@ -330,7 +331,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="twitter_url">Twitter/X</Label>
+                <Label htmlFor="twitter_url">{tx('Twitter/X')}</Label>
                 <Input 
                   id="twitter_url" 
                   placeholder="https://twitter.com/..."
@@ -344,7 +345,7 @@ function ClubProfileForm({ club, clubId }: { club: any; clubId: string }) {
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={updateMutation.isPending}>
               <Save className="w-4 h-4 mr-2" />
-              Guardar
+              {tx('Guardar')}
             </Button>
           </div>
         </form>
@@ -370,37 +371,37 @@ function ClubHistoryForm({ club, clubId }: { club: any; clubId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-profile', clubId] });
-      toast.success('História do clube atualizada');
+      toast.success(tx('História do clube atualizada'));
     },
     onError: () => {
-      toast.error('Erro ao atualizar história');
+      toast.error(tx('Erro ao atualizar história'));
     },
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>História e Objetivos</CardTitle>
-        <CardDescription>Conte a história do clube e defina os objetivos</CardDescription>
+        <CardTitle>{tx('História e Objetivos')}</CardTitle>
+        <CardDescription>{tx('Conte a história do clube e defina os objetivos')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate(formData); }} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="history">História do Clube</Label>
+            <Label htmlFor="history">{tx('História do Clube')}</Label>
             <Textarea 
               id="history" 
               rows={8}
-              placeholder="Descreva a história do clube, fundação, conquistas..."
+              placeholder={tx('Descreva a história do clube, fundação, conquistas...')}
               value={formData.history} 
               onChange={(e) => setFormData(prev => ({ ...prev, history: e.target.value }))}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="objectives">Objetivos</Label>
+            <Label htmlFor="objectives">{tx('Objetivos')}</Label>
             <Textarea 
               id="objectives" 
               rows={4}
-              placeholder="Defina os objetivos atuais do clube..."
+              placeholder={tx('Defina os objetivos atuais do clube...')}
               value={formData.objectives} 
               onChange={(e) => setFormData(prev => ({ ...prev, objectives: e.target.value }))}
             />
@@ -408,7 +409,7 @@ function ClubHistoryForm({ club, clubId }: { club: any; clubId: string }) {
           <div className="flex justify-end">
             <Button type="submit" disabled={updateMutation.isPending}>
               <Save className="w-4 h-4 mr-2" />
-              Guardar
+              {tx('Guardar')}
             </Button>
           </div>
         </form>
@@ -430,10 +431,10 @@ function ClubDocuments({ documents, clubId, isLoading }: { documents: any[]; clu
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club-documents', clubId] });
-      toast.success('Documento eliminado');
+      toast.success(tx('Documento eliminado'));
     },
     onError: () => {
-      toast.error('Erro ao eliminar documento');
+      toast.error(tx('Erro ao eliminar documento'));
     },
   });
 
@@ -444,18 +445,18 @@ function ClubDocuments({ documents, clubId, isLoading }: { documents: any[]; clu
   const getExpiryStatus = (expiryDate: string | null) => {
     if (!expiryDate) return null;
     const days = differenceInDays(new Date(expiryDate), new Date());
-    if (days < 0) return { color: 'text-red-600 bg-red-50', label: 'Expirado' };
-    if (days < 30) return { color: 'text-amber-600 bg-amber-50', label: `Expira em ${days} dias` };
-    return { color: 'text-green-600 bg-green-50', label: 'Válido' };
+    if (days < 0) return { color: 'text-red-600 bg-red-50', label: tx('Expirado') };
+    if (days < 30) return { color: 'text-amber-600 bg-amber-50', label: tx('Expira em {{v0}} dias', { v0: days }) };
+    return { color: 'text-green-600 bg-green-50', label: tx('Válido') };
   };
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-medium">Documentos do Clube</h3>
+        <h3 className="font-medium">{tx('Documentos do Clube')}</h3>
         <Button size="sm">
           <Plus className="w-4 h-4 mr-2" />
-          Adicionar Documento
+          {tx('Adicionar Documento')}
         </Button>
       </div>
 
@@ -463,7 +464,7 @@ function ClubDocuments({ documents, clubId, isLoading }: { documents: any[]; clu
         <Card>
           <CardContent className="py-8 text-center">
             <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Nenhum documento registado</p>
+            <p className="text-muted-foreground">{tx('Nenhum documento registado')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -489,7 +490,7 @@ function ClubDocuments({ documents, clubId, isLoading }: { documents: any[]; clu
                       )}
                       {doc.expiry_date && (
                         <span className="text-sm text-muted-foreground">
-                          Validade: {format(new Date(doc.expiry_date), 'dd/MM/yyyy')}
+                          {tx('Validade:')}{' '}{format(new Date(doc.expiry_date), 'dd/MM/yyyy')}
                         </span>
                       )}
                       <Button 

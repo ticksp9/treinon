@@ -25,6 +25,7 @@ import {
   type FormationSlot,
   type SportType,
 } from '@/lib/tactical-formations';
+import { tx } from '@/lib/i18n/ui';
 
 export interface FormationPlayerOption {
   id: string;
@@ -134,7 +135,7 @@ export function FormationPicker({
     return (
       <Card>
         <CardContent className="py-6 text-sm text-muted-foreground">
-          Não há formações disponíveis para esta modalidade.
+          {tx('Não há formações disponíveis para esta modalidade.')}
         </CardContent>
       </Card>
     );
@@ -184,7 +185,7 @@ export function FormationPicker({
           <div className="mt-4 flex justify-end gap-2">
             {onCancel && (
               <Button variant="outline" size="sm" onClick={onCancel}>
-                <X className="w-4 h-4 mr-1" /> Cancelar
+                <X className="w-4 h-4 mr-1" /> {tx('Cancelar')}
               </Button>
             )}
             {onConfirm && (
@@ -193,7 +194,7 @@ export function FormationPicker({
                 onClick={() => onConfirm({ formation, assignments })}
                 disabled={!assignments.every(a => !!a.player_id)}
               >
-                <Check className="w-4 h-4 mr-1" /> Confirmar
+                <Check className="w-4 h-4 mr-1" /> {tx('Confirmar')}
               </Button>
             )}
           </div>
@@ -217,7 +218,7 @@ function FieldRenderer({
     <div
       className="relative w-full rounded-md border bg-emerald-700/15 overflow-hidden"
       style={{ paddingTop: `${FIELD_RATIO * 100}%` }}
-      aria-label="Campo tático"
+      aria-label={tx('Campo tático')}
     >
       {/* Pitch lines */}
       <div className="absolute inset-0">
@@ -283,14 +284,14 @@ function SlotRow({
         <div className="truncate">{roleLabel(slot.role)}</div>
       </div>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-8"><SelectValue placeholder="Atribuir jogador" /></SelectTrigger>
+        <SelectTrigger className="h-8"><SelectValue placeholder={tx('Atribuir jogador')} /></SelectTrigger>
         <SelectContent>
           {players.map(p => {
             const taken = usedIds.has(p.id) && p.id !== value;
             return (
               <SelectItem key={p.id} value={p.id} disabled={taken}>
                 {p.number ? `${p.number} - ` : ''}{p.name}
-                {taken ? ' (atribuído)' : ''}
+                {taken ? tx(' (atribuído)') : ''}
               </SelectItem>
             );
           })}

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { tx } from '@/lib/i18n/ui';
 
 const formatCurrency = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -26,17 +27,17 @@ export function BudgetVarianceTab({ clubId }: { clubId: string }) {
   }));
 
   if (!activeCycle) {
-    return <Card><CardContent className="py-8 text-center text-muted-foreground">Sem orçamento ativo.</CardContent></Card>;
+    return <Card><CardContent className="py-8 text-center text-muted-foreground">{tx('Sem orçamento ativo.')}</CardContent></Card>;
   }
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Real vs Budget — {activeCycle.name}</h3>
+      <h3 className="text-lg font-semibold">{tx('Real vs Budget —')}{' '}{activeCycle.name}</h3>
 
       {/* Variance Chart */}
       {chartData.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Desvios por Categoria (%)</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tx('Desvios por Categoria (%)')}</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData} layout="vertical">
@@ -61,15 +62,15 @@ export function BudgetVarianceTab({ clubId }: { clubId: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Orçamento</TableHead>
-                <TableHead className="text-right">Realizado</TableHead>
-                <TableHead className="text-right">Forecast</TableHead>
-                <TableHead className="text-right">Desvio</TableHead>
+                <TableHead>{tx('Categoria')}</TableHead>
+                <TableHead>{tx('Tipo')}</TableHead>
+                <TableHead className="text-right">{tx('Orçamento')}</TableHead>
+                <TableHead className="text-right">{tx('Realizado')}</TableHead>
+                <TableHead className="text-right">{tx('Forecast')}</TableHead>
+                <TableHead className="text-right">{tx('Desvio')}</TableHead>
                 <TableHead className="text-right">%</TableHead>
-                <TableHead>Execução</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{tx('Execução')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -79,7 +80,7 @@ export function BudgetVarianceTab({ clubId }: { clubId: string }) {
                   <TableRow key={i}>
                     <TableCell className="font-medium">{v.category_name}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs">{v.category_type === 'revenue' ? 'Receita' : v.category_type === 'investment' ? 'Invest.' : 'Custo'}</Badge>
+                      <Badge variant="outline" className="text-xs">{v.category_type === 'revenue' ? tx('Receita') : v.category_type === 'investment' ? tx('Invest.') : tx('Custo')}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{formatCurrency(v.budget)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(v.actual)}</TableCell>
@@ -99,7 +100,7 @@ export function BudgetVarianceTab({ clubId }: { clubId: string }) {
                     </TableCell>
                     <TableCell>
                       <Badge variant={v.status === 'favorable' ? 'default' : v.status === 'unfavorable' ? 'destructive' : 'secondary'} className="text-xs">
-                        {v.status === 'favorable' ? 'Favorável' : v.status === 'unfavorable' ? 'Desfavorável' : 'Neutro'}
+                        {v.status === 'favorable' ? tx('Favorável') : v.status === 'unfavorable' ? tx('Desfavorável') : tx('Neutro')}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -108,7 +109,7 @@ export function BudgetVarianceTab({ clubId }: { clubId: string }) {
               {sorted.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    Sem dados de variância. Adicione linhas orçamentais primeiro.
+                    {tx('Sem dados de variância. Adicione linhas orçamentais primeiro.')}
                   </TableCell>
                 </TableRow>
               )}

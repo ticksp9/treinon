@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 export default function ERPDashboard() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
@@ -128,9 +129,9 @@ export default function ERPDashboard() {
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para administradores de clubes.
+                {tx('Esta funcionalidade está disponível apenas para administradores de clubes.')}
               </p>
             </CardContent>
           </Card>
@@ -147,9 +148,9 @@ export default function ERPDashboard() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">ERP do Clube</h1>
+          <h1 className="text-2xl font-display font-bold">{tx('ERP do Clube')}</h1>
           <p className="text-muted-foreground">
-            Visão geral da gestão financeira - {format(now, "MMMM 'de' yyyy", { locale: pt })}
+            {tx('Visão geral da gestão financeira -')}{' '}{format(now, "MMMM 'de' yyyy", { locale: pt })}
           </p>
         </div>
 
@@ -159,7 +160,7 @@ export default function ERPDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Saldo do Mês
+                {tx('Saldo do Mês')}
               </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -188,7 +189,7 @@ export default function ERPDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Saldo do Ano
+                {tx('Saldo do Ano')}
               </CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -217,14 +218,14 @@ export default function ERPDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Sócios Ativos
+                {tx('Sócios Ativos')}
               </CardTitle>
               <UserCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{membersCount || 0}</div>
               <p className="text-xs text-muted-foreground mt-2">
-                Sócios com quotas em dia
+                {tx('Sócios com quotas em dia')}
               </p>
             </CardContent>
           </Card>
@@ -233,14 +234,14 @@ export default function ERPDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pagamentos Pendentes
+                {tx('Pagamentos Pendentes')}
               </CardTitle>
               <AlertTriangle className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-amber-600">{pendingFees || 0}</div>
               <p className="text-xs text-muted-foreground mt-2">
-                Mensalidades de atletas por pagar
+                {tx('Mensalidades de atletas por pagar')}
               </p>
             </CardContent>
           </Card>
@@ -248,20 +249,20 @@ export default function ERPDashboard() {
 
         {/* Atalhos rápidos */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <QuickLink href="/erp/billing" icon={Wallet} label="Mensalidades" />
-          <QuickLink href="/erp/payments" icon={TrendingUp} label="Pagamentos" />
-          <QuickLink href="/erp/budget" icon={BarChart3} label="Orçamento" />
-          <QuickLink href="/erp/procurement" icon={Wallet} label="Compras" />
-          <QuickLink href="/erp/workforce" icon={Users} label="Contratos & Staff" />
-          <QuickLink href="/erp/inventory" icon={Wallet} label="Ativos & Inventário" />
-          <QuickLink href="/erp/facilities" icon={Building2} label="Instalações" />
-          <QuickLink href="/erp/medical" icon={UserCheck} label="Saúde & Medicina" />
-          <QuickLink href="/erp/academy" icon={Users} label="Formação & Academia" />
-          <QuickLink href="/erp/scouting" icon={UserCheck} label="Scouting" />
-          <QuickLink href="/erp/contabilidade" icon={Wallet} label="Contabilidade" />
-          <QuickLink href="/erp/atletas" icon={Users} label="Atletas" />
-          <QuickLink href="/erp/socios" icon={UserCheck} label="Sócios" />
-          <QuickLink href="/erp/bilheteira" icon={Calendar} label="Bilheteira" />
+          <QuickLink href="/erp/billing" icon={Wallet} label={tx('Mensalidades')} />
+          <QuickLink href="/erp/payments" icon={TrendingUp} label={tx('Pagamentos')} />
+          <QuickLink href="/erp/budget" icon={BarChart3} label={tx('Orçamento')} />
+          <QuickLink href="/erp/procurement" icon={Wallet} label={tx('Compras')} />
+          <QuickLink href="/erp/workforce" icon={Users} label={tx('Contratos & Staff')} />
+          <QuickLink href="/erp/inventory" icon={Wallet} label={tx('Ativos & Inventário')} />
+          <QuickLink href="/erp/facilities" icon={Building2} label={tx('Instalações')} />
+          <QuickLink href="/erp/medical" icon={UserCheck} label={tx('Saúde & Medicina')} />
+          <QuickLink href="/erp/academy" icon={Users} label={tx('Formação & Academia')} />
+          <QuickLink href="/erp/scouting" icon={UserCheck} label={tx('Scouting')} />
+          <QuickLink href="/erp/contabilidade" icon={Wallet} label={tx('Contabilidade')} />
+          <QuickLink href="/erp/atletas" icon={Users} label={tx('Atletas')} />
+          <QuickLink href="/erp/socios" icon={UserCheck} label={tx('Sócios')} />
+          <QuickLink href="/erp/bilheteira" icon={Calendar} label={tx('Bilheteira')} />
         </div>
       </div>
     </AppLayout>

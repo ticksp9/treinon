@@ -11,6 +11,7 @@ import { Loader2, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { teamsForYear, type YearTeam } from '@/lib/player-import';
 import { BirthYearRules } from './BirthYearRules';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { open: boolean; onClose: () => void; teams: YearTeam[]; seasonId: string | null; seasonStartYear: number }
 
@@ -20,7 +21,7 @@ export function BirthYearDialog({ open, onClose, teams: teamsIn, seasonId, seaso
   const [busy, setBusy] = useState(false);
 
   const distribute = async () => {
-    if (!seasonId) return toast.error('Escolha primeiro a época (no topo do ecrã).');
+    if (!seasonId) return toast.error(tx('Escolha primeiro a época (no topo do ecrã).'));
     setBusy(true);
     try {
       const [{ data: players }, { data: enrolled }] = await Promise.all([
@@ -35,7 +36,7 @@ export function BirthYearDialog({ open, onClose, teams: teamsIn, seasonId, seaso
           if (!has.has(`${p.id}|${t}`)) rows.push({ season_id: seasonId, player_id: p.id, team_id: t, status: 'active', joined_at: new Date().toISOString().slice(0, 10) });
         }
       }
-      if (rows.length === 0) { toast.info('Todos os jogadores com data de nascimento já estão nas equipas certas.'); return; }
+      if (rows.length === 0) { toast.info(tx('Todos os jogadores com data de nascimento já estão nas equipas certas.')); return; }
       for (const t of [...new Set(rows.map((r) => r.team_id))]) {
         await supabase.from('season_team_memberships' as never).upsert({ season_id: seasonId, team_id: t } as never, { onConflict: 'season_id,team_id' });
       }
@@ -49,13 +50,13 @@ export function BirthYearDialog({ open, onClose, teams: teamsIn, seasonId, seaso
         const { error } = await supabase.from('season_player_enrollments' as never).insert(fresh as never);
         if (error) throw error;
       }
-      toast.success(`${rows.length} colocações feitas nas equipas pelo ano de nascimento.`);
+      toast.success(tx('{{v0}} colocações feitas nas equipas pelo ano de nascimento.', { v0: rows.length }));
       qc.invalidateQueries({ queryKey: ['season-enrollments'] });
       qc.invalidateQueries({ queryKey: ['team-players'] });
       qc.invalidateQueries({ queryKey: ['season-enrollment-counts'] });
       qc.invalidateQueries({ queryKey: ['players'] });
     } catch (e) {
-      toast.error('Não foi possível distribuir: ' + (e as Error).message);
+      toast.error(tx('Não foi possível distribuir: ') + (e as Error).message);
     } finally { setBusy(false); }
   };
 
@@ -63,14 +64,14 @@ export function BirthYearDialog({ open, onClose, teams: teamsIn, seasonId, seaso
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Escalões por ano de nascimento</DialogTitle>
-          <DialogDescription>Defina os anos de cada equipa. Depois coloque automaticamente nas equipas os jogadores que já existem.</DialogDescription>
+          <DialogTitle>{tx('Escalões por ano de nascimento')}</DialogTitle>
+          <DialogDescription>{tx('Defina os anos de cada equipa. Depois coloque automaticamente nas equipas os jogadores que já existem.')}</DialogDescription>
         </DialogHeader>
         <BirthYearRules teams={teams} seasonStartYear={seasonStartYear} onChange={setTeams} />
         <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-          <p className="text-xs text-muted-foreground">Só junta jogadores às equipas; ninguém é retirado de onde já está.</p>
+          <p className="text-xs text-muted-foreground">{tx('Só junta jogadores às equipas; ninguém é retirado de onde já está.')}</p>
           <Button onClick={distribute} disabled={busy}>
-            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}Colocar jogadores nas equipas
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}{tx('Colocar jogadores nas equipas')}
           </Button>
         </div>
       </DialogContent>

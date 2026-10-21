@@ -10,6 +10,7 @@ import { Archive, Lock, Plus } from 'lucide-react';
 import { useSeasonContextQuery, useSeasonsList } from '@/hooks/useSeasonContext';
 import { closeSeason, archiveSeason } from '@/lib/season-service';
 import { generateSeasonReportPdf } from '@/lib/generateSeasonReportPdf';
+import { tx } from '@/lib/i18n/ui';
 
 export default function SeasonClosePage() {
   const nav = useNavigate();
@@ -42,55 +43,55 @@ export default function SeasonClosePage() {
 
   const close = useMutation({
     mutationFn: () => closeSeason(seasonId!),
-    onSuccess: () => { toast.success('Época fechada'); qc.invalidateQueries({ queryKey: ['season-context'] }); qc.invalidateQueries({ queryKey: ['seasons-list'] }); },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onSuccess: () => { toast.success(tx('Época fechada')); qc.invalidateQueries({ queryKey: ['season-context'] }); qc.invalidateQueries({ queryKey: ['seasons-list'] }); },
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
   const archive = useMutation({
     mutationFn: () => archiveSeason(seasonId!),
-    onSuccess: () => { toast.success('Época arquivada (imutável)'); qc.invalidateQueries({ queryKey: ['season-context'] }); qc.invalidateQueries({ queryKey: ['seasons-list'] }); nav('/seasons'); },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onSuccess: () => { toast.success(tx('Época arquivada (imutável)')); qc.invalidateQueries({ queryKey: ['season-context'] }); qc.invalidateQueries({ queryKey: ['seasons-list'] }); nav('/seasons'); },
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   if (!seasonId || !season) {
-    return <div className="p-6"><Card><CardContent className="py-10 text-center text-muted-foreground">Sem época ativa.</CardContent></Card></div>;
+    return <div className="p-6"><Card><CardContent className="py-10 text-center text-muted-foreground">{tx('Sem época ativa.')}</CardContent></Card></div>;
   }
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
-      <h1 className="text-2xl font-semibold">Fechar Época</h1>
+      <h1 className="text-2xl font-semibold">{tx('Fechar Época')}</h1>
       <Card>
         <CardHeader><CardTitle className="text-base">{season.name}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">{season.start_date} → {season.end_date}</p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-            <Stat label="Jogos" value={summary?.matches ?? 0} />
-            <Stat label="Treinos" value={summary?.trainings ?? 0} />
-            <Stat label="Presenças" value={summary?.attendance ?? 0} />
-            <Stat label="Avaliações" value={summary?.evaluations ?? 0} />
-            <Stat label="Cobranças" value={summary?.charges ?? 0} />
+            <Stat label={tx('Jogos')} value={summary?.matches ?? 0} />
+            <Stat label={tx('Treinos')} value={summary?.trainings ?? 0} />
+            <Stat label={tx('Presenças')} value={summary?.attendance ?? 0} />
+            <Stat label={tx('Avaliações')} value={summary?.evaluations ?? 0} />
+            <Stat label={tx('Cobranças')} value={summary?.charges ?? 0} />
           </div>
           <div className="flex flex-wrap gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => generateSeasonReportPdf(seasonId, season.name)}>
-              Exportar relatório (PDF)
+              {tx('Exportar relatório (PDF)')}
             </Button>
-            <Button onClick={() => nav('/seasons/new')}><Plus className="w-4 h-4 mr-1" /> Criar próxima época</Button>
+            <Button onClick={() => nav('/seasons/new')}><Plus className="w-4 h-4 mr-1" /> {tx('Criar próxima época')}</Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="secondary" disabled={season.status !== 'active'}>
-                  <Lock className="w-4 h-4 mr-1" /> Fechar época
+                  <Lock className="w-4 h-4 mr-1" /> {tx('Fechar época')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Fechar época {season.name}?</AlertDialogTitle>
+                  <AlertDialogTitle>{tx('Fechar época')}{' '}{season.name}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    A época deixa de ser editável como ativa, mas continua consultável e pode ainda ser reativada por um admin. Esta ação não apaga dados.
+                    {tx('A época deixa de ser editável como ativa, mas continua consultável e pode ainda ser reativada por um admin. Esta ação não apaga dados.')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => close.mutate()}>Fechar</AlertDialogAction>
+                  <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => close.mutate()}>{tx('Fechar')}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -98,19 +99,19 @@ export default function SeasonClosePage() {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" disabled={season.status === 'archived'}>
-                  <Archive className="w-4 h-4 mr-1" /> Arquivar (imutável)
+                  <Archive className="w-4 h-4 mr-1" /> {tx('Arquivar (imutável)')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Arquivar época {season.name}?</AlertDialogTitle>
+                  <AlertDialogTitle>{tx('Arquivar época')}{' '}{season.name}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Ao arquivar, nenhum registo desta época pode voltar a ser alterado. Continuará disponível apenas para consulta e relatórios. Esta ação é irreversível.
+                    {tx('Ao arquivar, nenhum registo desta época pode voltar a ser alterado. Continuará disponível apenas para consulta e relatórios. Esta ação é irreversível.')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => archive.mutate()}>Arquivar</AlertDialogAction>
+                  <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => archive.mutate()}>{tx('Arquivar')}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

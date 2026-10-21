@@ -12,6 +12,7 @@ import { AGE_CATEGORIES } from '@/lib/constants';
 import jsPDF from 'jspdf';
 import { Database } from '@/integrations/supabase/types';
 import { deliverPdf } from '@/lib/native-files';
+import { tx } from '@/lib/i18n/ui';
 
 type SeasonPlayerStatus = Database['public']['Enums']['season_player_status'];
 
@@ -329,7 +330,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
     // Save
     const filename = `mapeamento-equipas-${seasonName.replace('/', '-')}.pdf`;
     void deliverPdf(doc, filename);
-    toast.success('PDF gerado com sucesso');
+    toast.success(tx('PDF gerado com sucesso'));
   };
 
   const isLoading = teamsLoading || plansLoading || assignmentsLoading || profilesLoading;
@@ -349,37 +350,37 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Resumo e Exportação
+            {tx('Resumo e Exportação')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Reveja o mapeamento completo e exporte em PDF
+            {tx('Reveja o mapeamento completo e exporte em PDF')}
           </p>
         </div>
         <Button onClick={generatePDF}>
           <Download className="w-4 h-4 mr-2" />
-          Exportar PDF
+          {tx('Exportar PDF')}
         </Button>
       </div>
 
       {/* Summary Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mapeamento de Equipas - {seasonName}</CardTitle>
+          <CardTitle className="text-base">{tx('Mapeamento de Equipas -')}{' '}{seasonName}</CardTitle>
           <CardDescription>
             {clubName && <span>{clubName} • </span>}
-            {playerPlans?.length || 0} jogadores planeados
+            {playerPlans?.length || 0} {tx('jogadores planeados')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Equipa</TableHead>
-                <TableHead>Escalão</TableHead>
-                <TableHead>Treinadores</TableHead>
-                <TableHead className="text-center">Mantêm</TableHead>
-                <TableHead className="text-center">Chegam</TableHead>
-                <TableHead className="text-center">Total</TableHead>
+                <TableHead>{tx('Equipa')}</TableHead>
+                <TableHead>{tx('Escalão')}</TableHead>
+                <TableHead>{tx('Treinadores')}</TableHead>
+                <TableHead className="text-center">{tx('Mantêm')}</TableHead>
+                <TableHead className="text-center">{tx('Chegam')}</TableHead>
+                <TableHead className="text-center">{tx('Total')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -423,7 +424,7 @@ export function SummaryPdfStep({ seasonId, clubId, seasonName, clubName }: Summa
         <Card className="border-destructive/30">
           <CardHeader>
             <CardTitle className="text-base text-destructive">
-              Jogadores que Saem ({leavingPlayers.length})
+              {tx('Jogadores que Saem (')}{leavingPlayers.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

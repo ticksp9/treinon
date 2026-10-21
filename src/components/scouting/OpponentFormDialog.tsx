@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formationCodes } from '@/lib/tactic-board';
 import { SPORT_OPTIONS, type Opponent } from '@/lib/opponent-scouting';
+import { tx } from '@/lib/i18n/ui';
 
 export interface OpponentForm { name: string; category: string; sport_type: string; competition: string; coach_name: string; usual_formation: string }
 const NO_FORMATION = '__none__';
@@ -37,45 +38,45 @@ export function OpponentFormDialog({ open, onOpenChange, initial, defaults, onSu
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>{initial ? 'Editar adversário' : 'Novo adversário'}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{initial ? tx('Editar adversário') : tx('Novo adversário')}</DialogTitle></DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="opp-name">Equipa *</Label>
-            <Input id="opp-name" maxLength={120} value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="Ex.: Estrela do Monte" autoFocus />
+            <Label htmlFor="opp-name">{tx('Equipa *')}</Label>
+            <Input id="opp-name" maxLength={120} value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder={tx('Ex.: Estrela do Monte')} autoFocus />
           </div>
           <div>
-            <Label htmlFor="opp-cat">Escalão</Label>
-            <Input id="opp-cat" maxLength={60} value={form.category} onChange={(e) => set({ category: e.target.value })} placeholder="Ex.: Seniores, Sub-15" />
+            <Label htmlFor="opp-cat">{tx('Escalão')}</Label>
+            <Input id="opp-cat" maxLength={60} value={form.category} onChange={(e) => set({ category: e.target.value })} placeholder={tx('Ex.: Seniores, Sub-15')} />
           </div>
           <div>
-            <Label>Modalidade</Label>
+            <Label>{tx('Modalidade')}</Label>
             <Select value={form.sport_type} onValueChange={(v) => set({ sport_type: v, usual_formation: '' })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{SPORT_OPTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="opp-comp">Competição</Label>
-            <Input id="opp-comp" maxLength={120} value={form.competition} onChange={(e) => set({ competition: e.target.value })} placeholder="Ex.: Distrital 1.ª Divisão" />
+            <Label htmlFor="opp-comp">{tx('Competição')}</Label>
+            <Input id="opp-comp" maxLength={120} value={form.competition} onChange={(e) => set({ competition: e.target.value })} placeholder={tx('Ex.: Distrital 1.ª Divisão')} />
           </div>
           <div>
-            <Label>Formação habitual</Label>
+            <Label>{tx('Formação habitual')}</Label>
             <Select value={form.usual_formation || NO_FORMATION} onValueChange={(v) => set({ usual_formation: v === NO_FORMATION ? '' : v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_FORMATION}>Ainda não sei</SelectItem>
+                <SelectItem value={NO_FORMATION}>{tx('Ainda não sei')}</SelectItem>
                 {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="opp-coach">Treinador</Label>
+            <Label htmlFor="opp-coach">{tx('Treinador')}</Label>
             <Input id="opp-coach" maxLength={120} value={form.coach_name} onChange={(e) => set({ coach_name: e.target.value })} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={busy || !form.name.trim()}>{initial ? 'Guardar' : 'Criar ficha'}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tx('Cancelar')}</Button>
+          <Button onClick={submit} disabled={busy || !form.name.trim()}>{initial ? tx('Guardar') : tx('Criar ficha')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -18,6 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { tx } from '@/lib/i18n/ui';
 
 interface PaymentsTabProps {
   clubId: string;
@@ -177,12 +178,12 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Atletas com Pagamentos em Falta (+2 meses)
+              {tx('Atletas com Pagamentos em Falta (+2 meses)')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Estes atletas <strong>NÃO podem ser convocados</strong> até regularizarem os pagamentos.
+              {tx('Estes atletas')}{' '}<strong>{tx('NÃO podem ser convocados')}</strong> {tx('até regularizarem os pagamentos.')}
             </p>
             
             <Accordion type="multiple" className="w-full">
@@ -198,10 +199,10 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Atleta</TableHead>
-                          <TableHead>Equipa</TableHead>
-                          <TableHead>Meses em Falta</TableHead>
-                          <TableHead className="text-right">Valor Total</TableHead>
+                          <TableHead>{tx('Atleta')}</TableHead>
+                          <TableHead>{tx('Equipa')}</TableHead>
+                          <TableHead>{tx('Meses em Falta')}</TableHead>
+                          <TableHead className="text-right">{tx('Valor Total')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -234,21 +235,21 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Resumo de Pagamentos por Escalão
+            {tx('Resumo de Pagamentos por Escalão')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-muted-foreground text-center py-8">A carregar...</p>
+            <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
           ) : paymentSummary && Object.keys(paymentSummary).length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Escalão</TableHead>
-                  <TableHead className="text-right">Pago</TableHead>
-                  <TableHead className="text-right">Pendente</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Taxa Cobrança</TableHead>
+                  <TableHead>{tx('Escalão')}</TableHead>
+                  <TableHead className="text-right">{tx('Pago')}</TableHead>
+                  <TableHead className="text-right">{tx('Pendente')}</TableHead>
+                  <TableHead className="text-right">{tx('Total')}</TableHead>
+                  <TableHead className="text-right">{tx('Taxa Cobrança')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -279,7 +280,7 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
-                Não há dados de pagamentos registados.
+                {tx('Não há dados de pagamentos registados.')}
               </p>
             </div>
           )}
@@ -289,20 +290,20 @@ export function PaymentsTab({ clubId }: PaymentsTabProps) {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
+          <CardTitle>{tx('Ações Rápidas')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
             <Button variant="outline" disabled>
               <Users className="h-4 w-4 mr-2" />
-              Ver Todos os Atletas em Falta
+              {tx('Ver Todos os Atletas em Falta')}
             </Button>
             <Button variant="outline" disabled>
-              Exportar Relatório
+              {tx('Exportar Relatório')}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Funcionalidades adicionais em desenvolvimento.
+            {tx('Funcionalidades adicionais em desenvolvimento.')}
           </p>
         </CardContent>
       </Card>

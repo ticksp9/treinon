@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
   draft: 'Rascunho', submitted: 'Submetido', under_review: 'Em Revisão',
@@ -42,28 +43,28 @@ export function PurchaseRequestsTab({ clubId }: { clubId: string }) {
     <div className="space-y-4">
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Nova Requisição</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{tx('Nova Requisição')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Requisição de Compra</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Requisição de Compra')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
-              <div><Label>Título *</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
-              <div><Label>Descrição</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-              <div><Label>Valor Estimado (€)</Label><Input type="number" value={form.estimated_amount} onChange={e => setForm(f => ({ ...f, estimated_amount: Number(e.target.value) }))} /></div>
+              <div><Label>{tx('Título *')}</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
+              <div><Label>{tx('Descrição')}</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
+              <div><Label>{tx('Valor Estimado (€)')}</Label><Input type="number" value={form.estimated_amount} onChange={e => setForm(f => ({ ...f, estimated_amount: Number(e.target.value) }))} /></div>
               <div>
-                <Label>Urgência</Label>
+                <Label>{tx('Urgência')}</Label>
                 <Select value={form.urgency} onValueChange={v => setForm(f => ({ ...f, urgency: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
+                    <SelectItem value="low">{tx('Baixa')}</SelectItem>
+                    <SelectItem value="normal">{tx('Normal')}</SelectItem>
+                    <SelectItem value="high">{tx('Alta')}</SelectItem>
+                    <SelectItem value="critical">{tx('Crítica')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Justificação</Label><Textarea value={form.justification} onChange={e => setForm(f => ({ ...f, justification: e.target.value }))} /></div>
+              <div><Label>{tx('Justificação')}</Label><Textarea value={form.justification} onChange={e => setForm(f => ({ ...f, justification: e.target.value }))} /></div>
               <Button onClick={handleCreate} disabled={!form.title || createPurchaseRequest.isPending} className="w-full">
-                {createPurchaseRequest.isPending ? 'A submeter...' : 'Submeter Requisição'}
+                {createPurchaseRequest.isPending ? tx('A submeter...') : tx('Submeter Requisição')}
               </Button>
             </div>
           </DialogContent>
@@ -76,17 +77,17 @@ export function PurchaseRequestsTab({ clubId }: { clubId: string }) {
             <TableHeader>
               <TableRow>
                 <TableHead>Nº</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Valor Est.</TableHead>
-                <TableHead>Urgência</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead>{tx('Título')}</TableHead>
+                <TableHead>{tx('Valor Est.')}</TableHead>
+                <TableHead>{tx('Urgência')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
+                <TableHead>{tx('Data')}</TableHead>
+                <TableHead>{tx('Ações')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {purchaseRequests.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sem requisições</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{tx('Sem requisições')}</TableCell></TableRow>
               ) : purchaseRequests.map(pr => (
                 <TableRow key={pr.id}>
                   <TableCell className="font-mono text-xs">{pr.request_number || '—'}</TableCell>

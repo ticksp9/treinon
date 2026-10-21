@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 // Business logic for Medical / Health module
 
 export interface ExamComplianceItem {
@@ -107,65 +108,65 @@ export function computeDaysSince(dateStr: string, today: Date = new Date()): num
 
 // Return-to-play stage labels
 export const RTP_STAGES = [
-  { value: 'rest', label: 'Repouso' },
-  { value: 'partial_training', label: 'Treino Parcial' },
-  { value: 'integrated_restricted', label: 'Treino Integrado c/ Restrição' },
-  { value: 'full_training', label: 'Treino Completo' },
-  { value: 'match_ready', label: 'Liberado para Jogo' },
-  { value: 'post_return_monitoring', label: 'Monitorização Pós-Retorno' },
+  { value: 'rest', get label() { return tx('Repouso'); } },
+  { value: 'partial_training', get label() { return tx('Treino Parcial'); } },
+  { value: 'integrated_restricted', get label() { return tx('Treino Integrado c/ Restrição'); } },
+  { value: 'full_training', get label() { return tx('Treino Completo'); } },
+  { value: 'match_ready', get label() { return tx('Liberado para Jogo'); } },
+  { value: 'post_return_monitoring', get label() { return tx('Monitorização Pós-Retorno'); } },
 ];
 
 export const CLEARANCE_STATUSES = [
-  { value: 'fit', label: 'Apto', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
-  { value: 'fit_restricted', label: 'Apto c/ Restrições', color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
-  { value: 'unfit', label: 'Inapto', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
-  { value: 'unfit_training', label: 'Inapto p/ Treino', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
-  { value: 'unfit_match', label: 'Inapto p/ Jogo', color: 'bg-orange-500/20 text-orange-700 border-orange-500/30' },
-  { value: 'pending', label: 'Pendente', color: 'bg-gray-500/20 text-gray-700 border-gray-500/30' },
+  { value: 'fit', get label() { return tx('Apto'); }, color: 'bg-green-500/20 text-green-700 border-green-500/30' },
+  { value: 'fit_restricted', get label() { return tx('Apto c/ Restrições'); }, color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
+  { value: 'unfit', get label() { return tx('Inapto'); }, color: 'bg-red-500/20 text-red-700 border-red-500/30' },
+  { value: 'unfit_training', get label() { return tx('Inapto p/ Treino'); }, color: 'bg-red-500/20 text-red-700 border-red-500/30' },
+  { value: 'unfit_match', get label() { return tx('Inapto p/ Jogo'); }, color: 'bg-orange-500/20 text-orange-700 border-orange-500/30' },
+  { value: 'pending', get label() { return tx('Pendente'); }, color: 'bg-gray-500/20 text-gray-700 border-gray-500/30' },
 ];
 
 export const EXAM_CATEGORIES = [
-  { value: 'admissional', label: 'Admissional' },
-  { value: 'annual', label: 'Anual Obrigatório' },
-  { value: 'return_post_injury', label: 'Retorno Pós-Lesão' },
-  { value: 'cardiac', label: 'Cardiológico' },
-  { value: 'orthopedic', label: 'Ortopédico' },
-  { value: 'physiological', label: 'Fisiológico' },
-  { value: 'imaging', label: 'Imagem' },
-  { value: 'laboratory', label: 'Laboratorial' },
-  { value: 'functional', label: 'Avaliação Funcional' },
-  { value: 'other', label: 'Outro' },
+  { value: 'admissional', get label() { return tx('Admissional'); } },
+  { value: 'annual', get label() { return tx('Anual Obrigatório'); } },
+  { value: 'return_post_injury', get label() { return tx('Retorno Pós-Lesão'); } },
+  { value: 'cardiac', get label() { return tx('Cardiológico'); } },
+  { value: 'orthopedic', get label() { return tx('Ortopédico'); } },
+  { value: 'physiological', get label() { return tx('Fisiológico'); } },
+  { value: 'imaging', get label() { return tx('Imagem'); } },
+  { value: 'laboratory', get label() { return tx('Laboratorial'); } },
+  { value: 'functional', get label() { return tx('Avaliação Funcional'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 export const INJURY_CASE_STATUSES = [
-  { value: 'open', label: 'Aberto', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
-  { value: 'in_assessment', label: 'Em Avaliação', color: 'bg-orange-500/20 text-orange-700 border-orange-500/30' },
-  { value: 'in_treatment', label: 'Em Tratamento', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
-  { value: 'in_rehab', label: 'Em Reabilitação', color: 'bg-purple-500/20 text-purple-700 border-purple-500/30' },
-  { value: 'return_progressive', label: 'Retorno Progressivo', color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
-  { value: 'closed', label: 'Encerrado', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
+  { value: 'open', get label() { return tx('Aberto'); }, color: 'bg-red-500/20 text-red-700 border-red-500/30' },
+  { value: 'in_assessment', get label() { return tx('Em Avaliação'); }, color: 'bg-orange-500/20 text-orange-700 border-orange-500/30' },
+  { value: 'in_treatment', get label() { return tx('Em Tratamento'); }, color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+  { value: 'in_rehab', get label() { return tx('Em Reabilitação'); }, color: 'bg-purple-500/20 text-purple-700 border-purple-500/30' },
+  { value: 'return_progressive', get label() { return tx('Retorno Progressivo'); }, color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
+  { value: 'closed', get label() { return tx('Encerrado'); }, color: 'bg-green-500/20 text-green-700 border-green-500/30' },
 ];
 
 export const INJURY_CONTEXTS = [
-  { value: 'training', label: 'Treino' },
-  { value: 'match', label: 'Jogo' },
-  { value: 'gym', label: 'Ginásio' },
-  { value: 'travel', label: 'Deslocação' },
-  { value: 'other', label: 'Outro' },
+  { value: 'training', get label() { return tx('Treino'); } },
+  { value: 'match', get label() { return tx('Jogo'); } },
+  { value: 'gym', get label() { return tx('Ginásio'); } },
+  { value: 'travel', get label() { return tx('Deslocação'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 export const PHYSIO_MODALITIES = [
-  { value: 'manual_therapy', label: 'Terapia Manual' },
-  { value: 'electrotherapy', label: 'Eletroterapia' },
-  { value: 'cryotherapy', label: 'Crioterapia' },
-  { value: 'thermotherapy', label: 'Termoterapia' },
-  { value: 'ultrasound', label: 'Ultrassom' },
-  { value: 'laser', label: 'Laser' },
-  { value: 'exercise_therapy', label: 'Cinesioterapia' },
-  { value: 'hydrotherapy', label: 'Hidroterapia' },
-  { value: 'massage', label: 'Massagem' },
-  { value: 'taping', label: 'Taping/Ligaduras' },
-  { value: 'stretching', label: 'Alongamento' },
-  { value: 'proprioception', label: 'Proprioceção' },
-  { value: 'other', label: 'Outra' },
+  { value: 'manual_therapy', get label() { return tx('Terapia Manual'); } },
+  { value: 'electrotherapy', get label() { return tx('Eletroterapia'); } },
+  { value: 'cryotherapy', get label() { return tx('Crioterapia'); } },
+  { value: 'thermotherapy', get label() { return tx('Termoterapia'); } },
+  { value: 'ultrasound', get label() { return tx('Ultrassom'); } },
+  { value: 'laser', get label() { return tx('Laser'); } },
+  { value: 'exercise_therapy', get label() { return tx('Cinesioterapia'); } },
+  { value: 'hydrotherapy', get label() { return tx('Hidroterapia'); } },
+  { value: 'massage', get label() { return tx('Massagem'); } },
+  { value: 'taping', get label() { return tx('Taping/Ligaduras'); } },
+  { value: 'stretching', get label() { return tx('Alongamento'); } },
+  { value: 'proprioception', get label() { return tx('Proprioceção'); } },
+  { value: 'other', get label() { return tx('Outra'); } },
 ];

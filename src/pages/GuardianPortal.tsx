@@ -29,6 +29,7 @@ import { useMarkAnnouncementRead } from '@/hooks/useCommunication';
 import { useNotificationsFeed, useUnreadNotificationCount, useMarkNotificationRead, useRealtimeNotifications } from '@/hooks/useCommunicationPremium';
 import { EmptyState, PageLoading } from '@/components/ui/page-states';
 import { GuardianFinancialTab } from '@/components/billing/GuardianFinancialTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function GuardianPortal() {
   const { user } = useAuth();
@@ -65,7 +66,7 @@ export default function GuardianPortal() {
   useRealtimeNotifications();
 
   if (gpLoading || alLoading) {
-    return <AppLayout><div className="container py-8"><PageLoading message="A carregar portal..." /></div></AppLayout>;
+    return <AppLayout><div className="container py-8"><PageLoading message={tx('A carregar portal...')} /></div></AppLayout>;
   }
 
   if (!guardianProfile) {
@@ -74,8 +75,8 @@ export default function GuardianPortal() {
         <div className="container py-8">
           <EmptyState
             icon={<Shield className="h-10 w-10" />}
-            title="Portal do Encarregado"
-            description="Não foi encontrado um perfil de encarregado de educação associado à sua conta."
+            title={tx('Portal do Encarregado')}
+            description={tx('Não foi encontrado um perfil de encarregado de educação associado à sua conta.')}
           />
         </div>
       </AppLayout>
@@ -90,15 +91,15 @@ export default function GuardianPortal() {
 
   const handleCallupResponse = (matchId: string, playerId: string, status: string) => {
     respondCallup.mutate({ matchId, playerId, status }, {
-      onSuccess: () => toast.success(status === 'confirmed' ? 'Presença confirmada!' : 'Resposta registada'),
-      onError: () => toast.error('Erro ao responder'),
+      onSuccess: () => toast.success(status === 'confirmed' ? tx('Presença confirmada!') : tx('Resposta registada')),
+      onError: () => toast.error(tx('Erro ao responder')),
     });
   };
 
   const handleAttendanceResponse = (requestId: string, response: string) => {
     respondAttendance.mutate({ requestId, response }, {
-      onSuccess: () => toast.success('Resposta registada'),
-      onError: () => toast.error('Erro ao responder'),
+      onSuccess: () => toast.success(tx('Resposta registada')),
+      onError: () => toast.error(tx('Erro ao responder')),
     });
   };
 
@@ -113,7 +114,7 @@ export default function GuardianPortal() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Portal do Encarregado</h1>
+                <h1 className="text-2xl font-bold">{tx('Portal do Encarregado')}</h1>
                 {(totalPending > 0 || notifCount > 0) && (
                   <Badge variant="destructive" className="text-xs">
                     {totalPending + notifCount} pendente{(totalPending + notifCount) > 1 ? 's' : ''}
@@ -121,7 +122,7 @@ export default function GuardianPortal() {
                 )}
               </div>
               <p className="text-muted-foreground text-sm">
-                Bem-vindo(a), {guardianProfile.full_name}
+                {tx('Bem-vindo(a),')}{' '}{guardianProfile.full_name}
               </p>
             </div>
           </div>
@@ -135,7 +136,7 @@ export default function GuardianPortal() {
                   onClick={() => setSelectedAthleteIdx(i)}
                 >
                   <Users className="h-3 w-3 mr-1" />
-                  {a.players?.name || 'Atleta'}
+                  {a.players?.name || tx('Atleta')}
                 </Button>
               ))}
             </div>
@@ -144,11 +145,11 @@ export default function GuardianPortal() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex-wrap h-auto gap-1">
-            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>Início</span></TabsTrigger>
-            <TabsTrigger value="convocatorias"><Trophy className="h-4 w-4 mr-1" /><span>Convocatórias</span></TabsTrigger>
+            <TabsTrigger value="inicio"><Home className="h-4 w-4 mr-1" /><span>{tx('Início')}</span></TabsTrigger>
+            <TabsTrigger value="convocatorias"><Trophy className="h-4 w-4 mr-1" /><span>{tx('Convocatórias')}</span></TabsTrigger>
             <TabsTrigger value="confirmacoes" className="flex items-center gap-1">
               <ClipboardCheck className="h-4 w-4" />
-              <span>Confirmações</span>
+              <span>{tx('Confirmações')}</span>
               {totalPending > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold">
                   {totalPending}
@@ -157,7 +158,7 @@ export default function GuardianPortal() {
             </TabsTrigger>
             <TabsTrigger value="anuncios" className="flex items-center gap-1">
               <Megaphone className="h-4 w-4" />
-              <span>Anúncios</span>
+              <span>{tx('Anúncios')}</span>
               {unreadAnnouncements > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {unreadAnnouncements}
@@ -166,16 +167,16 @@ export default function GuardianPortal() {
             </TabsTrigger>
             <TabsTrigger value="notificacoes" className="flex items-center gap-1">
               <BellRing className="h-4 w-4" />
-              <span>Notificações</span>
+              <span>{tx('Notificações')}</span>
               {notifCount > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {notifCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="financeiro"><Euro className="h-4 w-4 mr-1" /><span>Financeiro</span></TabsTrigger>
-            <TabsTrigger value="agenda"><Calendar className="h-4 w-4 mr-1" /><span>Agenda</span></TabsTrigger>
-            <TabsTrigger value="preferencias"><Bell className="h-4 w-4 mr-1" /><span>Preferências</span></TabsTrigger>
+            <TabsTrigger value="financeiro"><Euro className="h-4 w-4 mr-1" /><span>{tx('Financeiro')}</span></TabsTrigger>
+            <TabsTrigger value="agenda"><Calendar className="h-4 w-4 mr-1" /><span>{tx('Agenda')}</span></TabsTrigger>
+            <TabsTrigger value="preferencias"><Bell className="h-4 w-4 mr-1" /><span>{tx('Preferências')}</span></TabsTrigger>
           </TabsList>
 
           {/* HOME TAB */}
@@ -189,7 +190,7 @@ export default function GuardianPortal() {
                     {selectedAthlete.players?.name}
                   </CardTitle>
                   <CardDescription>
-                    {(selectedAthlete.players as any)?.teams?.name || 'Sem equipa'} · {selectedAthlete.relationship || 'Encarregado'}
+                    {(selectedAthlete.players as any)?.teams?.name || tx('Sem equipa')} · {selectedAthlete.relationship || tx('Encarregado')}
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -200,25 +201,25 @@ export default function GuardianPortal() {
               <Card className={pendingConfirmations.length > 0 ? 'border-destructive/30' : ''}>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-primary">{pendingConfirmations.length}</div>
-                  <p className="text-xs text-muted-foreground">Confirmações Pendentes</p>
+                  <p className="text-xs text-muted-foreground">{tx('Confirmações Pendentes')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-primary">{callups.length}</div>
-                  <p className="text-xs text-muted-foreground">Convocatórias Ativas</p>
+                  <p className="text-xs text-muted-foreground">{tx('Convocatórias Ativas')}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-primary">{announcements.length}</div>
-                  <p className="text-xs text-muted-foreground">Anúncios</p>
+                  <p className="text-xs text-muted-foreground">{tx('Anúncios')}</p>
                 </CardContent>
               </Card>
               <Card className={notifCount > 0 ? 'border-primary/30' : ''}>
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-primary">{notifCount}</div>
-                  <p className="text-xs text-muted-foreground">Notificações</p>
+                  <p className="text-xs text-muted-foreground">{tx('Notificações')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -227,7 +228,7 @@ export default function GuardianPortal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Próximo Jogo</CardTitle>
+                  <CardTitle className="text-sm">{tx('Próximo Jogo')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {nextMatch ? (
@@ -243,17 +244,17 @@ export default function GuardianPortal() {
                         </p>
                       )}
                       <Badge variant={nextMatch.is_home ? 'default' : 'secondary'} className="text-xs mt-1">
-                        {nextMatch.is_home ? 'Casa' : 'Fora'}
+                        {nextMatch.is_home ? tx('Casa') : tx('Fora')}
                       </Badge>
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Sem jogos agendados</p>
+                    <p className="text-sm text-muted-foreground">{tx('Sem jogos agendados')}</p>
                   )}
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Próximo Treino</CardTitle>
+                  <CardTitle className="text-sm">{tx('Próximo Treino')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {nextTraining ? (
@@ -267,7 +268,7 @@ export default function GuardianPortal() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">Sem treinos agendados</p>
+                    <p className="text-sm text-muted-foreground">{tx('Sem treinos agendados')}</p>
                   )}
                 </CardContent>
               </Card>
@@ -279,13 +280,13 @@ export default function GuardianPortal() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="h-4 w-4 text-destructive" />
-                    <span className="font-semibold text-sm">Confirmações Pendentes</span>
+                    <span className="font-semibold text-sm">{tx('Confirmações Pendentes')}</span>
                   </div>
                   <div className="space-y-2">
                     {pendingConfirmations.slice(0, 3).map((pc: any) => (
                       <div key={pc.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                         <div>
-                          <p className="text-sm font-medium">{pc.matches?.opponent_name || 'Jogo'}</p>
+                          <p className="text-sm font-medium">{pc.matches?.opponent_name || tx('Jogo')}</p>
                           {pc.matches?.match_date && (
                             <p className="text-xs text-muted-foreground">
                               {format(new Date(pc.matches.match_date), "d MMM, HH:mm", { locale: pt })}
@@ -294,10 +295,10 @@ export default function GuardianPortal() {
                         </div>
                         <div className="flex gap-1">
                           <Button size="sm" variant="default" onClick={() => handleCallupResponse(pc.match_id, pc.player_id, 'confirmed')}>
-                            <CheckCircle2 className="h-3 w-3 mr-1" /> Sim
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> {tx('Sim')}
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => handleCallupResponse(pc.match_id, pc.player_id, 'declined')}>
-                            <XCircle className="h-3 w-3 mr-1" /> Não
+                            <XCircle className="h-3 w-3 mr-1" /> {tx('Não')}
                           </Button>
                         </div>
                       </div>
@@ -313,9 +314,9 @@ export default function GuardianPortal() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <BellRing className="h-4 w-4 text-primary" />
-                    <span className="font-semibold text-sm">Notificações recentes</span>
+                    <span className="font-semibold text-sm">{tx('Notificações recentes')}</span>
                     <Button size="sm" variant="link" className="ml-auto text-xs" onClick={() => setActiveTab('notificacoes')}>
-                      Ver todas
+                      {tx('Ver todas')}
                     </Button>
                   </div>
                   <div className="space-y-1.5">
@@ -339,7 +340,7 @@ export default function GuardianPortal() {
           {/* CALLUPS TAB */}
           <TabsContent value="convocatorias" className="space-y-4">
             {callups.length === 0 ? (
-              <EmptyState icon={<Trophy className="h-8 w-8" />} title="Sem convocatórias" description="Não há convocatórias ativas para os seus atletas." />
+              <EmptyState icon={<Trophy className="h-8 w-8" />} title={tx('Sem convocatórias')} description={tx('Não há convocatórias ativas para os seus atletas.')} />
             ) : (
               <div className="space-y-3">
                 {callups.map((c: any) => {
@@ -351,7 +352,7 @@ export default function GuardianPortal() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">{match.is_home ? 'CASA' : 'FORA'}</Badge>
+                              <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">{match.is_home ? tx('CASA') : tx('FORA')}</Badge>
                               <span className="font-semibold text-sm">{match.opponent_name}</span>
                             </div>
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -367,7 +368,7 @@ export default function GuardianPortal() {
                               <p className="text-xs text-muted-foreground mt-0.5">{match.competition}</p>
                             )}
                           </div>
-                          <Badge variant="outline" className="text-xs">Convocado</Badge>
+                          <Badge variant="outline" className="text-xs">{tx('Convocado')}</Badge>
                         </div>
                       </CardContent>
                     </Card>
@@ -379,16 +380,16 @@ export default function GuardianPortal() {
 
           {/* CONFIRMATIONS TAB */}
           <TabsContent value="confirmacoes" className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground">Convocatórias Pendentes</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground">{tx('Convocatórias Pendentes')}</h3>
             {pendingConfirmations.length === 0 && attendanceReqs.length === 0 ? (
-              <EmptyState icon={<ClipboardCheck className="h-8 w-8" />} title="Tudo em dia!" description="Não tem confirmações pendentes neste momento." />
+              <EmptyState icon={<ClipboardCheck className="h-8 w-8" />} title={tx('Tudo em dia!')} description={tx('Não tem confirmações pendentes neste momento.')} />
             ) : (
               <div className="space-y-3">
                 {pendingConfirmations.map((pc: any) => (
                   <Card key={pc.id}>
                     <CardContent className="p-4 flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-sm">{pc.matches?.opponent_name || 'Jogo'}</p>
+                        <p className="font-medium text-sm">{pc.matches?.opponent_name || tx('Jogo')}</p>
                         {pc.matches?.match_date && (
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(pc.matches.match_date), "d MMM, HH:mm", { locale: pt })}
@@ -396,16 +397,16 @@ export default function GuardianPortal() {
                         )}
                         {pc.confirmation_deadline && (
                           <p className="text-xs text-destructive flex items-center gap-1 mt-0.5">
-                            <Clock className="h-3 w-3" /> Prazo: {format(new Date(pc.confirmation_deadline), "d MMM, HH:mm", { locale: pt })}
+                            <Clock className="h-3 w-3" /> {tx('Prazo:')}{' '}{format(new Date(pc.confirmation_deadline), "d MMM, HH:mm", { locale: pt })}
                           </p>
                         )}
                       </div>
                       <div className="flex gap-1">
                         <Button size="sm" onClick={() => handleCallupResponse(pc.match_id, pc.player_id, 'confirmed')}>
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Confirmar
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> {tx('Confirmar')}
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => handleCallupResponse(pc.match_id, pc.player_id, 'declined')}>
-                          <XCircle className="h-3 w-3 mr-1" /> Recusar
+                          <XCircle className="h-3 w-3 mr-1" /> {tx('Recusar')}
                         </Button>
                       </div>
                     </CardContent>
@@ -414,7 +415,7 @@ export default function GuardianPortal() {
 
                 {attendanceReqs.length > 0 && (
                   <>
-                    <h3 className="text-sm font-semibold text-muted-foreground mt-4">Presenças</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground mt-4">{tx('Presenças')}</h3>
                     {attendanceReqs.map((ar: any) => (
                       <Card key={ar.id}>
                         <CardContent className="p-4 flex items-center justify-between">
@@ -423,8 +424,8 @@ export default function GuardianPortal() {
                             <p className="text-xs text-muted-foreground">{ar.event_type}</p>
                           </div>
                           <div className="flex gap-1">
-                            <Button size="sm" onClick={() => handleAttendanceResponse(ar.id, 'confirmed')}>Sim</Button>
-                            <Button size="sm" variant="outline" onClick={() => handleAttendanceResponse(ar.id, 'declined')}>Não</Button>
+                            <Button size="sm" onClick={() => handleAttendanceResponse(ar.id, 'confirmed')}>{tx('Sim')}</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleAttendanceResponse(ar.id, 'declined')}>{tx('Não')}</Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -438,7 +439,7 @@ export default function GuardianPortal() {
           {/* ANNOUNCEMENTS TAB */}
           <TabsContent value="anuncios" className="space-y-4">
             {announcements.length === 0 ? (
-              <EmptyState icon={<Megaphone className="h-8 w-8" />} title="Sem anúncios" description="Não há anúncios recentes." />
+              <EmptyState icon={<Megaphone className="h-8 w-8" />} title={tx('Sem anúncios')} description={tx('Não há anúncios recentes.')} />
             ) : (
               <ScrollArea className="max-h-[60vh]">
                 <div className="space-y-3">
@@ -454,8 +455,8 @@ export default function GuardianPortal() {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-1">
-                          {a.priority === 'urgent' && <Badge variant="destructive" className="text-[10px]">Urgente</Badge>}
-                          {a.priority === 'important' && <Badge className="text-[10px]">Importante</Badge>}
+                          {a.priority === 'urgent' && <Badge variant="destructive" className="text-[10px]">{tx('Urgente')}</Badge>}
+                          {a.priority === 'important' && <Badge className="text-[10px]">{tx('Importante')}</Badge>}
                           <h4 className="font-semibold text-sm">{a.title}</h4>
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-2">{a.content}</p>
@@ -473,7 +474,7 @@ export default function GuardianPortal() {
           {/* NOTIFICATIONS TAB */}
           <TabsContent value="notificacoes" className="space-y-4">
             {notifications.length === 0 ? (
-              <EmptyState icon={<Bell className="h-8 w-8" />} title="Sem notificações" description="Não tem notificações recentes." />
+              <EmptyState icon={<Bell className="h-8 w-8" />} title={tx('Sem notificações')} description={tx('Não tem notificações recentes.')} />
             ) : (
               <div className="space-y-2">
                 {notifications.map(n => (
@@ -487,8 +488,8 @@ export default function GuardianPortal() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className={`text-sm truncate ${!n.is_read ? 'font-semibold' : 'font-medium'}`}>{n.title}</p>
-                            {n.priority_level === 'urgent' && <Badge variant="destructive" className="text-[9px]">Urgente</Badge>}
-                            {n.priority_level === 'important' && <Badge className="text-[9px]">Importante</Badge>}
+                            {n.priority_level === 'urgent' && <Badge variant="destructive" className="text-[9px]">{tx('Urgente')}</Badge>}
+                            {n.priority_level === 'important' && <Badge className="text-[9px]">{tx('Importante')}</Badge>}
                           </div>
                           {n.body && <p className="text-xs text-muted-foreground">{n.body}</p>}
                           <p className="text-[10px] text-muted-foreground mt-1">
@@ -498,7 +499,7 @@ export default function GuardianPortal() {
                       </div>
                       {!n.is_read && (
                         <Button size="sm" variant="ghost" onClick={() => markNotifRead.mutate(n.id)}>
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Lido
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> {tx('Lido')}
                         </Button>
                       )}
                     </CardContent>
@@ -516,9 +517,9 @@ export default function GuardianPortal() {
           {/* AGENDA TAB */}
           <TabsContent value="agenda" className="space-y-4">
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-muted-foreground">Próximos Jogos</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground">{tx('Próximos Jogos')}</h3>
               {(upcomingEvents?.matches || []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem jogos agendados</p>
+                <p className="text-sm text-muted-foreground">{tx('Sem jogos agendados')}</p>
               ) : (
                 (upcomingEvents?.matches || []).map((m: any) => (
                   <Card key={m.id}>
@@ -532,16 +533,16 @@ export default function GuardianPortal() {
                         </p>
                       </div>
                       <Badge variant={m.is_home ? 'default' : 'secondary'} className="text-xs shrink-0">
-                        {m.is_home ? 'Casa' : 'Fora'}
+                        {m.is_home ? tx('Casa') : tx('Fora')}
                       </Badge>
                     </CardContent>
                   </Card>
                 ))
               )}
 
-              <h3 className="text-sm font-semibold text-muted-foreground mt-4">Próximos Treinos</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground mt-4">{tx('Próximos Treinos')}</h3>
               {(upcomingEvents?.trainings || []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sem treinos agendados</p>
+                <p className="text-sm text-muted-foreground">{tx('Sem treinos agendados')}</p>
               ) : (
                 (upcomingEvents?.trainings || []).map((t: any) => (
                   <Card key={t.id}>
@@ -566,16 +567,16 @@ export default function GuardianPortal() {
           <TabsContent value="preferencias" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Preferências de Notificação</CardTitle>
-                <CardDescription>Configure quais notificações deseja receber</CardDescription>
+                <CardTitle className="text-base">{tx('Preferências de Notificação')}</CardTitle>
+                <CardDescription>{tx('Configure quais notificações deseja receber')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { key: 'match_reminders', label: 'Lembretes de Jogos', desc: 'Receber lembrete antes dos jogos' },
-                  { key: 'training_reminders', label: 'Lembretes de Treinos', desc: 'Receber lembrete antes dos treinos' },
-                  { key: 'announcement_alerts', label: 'Alertas de Anúncios', desc: 'Ser notificado sobre novos anúncios' },
-                  { key: 'callup_alerts', label: 'Alertas de Convocatórias', desc: 'Ser notificado quando o atleta é convocado' },
-                  { key: 'unread_followup', label: 'Reforço de Não Lidos', desc: 'Lembrete para itens importantes não lidos' },
+                  { key: 'match_reminders', label: tx('Lembretes de Jogos'), desc: tx('Receber lembrete antes dos jogos') },
+                  { key: 'training_reminders', label: tx('Lembretes de Treinos'), desc: tx('Receber lembrete antes dos treinos') },
+                  { key: 'announcement_alerts', label: tx('Alertas de Anúncios'), desc: tx('Ser notificado sobre novos anúncios') },
+                  { key: 'callup_alerts', label: tx('Alertas de Convocatórias'), desc: tx('Ser notificado quando o atleta é convocado') },
+                  { key: 'unread_followup', label: tx('Reforço de Não Lidos'), desc: tx('Lembrete para itens importantes não lidos') },
                 ].map(item => (
                   <div key={item.key} className="flex items-center justify-between">
                     <div>
@@ -586,7 +587,7 @@ export default function GuardianPortal() {
                       checked={(notifPrefs as any)?.[item.key] ?? true}
                       onCheckedChange={(checked) => {
                         updatePrefs.mutate({ ...notifPrefs, [item.key]: checked } as any, {
-                          onSuccess: () => toast.success('Preferências atualizadas'),
+                          onSuccess: () => toast.success(tx('Preferências atualizadas')),
                         });
                       }}
                     />

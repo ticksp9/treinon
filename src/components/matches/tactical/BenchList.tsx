@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { tx } from '@/lib/i18n/ui';
 
 export interface BenchPlayer {
   player_id: string;
@@ -54,13 +55,13 @@ export function BenchList({
         e.preventDefault();
         onDropToBench?.();
       }}
-      aria-label="Banco de jogadores"
+      aria-label={tx('Banco de jogadores')}
     >
       <div className="p-2 border-b">
         <Input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Filtrar (nome, nº, posição)…"
+          placeholder={tx('Filtrar (nome, nº, posição)…')}
           className="h-8 text-sm"
         />
       </div>
@@ -68,7 +69,7 @@ export function BenchList({
         <ul className="p-1.5 space-y-1">
           {filtered.length === 0 && (
             <li className="text-xs text-muted-foreground px-2 py-3 text-center">
-              Sem jogadores no banco.
+              {tx('Sem jogadores no banco.')}
             </li>
           )}
           {filtered.map((p) => (

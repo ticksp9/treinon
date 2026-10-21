@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { tx } from '@/lib/i18n/ui';
 
 interface Exercise {
   id?: string;
@@ -239,12 +240,12 @@ export default function RehabPlanForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['physio-rehab-plans'] });
       queryClient.invalidateQueries({ queryKey: ['physio-active-rehab'] });
-      toast.success(isEditing ? 'Plano atualizado!' : 'Plano criado!');
+      toast.success(isEditing ? tx('Plano atualizado!') : tx('Plano criado!'));
       navigate('/club/physio/rehab');
     },
     onError: (error) => {
       console.error('Error saving plan:', error);
-      toast.error('Erro ao guardar plano');
+      toast.error(tx('Erro ao guardar plano'));
     },
   });
 
@@ -256,12 +257,12 @@ export default function RehabPlanForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['physio-rehab-plans'] });
-      toast.success('Plano eliminado!');
+      toast.success(tx('Plano eliminado!'));
       navigate('/club/physio/rehab');
     },
     onError: (error) => {
       console.error('Error deleting plan:', error);
-      toast.error('Erro ao eliminar plano');
+      toast.error(tx('Erro ao eliminar plano'));
     },
   });
 
@@ -292,7 +293,7 @@ export default function RehabPlanForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.player_id || !formData.title) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error(tx('Preencha todos os campos obrigatórios'));
       return;
     }
     saveMutation.mutate();
@@ -316,7 +317,7 @@ export default function RehabPlanForm() {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
             </CardContent>
           </Card>
         </div>
@@ -334,13 +335,13 @@ export default function RehabPlanForm() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-display font-bold">
-              {isEditing ? 'Editar Plano' : 'Novo Plano de Reabilitação'}
+              {isEditing ? tx('Editar Plano') : tx('Novo Plano de Reabilitação')}
             </h1>
           </div>
           {isEditing && (
             <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
+              {tx('Eliminar')}
             </Button>
           )}
         </div>
@@ -349,18 +350,18 @@ export default function RehabPlanForm() {
           {/* Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Informação do Plano</CardTitle>
+              <CardTitle>{tx('Informação do Plano')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="player">Jogador *</Label>
+                  <Label htmlFor="player">{tx('Jogador *')}</Label>
                   <Select
                     value={formData.player_id}
                     onValueChange={(value) => setFormData({ ...formData, player_id: value, injury_id: '' })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar jogador" />
+                      <SelectValue placeholder={tx('Selecionar jogador')} />
                     </SelectTrigger>
                     <SelectContent>
                       {players?.map(player => (
@@ -373,17 +374,17 @@ export default function RehabPlanForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="injury">Lesão Associada</Label>
+                  <Label htmlFor="injury">{tx('Lesão Associada')}</Label>
                   <Select
                     value={formData.injury_id || "none"}
                     onValueChange={(value) => setFormData({ ...formData, injury_id: value === "none" ? "" : value })}
                     disabled={!formData.player_id}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar lesão (opcional)" />
+                      <SelectValue placeholder={tx('Selecionar lesão (opcional)')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
+                      <SelectItem value="none">{tx('Nenhuma')}</SelectItem>
                       {playerInjuries?.map(injury => (
                         <SelectItem key={injury.id} value={injury.id}>
                           {injury.body_area} - {injury.injury_type} ({format(new Date(injury.start_date), 'dd/MM/yyyy')})
@@ -395,20 +396,20 @@ export default function RehabPlanForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="title">Título *</Label>
+                <Label htmlFor="title">{tx('Título *')}</Label>
                 <Input
                   id="title"
-                  placeholder="Ex: Recuperação LCA - Fase 1"
+                  placeholder={tx('Ex: Recuperação LCA - Fase 1')}
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="goal">Objetivo</Label>
+                <Label htmlFor="goal">{tx('Objetivo')}</Label>
                 <Textarea
                   id="goal"
-                  placeholder="Objetivo do plano de reabilitação..."
+                  placeholder={tx('Objetivo do plano de reabilitação...')}
                   value={formData.goal}
                   onChange={(e) => setFormData({ ...formData, goal: e.target.value })}
                   rows={2}
@@ -417,7 +418,7 @@ export default function RehabPlanForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Data Início *</Label>
+                  <Label htmlFor="start_date">{tx('Data Início *')}</Label>
                   <Input
                     id="start_date"
                     type="date"
@@ -427,7 +428,7 @@ export default function RehabPlanForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">Data Fim</Label>
+                  <Label htmlFor="end_date">{tx('Data Fim')}</Label>
                   <Input
                     id="end_date"
                     type="date"
@@ -437,7 +438,7 @@ export default function RehabPlanForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phase">Fase</Label>
+                  <Label htmlFor="phase">{tx('Fase')}</Label>
                   <Select
                     value={formData.phase}
                     onValueChange={(value) => setFormData({ ...formData, phase: value })}
@@ -454,7 +455,7 @@ export default function RehabPlanForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">Estado</Label>
+                  <Label htmlFor="status">{tx('Estado')}</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
@@ -472,10 +473,10 @@ export default function RehabPlanForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="notes">Notas</Label>
+                <Label htmlFor="notes">{tx('Notas')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Notas adicionais..."
+                  placeholder={tx('Notas adicionais...')}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={2}
@@ -487,18 +488,18 @@ export default function RehabPlanForm() {
           {/* Exercises */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Exercícios</CardTitle>
+              <CardTitle>{tx('Exercícios')}</CardTitle>
               <Button type="button" variant="outline" size="sm" onClick={addExercise}>
                 <Plus className="w-4 h-4 mr-2" />
-                Adicionar
+                {tx('Adicionar')}
               </Button>
             </CardHeader>
             <CardContent>
               {exercises.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhum exercício adicionado</p>
+                  <p>{tx('Nenhum exercício adicionado')}</p>
                   <Button type="button" variant="link" onClick={addExercise}>
-                    Adicionar primeiro exercício
+                    {tx('Adicionar primeiro exercício')}
                   </Button>
                 </div>
               ) : (
@@ -522,16 +523,16 @@ export default function RehabPlanForm() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Nome do Exercício *</Label>
+                          <Label>{tx('Nome do Exercício *')}</Label>
                           <Input
-                            placeholder="Ex: Flexão de joelho"
+                            placeholder={tx('Ex: Flexão de joelho')}
                             value={exercise.exercise_name}
                             onChange={(e) => updateExercise(index, 'exercise_name', e.target.value)}
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Local</Label>
+                          <Label>{tx('Local')}</Label>
                           <Select
                             value={exercise.location}
                             onValueChange={(value) => updateExercise(index, 'location', value)}
@@ -550,7 +551,7 @@ export default function RehabPlanForm() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
-                          <Label>Séries</Label>
+                          <Label>{tx('Séries')}</Label>
                           <Input
                             type="number"
                             placeholder="3"
@@ -560,7 +561,7 @@ export default function RehabPlanForm() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Repetições</Label>
+                          <Label>{tx('Repetições')}</Label>
                           <Input
                             type="number"
                             placeholder="10"
@@ -570,7 +571,7 @@ export default function RehabPlanForm() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Duração (seg)</Label>
+                          <Label>{tx('Duração (seg)')}</Label>
                           <Input
                             type="number"
                             placeholder="30"
@@ -580,9 +581,9 @@ export default function RehabPlanForm() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>Frequência</Label>
+                          <Label>{tx('Frequência')}</Label>
                           <Input
-                            placeholder="2x/dia"
+                            placeholder={tx('2x/dia')}
                             value={exercise.frequency}
                             onChange={(e) => updateExercise(index, 'frequency', e.target.value)}
                           />
@@ -590,9 +591,9 @@ export default function RehabPlanForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Descrição</Label>
+                        <Label>{tx('Descrição')}</Label>
                         <Textarea
-                          placeholder="Instruções detalhadas..."
+                          placeholder={tx('Instruções detalhadas...')}
                           value={exercise.description}
                           onChange={(e) => updateExercise(index, 'description', e.target.value)}
                           rows={2}
@@ -600,7 +601,7 @@ export default function RehabPlanForm() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>URL do Vídeo</Label>
+                        <Label>{tx('URL do Vídeo')}</Label>
                         <Input
                           type="url"
                           placeholder="https://youtube.com/..."
@@ -618,11 +619,11 @@ export default function RehabPlanForm() {
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate('/club/physio/rehab')}>
-              Cancelar
+              {tx('Cancelar')}
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
               <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? 'A guardar...' : 'Guardar'}
+              {saveMutation.isPending ? tx('A guardar...') : tx('Guardar')}
             </Button>
           </div>
         </form>
@@ -631,18 +632,18 @@ export default function RehabPlanForm() {
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Eliminar Plano</AlertDialogTitle>
+              <AlertDialogTitle>{tx('Eliminar Plano')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem a certeza? Os exercícios associados também serão eliminados.
+                {tx('Tem a certeza? Os exercícios associados também serão eliminados.')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => deleteMutation.mutate()}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Eliminar
+                {tx('Eliminar')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

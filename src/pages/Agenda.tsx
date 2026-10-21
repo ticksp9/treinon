@@ -30,6 +30,7 @@ import { openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
 import { ConsentDialog, useChildrenConsents } from '@/components/family/ConsentGate';
 import { cn } from '@/lib/utils';
 import { FamilyRehab } from '@/components/family/FamilyRehab';
+import { tx } from '@/lib/i18n/ui';
 
 interface FamilyRow { team_id: string; team_name: string; club_id: string | null; player_id: string; player_name: string }
 interface RsvpDetail { user_id: string; name: string; players: string | null; status: 'yes' | 'no'; people: number; note: string | null }
@@ -39,9 +40,9 @@ interface TeamRow { id: string; name: string; club_id: string | null; owner_id?:
 const db = supabase as any; // club_events / my_family_teams are newer than the generated types
 
 const KIND_META: Record<AgendaKind, { label: string; icon: typeof Trophy; className: string }> = {
-  match: { label: 'Jogos', icon: Trophy, className: 'bg-primary/10 text-primary' },
-  event: { label: 'Eventos', icon: PartyPopper, className: 'bg-accent/15 text-accent' },
-  training: { label: 'Treinos', icon: Dumbbell, className: 'bg-muted text-muted-foreground' },
+  match: { get label() { return tx('Jogos'); }, icon: Trophy, className: 'bg-primary/10 text-primary' },
+  event: { get label() { return tx('Eventos'); }, icon: PartyPopper, className: 'bg-accent/15 text-accent' },
+  training: { get label() { return tx('Treinos'); }, icon: Dumbbell, className: 'bg-muted text-muted-foreground' },
 };
 const ALL_TEAMS = '__all__', WHOLE_CLUB = '__club__';
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -159,15 +160,15 @@ export default function Agenda() {
   };
   const save = async () => {
     if (!form || !user) return;
-    if (!form.title.trim()) return toast.error('Dê um nome ao evento');
+    if (!form.title.trim()) return toast.error(tx('Dê um nome ao evento'));
     const start = new Date(`${form.date}T${form.time || '00:00'}`);
-    if (Number.isNaN(start.getTime())) return toast.error('Indique a data e a hora');
+    if (Number.isNaN(start.getTime())) return toast.error(tx('Indique a data e a hora'));
     let end: Date | null = form.endTime ? new Date(`${form.date}T${form.endTime}`) : null;
     if (end && end <= start) end = new Date(end.getTime() + 86_400_000); // ends after midnight
     const team = teams.find((t) => t.id === form.audience);
     // answers are accepted until the end of the chosen day
     const deadline = form.deadline ? new Date(`${form.deadline}T23:59:00`) : null;
-    if (deadline && deadline > (end ?? start)) return toast.error('O prazo para responder tem de ser antes do evento');
+    if (deadline && deadline > (end ?? start)) return toast.error(tx('O prazo para responder tem de ser antes do evento'));
     const payload = {
       rsvp_deadline: deadline ? deadline.toISOString() : null,
       title: form.title.trim(), kind: form.kind, starts_at: start.toISOString(), ends_at: end ? end.toISOString() : null,
@@ -180,14 +181,14 @@ export default function Agenda() {
       ? await db.from('club_events').update(payload).eq('id', form.id).select('id').single()
       : await db.from('club_events').insert({ ...payload, owner_id: user.id }).select('id').single();
     setSaving(false);
-    if (res.error) return toast.error('Não foi possível guardar: ' + res.error.message);
-    toast.success(form.id ? 'Evento atualizado' : 'Evento publicado');
+    if (res.error) return toast.error(tx('Não foi possível guardar: ') + res.error.message);
+    toast.success(form.id ? tx('Evento atualizado') : tx('Evento publicado'));
     if (form.email && res.data?.id) sendNotice({ kind: 'event', event_id: res.data.id }).then(toastNotice);
     setForm(null);
     qc.invalidateQueries({ queryKey: ['agenda'] });
   };
   const remove = async (i: AgendaItem) => {
-    if (!window.confirm(`Apagar o evento "${i.title}"?`)) return;
+    if (!window.confirm(tx('Apagar o evento "{{v0}}"?', { v0: i.title }))) return;
     const { error } = await db.from('club_events').delete().eq('id', i.id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ['agenda'] });
@@ -206,7 +207,7 @@ export default function Agenda() {
       { event_id: eventId, user_id: user.id, status, people: Math.min(20, Math.max(1, people)), updated_at: new Date().toISOString() },
       { onConflict: 'event_id,user_id' });
     setAnswering(null);
-    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível guardar a resposta: ') + error.message);
     qc.invalidateQueries({ queryKey: ['agenda'] });
     qc.invalidateQueries({ queryKey: ['event-rsvps', eventId] });
   };
@@ -219,27 +220,27 @@ export default function Agenda() {
   // ── matches and trainings: the family answers for each child ──
   const answerMatch = async (matchId: string, playerId: string, playerName: string, status: 'confirmed' | 'declined') => {
     if (!user) return;
-    const comment = status === 'declined' ? window.prompt(`Porque é que ${playerName} não pode ir? (opcional)`, '') : null;
+    const comment = status === 'declined' ? window.prompt(tx('Porque é que {{v0}} não pode ir? (opcional)', { v0: playerName }), '') : null;
     if (status === 'declined' && comment === null) return;
     setAnswering(matchId + playerId);
     const { error } = await supabase.from('callup_confirmations').upsert(
       { match_id: matchId, player_id: playerId, confirmed_by: user.id, status, comment: comment?.trim() || null, responded_at: new Date().toISOString() },
       { onConflict: 'match_id,player_id' });
     setAnswering(null);
-    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
-    toast.success(status === 'confirmed' ? `${playerName}: presença confirmada` : `${playerName}: o treinador fica a saber que não vai`);
+    if (error) return toast.error(tx('Não foi possível guardar a resposta: ') + error.message);
+    toast.success(status === 'confirmed' ? tx('{{v0}}: presença confirmada', { v0: playerName }) : tx('{{v0}}: o treinador fica a saber que não vai', { v0: playerName }));
     qc.invalidateQueries({ queryKey: ['agenda'] });
   };
   const answerTraining = async (sessionId: string, playerId: string, playerName: string, status: 'yes' | 'no') => {
     if (!user) return;
-    const reason = status === 'no' ? window.prompt(`Porque é que ${playerName} falta ao treino? (ex.: doença, escola)`, '') : null;
+    const reason = status === 'no' ? window.prompt(tx('Porque é que {{v0}} falta ao treino? (ex.: doença, escola)', { v0: playerName }), '') : null;
     if (status === 'no' && reason === null) return;
     setAnswering(sessionId + playerId);
     const { error } = await db.from('training_rsvps').upsert(
       { session_id: sessionId, player_id: playerId, status, reason: reason?.trim().slice(0, 120) || null, answered_by: user.id, updated_at: new Date().toISOString() },
       { onConflict: 'session_id,player_id' });
     setAnswering(null);
-    if (error) return toast.error('Não foi possível guardar a resposta: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível guardar a resposta: ') + error.message);
     qc.invalidateQueries({ queryKey: ['agenda'] });
   };
   const remind = async (id: string) => {
@@ -251,22 +252,22 @@ export default function Agenda() {
   const children = useMemo(() => [...new Set(family.map((f) => f.player_name))], [family]);
 
   return (
-    <AppLayout title="Eventos">
+    <AppLayout title={tx('Eventos')}>
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold"><CalendarDays className="h-5 w-5 text-primary" />Calendário</h2>
+            <h2 className="flex items-center gap-2 text-lg font-semibold"><CalendarDays className="h-5 w-5 text-primary" />{tx('Calendário')}</h2>
             <p className="text-sm text-muted-foreground">
               {isFamily
-                ? children.length ? `${children.join(', ')} · ${teams.map((t) => t.name).join(', ')}` : 'Jogos, treinos e eventos da equipa'
-                : 'Jogos, treinos e eventos que os pais e jogadores também veem'}
+                ? children.length ? `${children.join(', ')} · ${teams.map((t) => t.name).join(', ')}` : tx('Jogos, treinos e eventos da equipa')
+                : tx('Jogos, treinos e eventos que os pais e jogadores também veem')}
             </p>
           </div>
           {!isFamily && !roleLoading && (
-            <Button className="ml-auto" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />Novo evento</Button>
+            <Button className="ml-auto" onClick={openNew}><Plus className="mr-1.5 h-4 w-4" />{tx('Novo evento')}</Button>
           )}
           {isGuardian && consents.length > 0 && (
-            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setPrivacyOpen(true)}><ShieldCheck className="mr-1.5 h-4 w-4" />Privacidade</Button>
+            <Button variant="outline" size="sm" className="ml-auto" onClick={() => setPrivacyOpen(true)}><ShieldCheck className="mr-1.5 h-4 w-4" />{tx('Privacidade')}</Button>
           )}
         </div>
 
@@ -282,7 +283,7 @@ export default function Agenda() {
             );
           })}
           <Button size="sm" variant="ghost" className="ml-auto h-8" onClick={() => setShowPast((p) => !p)}>
-            {showPast ? 'Ver os próximos' : `Já passaram (${past.length})`}
+            {showPast ? tx('Ver os próximos') : tx('Já passaram ({{v0}})', { v0: past.length })}
           </Button>
         </div>
 
@@ -290,11 +291,11 @@ export default function Agenda() {
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : isFamily && family.length === 0 ? (
           <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
-            A sua conta ainda não está ligada a nenhum jogador. Peça ao treinador para o associar (ou para lhe enviar um convite) e o calendário aparece aqui.
+            {tx('A sua conta ainda não está ligada a nenhum jogador. Peça ao treinador para o associar (ou para lhe enviar um convite) e o calendário aparece aqui.')}
           </CardContent></Card>
         ) : days.length === 0 ? (
           <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
-            {showPast ? 'Nada nos últimos dois meses.' : 'Sem nada marcado para os próximos dias.'}
+            {showPast ? tx('Nada nos últimos dois meses.') : tx('Sem nada marcado para os próximos dias.')}
           </CardContent></Card>
         ) : (
           days.map((d) => (
@@ -311,8 +312,8 @@ export default function Agenda() {
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="font-mono text-sm font-semibold tabular-nums">{timeLabel(i)}</span>
                           <span className="font-medium">{i.title}</span>
-                          {i.status === 'in_progress' && <Badge className="h-5">A decorrer</Badge>}
-                          {i.calledUp && <Badge variant="secondary" className="h-5">Convocado</Badge>}
+                          {i.status === 'in_progress' && <Badge className="h-5">{tx('A decorrer')}</Badge>}
+                          {i.calledUp && <Badge variant="secondary" className="h-5">{tx('Convocado')}</Badge>}
                         </div>
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                           {i.kind === 'event' && i.eventKind && <span>{EVENT_KIND_LABELS[i.eventKind]}</span>}
@@ -330,8 +331,8 @@ export default function Agenda() {
                             return (
                               <div key={f.player_id} className="mt-2 flex flex-wrap items-center gap-1.5">
                                 <span className="text-sm font-medium">{f.player_name}:</span>
-                                <Button size="sm" variant={a?.status === 'confirmed' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'confirmed')} aria-pressed={a?.status === 'confirmed'}><Check className="mr-1 h-4 w-4" />Vai</Button>
-                                <Button size="sm" variant={a?.status === 'declined' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'declined')} aria-pressed={a?.status === 'declined'}><X className="mr-1 h-4 w-4" />Não pode ir</Button>
+                                <Button size="sm" variant={a?.status === 'confirmed' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'confirmed')} aria-pressed={a?.status === 'confirmed'}><Check className="mr-1 h-4 w-4" />{tx('Vai')}</Button>
+                                <Button size="sm" variant={a?.status === 'declined' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerMatch(i.id, f.player_id, f.player_name, 'declined')} aria-pressed={a?.status === 'declined'}><X className="mr-1 h-4 w-4" />{tx('Não pode ir')}</Button>
                               </div>
                             );
                           })}
@@ -344,15 +345,15 @@ export default function Agenda() {
                             return (
                               <div key={f.player_id} className="mt-2 flex flex-wrap items-center gap-1.5">
                                 <span className="text-sm font-medium">{f.player_name}:</span>
-                                <Button size="sm" variant={a?.status === 'yes' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'yes')} aria-pressed={a?.status === 'yes'}><Check className="mr-1 h-4 w-4" />Vai</Button>
-                                <Button size="sm" variant={a?.status === 'no' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'no')} aria-pressed={a?.status === 'no'}><X className="mr-1 h-4 w-4" />Falta</Button>
+                                <Button size="sm" variant={a?.status === 'yes' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'yes')} aria-pressed={a?.status === 'yes'}><Check className="mr-1 h-4 w-4" />{tx('Vai')}</Button>
+                                <Button size="sm" variant={a?.status === 'no' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answerTraining(i.id, f.player_id, f.player_name, 'no')} aria-pressed={a?.status === 'no'}><X className="mr-1 h-4 w-4" />{tx('Falta')}</Button>
                                 {a?.status === 'no' && a.reason && <span className="text-xs text-muted-foreground">{a.reason}</span>}
                               </div>
                             );
                           })}
                         {i.kind === 'training' && i.answerable && !isFamily && (() => {
                           const out = (data?.trainingAnswers ?? []).filter((c) => c.session_id === i.id && c.status === 'no').length;
-                          return out > 0 ? <p className="mt-1 text-xs font-medium text-accent">{out} {out === 1 ? 'jogador avisou que falta' : 'jogadores avisaram que faltam'} (ver nas presenças)</p> : null;
+                          return out > 0 ? <p className="mt-1 text-xs font-medium text-accent">{out} {out === 1 ? tx('jogador avisou que falta') : tx('jogadores avisaram que faltam')} {tx('(ver nas presenças)')}</p> : null;
                         })()}
                         {i.kind === 'event' && (() => {
                           const rows = data?.rsvps ?? [];
@@ -365,27 +366,27 @@ export default function Agenda() {
                             <div className="mt-2 space-y-2">
                               {i.rsvpDeadline && (
                                 <p className={cn('text-xs', closed ? 'text-destructive' : 'text-muted-foreground')}>
-                                  {closed ? 'O prazo para responder terminou a ' : 'Responder até '}{i.rsvpDeadline.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                  {closed ? tx('O prazo para responder terminou a ') : tx('Responder até ')}{i.rsvpDeadline.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
                                 </p>
                               )}
                               {over ? (
-                                my && <p className="text-xs text-muted-foreground">A sua resposta: {my.status === 'yes' ? `fui (${my.people} ${my.people === 1 ? 'pessoa' : 'pessoas'})` : 'não fui'}</p>
+                                my && <p className="text-xs text-muted-foreground">{tx('A sua resposta:')}{' '}{my.status === 'yes' ? tx('fui ({{v0}} {{v1}})', { v0: my.people, v1: my.people === 1 ? 'pessoa' : 'pessoas' }) : tx('não fui')}</p>
                               ) : (
                                 <div className="flex flex-wrap items-center gap-1.5">
                                   <Button size="sm" variant={my?.status === 'yes' ? 'default' : 'outline'} className="h-8" disabled={busy} onClick={() => answer(i.id, 'yes', my?.people ?? 1)} aria-pressed={my?.status === 'yes'}>
-                                    <Check className="mr-1 h-4 w-4" />Vou
+                                    <Check className="mr-1 h-4 w-4" />{tx('Vou')}
                                   </Button>
                                   <Button size="sm" variant={my?.status === 'no' ? 'destructive' : 'outline'} className="h-8" disabled={busy} onClick={() => answer(i.id, 'no')} aria-pressed={my?.status === 'no'}>
-                                    <X className="mr-1 h-4 w-4" />Não vou
+                                    <X className="mr-1 h-4 w-4" />{tx('Não vou')}
                                   </Button>
                                   {my?.status === 'yes' && (
                                     <span className="ml-1 flex items-center gap-1 text-sm">
-                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people <= 1} onClick={() => answer(i.id, 'yes', my.people - 1)} aria-label="Menos uma pessoa"><Minus className="h-4 w-4" /></Button>
+                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people <= 1} onClick={() => answer(i.id, 'yes', my.people - 1)} aria-label={tx('Menos uma pessoa')}><Minus className="h-4 w-4" /></Button>
                                       <span className="min-w-[4.5rem] text-center tabular-nums">{my.people} {my.people === 1 ? 'pessoa' : 'pessoas'}</span>
-                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people >= 20} onClick={() => answer(i.id, 'yes', my.people + 1)} aria-label="Mais uma pessoa"><Plus className="h-4 w-4" /></Button>
+                                      <Button size="icon" variant="outline" className="h-8 w-8" disabled={busy || my.people >= 20} onClick={() => answer(i.id, 'yes', my.people + 1)} aria-label={tx('Mais uma pessoa')}><Plus className="h-4 w-4" /></Button>
                                     </span>
                                   )}
-                                  {!my && <span className="text-xs text-muted-foreground">Diga se vai</span>}
+                                  {!my && <span className="text-xs text-muted-foreground">{tx('Diga se vai')}</span>}
                                 </div>
                               )}
                               {/* everybody's answers: only for who organises (the database returns nothing to the others) */}
@@ -405,7 +406,7 @@ export default function Agenda() {
                                             {a.status === 'yes' && <span className="ml-auto shrink-0 font-mono text-xs">{a.people} {a.people === 1 ? 'pessoa' : 'pessoas'}</span>}
                                           </li>
                                         ))}
-                                        {answers.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">Só quem organiza o evento vê os nomes.</li>}
+                                        {answers.length === 0 && <li className="px-2 py-1.5 text-xs text-muted-foreground">{tx('Só quem organiza o evento vê os nomes.')}</li>}
                                       </ul>
                                     )
                                   )}
@@ -416,17 +417,17 @@ export default function Agenda() {
                         })()}
                         {mine && (
                           <div className="mt-2 flex flex-wrap gap-1">
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openWhatsApp(eventShareText(i))}><MessageCircle className="mr-1 h-3.5 w-3.5" />WhatsApp</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openWhatsApp(eventShareText(i))}><MessageCircle className="mr-1 h-3.5 w-3.5" />{tx('WhatsApp')}</Button>
                             <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={emailing === i.id} onClick={() => emailEvent(i.id)}>
-                              {emailing === i.id ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-1 h-3.5 w-3.5" />}Email aos pais
+                              {emailing === i.id ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <Mail className="mr-1 h-3.5 w-3.5" />}{tx('Email aos pais')}
                             </Button>
                             {(i.end ?? i.start).getTime() > Date.now() && (
-                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={emailing === i.id} onClick={() => remind(i.id)} title="Email só a quem tem conta e ainda não respondeu">
-                                <BellRing className="mr-1 h-3.5 w-3.5" />Lembrar quem falta
+                              <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={emailing === i.id} onClick={() => remind(i.id)} title={tx('Email só a quem tem conta e ainda não respondeu')}>
+                                <BellRing className="mr-1 h-3.5 w-3.5" />{tx('Lembrar quem falta')}
                               </Button>
                             )}
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openEdit(i)}><Pencil className="mr-1 h-3.5 w-3.5" />Editar</Button>
-                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive" onClick={() => remove(i)}><Trash2 className="mr-1 h-3.5 w-3.5" />Apagar</Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => openEdit(i)}><Pencil className="mr-1 h-3.5 w-3.5" />{tx('Editar')}</Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-destructive" onClick={() => remove(i)}><Trash2 className="mr-1 h-3.5 w-3.5" />{tx('Apagar')}</Button>
                           </div>
                         )}
                       </div>
@@ -444,65 +445,65 @@ export default function Agenda() {
       <Dialog open={!!form} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{form?.id ? 'Editar evento' : 'Novo evento'}</DialogTitle>
-            <DialogDescription>Aparece no calendário dos pais e jogadores a quem se destina.</DialogDescription>
+            <DialogTitle>{form?.id ? tx('Editar evento') : tx('Novo evento')}</DialogTitle>
+            <DialogDescription>{tx('Aparece no calendário dos pais e jogadores a quem se destina.')}</DialogDescription>
           </DialogHeader>
           {form && (
             <div className="space-y-3">
               <div>
-                <Label>Nome *</Label>
-                <Input value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Ex.: Jantar de Natal da equipa" />
+                <Label>{tx('Nome *')}</Label>
+                <Input value={form.title} maxLength={120} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder={tx('Ex.: Jantar de Natal da equipa')} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Tipo</Label>
+                  <Label>{tx('Tipo')}</Label>
                   <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v as EventKind })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{(Object.keys(EVENT_KIND_LABELS) as EventKind[]).map((k) => <SelectItem key={k} value={k}>{EVENT_KIND_LABELS[k]}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Para quem</Label>
+                  <Label>{tx('Para quem')}</Label>
                   <Select value={form.audience} onValueChange={(v) => setForm({ ...form, audience: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                      {canClubWide && <SelectItem value={WHOLE_CLUB}>Todo o clube</SelectItem>}
-                      {(ownTeamsNoClub || teams.length === 0) && !canClubWide && <SelectItem value={ALL_TEAMS}>Todas as minhas equipas</SelectItem>}
+                      {canClubWide && <SelectItem value={WHOLE_CLUB}>{tx('Todo o clube')}</SelectItem>}
+                      {(ownTeamsNoClub || teams.length === 0) && !canClubWide && <SelectItem value={ALL_TEAMS}>{tx('Todas as minhas equipas')}</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3">
-                <div><Label>Data *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                <div><Label>Início</Label><Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
-                <div><Label>Fim</Label><Input type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} /></div>
+                <div><Label>{tx('Data *')}</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                <div><Label>{tx('Início')}</Label><Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
+                <div><Label>{tx('Fim')}</Label><Input type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} /></div>
               </div>
               <div>
-                <Label>Responder até (opcional)</Label>
+                <Label>{tx('Responder até (opcional)')}</Label>
                 <Input type="date" value={form.deadline} max={form.date} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-                <p className="mt-1 text-xs text-muted-foreground">Depois desse dia já não dá para responder. Quem ainda não respondeu recebe um lembrete por email na véspera do prazo (sem prazo: dois dias antes do evento).</p>
+                <p className="mt-1 text-xs text-muted-foreground">{tx('Depois desse dia já não dá para responder. Quem ainda não respondeu recebe um lembrete por email na véspera do prazo (sem prazo: dois dias antes do evento).')}</p>
               </div>
               <div>
-                <Label>Local</Label>
-                <Input value={form.location} maxLength={200} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Ex.: Sede do clube" />
+                <Label>{tx('Local')}</Label>
+                <Input value={form.location} maxLength={200} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder={tx('Ex.: Sede do clube')} />
               </div>
               <div>
-                <Label>Detalhes</Label>
-                <Textarea rows={3} maxLength={2000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Preço, o que levar, até quando confirmar…" />
+                <Label>{tx('Detalhes')}</Label>
+                <Textarea rows={3} maxLength={2000} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={tx('Preço, o que levar, até quando confirmar…')} />
               </div>
               <div className="flex items-start gap-3 rounded-md border p-3">
                 <Switch checked={form.email} onCheckedChange={(v) => setForm({ ...form, email: v })} className="mt-0.5" />
                 <div>
-                  <Label className="cursor-pointer">Avisar os pais por email</Label>
-                  <p className="text-xs text-muted-foreground">Para os emails dos pais das equipas escolhidas (com ou sem conta na app).</p>
+                  <Label className="cursor-pointer">{tx('Avisar os pais por email')}</Label>
+                  <p className="text-xs text-muted-foreground">{tx('Para os emails dos pais das equipas escolhidas (com ou sem conta na app).')}</p>
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setForm(null)}>Cancelar</Button>
-            <Button onClick={save} disabled={saving}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{form?.id ? 'Guardar' : 'Publicar'}</Button>
+            <Button variant="outline" onClick={() => setForm(null)}>{tx('Cancelar')}</Button>
+            <Button onClick={save} disabled={saving}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{form?.id ? tx('Guardar') : tx('Publicar')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

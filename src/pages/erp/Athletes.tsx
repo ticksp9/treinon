@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
+import { tx } from '@/lib/i18n/ui';
 
 const MONTHS = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -168,10 +169,10 @@ export default function Athletes() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-player-fees', clubId, selectedYear] });
-      toast.success('Pagamento atualizado');
+      toast.success(tx('Pagamento atualizado'));
     },
     onError: () => {
-      toast.error('Erro ao atualizar pagamento');
+      toast.error(tx('Erro ao atualizar pagamento'));
     },
   });
 
@@ -193,9 +194,9 @@ export default function Athletes() {
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para administradores de clubes.
+                {tx('Esta funcionalidade está disponível apenas para administradores de clubes.')}
               </p>
             </CardContent>
           </Card>
@@ -212,9 +213,9 @@ export default function Athletes() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Atletas - Finanças</h1>
+          <h1 className="text-2xl font-display font-bold">{tx('Atletas - Finanças')}</h1>
           <p className="text-muted-foreground">
-            Gestão de mensalidades e kits
+            {tx('Gestão de mensalidades e kits')}
           </p>
         </div>
 
@@ -222,11 +223,11 @@ export default function Athletes() {
           <TabsList>
             <TabsTrigger value="mensalidades" className="flex items-center gap-2">
               <Euro className="w-4 h-4" />
-              Mensalidades
+              {tx('Mensalidades')}
             </TabsTrigger>
             <TabsTrigger value="kits" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Kits
+              {tx('Kits')}
             </TabsTrigger>
           </TabsList>
 
@@ -235,10 +236,10 @@ export default function Athletes() {
             <div className="flex gap-4">
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Equipa" />
+                  <SelectValue placeholder={tx('Equipa')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as equipas</SelectItem>
+                  <SelectItem value="all">{tx('Todas as equipas')}</SelectItem>
                   {teams?.map(team => (
                     <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                   ))}
@@ -266,14 +267,14 @@ export default function Athletes() {
                 ) : players?.length === 0 ? (
                   <div className="py-12 text-center">
                     <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Nenhum atleta encontrado</p>
+                    <p className="text-muted-foreground">{tx('Nenhum atleta encontrado')}</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky left-0 bg-background">Atleta</TableHead>
-                        <TableHead>Equipa</TableHead>
+                        <TableHead className="sticky left-0 bg-background">{tx('Atleta')}</TableHead>
+                        <TableHead>{tx('Equipa')}</TableHead>
                         {MONTHS.map((month, idx) => (
                           <TableHead key={idx} className="text-center min-w-[80px]">
                             {month.substring(0, 3)}
@@ -347,23 +348,23 @@ export default function Athletes() {
             {/* Atribuições de kits */}
             <Card>
               <CardHeader>
-                <CardTitle>Atribuições de Kits</CardTitle>
-                <CardDescription>Kits atribuídos aos atletas</CardDescription>
+                <CardTitle>{tx('Atribuições de Kits')}</CardTitle>
+                <CardDescription>{tx('Kits atribuídos aos atletas')}</CardDescription>
               </CardHeader>
               <CardContent>
                 {!kitAssignments || kitAssignments.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    Nenhuma atribuição de kit registada
+                    {tx('Nenhuma atribuição de kit registada')}
                   </p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Atleta</TableHead>
-                        <TableHead>Kit</TableHead>
-                        <TableHead>Tamanho</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Estado</TableHead>
+                        <TableHead>{tx('Atleta')}</TableHead>
+                        <TableHead>{tx('Kit')}</TableHead>
+                        <TableHead>{tx('Tamanho')}</TableHead>
+                        <TableHead>{tx('Valor')}</TableHead>
+                        <TableHead>{tx('Estado')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -380,9 +381,9 @@ export default function Athletes() {
                               assignment.status === 'delivered' ? 'default' :
                               assignment.status === 'paid' ? 'secondary' : 'outline'
                             }>
-                              {assignment.status === 'pending' && 'Pendente'}
-                              {assignment.status === 'paid' && 'Pago'}
-                              {assignment.status === 'delivered' && 'Entregue'}
+                              {assignment.status === 'pending' && tx('Pendente')}
+                              {assignment.status === 'paid' && tx('Pago')}
+                              {assignment.status === 'delivered' && tx('Entregue')}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -423,12 +424,12 @@ function KitDialog({ clubId, userId }: { clubId: string; userId: string }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-kits', clubId] });
-      toast.success('Kit criado com sucesso');
+      toast.success(tx('Kit criado com sucesso'));
       setOpen(false);
       setFormData({ name: '', season: '2024/2025', price: '' });
     },
     onError: () => {
-      toast.error('Erro ao criar kit');
+      toast.error(tx('Erro ao criar kit'));
     },
   });
 
@@ -437,19 +438,19 @@ function KitDialog({ clubId, userId }: { clubId: string; userId: string }) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
-          Novo Kit
+          {tx('Novo Kit')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Criar Kit</DialogTitle>
+          <DialogTitle>{tx('Criar Kit')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do Kit</Label>
+            <Label htmlFor="name">{tx('Nome do Kit')}</Label>
             <Input 
               id="name" 
-              placeholder="Ex: Kit Principal, Kit Treino"
+              placeholder={tx('Ex: Kit Principal, Kit Treino')}
               required
               value={formData.name} 
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -457,7 +458,7 @@ function KitDialog({ clubId, userId }: { clubId: string; userId: string }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="season">Época</Label>
+              <Label htmlFor="season">{tx('Época')}</Label>
               <Input 
                 id="season" 
                 value={formData.season} 
@@ -465,7 +466,7 @@ function KitDialog({ clubId, userId }: { clubId: string; userId: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Preço (€)</Label>
+              <Label htmlFor="price">{tx('Preço (€)')}</Label>
               <Input 
                 id="price" 
                 type="number"
@@ -477,10 +478,10 @@ function KitDialog({ clubId, userId }: { clubId: string; userId: string }) {
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
+              {tx('Cancelar')}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              Criar
+              {tx('Criar')}
             </Button>
           </div>
         </form>

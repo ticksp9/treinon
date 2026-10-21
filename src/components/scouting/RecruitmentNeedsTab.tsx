@@ -16,6 +16,7 @@ import { Plus, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { PRIORITY_OPTIONS } from '@/hooks/useScouting';
 import { POSITIONS } from '@/lib/player-constants';
+import { tx } from '@/lib/i18n/ui';
 
 export function RecruitmentNeedsTab() {
   const { clubId } = useUserRole();
@@ -56,10 +57,10 @@ export function RecruitmentNeedsTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scouting-recruitment-needs', clubId] });
       qc.invalidateQueries({ queryKey: ['scouting-needs-count', clubId] });
-      toast.success('Necessidade criada');
+      toast.success(tx('Necessidade criada'));
       setOpen(false);
     },
-    onError: () => toast.error('Erro ao criar necessidade'),
+    onError: () => toast.error(tx('Erro ao criar necessidade')),
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
@@ -67,7 +68,7 @@ export function RecruitmentNeedsTab() {
     const fd = new FormData(e.currentTarget);
     const form: Record<string, any> = {};
     fd.forEach((v, k) => { form[k] = v; });
-    if (!form.position) { toast.error('Posição é obrigatória'); return; }
+    if (!form.position) { toast.error(tx('Posição é obrigatória')); return; }
     createMutation.mutate(form);
   };
 
@@ -76,40 +77,40 @@ export function RecruitmentNeedsTab() {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Necessidades de Recrutamento ({needs?.length || 0})</h3>
+        <h3 className="text-lg font-semibold">{tx('Necessidades de Recrutamento (')}{needs?.length || 0})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Nova Necessidade</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{tx('Nova Necessidade')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Necessidade</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Necessidade')}</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <Label>Posição *</Label>
+                <Label>{tx('Posição *')}</Label>
                 <Select name="position">
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{POSITIONS.football.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Perfil Desejado</Label><Textarea name="profile_description" rows={2} /></div>
+              <div><Label>{tx('Perfil Desejado')}</Label><Textarea name="profile_description" rows={2} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Urgência</Label>
+                  <Label>{tx('Urgência')}</Label>
                   <Select name="urgency">
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{PRIORITY_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Prioridade</Label>
+                  <Label>{tx('Prioridade')}</Label>
                   <Select name="priority">
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{PRIORITY_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
-              <div><Label>Motivo</Label><Input name="reason" /></div>
-              <div><Label>Janela Alvo</Label><Input name="target_window" placeholder="Ex: Jan 2026" /></div>
-              <div><Label>Notas</Label><Textarea name="notes" rows={2} /></div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>Criar</Button>
+              <div><Label>{tx('Motivo')}</Label><Input name="reason" /></div>
+              <div><Label>{tx('Janela Alvo')}</Label><Input name="target_window" placeholder={tx('Ex: Jan 2026')} /></div>
+              <div><Label>{tx('Notas')}</Label><Textarea name="notes" rows={2} /></div>
+              <Button type="submit" className="w-full" disabled={createMutation.isPending}>{tx('Criar')}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -117,7 +118,7 @@ export function RecruitmentNeedsTab() {
 
       {(needs?.length || 0) === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
-          <AlertCircle className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>Nenhuma necessidade registada.</p>
+          <AlertCircle className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>{tx('Nenhuma necessidade registada.')}</p>
         </CardContent></Card>
       ) : (
         <div className="space-y-2">

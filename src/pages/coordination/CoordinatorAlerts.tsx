@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 export interface CoordinatorAlert {
   kind: 'absence' | 'payment'; player_id: string; player_name: string; team_id: string; team_name: string; club_id: string;
@@ -30,8 +31,8 @@ const ALL = '__all__';
 const euro = (n: number) => n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
 
 const KINDS = {
-  absence: { title: 'Faltas a treinos sem motivo', icon: CalendarX, tone: 'bg-accent/15 text-accent', empty: 'Nenhum jogador com dois treinos seguidos sem motivo de falta.' },
-  payment: { title: 'Mensalidades em atraso', icon: Euro, tone: 'bg-destructive/10 text-destructive', empty: 'Sem mensalidades em atraso.' },
+  absence: { get title() { return tx('Faltas a treinos sem motivo'); }, icon: CalendarX, tone: 'bg-accent/15 text-accent', get empty() { return tx('Nenhum jogador com dois treinos seguidos sem motivo de falta.'); } },
+  payment: { get title() { return tx('Mensalidades em atraso'); }, icon: Euro, tone: 'bg-destructive/10 text-destructive', get empty() { return tx('Sem mensalidades em atraso.'); } },
 } as const;
 
 export default function CoordinatorAlerts() {
@@ -57,24 +58,24 @@ export default function CoordinatorAlerts() {
   const open = alerts.filter((a) => !a.resolved);
 
   const resolve = async (a: CoordinatorAlert, resolved: boolean) => {
-    const note = resolved ? window.prompt(`O que ficou combinado com ${a.player_name}? (opcional)`, a.note ?? '') : null;
+    const note = resolved ? window.prompt(tx('O que ficou combinado com {{v0}}? (opcional)', { v0: a.player_name }), a.note ?? '') : null;
     if (resolved && note === null) return; // cancelled
     const key = a.kind + a.player_id + a.ref_key;
     setBusy(key);
     const { error } = await db.rpc('resolve_coordinator_alert', { _kind: a.kind, _player: a.player_id, _ref_key: a.ref_key, _note: note, _resolved: resolved });
     setBusy(null);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
     qc.invalidateQueries({ queryKey: ['coordinator-alerts'] });
   };
 
   return (
-    <AppLayout title="Alertas">
+    <AppLayout title={tx('Alertas')}>
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold"><BellRing className="h-5 w-5 text-primary" />Alertas da coordenação</h2>
+            <h2 className="flex items-center gap-2 text-lg font-semibold"><BellRing className="h-5 w-5 text-primary" />{tx('Alertas da coordenação')}</h2>
             <p className="text-sm text-muted-foreground">
-              {open.length === 0 ? 'Nada por tratar.' : `${open.length} por tratar: ${open.filter((a) => a.kind === 'absence').length} de faltas, ${open.filter((a) => a.kind === 'payment').length} de mensalidades.`}
+              {open.length === 0 ? tx('Nada por tratar.') : tx('{{v0}} por tratar: {{v1}} de faltas, {{v2}} de mensalidades.', { v0: open.length, v1: open.filter((a) => a.kind === 'absence').length, v2: open.filter((a) => a.kind === 'payment').length })}
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -82,19 +83,19 @@ export default function CoordinatorAlerts() {
               <Select value={team} onValueChange={setTeam}>
                 <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>Todos os escalões</SelectItem>
+                  <SelectItem value={ALL}>{tx('Todos os escalões')}</SelectItem>
                   {teams.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
-            <Button size="sm" variant={showResolved ? 'default' : 'outline'} className="h-9" onClick={() => setShowResolved((v) => !v)}>Tratados</Button>
+            <Button size="sm" variant={showResolved ? 'default' : 'outline'} className="h-9" onClick={() => setShowResolved((v) => !v)}>{tx('Tratados')}</Button>
           </div>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : error ? (
-          <Card><CardContent className="py-8 text-center text-sm text-destructive">Não foi possível carregar os alertas: {(error as Error).message}</CardContent></Card>
+          <Card><CardContent className="py-8 text-center text-sm text-destructive">{tx('Não foi possível carregar os alertas:')}{' '}{(error as Error).message}</CardContent></Card>
         ) : (
           (Object.keys(KINDS) as (keyof typeof KINDS)[]).map((k) => {
             const K = KINDS[k];
@@ -115,16 +116,16 @@ export default function CoordinatorAlerts() {
                             <Link to={`/players/${a.player_id}`} className="font-medium hover:underline">{a.player_name}</Link>
                             <Badge variant="outline" className="h-5">{a.team_name}</Badge>
                             {a.kind === 'payment' && a.amount != null && <span className="font-mono text-sm font-semibold text-destructive">{euro(Number(a.amount))}</span>}
-                            {a.resolved && <Badge variant="secondary" className="h-5">Tratado</Badge>}
+                            {a.resolved && <Badge variant="secondary" className="h-5">{tx('Tratado')}</Badge>}
                           </div>
                           <p className="mt-0.5 text-sm text-muted-foreground">{a.headline}</p>
                           {a.note && <p className="mt-1 text-sm">“{a.note}”</p>}
                         </div>
                         {a.resolved ? (
-                          <Button size="sm" variant="ghost" className="h-8 shrink-0" disabled={busy === key} onClick={() => resolve(a, false)}><RotateCcw className="mr-1 h-4 w-4" />Reabrir</Button>
+                          <Button size="sm" variant="ghost" className="h-8 shrink-0" disabled={busy === key} onClick={() => resolve(a, false)}><RotateCcw className="mr-1 h-4 w-4" />{tx('Reabrir')}</Button>
                         ) : (
                           <Button size="sm" variant="outline" className="h-8 shrink-0" disabled={busy === key} onClick={() => resolve(a, true)}>
-                            {busy === key ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}Tratado
+                            {busy === key ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Check className="mr-1 h-4 w-4" />}{tx('Tratado')}
                           </Button>
                         )}
                       </CardContent>
@@ -137,8 +138,7 @@ export default function CoordinatorAlerts() {
         )}
 
         <p className="text-xs text-muted-foreground">
-          Faltas: conta quem faltou aos dois últimos treinos com presenças registadas e sem motivo escrito pelo treinador. Mensalidades: cobranças por pagar depois da data de vencimento.
-          Só aparecem os escalões que coordena.
+          {tx('Faltas: conta quem faltou aos dois últimos treinos com presenças registadas e sem motivo escrito pelo treinador. Mensalidades: cobranças por pagar depois da data de vencimento. Só aparecem os escalões que coordena.')}
         </p>
       </div>
     </AppLayout>

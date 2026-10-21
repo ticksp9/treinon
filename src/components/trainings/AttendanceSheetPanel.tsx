@@ -23,6 +23,7 @@ import { imageAsDataUrl } from '@/lib/team-branding';
 import { MAX_SHEET_COLUMNS, MAX_SHEET_ROWS, alignSessions, sessionFor, binarize, findMarks, makeSheetCode, photoPixels, project, readSheet, sessionsForSheet, sheetLayout, toGray } from '@/lib/attendance-sheet';
 import { buildAttendanceSheetPdf, sheetGeometryFor } from '@/lib/attendance-sheet-pdf';
 import { deliverPdf } from '@/lib/native-files';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -88,7 +89,7 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
         if (missing.length) {
           const rows = missing.map((c) => { const b = base?.find((x) => x.id === c.id); return { team_id: t.id, owner_id: user.id, date: c.date, location: b?.location ?? null, duration_minutes: b?.duration_minutes ?? null, season_id: b?.season_id ?? null }; });
           const { data: made, error: e2 } = await supabase.from('training_sessions').insert(rows).select('id, date');
-          if (e2) { setBusy(false); return toast.error(`Não foi possível criar os treinos de ${t.name}: ${e2.message}`); }
+          if (e2) { setBusy(false); return toast.error(tx('Não foi possível criar os treinos de {{v0}}: {{v1}}', { v0: t.name, v1: e2.message })); }
           (made ?? []).forEach((m) => { const i = chosen.findIndex((c) => c.date === m.date && !aligned[chosen.indexOf(c)]); if (i >= 0) aligned[i] = m as Session; });
         }
         session_map[t.id] = aligned.map((x) => x?.id ?? '');
@@ -98,39 +99,39 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
     const geometry = sheetGeometryFor(roster);
     const { error } = await db.from('attendance_sheets').insert({ team_id: teamId, owner_id: user.id, code, session_ids: chosen.map((s) => s.id), player_ids: roster.map((p) => p.id), session_map, layout: geometry });
     setBusy(false);
-    if (error) return toast.error('Não foi possível criar a folha: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível criar a folha: ') + error.message);
     qc.invalidateQueries({ queryKey: ['attendance-sheets', teamId] });
     const doc = buildAttendanceSheetPdf({
       teamName: group.map((t) => t.name).join(' + '), season: seasonOf(new Date(chosen[0].date)), code, sessions: chosen, crest, geometry,
       players: roster,
     });
     const name = `folha-presencas-${code}.pdf`;
-    void deliverPdf(doc, name, { print: mode === 'print', title: `Folha de presenças ${code}` });
+    void deliverPdf(doc, name, { print: mode === 'print', title: tx('Folha de presenças {{v0}}', { v0: code }) });
     setPrintOpen(false);
-    toast.success(`Folha ${code} criada. Depois de assinada, use "Ler folha assinada".`);
+    toast.success(tx('Folha {{v0}} criada. Depois de assinada, use "Ler folha assinada".', { v0: code }));
   };
 
   return (
     <Card>
       <CardContent className="flex flex-wrap items-center gap-2 p-4">
         <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
-          <p className="text-sm font-semibold">Folha para os jogadores assinarem</p>
-          <p className="text-xs text-muted-foreground">Imprima a folha dos próximos treinos. Depois de assinada, tire-lhe uma fotografia e a app marca as presenças.</p>
+          <p className="text-sm font-semibold">{tx('Folha para os jogadores assinarem')}</p>
+          <p className="text-xs text-muted-foreground">{tx('Imprima a folha dos próximos treinos. Depois de assinada, tire-lhe uma fotografia e a app marca as presenças.')}</p>
         </div>
-        <Button variant="outline" onClick={() => setPrintOpen(true)} disabled={!players.length}><Printer className="mr-1.5 h-4 w-4" />Imprimir folha</Button>
-        <Button onClick={() => setReadOpen(true)} disabled={!sheets.length} title={sheets.length ? undefined : 'Imprima primeiro uma folha'}><Camera className="mr-1.5 h-4 w-4" />Ler folha assinada</Button>
+        <Button variant="outline" onClick={() => setPrintOpen(true)} disabled={!players.length}><Printer className="mr-1.5 h-4 w-4" />{tx('Imprimir folha')}</Button>
+        <Button onClick={() => setReadOpen(true)} disabled={!sheets.length} title={sheets.length ? undefined : tx('Imprima primeiro uma folha')}><Camera className="mr-1.5 h-4 w-4" />{tx('Ler folha assinada')}</Button>
       </CardContent>
 
       <Dialog open={printOpen} onOpenChange={setPrintOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Folha de presenças</DialogTitle>
-            <DialogDescription>Uma coluna por treino e uma linha por jogador, como a folha do clube.</DialogDescription>
+            <DialogTitle>{tx('Folha de presenças')}</DialogTitle>
+            <DialogDescription>{tx('Uma coluna por treino e uma linha por jogador, como a folha do clube.')}</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
-            <div><Label htmlFor="sh-from">A partir de</Label><Input id="sh-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
+            <div><Label htmlFor="sh-from">{tx('A partir de')}</Label><Input id="sh-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
             <div>
-              <Label>Treinos na folha</Label>
+              <Label>{tx('Treinos na folha')}</Label>
               <Select value={String(count)} onValueChange={(v) => setCount(Number(v))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Array.from({ length: MAX_SHEET_COLUMNS }, (_, i) => i + 1).map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
@@ -139,19 +140,19 @@ export function AttendanceSheetPanel({ teamId, teamName, players: ownPlayers, se
           </div>
           <div className="space-y-1 text-sm">
             {chosen.length === 0 ? (
-              <p className="text-muted-foreground">Não há treinos marcados a partir desse dia. Crie-os em <strong>Configurar Treinos</strong>.</p>
+              <p className="text-muted-foreground">{tx('Não há treinos marcados a partir desse dia. Crie-os em')}{' '}<strong>{tx('Configurar Treinos')}</strong>.</p>
             ) : (
               <>
-                <p className="text-muted-foreground">{chosen.length} {chosen.length === 1 ? 'treino' : 'treinos'} · {roster.length} jogadores (por ordem alfabética){group.length > 1 ? ` de ${group.map((t) => t.name).join(' e ')}` : ''}</p>
+                <p className="text-muted-foreground">{chosen.length} {chosen.length === 1 ? 'treino' : 'treinos'} · {roster.length} {tx('jogadores (por ordem alfabética)')}{group.length > 1 ? ` de ${group.map((t) => t.name).join(' e ')}` : ''}</p>
                 <div className="flex flex-wrap gap-1">{chosen.map((s) => <span key={s.id} className="rounded border px-1.5 py-0.5 font-mono text-xs">{short(s.date)}</span>)}</div>
-                {chosen.length < count && <p className="text-xs text-muted-foreground">Só há {chosen.length} treinos marcados. Para mais colunas, crie os treinos em Configurar Treinos.</p>}
+                {chosen.length < count && <p className="text-xs text-muted-foreground">{tx('Só há')}{' '}{chosen.length} {tx('treinos marcados. Para mais colunas, crie os treinos em Configurar Treinos.')}</p>}
               </>
             )}
-            {players.length > MAX_SHEET_ROWS && <p className="text-xs text-destructive">A folha leva até {MAX_SHEET_ROWS} jogadores; ficam de fora os últimos por ordem alfabética.</p>}
+            {players.length > MAX_SHEET_ROWS && <p className="text-xs text-destructive">{tx('A folha leva até')}{' '}{MAX_SHEET_ROWS} {tx('jogadores; ficam de fora os últimos por ordem alfabética.')}</p>}
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => makeSheet('download')} disabled={busy || !chosen.length}><FileDown className="mr-1.5 h-4 w-4" />PDF</Button>
-            <Button onClick={() => makeSheet('print')} disabled={busy || !chosen.length}><Printer className="mr-1.5 h-4 w-4" />Imprimir</Button>
+            <Button onClick={() => makeSheet('print')} disabled={busy || !chosen.length}><Printer className="mr-1.5 h-4 w-4" />{tx('Imprimir')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -226,12 +227,12 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
         if (s && sid && happened(s)) rows.push({ session_id: sid, player_id: pid, present: !!grid[r]?.[c], owner_id: user.id, recorded_at: new Date().toISOString(), recorded_by: user.id });
       });
     });
-    if (!rows.length) return toast.info('Nenhum dos treinos desta folha já aconteceu.');
+    if (!rows.length) return toast.info(tx('Nenhum dos treinos desta folha já aconteceu.'));
     setSaving(true);
     const { error } = await db.from('training_attendance').upsert(rows, { onConflict: 'session_id,player_id' });
     setSaving(false);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
-    toast.success(`Presenças guardadas: ${rows.filter((x) => x.present).length} presenças em ${new Set(rows.map((x) => x.session_id)).size} treinos.`);
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
+    toast.success(tx('Presenças guardadas: {{v0}} presenças em {{v1}} treinos.', { v0: rows.filter((x) => x.present).length, v1: new Set(rows.map((x) => x.session_id)).size }));
     sendNotice({ kind: 'absence_alert', team_id: teamId }).catch(() => {});
     onSaved();
   };
@@ -240,19 +241,19 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ler folha assinada</DialogTitle>
-          <DialogDescription>Fotografe a folha inteira, de frente, com os quatro quadrados pretos à vista. Confira o resultado antes de guardar.</DialogDescription>
+          <DialogTitle>{tx('Ler folha assinada')}</DialogTitle>
+          <DialogDescription>{tx('Fotografe a folha inteira, de frente, com os quatro quadrados pretos à vista. Confira o resultado antes de guardar.')}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[14rem] flex-1">
-            <Label>Folha</Label>
+            <Label>{tx('Folha')}</Label>
             <Select value={sheetId} onValueChange={setSheetId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{sheets.map((s) => <SelectItem key={s.id} value={s.id}>Folha {s.code} · criada {format(new Date(s.created_at), 'dd/MM')} · {s.session_ids.length} treinos</SelectItem>)}</SelectContent>
+              <SelectContent>{sheets.map((s) => <SelectItem key={s.id} value={s.id}>{tx('Folha')}{' '}{s.code} {tx('· criada')}{' '}{format(new Date(s.created_at), 'dd/MM')} · {s.session_ids.length} treinos</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <input ref={file} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && readPhoto(e.target.files[0])} />
-          <Button onClick={() => file.current?.click()} disabled={reading || !sheet}>{reading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}{grid ? 'Outra fotografia' : 'Fotografar / escolher fotografia'}</Button>
+          <Button onClick={() => file.current?.click()} disabled={reading || !sheet}>{reading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}{grid ? tx('Outra fotografia') : tx('Fotografar / escolher fotografia')}</Button>
         </div>
         {problem && <p className="rounded-md border border-destructive/50 bg-destructive/10 p-2 text-sm">{problem}</p>}
 
@@ -262,14 +263,14 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr>
-                    <th className="p-1 text-left text-xs font-semibold text-muted-foreground">Jogador</th>
-                    {cols.map((s, c) => <th key={c} className="p-1 text-center font-mono text-[11px] font-semibold">{s ? short(s.date) : '—'}{s && !happened(s) && <span className="block font-sans text-[10px] font-normal text-muted-foreground">ainda não</span>}</th>)}
+                    <th className="p-1 text-left text-xs font-semibold text-muted-foreground">{tx('Jogador')}</th>
+                    {cols.map((s, c) => <th key={c} className="p-1 text-center font-mono text-[11px] font-semibold">{s ? short(s.date) : '—'}{s && !happened(s) && <span className="block font-sans text-[10px] font-normal text-muted-foreground">{tx('ainda não')}</span>}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {sheet.player_ids.map((pid, r) => (
                     <tr key={pid} className="border-t">
-                      <td className="p-1">{names.get(pid) ?? <span className="text-muted-foreground">(já não está na equipa)</span>}</td>
+                      <td className="p-1">{names.get(pid) ?? <span className="text-muted-foreground">{tx('(já não está na equipa)')}</span>}</td>
                       {cols.map((s, c) => {
                         const on = !!grid[r]?.[c], doubt = !!unsure?.[r]?.[c];
                         const off = !s || !happened(s) || !names.has(pid);
@@ -287,14 +288,14 @@ function ReadSheetDialog({ sheets, players, teamId, onClose, onSaved }: { sheets
                   ))}
                 </tbody>
               </table>
-              <p className="mt-2 text-xs text-muted-foreground">Verde = assinou. Contorno laranja = a leitura teve dúvidas: confirme esses. Toque num quadrado para corrigir. Os treinos que ainda não aconteceram não são gravados.</p>
+              <p className="mt-2 text-xs text-muted-foreground">{tx('Verde = assinou. Contorno laranja = a leitura teve dúvidas: confirme esses. Toque num quadrado para corrigir. Os treinos que ainda não aconteceram não são gravados.')}</p>
             </div>
-            <div ref={canvas} className="space-y-1" aria-label="Fotografia com os quadrados lidos" />
+            <div ref={canvas} className="space-y-1" aria-label={tx('Fotografia com os quadrados lidos')} />
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={!grid || saving}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}Guardar presenças</Button>
+          <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
+          <Button onClick={save} disabled={!grid || saving}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{tx('Guardar presenças')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

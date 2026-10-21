@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 // ---- Vendor types ----
 export interface Vendor {
@@ -185,7 +186,7 @@ export function useProcurement(clubId: string | null) {
       } as any);
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['vendors', clubId] }); toast.success('Fornecedor criado'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['vendors', clubId] }); toast.success(tx('Fornecedor criado')); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -220,7 +221,7 @@ export function useProcurement(clubId: string | null) {
       } as any);
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['purchase-requests', clubId] }); toast.success('Requisição criada'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['purchase-requests', clubId] }); toast.success(tx('Requisição criada')); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -269,7 +270,7 @@ export function useProcurement(clubId: string | null) {
       } as any);
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices-payable', clubId] }); toast.success('Fatura registada'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['invoices-payable', clubId] }); toast.success(tx('Fatura registada')); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -304,7 +305,7 @@ export function useProcurement(clubId: string | null) {
       } as any);
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['expense-claims', clubId] }); toast.success('Despesa submetida'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['expense-claims', clubId] }); toast.success(tx('Despesa submetida')); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -368,7 +369,7 @@ export function useProcurement(clubId: string | null) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['supplier-payments', clubId] });
       qc.invalidateQueries({ queryKey: ['invoices-payable', clubId] });
-      toast.success('Pagamento registado');
+      toast.success(tx('Pagamento registado'));
     },
     onError: (e: any) => toast.error(e.message),
   });

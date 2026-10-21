@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Play, Clock, Pencil } from 'lucide-react';
 import { type ReportEntryMode, ENTRY_MODE_LABELS, ENTRY_MODE_DESCRIPTIONS } from '@/lib/match-report-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface ReportEntryModeSelectorProps {
   value: ReportEntryMode;
@@ -20,7 +21,7 @@ const MODE_ICONS: Record<ReportEntryMode, React.ReactNode> = {
 export function ReportEntryModeSelector({ value, onChange, disabled }: ReportEntryModeSelectorProps) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">Modo de Registo</Label>
+      <Label className="text-sm font-medium">{tx('Modo de Registo')}</Label>
       <RadioGroup value={value} onValueChange={(v) => onChange(v as ReportEntryMode)} disabled={disabled}>
         {(['live', 'post_game', 'hybrid'] as ReportEntryMode[]).map(mode => (
           <Card key={mode} className={`cursor-pointer transition-colors ${value === mode ? 'border-primary bg-primary/5' : 'hover:bg-secondary/30'}`} onClick={() => !disabled && onChange(mode)}>

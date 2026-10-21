@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   maintenance: any[];
@@ -16,18 +17,18 @@ export function MaintenanceTab({ maintenance }: Props) {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Manutenções ({maintenance.length})</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{tx('Manutenções (')}{maintenance.length})</CardTitle></CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tipo</TableHead><TableHead>Data Agendada</TableHead><TableHead>Data Realizada</TableHead>
-              <TableHead>Custo</TableHead><TableHead>Próxima</TableHead><TableHead>Estado</TableHead>
+              <TableHead>{tx('Tipo')}</TableHead><TableHead>{tx('Data Agendada')}</TableHead><TableHead>{tx('Data Realizada')}</TableHead>
+              <TableHead>{tx('Custo')}</TableHead><TableHead>{tx('Próxima')}</TableHead><TableHead>{tx('Estado')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {maintenance.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Sem manutenções</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{tx('Sem manutenções')}</TableCell></TableRow>
             ) : maintenance.slice(0, 50).map(m => (
               <TableRow key={m.id}>
                 <TableCell className="font-medium">{m.maintenance_type}</TableCell>

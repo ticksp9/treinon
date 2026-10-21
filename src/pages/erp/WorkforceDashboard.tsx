@@ -11,6 +11,7 @@ import { ContractsTab } from '@/components/workforce/ContractsTab';
 import { PayrollTab } from '@/components/workforce/PayrollTab';
 import { FeesTab } from '@/components/workforce/FeesTab';
 import { ObligationsTab } from '@/components/workforce/ObligationsTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function WorkforceDashboard() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
@@ -36,8 +37,8 @@ export default function WorkforceDashboard() {
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
-              <p className="text-muted-foreground">Apenas administradores do clube podem aceder a este módulo.</p>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
+              <p className="text-muted-foreground">{tx('Apenas administradores do clube podem aceder a este módulo.')}</p>
             </CardContent>
           </Card>
         </div>
@@ -49,18 +50,18 @@ export default function WorkforceDashboard() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Contratos & Staff</h1>
-          <p className="text-muted-foreground">Gestão de pessoal, contratos, salários, honorários e obrigações</p>
+          <h1 className="text-2xl font-display font-bold">{tx('Contratos & Staff')}</h1>
+          <p className="text-muted-foreground">{tx('Gestão de pessoal, contratos, salários, honorários e obrigações')}</p>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="staff">Staff</TabsTrigger>
-            <TabsTrigger value="contracts">Contratos</TabsTrigger>
-            <TabsTrigger value="payroll">Salários</TabsTrigger>
-            <TabsTrigger value="fees">Honorários</TabsTrigger>
-            <TabsTrigger value="obligations">Obrigações</TabsTrigger>
+            <TabsTrigger value="overview">{tx('Visão Geral')}</TabsTrigger>
+            <TabsTrigger value="staff">{tx('Staff')}</TabsTrigger>
+            <TabsTrigger value="contracts">{tx('Contratos')}</TabsTrigger>
+            <TabsTrigger value="payroll">{tx('Salários')}</TabsTrigger>
+            <TabsTrigger value="fees">{tx('Honorários')}</TabsTrigger>
+            <TabsTrigger value="obligations">{tx('Obrigações')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">

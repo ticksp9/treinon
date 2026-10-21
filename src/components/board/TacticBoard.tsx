@@ -24,18 +24,19 @@ import { cn } from '@/lib/utils';
 import { useTeamTactics } from '@/hooks/useTeamTactics';
 import { splitFormations, tacticsFor } from '@/lib/team-tactics';
 import { customFormationCodes, hasFormationLayout, promptNewFormation, removeCustomFormation, saveFormationLayout, useFormationsVersion } from '@/lib/custom-formations';
+import { tx } from '@/lib/i18n/ui';
 
 type Tool = 'move' | DrawKind | 'erase';
 const TOOLS: { id: Tool; label: string; icon: typeof Hand }[] = [
-  { id: 'move', label: 'Mover', icon: Hand },
-  { id: 'pass', label: 'Passe', icon: ArrowUpRight },
-  { id: 'run', label: 'Corrida', icon: MoveUpRight },
-  { id: 'curve', label: 'Curva', icon: Spline },
-  { id: 'free', label: 'Traço', icon: Pencil },
-  { id: 'zone', label: 'Zona', icon: Square },
-  { id: 'circle', label: 'Círculo', icon: Circle },
-  { id: 'text', label: 'Texto', icon: Type },
-  { id: 'erase', label: 'Borracha', icon: Eraser },
+  { id: 'move', get label() { return tx('Mover'); }, icon: Hand },
+  { id: 'pass', get label() { return tx('Passe'); }, icon: ArrowUpRight },
+  { id: 'run', get label() { return tx('Corrida'); }, icon: MoveUpRight },
+  { id: 'curve', get label() { return tx('Curva'); }, icon: Spline },
+  { id: 'free', get label() { return tx('Traço'); }, icon: Pencil },
+  { id: 'zone', get label() { return tx('Zona'); }, icon: Square },
+  { id: 'circle', get label() { return tx('Círculo'); }, icon: Circle },
+  { id: 'text', get label() { return tx('Texto'); }, icon: Type },
+  { id: 'erase', get label() { return tx('Borracha'); }, icon: Eraser },
 ];
 const COLORS = ['#ffffff', '#facc15', '#f97316', '#38bdf8', '#111827'];
 const SPORTS: Record<string, string> = { football_11: 'Futebol 11', football_9: 'Futebol 9', football_7: 'Futebol 7', football_5: 'Futebol 5', futsal: 'Futsal' };
@@ -211,7 +212,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
       return;
     }
     if (tool === 'text') {
-      const text = window.prompt('Texto no campo (ex.: Pressão alta)')?.trim().slice(0, 40);
+      const text = window.prompt(tx('Texto no campo (ex.: Pressão alta)'))?.trim().slice(0, 40);
       if (text) commit({ ...state, drawings: [...state.drawings, { id: uid('d'), t: 'text', pts: [p], color, step, text }] });
       return;
     }
@@ -271,12 +272,12 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
   const addLoose = (kind: 'ball' | 'cone') => commit({ ...state, tokens: [...state.tokens, { id: uid(kind[0]), kind, x: state.half ? BW * 0.75 : BW / 2 + (kind === 'cone' ? 4 : 0), y: BH / 2 + (kind === 'cone' ? 4 : 0) }] });
   const clearDrawings = () => commit({ ...state, drawings: state.drawings.filter((d) => d.step !== step) });
   const clearAll = () => {
-    if (!window.confirm('Limpar tudo? O quadro volta ao início (desenhos, passos, adversário e nota).')) return;
+    if (!window.confirm(tx('Limpar tudo? O quadro volta ao início (desenhos, passos, adversário e nota).'))) return;
     if (persistKey) clearBoardDraft(persistKey);
     commit(initial); setStep(0); setSelected(null); setLoaded(null); setPlayT(null);
   };
   const clearSide = (side: 'away') => commit({ ...state, tokens: state.tokens.filter((t) => t.kind !== side), awayFormation: null });
-  const newStep = () => { commit(addStep(state, step)); setStep(step + 1); setTool('move'); toast.info(`Passo ${step + 2}: arraste os jogadores e a bola para onde vão.`); };
+  const newStep = () => { commit(addStep(state, step)); setStep(step + 1); setTool('move'); toast.info(tx('Passo {{v0}}: arraste os jogadores e a bola para onde vão.', { v0: step + 2 })); };
   const selectedToken = state.tokens.find((t) => t.id === selected) ?? null;
   const patchToken = (patch: Partial<Token>) => setState((s) => ({ ...s, tokens: s.tokens.map((t) => (t.id === selected ? { ...t, ...patch } : t)) }));
 
@@ -296,20 +297,20 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
     const board_data = JSON.parse(JSON.stringify(state));
     if (loaded) {
       const { error } = await supabase.from('tactical_boards').update({ board_data } as never).eq('id', loaded.id);
-      if (error) return toast.error('Não foi possível guardar: ' + error.message);
-      toast.success(`"${loaded.name}" atualizada.`);
+      if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
+      toast.success(tx('"{{v0}}" atualizada.', { v0: loaded.name }));
     } else {
-      const name = window.prompt('Nome da jogada (ex.: Canto ofensivo 1)')?.trim();
+      const name = window.prompt(tx('Nome da jogada (ex.: Canto ofensivo 1)'))?.trim();
       if (!name) return;
       const { data, error } = await supabase.from('tactical_boards').insert({ name, owner_id: user.id, team_id: teamId ?? null, board_data } as never).select('id').single();
-      if (error) return toast.error('Não foi possível guardar: ' + error.message);
+      if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
       if (data) setLoaded({ id: (data as { id: string }).id, name });
-      toast.success('Jogada guardada.');
+      toast.success(tx('Jogada guardada.'));
     }
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });
   };
   const renamePlay = async (p: { id: string; name: string }) => {
-    const name = window.prompt('Novo nome da jogada', p.name)?.trim();
+    const name = window.prompt(tx('Novo nome da jogada'), p.name)?.trim();
     if (!name || name === p.name) return;
     const { error } = await supabase.from('tactical_boards').update({ name } as never).eq('id', p.id);
     if (error) return toast.error(error.message);
@@ -321,7 +322,7 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
     if (!user) return;
     const { error } = await supabase.from('tactical_boards').insert({ name: `${p.name} (cópia)`, owner_id: user.id, team_id: teamId ?? null, board_data: p.board_data } as never);
     if (error) return toast.error(error.message);
-    toast.success('Cópia criada.');
+    toast.success(tx('Cópia criada.'));
     qc.invalidateQueries({ queryKey: ['tactical-boards'] });
   };
   const deletePlay = async (id: string) => {
@@ -333,11 +334,11 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
   const toggleLines = (side: 'home' | 'away') => commit({ ...state, lines: { ...state.lines, [side]: !state.lines?.[side] } });
   /** shown next to a formation the coach created himself (typed wrong, no longer used…) */
   const forgetBtn = (code: string | null | undefined) => code && customFormationCodes(state.sport).includes(code) && (
-    <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-destructive" aria-label={`Apagar a formação ${code} da lista`} title="Apagar esta formação da minha lista"
+    <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-destructive" aria-label={tx('Apagar a formação {{v0}} da lista', { v0: code })} title={tx('Apagar esta formação da minha lista')}
       onClick={async () => {
-        if (!window.confirm(`Apagar a formação ${code} da sua lista? O que já está no quadro não muda.`)) return;
+        if (!window.confirm(tx('Apagar a formação {{v0}} da sua lista? O que já está no quadro não muda.', { v0: code }))) return;
         await removeCustomFormation(user?.id, state.sport, code);
-        toast.success(`Formação ${code} apagada da lista.`);
+        toast.success(tx('Formação {{v0}} apagada da lista.', { v0: code }));
       }}>
       <ListX className="h-4 w-4" />
     </Button>
@@ -348,19 +349,19 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
     const code = state.homeFormation;
     if (!code || !homeLayout) return;
     const failed = await saveFormationLayout(user?.id, state.sport, code, homeLayout);
-    if (failed) toast.error('O desenho fica neste aparelho, mas não foi guardado na conta: ' + failed);
-    else toast.success(`Desenho guardado: a formação ${code} passa a abrir assim, no quadro e nos jogos.`);
+    if (failed) toast.error(tx('O desenho fica neste aparelho, mas não foi guardado na conta: ') + failed);
+    else toast.success(tx('Desenho guardado: a formação {{v0}} passa a abrir assim, no quadro e nos jogos.', { v0: code }));
   };
   const resetLayout = async () => {
     const code = state.homeFormation;
-    if (!code || !window.confirm(`Repor as posições originais da formação ${code}?`)) return;
+    if (!code || !window.confirm(tx('Repor as posições originais da formação {{v0}}?', { v0: code }))) return;
     await saveFormationLayout(user?.id, state.sport, code, null);
     applyFormation('home', code);
-    toast.success(`Formação ${code} reposta.`);
+    toast.success(tx('Formação {{v0}} reposta.', { v0: code }));
   };
   const linesBtn = (side: 'home' | 'away') => (
     <Button size="icon" variant={state.lines?.[side] ? 'default' : 'outline'} className="h-9 w-9" onClick={() => toggleLines(side)}
-      aria-label={side === 'home' ? 'Linhas da minha equipa' : 'Linhas do adversário'} title="Ligar os setores (defesa, meio-campo, ataque)">
+      aria-label={side === 'home' ? tx('Linhas da minha equipa') : tx('Linhas do adversário')} title={tx('Ligar os setores (defesa, meio-campo, ataque)')}>
       <Waypoints className="h-4 w-4" />
     </Button>
   );
@@ -398,20 +399,20 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
         ))}
         <span className="mx-1 flex items-center gap-1">
           {COLORS.map((c) => (
-            <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Cor ${c}`}
+            <button key={c} type="button" onClick={() => setColor(c)} aria-label={tx('Cor {{v0}}', { v0: c })}
               className={cn('h-6 w-6 rounded-full border-2', color === c ? 'border-primary ring-2 ring-primary/40' : 'border-muted-foreground/40')} style={{ background: c }} />
           ))}
         </span>
-        <Button size="icon" variant="outline" className="h-9 w-9" onClick={doUndo} disabled={!undo.length} aria-label="Desfazer"><Undo2 className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" className="h-9 w-9" onClick={doRedo} disabled={!redo.length} aria-label="Refazer"><Redo2 className="h-4 w-4" /></Button>
-        <Button size="sm" variant="outline" className="h-9" onClick={clearDrawings} title="Apaga os desenhos deste passo"><RotateCcw className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Limpar desenhos</span></Button>
-        <Button size="sm" variant="outline" className="h-9 text-destructive" onClick={clearAll} title="Recomeçar o quadro do início"><Trash2 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Limpar tudo</span></Button>
+        <Button size="icon" variant="outline" className="h-9 w-9" onClick={doUndo} disabled={!undo.length} aria-label={tx('Desfazer')}><Undo2 className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="h-9 w-9" onClick={doRedo} disabled={!redo.length} aria-label={tx('Refazer')}><Redo2 className="h-4 w-4" /></Button>
+        <Button size="sm" variant="outline" className="h-9" onClick={clearDrawings} title={tx('Apaga os desenhos deste passo')}><RotateCcw className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Limpar desenhos')}</span></Button>
+        <Button size="sm" variant="outline" className="h-9 text-destructive" onClick={clearAll} title={tx('Recomeçar o quadro do início')}><Trash2 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Limpar tudo')}</span></Button>
         <div className="ml-auto flex items-center gap-1.5">
-          <Button size="sm" variant={state.half ? 'default' : 'outline'} className="h-9" onClick={() => setState((s) => ({ ...s, half: !s.half }))} title="Meio-campo (bolas paradas)">½ campo</Button>
-          <Button size="icon" variant="outline" className="h-9 w-9" onClick={() => setFull((f) => !f)} aria-label={full ? 'Sair do ecrã inteiro' : 'Ecrã inteiro'}>
+          <Button size="sm" variant={state.half ? 'default' : 'outline'} className="h-9" onClick={() => setState((s) => ({ ...s, half: !s.half }))} title={tx('Meio-campo (bolas paradas)')}>{tx('½ campo')}</Button>
+          <Button size="icon" variant="outline" className="h-9 w-9" onClick={() => setFull((f) => !f)} aria-label={full ? tx('Sair do ecrã inteiro') : tx('Ecrã inteiro')}>
             {full ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
-          {onClose && <Button size="sm" variant="secondary" className="h-9" onClick={onClose}>Fechar</Button>}
+          {onClose && <Button size="sm" variant="secondary" className="h-9" onClick={onClose}>{tx('Fechar')}</Button>}
         </div>
       </div>
 
@@ -424,28 +425,28 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
         <span className="flex items-center gap-1.5">
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: HOME }} />
           <Select value={state.homeFormation ?? ''} onValueChange={(v) => setFormation('home', v)}>
-            <SelectTrigger className="h-9 w-36"><SelectValue placeholder="A minha equipa" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-36"><SelectValue placeholder={tx('A minha equipa')} /></SelectTrigger>
             <SelectContent>
               {myTactics.length > 0 && (
                 <SelectGroup>
-                  <SelectLabel>As nossas táticas</SelectLabel>
+                  <SelectLabel>{tx('As nossas táticas')}</SelectLabel>
                   {myTactics.map((f) => <SelectItem key={f.code} value={f.code}>{f.isDefault ? '★ ' : ''}{f.label}</SelectItem>)}
                 </SelectGroup>
               )}
               <SelectGroup>
-                {myTactics.length > 0 && <SelectLabel>Outras formações</SelectLabel>}
+                {myTactics.length > 0 && <SelectLabel>{tx('Outras formações')}</SelectLabel>}
                 {otherFormations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
               </SelectGroup>
-              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
+              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">{tx('+ Nova formação…')}</SelectItem>
             </SelectContent>
           </Select>
           {state.homeFormation && homeLayout && (
-            <Button size="sm" variant="outline" className="h-9" onClick={saveLayout} title="Arraste os jogadores para onde quer e guarde: a formação passa a abrir com este desenho">
-              <LayoutGrid className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar posições</span>
+            <Button size="sm" variant="outline" className="h-9" onClick={saveLayout} title={tx('Arraste os jogadores para onde quer e guarde: a formação passa a abrir com este desenho')}>
+              <LayoutGrid className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Guardar posições')}</span>
             </Button>
           )}
           {state.homeFormation && hasFormationLayout(state.sport, state.homeFormation) && (
-            <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground" onClick={resetLayout} aria-label="Repor as posições originais da formação" title="Repor as posições originais desta formação">
+            <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground" onClick={resetLayout} aria-label={tx('Repor as posições originais da formação')} title={tx('Repor as posições originais desta formação')}>
               <RotateCcw className="h-4 w-4" />
             </Button>
           )}
@@ -455,45 +456,45 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
         <span className="flex items-center gap-1.5">
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: AWAY }} />
           <Select value={state.awayFormation ?? ''} onValueChange={(v) => setFormation('away', v)}>
-            <SelectTrigger className="h-9 w-36"><SelectValue placeholder="Adversário" /></SelectTrigger>
+            <SelectTrigger className="h-9 w-36"><SelectValue placeholder={tx('Adversário')} /></SelectTrigger>
             <SelectContent>
               {formations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
-              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
+              <SelectItem value={NEW_FORMATION} className="font-medium text-primary">{tx('+ Nova formação…')}</SelectItem>
             </SelectContent>
           </Select>
           {state.awayFormation !== state.homeFormation && forgetBtn(state.awayFormation)}
           {state.tokens.some((t) => t.kind === 'away') && linesBtn('away')}
-          {state.tokens.some((t) => t.kind === 'away') && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => clearSide('away')} aria-label="Tirar adversário"><Trash2 className="h-4 w-4" /></Button>}
+          {state.tokens.some((t) => t.kind === 'away') && <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => clearSide('away')} aria-label={tx('Tirar adversário')}><Trash2 className="h-4 w-4" /></Button>}
         </span>
-        <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('ball')}>⚽ Bola</Button>
-        <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('cone')}>▲ Cone</Button>
+        <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('ball')}>{tx('⚽ Bola')}</Button>
+        <Button size="sm" variant="outline" className="h-9" onClick={() => addLoose('cone')}>{tx('▲ Cone')}</Button>
         <div className="ml-auto flex items-center gap-1.5">
           {onSaveExternal ? (
-            <Button size="sm" className="h-9" onClick={() => onSaveExternal(JSON.parse(JSON.stringify(state)))}><Save className="mr-1.5 h-4 w-4" />{saveLabel ?? 'Guardar'}</Button>
+            <Button size="sm" className="h-9" onClick={() => onSaveExternal(JSON.parse(JSON.stringify(state)))}><Save className="mr-1.5 h-4 w-4" />{saveLabel ?? tx('Guardar')}</Button>
           ) : (<>
-          <Button size="sm" variant="outline" className="h-9" onClick={() => setSavedOpen((o) => !o)}><FolderOpen className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Jogadas ({saved.length})</span></Button>
+          <Button size="sm" variant="outline" className="h-9" onClick={() => setSavedOpen((o) => !o)}><FolderOpen className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Jogadas (')}{saved.length})</span></Button>
           {loaded && (
             <span className="flex max-w-[11rem] items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground">
               <span className="truncate">{loaded.name}</span>
-              <button type="button" onClick={() => setLoaded(null)} aria-label="Guardar como jogada nova" title="Deixar de editar esta jogada (o próximo Guardar cria uma nova)"><X className="h-3.5 w-3.5" /></button>
+              <button type="button" onClick={() => setLoaded(null)} aria-label={tx('Guardar como jogada nova')} title={tx('Deixar de editar esta jogada (o próximo Guardar cria uma nova)')}><X className="h-3.5 w-3.5" /></button>
             </span>
           )}
-          <Button size="sm" variant="outline" className="h-9" onClick={savePlay} title={loaded ? `Atualizar "${loaded.name}"` : 'Guardar como jogada nova'}><Save className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Guardar</span></Button>
+          <Button size="sm" variant="outline" className="h-9" onClick={savePlay} title={loaded ? tx('Atualizar "{{v0}}"', { v0: loaded.name }) : tx('Guardar como jogada nova')}><Save className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Guardar')}</span></Button>
           </>)}
-          <Button size="icon" variant="outline" className="h-9 w-9" onClick={exportPng} aria-label="Exportar imagem"><Download className="h-4 w-4" /></Button>
+          <Button size="icon" variant="outline" className="h-9 w-9" onClick={exportPng} aria-label={tx('Exportar imagem')}><Download className="h-4 w-4" /></Button>
         </div>
       </div>
 
       {savedOpen && (
         <div className="flex flex-wrap gap-2 rounded-md border p-2">
-          {saved.length === 0 && <span className="text-sm text-muted-foreground">Ainda não há jogadas guardadas. Prepare os cantos, livres e saídas de bola antes do jogo e guarde-os aqui.</span>}
+          {saved.length === 0 && <span className="text-sm text-muted-foreground">{tx('Ainda não há jogadas guardadas. Prepare os cantos, livres e saídas de bola antes do jogo e guarde-os aqui.')}</span>}
           {saved.map((s) => (
             <span key={s.id} className="flex items-center overflow-hidden rounded-md border">
               <button type="button" className={cn('px-2.5 py-1.5 text-sm hover:bg-muted', loaded?.id === s.id && 'font-semibold')} title={(s.board_data as { note?: string } | null)?.note || undefined}
                 onClick={() => { commit(normalizeBoard(s.board_data, state.sport)); setLoaded({ id: s.id, name: s.name }); setStep(0); setSavedOpen(false); }}>{s.name}</button>
-              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => renamePlay(s)} aria-label={`Mudar o nome de ${s.name}`}><PencilLine className="h-3.5 w-3.5" /></button>
-              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => duplicatePlay(s)} aria-label={`Duplicar ${s.name}`}><Copy className="h-3.5 w-3.5" /></button>
-              <button type="button" className="border-l px-1.5 py-1.5 text-destructive hover:bg-muted" onClick={() => window.confirm(`Apagar "${s.name}"?`) && deletePlay(s.id)} aria-label={`Apagar ${s.name}`}><Trash2 className="h-3.5 w-3.5" /></button>
+              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => renamePlay(s)} aria-label={tx('Mudar o nome de {{v0}}', { v0: s.name })}><PencilLine className="h-3.5 w-3.5" /></button>
+              <button type="button" className="border-l px-1.5 py-1.5 hover:bg-muted" onClick={() => duplicatePlay(s)} aria-label={tx('Duplicar {{v0}}', { v0: s.name })}><Copy className="h-3.5 w-3.5" /></button>
+              <button type="button" className="border-l px-1.5 py-1.5 text-destructive hover:bg-muted" onClick={() => window.confirm(tx('Apagar "{{v0}}"?', { v0: s.name })) && deletePlay(s.id)} aria-label={tx('Apagar {{v0}}', { v0: s.name })}><Trash2 className="h-3.5 w-3.5" /></button>
             </span>
           ))}
         </div>
@@ -577,39 +578,39 @@ export function TacticBoard({ initial, players, slotMap, teamId, persistKey, hom
       {selectedToken && (selectedToken.kind === 'home' || selectedToken.kind === 'away') && (
         <div className="flex flex-wrap items-center gap-2 rounded-md border p-2 text-sm">
           <span className="h-3.5 w-3.5 rounded-full" style={{ background: selectedToken.kind === 'home' ? HOME : AWAY }} />
-          <Input className="h-8 w-16" maxLength={3} value={selectedToken.n ?? ''} onChange={(e) => patchToken({ n: e.target.value })} aria-label="Número" />
-          <Input className="h-8 w-40" maxLength={18} placeholder="Nome (opcional)" value={selectedToken.name ?? ''} onChange={(e) => patchToken({ name: e.target.value })} aria-label="Nome" />
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { commit(removeToken(state, selectedToken.id)); setSelected(null); }}><Trash2 className="mr-1 h-4 w-4" />Tirar</Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>Fechar</Button>
+          <Input className="h-8 w-16" maxLength={3} value={selectedToken.n ?? ''} onChange={(e) => patchToken({ n: e.target.value })} aria-label={tx('Número')} />
+          <Input className="h-8 w-40" maxLength={18} placeholder={tx('Nome (opcional)')} value={selectedToken.name ?? ''} onChange={(e) => patchToken({ name: e.target.value })} aria-label={tx('Nome')} />
+          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => { commit(removeToken(state, selectedToken.id)); setSelected(null); }}><Trash2 className="mr-1 h-4 w-4" />{tx('Tirar')}</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(null)}>{tx('Fechar')}</Button>
         </div>
       )}
 
       {/* steps */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Passos</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Passos')}</span>
         {Array.from({ length: totalSteps + 1 }, (_, k) => (
           <Button key={k} size="sm" variant={shownStep === k ? 'default' : 'outline'} className="h-9 w-9 px-0" onClick={() => { setPlayT(null); setStep(k); }}>{k + 1}</Button>
         ))}
-        <Button size="sm" variant="outline" className="h-9" onClick={newStep} disabled={playT != null}><Plus className="mr-1 h-4 w-4" />Passo</Button>
-        {step > 0 && playT == null && <Button size="sm" variant="ghost" className="h-9" onClick={() => { commit(deleteStep(state, step)); setStep(step - 1); }}><Trash2 className="mr-1 h-4 w-4" />Passo</Button>}
+        <Button size="sm" variant="outline" className="h-9" onClick={newStep} disabled={playT != null}><Plus className="mr-1 h-4 w-4" />{tx('Passo')}</Button>
+        {step > 0 && playT == null && <Button size="sm" variant="ghost" className="h-9" onClick={() => { commit(deleteStep(state, step)); setStep(step - 1); }}><Trash2 className="mr-1 h-4 w-4" />{tx('Passo')}</Button>}
         <div className="ml-auto flex items-center gap-1.5">
-          <Button size="sm" variant="outline" className="h-9 w-14 px-0 tabular-nums" onClick={() => setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])} title="Velocidade do movimento">
+          <Button size="sm" variant="outline" className="h-9 w-14 px-0 tabular-nums" onClick={() => setSpeed((v) => SPEEDS[(SPEEDS.indexOf(v) + 1) % SPEEDS.length])} title={tx('Velocidade do movimento')}>
             {String(speed).replace('.', ',')}×
           </Button>
-          <Button size="sm" variant="outline" className="h-9" disabled={playT != null || step >= totalSteps} onClick={() => startPlay(step, step + 1, step + 1)} title="Mostrar só o movimento seguinte">
-            <StepForward className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Seguinte</span>
+          <Button size="sm" variant="outline" className="h-9" disabled={playT != null || step >= totalSteps} onClick={() => startPlay(step, step + 1, step + 1)} title={tx('Mostrar só o movimento seguinte')}>
+            <StepForward className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">{tx('Seguinte')}</span>
           </Button>
         <Button size="sm" className="h-9" disabled={totalSteps === 0} onClick={() => (playT == null ? startPlay(0, totalSteps + 0.5, null) : setPlayT(null))}>
-          {playT == null ? <><Play className="mr-1.5 h-4 w-4" />Ver movimento</> : <><Pause className="mr-1.5 h-4 w-4" />Parar</>}
+          {playT == null ? <><Play className="mr-1.5 h-4 w-4" />{tx('Ver movimento')}</> : <><Pause className="mr-1.5 h-4 w-4" />{tx('Parar')}</>}
         </Button>
         </div>
       </div>
 
       {/* what to remember about this play; saved with it */}
-      <Input className="h-9" maxLength={160} placeholder="Nota da jogada (ex.: o 5 ataca o primeiro poste, o 8 fica à entrada da área)" value={state.note ?? ''} onChange={(e) => setState((st) => ({ ...st, note: e.target.value }))} aria-label="Nota da jogada" />
+      <Input className="h-9" maxLength={160} placeholder={tx('Nota da jogada (ex.: o 5 ataca o primeiro poste, o 8 fica à entrada da área)')} value={state.note ?? ''} onChange={(e) => setState((st) => ({ ...st, note: e.target.value }))} aria-label={tx('Nota da jogada')} />
       {!full && (
         <p className="text-xs text-muted-foreground">
-          Arraste os jogadores (e também as setas, zonas e textos já feitos). Escolha uma ferramenta e desenhe com o dedo; em Curva, faça o arco e ele fica uma seta curva. Toque num jogador para mudar o número/nome. "+ Passo" cria o movimento seguinte.
+          {tx('Arraste os jogadores (e também as setas, zonas e textos já feitos). Escolha uma ferramenta e desenhe com o dedo; em Curva, faça o arco e ele fica uma seta curva. Toque num jogador para mudar o número/nome. "+ Passo" cria o movimento seguinte.')}
         </p>
       )}
     </div>

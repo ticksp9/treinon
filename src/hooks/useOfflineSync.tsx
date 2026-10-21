@@ -15,6 +15,7 @@ import {
 const MAX_ATTEMPTS = 8;
 const RETRY_INTERVAL_MS = 30_000;
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 export function useOfflineSync() {
   const { isOnline } = useOnlineStatus();
@@ -74,7 +75,7 @@ export function useOfflineSync() {
           const attempts = (op.attempts ?? 0) + 1;
           if (attempts >= MAX_ATTEMPTS) {
             await removePendingOperation(op.id);
-            toast.error('Um registo offline não pôde ser gravado no servidor e foi descartado. Verifique o jogo/treino.');
+            toast.error(tx('Um registo offline não pôde ser gravado no servidor e foi descartado. Verifique o jogo/treino.'));
           } else {
             await updatePendingOperation({ ...op, attempts });
           }
@@ -85,13 +86,13 @@ export function useOfflineSync() {
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} operação(ões) sincronizada(s) com sucesso!`);
+        toast.success(tx('{{v0}} operação(ões) sincronizada(s) com sucesso!', { v0: successCount }));
         // Invalidate all queries to refresh data
         queryClient.invalidateQueries();
       }
 
       if (errorCount > 0) {
-        toast.error(`${errorCount} operação(ões) falharam. Tentaremos novamente mais tarde.`);
+        toast.error(tx('{{v0}} operação(ões) falharam. Tentaremos novamente mais tarde.', { v0: errorCount }));
       }
     } catch (error) {
       console.error('Error during sync:', error);

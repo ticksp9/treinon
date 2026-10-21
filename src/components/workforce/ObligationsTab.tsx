@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { StatutoryObligation, ContractAlert } from '@/hooks/useWorkforce';
 import { computeObligationAging } from '@/hooks/useWorkforce';
+import { tx } from '@/lib/i18n/ui';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -42,7 +43,7 @@ export function ObligationsTab({ obligations, alerts, isLoading }: Props) {
     <div className="space-y-6">
       {/* Aging chart */}
       <Card>
-        <CardHeader><CardTitle>Aging de Obrigações</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tx('Aging de Obrigações')}</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={agingData}>
@@ -59,7 +60,7 @@ export function ObligationsTab({ obligations, alerts, isLoading }: Props) {
       {/* Overdue alerts */}
       {overdueAlerts.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-destructive">Alertas de Incumprimento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-destructive">{tx('Alertas de Incumprimento')}</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-2">
               {overdueAlerts.map(a => (
@@ -78,21 +79,21 @@ export function ObligationsTab({ obligations, alerts, isLoading }: Props) {
 
       {/* Obligations table */}
       <Card>
-        <CardHeader><CardTitle>Obrigações</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{tx('Obrigações')}</CardTitle></CardHeader>
         <CardContent>
           {obligations.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">Sem obrigações registadas.</p>
+            <p className="text-center py-8 text-muted-foreground">{tx('Sem obrigações registadas.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Valor Devido</TableHead>
-                  <TableHead>Valor Pago</TableHead>
-                  <TableHead>Em Aberto</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>{tx('Tipo')}</TableHead>
+                  <TableHead>{tx('Período')}</TableHead>
+                  <TableHead>{tx('Vencimento')}</TableHead>
+                  <TableHead>{tx('Valor Devido')}</TableHead>
+                  <TableHead>{tx('Valor Pago')}</TableHead>
+                  <TableHead>{tx('Em Aberto')}</TableHead>
+                  <TableHead>{tx('Estado')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

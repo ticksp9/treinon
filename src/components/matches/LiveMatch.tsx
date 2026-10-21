@@ -55,7 +55,7 @@ import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { checkMatchConsistency, type ConsistencyIssue } from '@/lib/match-playing-time';
 import { cacheData, getCachedData, addPendingOperation, isNetworkError } from '@/lib/offlineStorage';
-import { useT, tr } from '@/lib/i18n/ui';
+import { useT, tr, tx } from '@/lib/i18n/ui';
 
 const LIVE_DATA_KEY = (matchId: string) => `live_match_data_${matchId}`;
 
@@ -811,7 +811,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       }
 
       startAutoSave();
-      toast.success(`${getPartLabel(1, config.partsCount)} iniciada!`);
+      toast.success(tx('{{v0}} iniciada!', { v0: getPartLabel(1, config.partsCount) }));
     } catch (error) {
       console.error('[LiveMatch] Error starting match:', error);
       toast.error(t('Erro ao iniciar jogo'));
@@ -935,7 +935,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     await liveState.saveLocal(state);
 
     startAutoSave();
-    toast.success(`${getPartLabel(nextPart, partsCount)} iniciada!`);
+    toast.success(tx('{{v0}} iniciada!', { v0: getPartLabel(nextPart, partsCount) }));
   };
 
   const finishMatch = async (finalPartElapsed: number[], finalPartRealSeconds?: number[], finalPartRegulationMinutes?: number[]) => {
@@ -1184,7 +1184,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           minute,
         );
         setSyncStatus('pending');
-        toast.success('Substituição guardada neste aparelho (sem rede — será enviada depois).');
+        toast.success(tx('Substituição guardada neste aparelho (sem rede — será enviada depois).'));
         return;
       }
 
@@ -1263,7 +1263,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       if (isNetworkError(error)) {
         await addPendingOperation('match_events', 'delete', { id: eventId });
         setEvents(prev => prev.filter(e => e.id !== eventId));
-        toast.success('Evento removido (sem rede — será sincronizado depois)');
+        toast.success(tx('Evento removido (sem rede — será sincronizado depois)'));
       } else {
         toast.error(t('Erro ao remover evento'));
       }

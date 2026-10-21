@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Zap, Plus, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface AutomationsTabProps {
   clubId: string | null;
@@ -58,17 +59,17 @@ export function AutomationsTab({ clubId, userId }: AutomationsTabProps) {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Automações</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">{tx('Automações')}</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Nova Automação
+          <Plus className="h-4 w-4 mr-1" /> {tx('Nova Automação')}
         </Button>
       </div>
 
       {rules.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Zap className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhuma automação configurada</p>
-          <p className="text-xs mt-1">Configure lembretes automáticos para treinos e jogos</p>
+          <p className="text-sm">{tx('Nenhuma automação configurada')}</p>
+          <p className="text-xs mt-1">{tx('Configure lembretes automáticos para treinos e jogos')}</p>
         </div>
       ) : (
         <ScrollArea className="max-h-[60vh] md:max-h-none">
@@ -91,7 +92,7 @@ export function AutomationsTab({ clubId, userId }: AutomationsTabProps) {
                         </Badge>
                         {r.trigger_config && (r.trigger_config as Record<string, unknown>).hours_before && (
                           <span className="text-[10px] text-muted-foreground">
-                            {String((r.trigger_config as Record<string, unknown>).hours_before)}h antes
+                            {String((r.trigger_config as Record<string, unknown>).hours_before)}{tx('h antes')}
                           </span>
                         )}
                       </div>
@@ -108,7 +109,7 @@ export function AutomationsTab({ clubId, userId }: AutomationsTabProps) {
                         size="icon"
                         className="h-8 w-8 text-destructive"
                         onClick={() =>
-                          deleteRule.mutate(r.id, { onSuccess: () => toast.success('Automação removida') })
+                          deleteRule.mutate(r.id, { onSuccess: () => toast.success(tx('Automação removida')) })
                         }
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -143,7 +144,7 @@ function CreateAutomationDialog({
   const [audience, setAudience] = useState('full_team');
 
   const handleSubmit = () => {
-    if (!name.trim()) { toast.error('Nome é obrigatório'); return; }
+    if (!name.trim()) { toast.error(tx('Nome é obrigatório')); return; }
     create.mutate(
       {
         name: name.trim(),
@@ -153,11 +154,11 @@ function CreateAutomationDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Automação criada');
+          toast.success(tx('Automação criada'));
           setName('');
           onClose();
         },
-        onError: () => toast.error('Erro ao criar automação'),
+        onError: () => toast.error(tx('Erro ao criar automação')),
       }
     );
   };
@@ -166,15 +167,15 @@ function CreateAutomationDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Nova Automação</DialogTitle>
+          <DialogTitle>{tx('Nova Automação')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Nome *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Lembrete 24h antes do treino" />
+            <Label>{tx('Nome *')}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tx('Ex: Lembrete 24h antes do treino')} />
           </div>
           <div>
-            <Label>Gatilho</Label>
+            <Label>{tx('Gatilho')}</Label>
             <Select value={triggerType} onValueChange={setTriggerType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -186,12 +187,12 @@ function CreateAutomationDialog({
           </div>
           {triggerType.startsWith('time_before_') && (
             <div>
-              <Label>Horas antes</Label>
+              <Label>{tx('Horas antes')}</Label>
               <Input type="number" min="1" max="168" value={hoursBefore} onChange={(e) => setHoursBefore(e.target.value)} />
             </div>
           )}
           <div>
-            <Label>Audiência</Label>
+            <Label>{tx('Audiência')}</Label>
             <Select value={audience} onValueChange={setAudience}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -202,9 +203,9 @@ function CreateAutomationDialog({
             </Select>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={create.isPending}>
-              {create.isPending ? 'A criar...' : 'Criar Automação'}
+              {create.isPending ? tx('A criar...') : tx('Criar Automação')}
             </Button>
           </div>
         </div>

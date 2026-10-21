@@ -14,6 +14,7 @@ import { Plus, GraduationCap, FileText, Trash2, Upload, ExternalLink } from 'luc
 import { DIPLOMA_LEVELS } from '@/lib/coach-constants';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface Diploma {
   id: string;
@@ -86,12 +87,12 @@ export function CoachDiplomas() {
         .from('coach-documents')
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      if (signedError || !signed?.signedUrl) throw signedError ?? new Error('Falha ao assinar URL');
+      if (signedError || !signed?.signedUrl) throw signedError ?? new Error(tx('Falha ao assinar URL'));
 
       setForm(prev => ({ ...prev, document_url: signed.signedUrl }));
-      toast.success('Documento carregado!');
+      toast.success(tx('Documento carregado!'));
     } catch (error: any) {
-      toast.error('Erro ao carregar documento: ' + error.message);
+      toast.error(tx('Erro ao carregar documento: ') + error.message);
     } finally {
       setUploading(false);
     }
@@ -99,7 +100,7 @@ export function CoachDiplomas() {
 
   const handleSave = async () => {
     if (!user || !form.name) {
-      toast.error('Preencha o nome do diploma');
+      toast.error(tx('Preencha o nome do diploma'));
       return;
     }
 
@@ -121,7 +122,7 @@ export function CoachDiplomas() {
 
       if (error) throw error;
       
-      toast.success('Diploma adicionado!');
+      toast.success(tx('Diploma adicionado!'));
       setDialogOpen(false);
       setForm({
         name: '',
@@ -134,14 +135,14 @@ export function CoachDiplomas() {
       });
       fetchDiplomas();
     } catch (error: any) {
-      toast.error('Erro ao guardar diploma: ' + error.message);
+      toast.error(tx('Erro ao guardar diploma: ') + error.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem a certeza que deseja eliminar este diploma?')) return;
+    if (!confirm(tx('Tem a certeza que deseja eliminar este diploma?'))) return;
 
     try {
       const { error } = await supabase
@@ -150,10 +151,10 @@ export function CoachDiplomas() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Diploma eliminado');
+      toast.success(tx('Diploma eliminado'));
       fetchDiplomas();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(tx('Erro ao eliminar: ') + error.message);
     }
   };
 
@@ -166,7 +167,7 @@ export function CoachDiplomas() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -176,41 +177,41 @@ export function CoachDiplomas() {
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Diplomas e Formações</h3>
-          <p className="text-sm text-muted-foreground">Gerir as suas certificações e qualificações</p>
+          <h3 className="text-lg font-semibold">{tx('Diplomas e Formações')}</h3>
+          <p className="text-sm text-muted-foreground">{tx('Gerir as suas certificações e qualificações')}</p>
         </div>
         
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar Diploma
+              {tx('Adicionar Diploma')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Novo Diploma / Formação</DialogTitle>
+              <DialogTitle>{tx('Novo Diploma / Formação')}</DialogTitle>
             </DialogHeader>
             
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Nome do Diploma *</Label>
+                  <Label>{tx('Nome do Diploma *')}</Label>
                   <Input
                     value={form.name}
                     onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: UEFA B, Treinador Grau II"
+                    placeholder={tx('Ex: UEFA B, Treinador Grau II')}
                   />
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Nível</Label>
+                  <Label>{tx('Nível')}</Label>
                   <Select
                     value={form.diploma_level}
                     onValueChange={(v) => setForm(prev => ({ ...prev, diploma_level: v }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione o nível" />
+                      <SelectValue placeholder={tx('Selecione o nível')} />
                     </SelectTrigger>
                     <SelectContent>
                       {DIPLOMA_LEVELS.map((level) => (
@@ -223,16 +224,16 @@ export function CoachDiplomas() {
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Entidade Emissora</Label>
+                  <Label>{tx('Entidade Emissora')}</Label>
                   <Input
                     value={form.issuing_organization}
                     onChange={(e) => setForm(prev => ({ ...prev, issuing_organization: e.target.value }))}
-                    placeholder="Ex: FPF, IPDJ, UEFA"
+                    placeholder={tx('Ex: FPF, IPDJ, UEFA')}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Data de Emissão</Label>
+                  <Label>{tx('Data de Emissão')}</Label>
                   <Input
                     type="date"
                     value={form.issue_date}
@@ -241,7 +242,7 @@ export function CoachDiplomas() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Data de Validade</Label>
+                  <Label>{tx('Data de Validade')}</Label>
                   <Input
                     type="date"
                     value={form.expiry_date}
@@ -250,12 +251,12 @@ export function CoachDiplomas() {
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Documento (PDF/Imagem)</Label>
+                  <Label>{tx('Documento (PDF/Imagem)')}</Label>
                   <div className="flex gap-2">
                     <Input
                       value={form.document_url}
                       onChange={(e) => setForm(prev => ({ ...prev, document_url: e.target.value }))}
-                      placeholder="URL do documento"
+                      placeholder={tx('URL do documento')}
                       className="flex-1"
                     />
                     <div className="relative">
@@ -274,11 +275,11 @@ export function CoachDiplomas() {
                 </div>
                 
                 <div className="col-span-2 space-y-2">
-                  <Label>Notas</Label>
+                  <Label>{tx('Notas')}</Label>
                   <Textarea
                     value={form.notes}
                     onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Observações adicionais..."
+                    placeholder={tx('Observações adicionais...')}
                     rows={2}
                   />
                 </div>
@@ -286,10 +287,10 @@ export function CoachDiplomas() {
               
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? 'A guardar...' : 'Guardar'}
+                  {saving ? tx('A guardar...') : tx('Guardar')}
                 </Button>
               </div>
             </div>
@@ -301,9 +302,9 @@ export function CoachDiplomas() {
         <Card>
           <CardContent className="py-12 text-center">
             <GraduationCap className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Sem Diplomas</h3>
+            <h3 className="text-lg font-medium mb-2">{tx('Sem Diplomas')}</h3>
             <p className="text-muted-foreground">
-              Adicione os seus diplomas e certificações para completar o seu currículo
+              {tx('Adicione os seus diplomas e certificações para completar o seu currículo')}
             </p>
           </CardContent>
         </Card>
@@ -334,12 +335,12 @@ export function CoachDiplomas() {
                     <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                       {diploma.issue_date && (
                         <span>
-                          Emitido: {format(new Date(diploma.issue_date), 'MMM yyyy', { locale: pt })}
+                          {tx('Emitido:')}{' '}{format(new Date(diploma.issue_date), 'MMM yyyy', { locale: pt })}
                         </span>
                       )}
                       {diploma.expiry_date && (
                         <span>
-                          Validade: {format(new Date(diploma.expiry_date), 'MMM yyyy', { locale: pt })}
+                          {tx('Validade:')}{' '}{format(new Date(diploma.expiry_date), 'MMM yyyy', { locale: pt })}
                         </span>
                       )}
                     </div>

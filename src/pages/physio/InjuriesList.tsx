@@ -22,6 +22,7 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { INJURY_STATUSES, INJURY_SEVERITIES, BODY_AREAS, INJURY_TYPES } from '@/lib/physio-constants';
+import { tx } from '@/lib/i18n/ui';
 
 export default function InjuriesList() {
   const { user } = useAuth();
@@ -101,9 +102,9 @@ export default function InjuriesList() {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para fisioterapeutas e administradores.
+                {tx('Esta funcionalidade está disponível apenas para fisioterapeutas e administradores.')}
               </p>
             </CardContent>
           </Card>
@@ -141,12 +142,12 @@ export default function InjuriesList() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-display font-bold">Lesões</h1>
-            <p className="text-muted-foreground">Histórico completo de lesões</p>
+            <h1 className="text-2xl font-display font-bold">{tx('Lesões')}</h1>
+            <p className="text-muted-foreground">{tx('Histórico completo de lesões')}</p>
           </div>
           <Button onClick={() => navigate('/club/physio/injuries/new')}>
             <Plus className="w-4 h-4 mr-2" />
-            Nova Lesão
+            {tx('Nova Lesão')}
           </Button>
         </div>
 
@@ -157,7 +158,7 @@ export default function InjuriesList() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Pesquisar jogador..."
+                  placeholder={tx('Pesquisar jogador...')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -165,10 +166,10 @@ export default function InjuriesList() {
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Estado" />
+                  <SelectValue placeholder={tx('Estado')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os Estados</SelectItem>
+                  <SelectItem value="all">{tx('Todos os Estados')}</SelectItem>
                   {INJURY_STATUSES.map(s => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
@@ -176,10 +177,10 @@ export default function InjuriesList() {
               </Select>
               <Select value={teamFilter} onValueChange={setTeamFilter}>
                 <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Equipa" />
+                  <SelectValue placeholder={tx('Equipa')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas as Equipas</SelectItem>
+                  <SelectItem value="all">{tx('Todas as Equipas')}</SelectItem>
                   {teams?.map(team => (
                     <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                   ))}
@@ -199,13 +200,13 @@ export default function InjuriesList() {
             ) : injuries?.length === 0 ? (
               <div className="text-center py-12">
                 <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma lesão encontrada</h3>
+                <h3 className="text-lg font-semibold mb-2">{tx('Nenhuma lesão encontrada')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Não existem lesões registadas com os filtros selecionados.
+                  {tx('Não existem lesões registadas com os filtros selecionados.')}
                 </p>
                 <Button onClick={() => navigate('/club/physio/injuries/new')}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Registar Lesão
+                  {tx('Registar Lesão')}
                 </Button>
               </div>
             ) : (
@@ -213,13 +214,13 @@ export default function InjuriesList() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Jogador</TableHead>
-                      <TableHead>Equipa</TableHead>
-                      <TableHead>Zona</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Gravidade</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Data Início</TableHead>
+                      <TableHead>{tx('Jogador')}</TableHead>
+                      <TableHead>{tx('Equipa')}</TableHead>
+                      <TableHead>{tx('Zona')}</TableHead>
+                      <TableHead>{tx('Tipo')}</TableHead>
+                      <TableHead>{tx('Gravidade')}</TableHead>
+                      <TableHead>{tx('Estado')}</TableHead>
+                      <TableHead>{tx('Data Início')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

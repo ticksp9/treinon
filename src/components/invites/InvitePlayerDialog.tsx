@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCreateInvite } from '@/hooks/useAccessInvites';
 import { toast } from 'sonner';
 import { Loader2, UserPlus, Copy, Link2 } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   teamId: string;
@@ -31,7 +32,7 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recipientName) {
-      toast.error('Indique o nome do convidado');
+      toast.error(tx('Indique o nome do convidado'));
       return;
     }
 
@@ -45,9 +46,9 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
         // SECURITY: scope_type, club_id, owner_coach_id derived server-side
       });
       setResult({ token: data.token, code: data.code });
-      toast.success('Convite criado!');
+      toast.success(tx('Convite criado!'));
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar convite');
+      toast.error(err.message || tx('Erro ao criar convite'));
     }
   };
 
@@ -57,7 +58,7 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copiado!');
+    toast.success(tx('Copiado!'));
   };
 
   const handleClose = () => {
@@ -72,73 +73,73 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
       <DialogTrigger asChild>
         {trigger || (
           <Button size="sm" variant="outline">
-            <UserPlus className="h-4 w-4 mr-1" /> Convidar
+            <UserPlus className="h-4 w-4 mr-1" /> {tx('Convidar')}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Convidar para a plataforma</DialogTitle>
+          <DialogTitle>{tx('Convidar para a plataforma')}</DialogTitle>
           <DialogDescription>
             {playerName
-              ? `Enviar convite relacionado com ${playerName}`
-              : 'Enviar convite de acesso restrito'}
+              ? tx('Enviar convite relacionado com {{v0}}', { v0: playerName })
+              : tx('Enviar convite de acesso restrito')}
           </DialogDescription>
         </DialogHeader>
 
         {!result ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Tipo de convite</Label>
+              <Label>{tx('Tipo de convite')}</Label>
               <Select value={inviteType} onValueChange={(v) => setInviteType(v as 'guardian' | 'player')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="guardian">Encarregado de Educação</SelectItem>
-                  <SelectItem value="player">Atleta</SelectItem>
+                  <SelectItem value="guardian">{tx('Encarregado de Educação')}</SelectItem>
+                  <SelectItem value="player">{tx('Atleta')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="recipientName">Nome do convidado</Label>
+              <Label htmlFor="recipientName">{tx('Nome do convidado')}</Label>
               <Input
                 id="recipientName"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
-                placeholder="Nome completo"
+                placeholder={tx('Nome completo')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email (opcional)</Label>
+              <Label htmlFor="email">{tx('Email (opcional)')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@exemplo.com"
+                placeholder={tx('email@exemplo.com')}
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={createInvite.isPending}>
               {createInvite.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Criar convite
+              {tx('Criar convite')}
             </Button>
           </form>
         ) : (
           <div className="space-y-4">
             <Alert>
               <AlertDescription>
-                Convite criado! Partilhe o link ou código com o convidado.
+                {tx('Convite criado! Partilhe o link ou código com o convidado.')}
               </AlertDescription>
             </Alert>
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Código de acesso</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Código de acesso')}</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-lg font-mono tracking-widest px-4 py-2">
                     {result.code}
@@ -150,7 +151,7 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">Link direto</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Link direto')}</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input value={inviteLink} readOnly className="text-xs" />
                   <Button size="sm" variant="ghost" onClick={() => copyToClipboard(inviteLink)}>
@@ -161,7 +162,7 @@ export function InvitePlayerDialog({ teamId, playerId, playerName, scopeType, cl
             </div>
 
             <Button variant="outline" className="w-full" onClick={handleClose}>
-              Fechar
+              {tx('Fechar')}
             </Button>
           </div>
         )}

@@ -35,6 +35,7 @@ import { Plus, Pencil, Trash2, FileText, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { tx } from '@/lib/i18n/ui';
 
 interface DocumentsTabProps {
   clubId: string;
@@ -53,16 +54,16 @@ interface Document {
 }
 
 const DOCUMENT_TYPES = [
-  { value: 'rules', label: 'Regras Internas' },
-  { value: 'code_of_conduct', label: 'Código de Conduta' },
-  { value: 'regulation', label: 'Regulamento' },
-  { value: 'other', label: 'Outro' },
+  { value: 'rules', get label() { return tx('Regras Internas'); } },
+  { value: 'code_of_conduct', get label() { return tx('Código de Conduta'); } },
+  { value: 'regulation', get label() { return tx('Regulamento'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 const AUDIENCES = [
-  { value: 'parents', label: 'Pais' },
-  { value: 'athletes', label: 'Atletas' },
-  { value: 'coaches', label: 'Treinadores' },
+  { value: 'parents', get label() { return tx('Pais'); } },
+  { value: 'athletes', get label() { return tx('Atletas'); } },
+  { value: 'coaches', get label() { return tx('Treinadores'); } },
 ];
 
 export function DocumentsTab({ clubId }: DocumentsTabProps) {
@@ -113,11 +114,11 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-documents', clubId] });
-      toast.success("Documento criado com sucesso");
+      toast.success(tx('Documento criado com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar documento: ${error.message}`);
+      toast.error(tx('Erro ao criar documento: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -139,11 +140,11 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-documents', clubId] });
-      toast.success("Documento atualizado com sucesso");
+      toast.success(tx('Documento atualizado com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao atualizar documento: ${error.message}`);
+      toast.error(tx('Erro ao atualizar documento: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -158,10 +159,10 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-documents', clubId] });
-      toast.success("Documento eliminado com sucesso");
+      toast.success(tx('Documento eliminado com sucesso'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao eliminar documento: ${error.message}`);
+      toast.error(tx('Erro ao eliminar documento: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -221,35 +222,35 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Documentos da Coordenação</CardTitle>
+        <CardTitle>{tx('Documentos da Coordenação')}</CardTitle>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setEditingDoc(null); resetForm(); }}>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Documento
+              {tx('Novo Documento')}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
-                {editingDoc ? "Editar Documento" : "Novo Documento"}
+                {editingDoc ? tx('Editar Documento') : tx('Novo Documento')}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Título</Label>
+                <Label htmlFor="title">{tx('Título')}</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Código de Conduta para Atletas"
+                  placeholder={tx('Ex: Código de Conduta para Atletas')}
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="document_type">Tipo</Label>
+                  <Label htmlFor="document_type">{tx('Tipo')}</Label>
                   <Select
                     value={formData.document_type}
                     onValueChange={(value) => setFormData({ ...formData, document_type: value })}
@@ -268,7 +269,7 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="version">Versão</Label>
+                  <Label htmlFor="version">{tx('Versão')}</Label>
                   <Input
                     id="version"
                     value={formData.version}
@@ -279,18 +280,18 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description">{tx('Descrição')}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Breve descrição do documento..."
+                  placeholder={tx('Breve descrição do documento...')}
                   rows={3}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="file_url">URL do Ficheiro (opcional)</Label>
+                <Label htmlFor="file_url">{tx('URL do Ficheiro (opcional)')}</Label>
                 <Input
                   id="file_url"
                   type="url"
@@ -301,7 +302,7 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Destinatários</Label>
+                <Label>{tx('Destinatários')}</Label>
                 <div className="flex gap-4">
                   {AUDIENCES.map((audience) => (
                     <div key={audience.value} className="flex items-center gap-2">
@@ -320,10 +321,10 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingDoc ? "Guardar" : "Criar"}
+                  {editingDoc ? tx('Guardar') : tx('Criar')}
                 </Button>
               </div>
             </form>
@@ -332,17 +333,17 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground text-center py-8">A carregar...</p>
+          <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
         ) : documents && documents.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Documento</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Destinatários</TableHead>
-                <TableHead>Versão</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{tx('Documento')}</TableHead>
+                <TableHead>{tx('Tipo')}</TableHead>
+                <TableHead>{tx('Destinatários')}</TableHead>
+                <TableHead>{tx('Versão')}</TableHead>
+                <TableHead>{tx('Data')}</TableHead>
+                <TableHead className="text-right">{tx('Ações')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -399,7 +400,7 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          if (confirm("Tem a certeza que quer eliminar este documento?")) {
+                          if (confirm(tx('Tem a certeza que quer eliminar este documento?'))) {
                             deleteMutation.mutate(doc.id);
                           }
                         }}
@@ -415,10 +416,10 @@ export function DocumentsTab({ clubId }: DocumentsTabProps) {
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
-              Ainda não tem documentos da coordenação.
+              {tx('Ainda não tem documentos da coordenação.')}
             </p>
             <p className="text-sm text-muted-foreground">
-              Adicione regras, códigos de conduta e regulamentos.
+              {tx('Adicione regras, códigos de conduta e regulamentos.')}
             </p>
           </div>
         )}

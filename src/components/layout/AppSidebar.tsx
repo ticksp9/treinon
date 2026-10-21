@@ -56,7 +56,7 @@ import {
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { tr, useT } from '@/lib/i18n/ui';
+import { tr, useT, tx } from '@/lib/i18n/ui';
 
 // Staff/coach menu — what a coach uses every week comes first
 const staffMenuItems = [
@@ -203,7 +203,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3">
           <img src="/icon.svg" alt="" className="w-9 h-9 rounded-md ring-1 ring-sidebar-border" />
           <div>
-            <h1 className="font-display font-bold text-sidebar-foreground tracking-tight">TreinON</h1>
+            <h1 className="font-display font-bold text-sidebar-foreground tracking-tight">{tx('TreinON')}</h1>
             <p className="text-xs text-sidebar-foreground/60">{t('O treinador ligado ao jogo')}</p>
           </div>
         </div>

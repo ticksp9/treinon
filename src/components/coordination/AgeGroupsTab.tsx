@@ -25,6 +25,7 @@ import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { getSeasonStartYear, getCurrentSeasonName } from "@/lib/constants";
 import { alignAgeGroupsToSeason, type AgeGroupRule } from "@/lib/age-group-rules";
+import { tx } from '@/lib/i18n/ui';
 
 interface AgeGroupsTabProps {
   clubId: string;
@@ -82,11 +83,11 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-age-groups', clubId] });
-      toast.success("Escalão criado com sucesso");
+      toast.success(tx('Escalão criado com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar escalão: ${error.message}`);
+      toast.error(tx('Erro ao criar escalão: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -105,11 +106,11 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-age-groups', clubId] });
-      toast.success("Escalão atualizado com sucesso");
+      toast.success(tx('Escalão atualizado com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao atualizar escalão: ${error.message}`);
+      toast.error(tx('Erro ao atualizar escalão: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -124,10 +125,10 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-age-groups', clubId] });
-      toast.success("Escalão eliminado com sucesso");
+      toast.success(tx('Escalão eliminado com sucesso'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao eliminar escalão: ${error.message}`);
+      toast.error(tx('Erro ao eliminar escalão: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -166,35 +167,35 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Escalões</CardTitle>
+        <CardTitle>{tx('Escalões')}</CardTitle>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { setEditingGroup(null); resetForm(); }}>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Escalão
+              {tx('Novo Escalão')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingGroup ? "Editar Escalão" : "Novo Escalão"}
+                {editingGroup ? tx('Editar Escalão') : tx('Novo Escalão')}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome do Escalão</Label>
+                <Label htmlFor="name">{tx('Nome do Escalão')}</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ex: Infantis, Iniciados, Juvenis"
+                  placeholder={tx('Ex: Infantis, Iniciados, Juvenis')}
                   required
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="min_birth_year">Ano Nasc. Mínimo</Label>
+                  <Label htmlFor="min_birth_year">{tx('Ano Nasc. Mínimo')}</Label>
                   <Input
                     id="min_birth_year"
                     type="number"
@@ -205,12 +206,12 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Jogadores nascidos a partir de {formData.min_birth_year}
+                    {tx('Jogadores nascidos a partir de')}{' '}{formData.min_birth_year}
                   </p>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="max_birth_year">Ano Nasc. Máximo</Label>
+                  <Label htmlFor="max_birth_year">{tx('Ano Nasc. Máximo')}</Label>
                   <Input
                     id="max_birth_year"
                     type="number"
@@ -221,17 +222,17 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Jogadores nascidos até {formData.max_birth_year}
+                    {tx('Jogadores nascidos até')}{' '}{formData.max_birth_year}
                   </p>
                 </div>
               </div>
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingGroup ? "Guardar" : "Criar"}
+                  {editingGroup ? tx('Guardar') : tx('Criar')}
                 </Button>
               </div>
             </form>
@@ -240,16 +241,16 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground text-center py-8">A carregar...</p>
+          <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
         ) : ageGroups && ageGroups.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-8"></TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Anos de Nascimento</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{tx('Nome')}</TableHead>
+                <TableHead>{tx('Anos de Nascimento')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
+                <TableHead className="text-right">{tx('Ações')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -268,7 +269,7 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                           <span>{aligned.min_birth_year} - {aligned.max_birth_year}</span>
                           {changed && (
                             <div className="text-xs text-muted-foreground">
-                              Ajustado para {getCurrentSeasonName()} (guardado: {group.min_birth_year} - {group.max_birth_year})
+                              {tx('Ajustado para')}{' '}{getCurrentSeasonName()} {tx('(guardado:')}{' '}{group.min_birth_year} - {group.max_birth_year})
                             </div>
                           )}
                         </div>
@@ -277,7 +278,7 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                   </TableCell>
                   <TableCell>
                     <Badge variant={group.is_active ? "default" : "secondary"}>
-                      {group.is_active ? "Ativo" : "Inativo"}
+                      {group.is_active ? tx('Ativo') : tx('Inativo')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -293,7 +294,7 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          if (confirm("Tem a certeza que quer eliminar este escalão?")) {
+                          if (confirm(tx('Tem a certeza que quer eliminar este escalão?'))) {
                             deleteMutation.mutate(group.id);
                           }
                         }}
@@ -309,10 +310,10 @@ export function AgeGroupsTab({ clubId }: AgeGroupsTabProps) {
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
-              Ainda não tem escalões definidos.
+              {tx('Ainda não tem escalões definidos.')}
             </p>
             <p className="text-sm text-muted-foreground">
-              Crie escalões como "Infantis", "Iniciados", "Juvenis", etc.
+              {tx('Crie escalões como "Infantis", "Iniciados", "Juvenis", etc.')}
             </p>
           </div>
         )}

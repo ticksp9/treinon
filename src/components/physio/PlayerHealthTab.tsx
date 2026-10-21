@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { INJURY_STATUSES, INJURY_SEVERITIES, BODY_AREAS, INJURY_TYPES } from '@/lib/physio-constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerHealthTabProps {
   playerId: string;
@@ -131,11 +132,11 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
       queryClient.invalidateQueries({ queryKey: ['player-daily-logs', playerId] });
       setShowLogDialog(false);
       setLogData({ pain_level: 0, fatigue_level: 5, sleep_quality: 5, adherence: true, notes: '' });
-      toast.success('Registo diário guardado!');
+      toast.success(tx('Registo diário guardado!'));
     },
     onError: (error) => {
       console.error('Error adding log:', error);
-      toast.error('Erro ao guardar registo');
+      toast.error(tx('Erro ao guardar registo'));
     },
   });
 
@@ -162,9 +163,9 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Heart className="w-5 h-5" />
-            Estado de Saúde
+            {tx('Estado de Saúde')}
           </CardTitle>
-          <CardDescription>Resumo do estado do jogador</CardDescription>
+          <CardDescription>{tx('Resumo do estado do jogador')}</CardDescription>
         </CardHeader>
         <CardContent>
           {injuriesLoading ? (
@@ -176,7 +177,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                   <AlertTriangle className="w-5 h-5 text-yellow-600" />
                   <div>
                     <p className="font-medium">
-                      {activeInjury.is_fit ? 'Apto com Restrições' : 'Indisponível'}
+                      {activeInjury.is_fit ? tx('Apto com Restrições') : tx('Indisponível')}
                     </p>
                     {activeInjury.restrictions && (
                       <p className="text-sm text-muted-foreground">{activeInjury.restrictions}</p>
@@ -190,7 +191,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <span>
-                    Próxima reavaliação: {format(new Date(latestAssessment.next_review_date), 'dd/MM/yyyy')}
+                    {tx('Próxima reavaliação:')}{' '}{format(new Date(latestAssessment.next_review_date), 'dd/MM/yyyy')}
                   </span>
                 </div>
               )}
@@ -198,7 +199,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
           ) : (
             <div className="flex items-center justify-center gap-3 py-6 text-green-600">
               <Activity className="w-6 h-6" />
-              <span className="font-medium">Jogador Apto</span>
+              <span className="font-medium">{tx('Jogador Apto')}</span>
             </div>
           )}
         </CardContent>
@@ -213,8 +214,8 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
-            <CardTitle className="text-lg">Lesões Ativas</CardTitle>
-            <CardDescription>Lesões em tratamento</CardDescription>
+            <CardTitle className="text-lg">{tx('Lesões Ativas')}</CardTitle>
+            <CardDescription>{tx('Lesões em tratamento')}</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -223,7 +224,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
           ) : injuries?.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p>Sem lesões ativas</p>
+              <p>{tx('Sem lesões ativas')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -247,7 +248,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    Desde {format(new Date(injury.start_date), 'dd/MM/yyyy')}
+                    {tx('Desde')}{' '}{format(new Date(injury.start_date), 'dd/MM/yyyy')}
                   </p>
                 </div>
               ))}
@@ -262,7 +263,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <ClipboardList className="w-5 h-5" />
-              Plano de Reabilitação
+              {tx('Plano de Reabilitação')}
             </CardTitle>
             <CardDescription>{rehabPlan.title}</CardDescription>
           </CardHeader>
@@ -275,13 +276,13 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
               <div className="flex gap-2">
                 <Badge variant="secondary">{rehabPlan.phase}</Badge>
                 <Badge variant="outline">
-                  {rehabPlan.exercises?.length || 0} exercícios
+                  {rehabPlan.exercises?.length || 0} {tx('exercícios')}
                 </Badge>
               </div>
 
               {rehabPlan.exercises && rehabPlan.exercises.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium">Exercícios:</p>
+                  <p className="text-sm font-medium">{tx('Exercícios:')}</p>
                   {rehabPlan.exercises.slice(0, 3).map((ex: any) => (
                     <div key={ex.id} className="text-sm p-2 bg-muted/50 rounded">
                       {ex.exercise_name}
@@ -306,23 +307,23 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
-            <CardTitle className="text-lg">Registo Diário</CardTitle>
-            <CardDescription>Acompanhamento do estado do jogador</CardDescription>
+            <CardTitle className="text-lg">{tx('Registo Diário')}</CardTitle>
+            <CardDescription>{tx('Acompanhamento do estado do jogador')}</CardDescription>
           </div>
           <Dialog open={showLogDialog} onOpenChange={setShowLogDialog}>
             <DialogTrigger asChild>
               <Button size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Novo Registo
+                {tx('Novo Registo')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Registo Diário</DialogTitle>
+                <DialogTitle>{tx('Registo Diário')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-6 py-4">
                 <div className="space-y-3">
-                  <Label>Nível de Dor: {logData.pain_level}</Label>
+                  <Label>{tx('Nível de Dor:')}{' '}{logData.pain_level}</Label>
                   <Slider
                     value={[logData.pain_level]}
                     onValueChange={([value]) => setLogData({ ...logData, pain_level: value })}
@@ -330,13 +331,13 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                     step={1}
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Sem dor</span>
-                    <span>Dor intensa</span>
+                    <span>{tx('Sem dor')}</span>
+                    <span>{tx('Dor intensa')}</span>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Fadiga: {logData.fatigue_level}</Label>
+                  <Label>{tx('Fadiga:')}{' '}{logData.fatigue_level}</Label>
                   <Slider
                     value={[logData.fatigue_level]}
                     onValueChange={([value]) => setLogData({ ...logData, fatigue_level: value })}
@@ -346,7 +347,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Qualidade do Sono: {logData.sleep_quality}</Label>
+                  <Label>{tx('Qualidade do Sono:')}{' '}{logData.sleep_quality}</Label>
                   <Slider
                     value={[logData.sleep_quality]}
                     onValueChange={([value]) => setLogData({ ...logData, sleep_quality: value })}
@@ -356,7 +357,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label>Cumpriu os exercícios</Label>
+                  <Label>{tx('Cumpriu os exercícios')}</Label>
                   <Switch
                     checked={logData.adherence}
                     onCheckedChange={(checked) => setLogData({ ...logData, adherence: checked })}
@@ -364,9 +365,9 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Notas</Label>
+                  <Label>{tx('Notas')}</Label>
                   <Textarea
-                    placeholder="Observações..."
+                    placeholder={tx('Observações...')}
                     value={logData.notes}
                     onChange={(e) => setLogData({ ...logData, notes: e.target.value })}
                     rows={2}
@@ -378,7 +379,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                   className="w-full"
                   disabled={addLogMutation.isPending}
                 >
-                  Guardar Registo
+                  {tx('Guardar Registo')}
                 </Button>
               </div>
             </DialogContent>
@@ -387,7 +388,7 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
         <CardContent>
           {recentLogs?.length === 0 ? (
             <p className="text-center py-4 text-muted-foreground">
-              Sem registos recentes
+              {tx('Sem registos recentes')}
             </p>
           ) : (
             <div className="space-y-2">
@@ -397,8 +398,8 @@ export function PlayerHealthTab({ playerId, clubId }: PlayerHealthTabProps) {
                     {format(new Date(log.log_date), 'dd/MM', { locale: pt })}
                   </span>
                   <div className="flex items-center gap-4">
-                    <span>Dor: {log.pain_level}/10</span>
-                    <span>Fadiga: {log.fatigue_level}/10</span>
+                    <span>{tx('Dor:')}{' '}{log.pain_level}/10</span>
+                    <span>{tx('Fadiga:')}{' '}{log.fatigue_level}/10</span>
                     <Badge variant={log.adherence ? 'secondary' : 'destructive'}>
                       {log.adherence ? '✓' : '✗'}
                     </Badge>

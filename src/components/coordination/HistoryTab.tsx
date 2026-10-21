@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { tx } from '@/lib/i18n/ui';
 
 interface HistoryTabProps {
   clubId: string;
@@ -103,17 +104,17 @@ export function HistoryTab({ clubId }: HistoryTabProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="h-5 w-5" />
-          Histórico de Alterações
+          {tx('Histórico de Alterações')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p className="text-muted-foreground text-center py-8">A carregar...</p>
+          <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
         ) : !history || history.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">Ainda não há registos no histórico.</p>
+            <p className="text-muted-foreground">{tx('Ainda não há registos no histórico.')}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              As alterações a equipas, jogadores e treinadores serão registadas aqui.
+              {tx('As alterações a equipas, jogadores e treinadores serão registadas aqui.')}
             </p>
           </div>
         ) : (

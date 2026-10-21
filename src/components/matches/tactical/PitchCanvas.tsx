@@ -5,6 +5,7 @@
  */
 import { ReactNode, useMemo } from 'react';
 import type { SportType } from '@/lib/tactical-formations';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   sportType: SportType | string;
@@ -30,7 +31,7 @@ export function PitchCanvas({ sportType, children, className }: Props) {
         backgroundImage:
           'repeating-linear-gradient(0deg, hsl(var(--field)) 0 8%, hsl(var(--field-dark)) 8% 16%)',
       }}
-      aria-label="Campo tático"
+      aria-label={tx('Campo tático')}
     >
       <svg
         viewBox="0 0 100 155"

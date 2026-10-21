@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { roleLabel } from '@/lib/tactical-formations';
 import { Target } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   matchId: string;
@@ -35,7 +36,7 @@ export function MatchPositionsBlock({ matchId, matchEndMinuteAbs = 90, playerNam
       <Card>
         <CardContent className="py-6 text-center text-sm text-muted-foreground">
           <Target className="w-8 h-8 mx-auto mb-2 opacity-60" />
-          Nenhuma formação tática registada para este jogo.
+          {tx('Nenhuma formação tática registada para este jogo.')}
         </CardContent>
       </Card>
     );
@@ -48,7 +49,7 @@ export function MatchPositionsBlock({ matchId, matchEndMinuteAbs = 90, playerNam
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <Target className="w-4 h-4" /> Posições e minutos
+            <Target className="w-4 h-4" /> {tx('Posições e minutos')}
           </span>
           <div className="flex gap-1">
             {data.formations.map(f => (
@@ -66,9 +67,9 @@ export function MatchPositionsBlock({ matchId, matchEndMinuteAbs = 90, playerNam
           <table className="w-full text-sm">
             <thead>
               <tr className="text-xs text-muted-foreground border-b">
-                <th className="text-left py-1.5 font-medium">Jogador</th>
-                <th className="text-right py-1.5 font-medium">Total</th>
-                <th className="text-left py-1.5 font-medium pl-3">Minutos por posição</th>
+                <th className="text-left py-1.5 font-medium">{tx('Jogador')}</th>
+                <th className="text-right py-1.5 font-medium">{tx('Total')}</th>
+                <th className="text-left py-1.5 font-medium pl-3">{tx('Minutos por posição')}</th>
               </tr>
             </thead>
             <tbody>
@@ -103,7 +104,7 @@ export function MatchPositionsBlock({ matchId, matchEndMinuteAbs = 90, playerNam
 
         {/* Timeline */}
         <div className="space-y-1.5">
-          <p className="text-xs text-muted-foreground">Cronologia de posições</p>
+          <p className="text-xs text-muted-foreground">{tx('Cronologia de posições')}</p>
           {playerIds.map(pid => {
             const intervals = data.intervalsByPlayer.get(pid) ?? [];
             return (

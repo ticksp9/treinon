@@ -16,6 +16,7 @@ import {
   FOOT_LABEL, MOMENTS, headToHead, matchesAgainst, plannedSchemes, schemesByMoment, sortSquad, sportLabel,
   type MatchPlan, type Opponent, type OpponentObservation, type OpponentPlayer, type OpponentScheme, type PlayedMatch,
 } from '@/lib/opponent-scouting';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -65,35 +66,35 @@ export default function ScoutingReport() {
   const picked = plannedSchemes(data?.schemes ?? [], plan?.scheme_ids ?? []);
   const board = (s: OpponentScheme) => normalizeBoard(s.board_data, opponent?.sport_type ?? 'football_11');
 
-  if (isLoading) return <p className="p-10 text-center text-sm text-slate-500">A preparar o relatório…</p>;
-  if (!opponent) return <div className="space-y-3 p-10 text-center"><p>Ficha não encontrada.</p><Button variant="outline" asChild><Link to="/scouting">Voltar aos adversários</Link></Button></div>;
+  if (isLoading) return <p className="p-10 text-center text-sm text-slate-500">{tx('A preparar o relatório…')}</p>;
+  if (!opponent) return <div className="space-y-3 p-10 text-center"><p>{tx('Ficha não encontrada.')}</p><Button variant="outline" asChild><Link to="/scouting">{tx('Voltar aos adversários')}</Link></Button></div>;
 
   const hasPlan = !!plan && (plan.key_points.length > 0 || !!plan.notes || picked.length > 0);
 
   return (
     <div className="min-h-screen bg-slate-200 text-slate-900 print:bg-white">
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b bg-white px-4 py-2 print:hidden">
-        <Button variant="ghost" size="sm" asChild><Link to={`/scouting/adversarios/${opponent.id}`}><ArrowLeft className="mr-1 h-4 w-4" />Ficha</Link></Button>
-        <span className="text-sm text-slate-500">Relatório para imprimir ou guardar em PDF (no destino da impressão, escolha «Guardar como PDF»).</span>
-        <Button size="sm" className="ml-auto" onClick={() => window.print()}><Printer className="mr-1.5 h-4 w-4" />Imprimir / Guardar em PDF</Button>
+        <Button variant="ghost" size="sm" asChild><Link to={`/scouting/adversarios/${opponent.id}`}><ArrowLeft className="mr-1 h-4 w-4" />{tx('Ficha')}</Link></Button>
+        <span className="text-sm text-slate-500">{tx('Relatório para imprimir ou guardar em PDF (no destino da impressão, escolha «Guardar como PDF»).')}</span>
+        <Button size="sm" className="ml-auto" onClick={() => window.print()}><Printer className="mr-1.5 h-4 w-4" />{tx('Imprimir / Guardar em PDF')}</Button>
       </div>
 
       <article className="mx-auto my-4 max-w-[210mm] bg-white p-8 shadow [print-color-adjust:exact] print:m-0 print:max-w-none print:p-0 print:shadow-none">
         <header className="flex flex-wrap items-end justify-between gap-2 border-b-4 border-slate-800 pb-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-orange-600">Relatório de adversário</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-orange-600">{tx('Relatório de adversário')}</p>
             <h1 className="text-3xl font-bold leading-tight">{opponent.name}</h1>
             <p className="text-sm text-slate-600">
               {[opponent.category, sportLabel(opponent.sport_type), opponent.competition, opponent.usual_formation && `Formação habitual ${opponent.usual_formation}`, opponent.coach_name && `Treinador: ${opponent.coach_name}`].filter(Boolean).join(' · ')}
             </p>
           </div>
-          <p className="text-right text-xs text-slate-500">TreinON<br />{day(new Date().toISOString())}</p>
+          <p className="text-right text-xs text-slate-500">{tx('TreinON')}<br />{day(new Date().toISOString())}</p>
         </header>
 
         {data?.match && (
           <section className="break-inside-avoid">
-            <H2>Plano de jogo · {data.match.team?.name} {data.match.is_home ? 'vs' : 'em casa de'} {data.match.opponent_name} · {day(data.match.match_date)}{data.match.location ? ` · ${data.match.location}` : ''}</H2>
-            {!hasPlan && <p className="text-sm text-slate-500">Ainda sem plano escrito para este jogo.</p>}
+            <H2>{tx('Plano de jogo ·')}{' '}{data.match.team?.name} {data.match.is_home ? 'vs' : tx('em casa de')} {data.match.opponent_name} · {day(data.match.match_date)}{data.match.location ? ` · ${data.match.location}` : ''}</H2>
+            {!hasPlan && <p className="text-sm text-slate-500">{tx('Ainda sem plano escrito para este jogo.')}</p>}
             {plan && plan.key_points.length > 0 && (
               <ol className="space-y-1">
                 {plan.key_points.map((p, i) => <li key={i} className="flex gap-2 text-base font-semibold"><span className="w-5 shrink-0 text-orange-600">{i + 1}.</span>{p}</li>)}
@@ -115,10 +116,10 @@ export default function ScoutingReport() {
 
         {(opponent.strengths || opponent.weaknesses || opponent.notes) && (
           <section className="break-inside-avoid">
-            <H2>Resumo</H2>
+            <H2>{tx('Resumo')}</H2>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><p className="text-xs font-bold uppercase text-slate-500">Pontos fortes</p><p className="whitespace-pre-line">{opponent.strengths || '—'}</p></div>
-              <div><p className="text-xs font-bold uppercase text-slate-500">Pontos fracos</p><p className="whitespace-pre-line">{opponent.weaknesses || '—'}</p></div>
+              <div><p className="text-xs font-bold uppercase text-slate-500">{tx('Pontos fortes')}</p><p className="whitespace-pre-line">{opponent.strengths || '—'}</p></div>
+              <div><p className="text-xs font-bold uppercase text-slate-500">{tx('Pontos fracos')}</p><p className="whitespace-pre-line">{opponent.weaknesses || '—'}</p></div>
             </div>
             {opponent.notes && <p className="mt-2 whitespace-pre-line text-sm">{opponent.notes}</p>}
           </section>
@@ -140,13 +141,13 @@ export default function ScoutingReport() {
 
         {squad.length > 0 && (
           <section>
-            <H2>Plantel</H2>
+            <H2>{tx('Plantel')}</H2>
             <table className="w-full border-collapse text-sm">
-              <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="w-6 py-1" /><th className="w-10 py-1">N.º</th><th className="py-1">Nome</th><th className="w-16 py-1">Pos.</th><th className="w-20 py-1">Pé</th><th className="py-1">Notas</th></tr></thead>
+              <thead><tr className="border-b text-left text-xs uppercase text-slate-500"><th className="w-6 py-1" /><th className="w-10 py-1">N.º</th><th className="py-1">{tx('Nome')}</th><th className="w-16 py-1">{tx('Pos.')}</th><th className="w-20 py-1">{tx('Pé')}</th><th className="py-1">{tx('Notas')}</th></tr></thead>
               <tbody>
                 {squad.map((p) => (
                   <tr key={p.id} className="break-inside-avoid border-b border-slate-200 align-top">
-                    <td className="py-1">{p.is_key && <Star className="h-3.5 w-3.5 fill-orange-500 text-orange-500" aria-label="Jogador-chave" />}</td>
+                    <td className="py-1">{p.is_key && <Star className="h-3.5 w-3.5 fill-orange-500 text-orange-500" aria-label={tx('Jogador-chave')} />}</td>
                     <td className="py-1 font-mono font-bold">{p.shirt_number || '–'}</td>
                     <td className={p.is_key ? 'py-1 font-semibold' : 'py-1'}>{p.name || '—'}</td>
                     <td className="py-1">{p.position || ''}</td>
@@ -161,7 +162,7 @@ export default function ScoutingReport() {
 
         {(data?.observations.length ?? 0) > 0 && (
           <section>
-            <H2>Jogos vistos</H2>
+            <H2>{tx('Jogos vistos')}</H2>
             <div className="space-y-2">
               {data!.observations.map((o) => (
                 <div key={o.id} className="break-inside-avoid text-sm">
@@ -175,15 +176,15 @@ export default function ScoutingReport() {
 
         {against.length > 0 && (
           <section className="break-inside-avoid">
-            <H2>Os nossos jogos contra esta equipa</H2>
-            {h2h.played > 0 && <p className="mb-1 font-mono text-sm">{h2h.played} J · {h2h.won} V · {h2h.drawn} E · {h2h.lost} D · {h2h.goalsFor}–{h2h.goalsAgainst} em golos</p>}
+            <H2>{tx('Os nossos jogos contra esta equipa')}</H2>
+            {h2h.played > 0 && <p className="mb-1 font-mono text-sm">{h2h.played} J · {h2h.won} V · {h2h.drawn} E · {h2h.lost} D · {h2h.goalsFor}–{h2h.goalsAgainst} {tx('em golos')}</p>}
             <table className="w-full border-collapse text-sm">
               <tbody>
                 {against.map((m) => (
                   <tr key={m.id} className="border-b border-slate-200">
                     <td className="w-24 py-1 font-mono">{day(m.match_date)}</td>
-                    <td className="py-1">{m.team_name}{m.is_home === false ? ' (fora)' : m.is_home ? ' (casa)' : ''}</td>
-                    <td className="py-1 text-right font-mono font-semibold">{m.goals_for != null && m.goals_against != null && m.status === 'completed' ? `${m.goals_for}–${m.goals_against}` : 'por jogar'}</td>
+                    <td className="py-1">{m.team_name}{m.is_home === false ? tx(' (fora)') : m.is_home ? tx(' (casa)') : ''}</td>
+                    <td className="py-1 text-right font-mono font-semibold">{m.goals_for != null && m.goals_against != null && m.status === 'completed' ? `${m.goals_for}–${m.goals_against}` : tx('por jogar')}</td>
                   </tr>
                 ))}
               </tbody>

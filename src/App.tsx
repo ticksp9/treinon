@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Fragment } from "react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -109,7 +109,8 @@ function PageLoader() {
 }
 
 function AppContent() {
-  useLanguage();
+  // changing the language redraws every screen (texts translated outside components included)
+  const { currentLanguage } = useLanguage();
 
   return (
     <>
@@ -123,6 +124,7 @@ function AppContent() {
         <ActiveTeamProvider>
         {/* one broken screen must never blank the whole app */}
         <ErrorBoundary label="página" fallbackTitle="Esta página teve um problema" showBack>
+        <Fragment key={currentLanguage}>
         <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public routes */}
@@ -211,6 +213,7 @@ function AppContent() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </Fragment>
         </ErrorBoundary>
         </ActiveTeamProvider>
         </SeasonProvider>

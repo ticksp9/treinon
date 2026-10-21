@@ -58,7 +58,7 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onAbsent
         <td className="max-w-[9rem] truncate py-1.5 pr-1">
           <Link to={`/players/${r.player_id}`} className="font-medium hover:underline">{r.name}</Link>
           {kind === 'out' && r.player_id in absences && (
-            <span className="ml-1.5 rounded bg-destructive/10 px-1 text-[10px] font-semibold uppercase text-destructive">Ausente{absences[r.player_id] ? ` · ${absences[r.player_id]}` : ''}</span>
+            <span className="ml-1.5 rounded bg-destructive/10 px-1 text-[10px] font-semibold uppercase text-destructive">{tx('Ausente')}{absences[r.player_id] ? ` · ${absences[r.player_id]}` : ''}</span>
           )}
         </td>
         <td className="py-1.5 text-center text-xs font-semibold">{r.position ?? '–'}</td>

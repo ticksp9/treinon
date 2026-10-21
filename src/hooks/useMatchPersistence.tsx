@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { cacheData, getCachedData, addPendingOperation } from '@/lib/offlineStorage';
 import { useOnlineStatus } from './useOnlineStatus';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 export interface MatchState {
   matchId: string;
@@ -229,7 +230,7 @@ export function useMatchPersistence(matchId: string) {
     if (isOnline && stateRef.current) {
       const unsyncedEvents = stateRef.current.events.filter(e => !e.synced);
       if (unsyncedEvents.length > 0) {
-        toast.info(`A sincronizar ${unsyncedEvents.length} evento(s)...`);
+        toast.info(tx('A sincronizar {{v0}} evento(s)...', { v0: unsyncedEvents.length }));
       }
     }
   }, [isOnline]);

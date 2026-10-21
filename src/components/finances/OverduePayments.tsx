@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Bell, Mail, Phone } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface OverduePaymentsProps {
   clubId: string;
@@ -106,7 +107,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
 
   const sendNotification = (player: any) => {
     // In a real app, this would send an email/SMS
-    toast.success(`Notificação enviada para ${player.parent_email || player.parent_phone || 'encarregado'}`);
+    toast.success(tx('Notificação enviada para {{v0}}', { v0: player.parent_email || player.parent_phone || 'encarregado' }));
   };
 
   if (isLoading) {
@@ -124,7 +125,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total em Atraso</p>
+                <p className="text-sm text-muted-foreground">{tx('Total em Atraso')}</p>
                 <p className="text-2xl font-bold">{overdueData?.length || 0}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-amber-500" />
@@ -135,7 +136,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">+2 Meses Atraso</p>
+                <p className="text-sm text-muted-foreground">{tx('+2 Meses Atraso')}</p>
                 <p className="text-2xl font-bold text-red-600">{criticalOverdue.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-500" />
@@ -146,7 +147,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">1 Mês Atraso</p>
+                <p className="text-sm text-muted-foreground">{tx('1 Mês Atraso')}</p>
                 <p className="text-2xl font-bold text-amber-600">{warningOverdue.length}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-amber-500" />
@@ -159,10 +160,10 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
       <div className="flex gap-2">
         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filtrar por equipa" />
+            <SelectValue placeholder={tx('Filtrar por equipa')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas as Equipas</SelectItem>
+            <SelectItem value="all">{tx('Todas as Equipas')}</SelectItem>
             {teams?.map(team => (
               <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
             ))}
@@ -176,9 +177,9 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="w-5 h-5" />
-              Pagamentos Críticos (+2 meses)
+              {tx('Pagamentos Críticos (+2 meses)')}
             </CardTitle>
-            <CardDescription>Estes jogadores têm mais de 2 meses de mensalidades em atraso</CardDescription>
+            <CardDescription>{tx('Estes jogadores têm mais de 2 meses de mensalidades em atraso')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -212,7 +213,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
                       onClick={() => sendNotification(player)}
                     >
                       <Bell className="w-3 h-3 mr-1" />
-                      Notificar
+                      {tx('Notificar')}
                     </Button>
                   </div>
                 </div>
@@ -228,7 +229,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="w-5 h-5" />
-              Pagamentos em Atraso (1 mês)
+              {tx('Pagamentos em Atraso (1 mês)')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -257,7 +258,7 @@ export function OverduePayments({ clubId }: OverduePaymentsProps) {
       {overdueData?.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Não há pagamentos em atraso</p>
+            <p className="text-muted-foreground">{tx('Não há pagamentos em atraso')}</p>
           </CardContent>
         </Card>
       )}

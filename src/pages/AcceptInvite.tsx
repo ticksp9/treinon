@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Shield, Users, CheckCircle2, ArrowLeft, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { tx } from '@/lib/i18n/ui';
 
 type Step = 'validating' | 'preview' | 'auth' | 'success' | 'error';
 
@@ -101,22 +102,22 @@ export default function AcceptInvite() {
       });
       if (result.success) {
         setStep('success');
-        toast.success('Convite aceite com sucesso!');
+        toast.success(tx('Convite aceite com sucesso!'));
         setTimeout(() => navigate(result.redirect), 2000);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao aceitar convite');
+      toast.error(err.message || tx('Erro ao aceitar convite'));
     }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !name || !username) {
-      toast.error('Preencha todos os campos');
+      toast.error(tx('Preencha todos os campos'));
       return;
     }
     if (password.length < 6) {
-      toast.error('A password deve ter pelo menos 6 caracteres');
+      toast.error(tx('A password deve ter pelo menos 6 caracteres'));
       return;
     }
     setLoading(true);
@@ -134,7 +135,7 @@ export default function AcceptInvite() {
     if (error) {
       setLoading(false);
       if (error.message.includes('User already registered')) {
-        toast.error('Este email já está registado. Use a aba "Já tenho conta".');
+        toast.error(tx('Este email já está registado. Use a aba "Já tenho conta".'));
       } else {
         toast.error(error.message);
       }
@@ -150,13 +151,13 @@ export default function AcceptInvite() {
           invite_id: validation.invite_id,
         });
         setStep('success');
-        toast.success('Conta criada e convite aceite!');
+        toast.success(tx('Conta criada e convite aceite!'));
         setTimeout(() => navigate(result.redirect), 2000);
       } catch (err: any) {
         toast.error(err.message);
       }
     } else {
-      toast.success('Conta criada! Confirme o seu email e depois volte a abrir o link do convite.');
+      toast.success(tx('Conta criada! Confirme o seu email e depois volte a abrir o link do convite.'));
       setStep('success');
     }
     setLoading(false);
@@ -165,7 +166,7 @@ export default function AcceptInvite() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error('Preencha todos os campos');
+      toast.error(tx('Preencha todos os campos'));
       return;
     }
     setLoading(true);
@@ -174,7 +175,7 @@ export default function AcceptInvite() {
     if (error) {
       setLoading(false);
       if (error.message.includes('Email not confirmed')) {
-        toast.error('Confirme o seu email antes de entrar.');
+        toast.error(tx('Confirme o seu email antes de entrar.'));
       } else {
         toast.error(error.message);
       }
@@ -188,7 +189,7 @@ export default function AcceptInvite() {
           invite_id: validation.invite_id,
         });
         setStep('success');
-        toast.success('Convite aceite!');
+        toast.success(tx('Convite aceite!'));
         setTimeout(() => navigate(result.redirect), 2000);
       } catch (err: any) {
         toast.error(err.message);
@@ -206,29 +207,29 @@ export default function AcceptInvite() {
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
               <KeyRound className="h-7 w-7 text-primary" />
             </div>
-            <CardTitle>Inserir código de convite</CardTitle>
+            <CardTitle>{tx('Inserir código de convite')}</CardTitle>
             <CardDescription>
-              Introduza o código que recebeu para aceder à plataforma
+              {tx('Introduza o código que recebeu para aceder à plataforma')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCodeSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="code">Código</Label>
+                <Label htmlFor="code">{tx('Código')}</Label>
                 <Input
                   id="code"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                  placeholder="Ex: ABC123"
+                  placeholder={tx('Ex: ABC123')}
                   className="text-center text-lg tracking-widest font-mono"
                   maxLength={8}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={manualCode.length < 4}>
-                Validar código
+                {tx('Validar código')}
               </Button>
               <Button variant="ghost" className="w-full" onClick={() => navigate('/auth')}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao login principal
+                <ArrowLeft className="h-4 w-4 mr-2" /> {tx('Voltar ao login principal')}
               </Button>
             </form>
           </CardContent>
@@ -243,7 +244,7 @@ export default function AcceptInvite() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center p-8">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="mt-4 text-muted-foreground">A validar convite...</p>
+          <p className="mt-4 text-muted-foreground">{tx('A validar convite...')}</p>
         </Card>
       </div>
     );
@@ -258,15 +259,15 @@ export default function AcceptInvite() {
             <div className="mx-auto w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center mb-3">
               <Shield className="h-7 w-7 text-destructive" />
             </div>
-            <CardTitle>Convite inválido</CardTitle>
+            <CardTitle>{tx('Convite inválido')}</CardTitle>
             <CardDescription>{errorMsg}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button variant="outline" className="w-full" onClick={() => navigate('/auth')}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Ir para o login principal
+              <ArrowLeft className="h-4 w-4 mr-2" /> {tx('Ir para o login principal')}
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Se o convite expirou, peça ao responsável para enviar um novo convite.
+              {tx('Se o convite expirou, peça ao responsável para enviar um novo convite.')}
             </p>
           </CardContent>
         </Card>
@@ -280,8 +281,8 @@ export default function AcceptInvite() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center p-8">
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto" />
-          <h2 className="text-xl font-bold mt-4">Convite aceite!</h2>
-          <p className="text-muted-foreground mt-2">A redirecionar para o portal...</p>
+          <h2 className="text-xl font-bold mt-4">{tx('Convite aceite!')}</h2>
+          <p className="text-muted-foreground mt-2">{tx('A redirecionar para o portal...')}</p>
         </Card>
       </div>
     );
@@ -296,39 +297,39 @@ export default function AcceptInvite() {
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
               <Users className="h-7 w-7 text-primary" />
             </div>
-            <CardTitle>Convite recebido</CardTitle>
+            <CardTitle>{tx('Convite recebido')}</CardTitle>
             <CardDescription>
-              Está a ser convidado para aceder à plataforma
+              {tx('Está a ser convidado para aceder à plataforma')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Perfil</span>
+                <span className="text-sm text-muted-foreground">{tx('Perfil')}</span>
                 <Badge>{inviteLabel}</Badge>
               </div>
               {validation?.context_name && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">
-                    {validation.scope_type === 'club' ? 'Clube' : 'Treinador'}
+                    {validation.scope_type === 'club' ? tx('Clube') : tx('Treinador')}
                   </span>
                   <span className="text-sm font-medium">{validation.context_name}</span>
                 </div>
               )}
               {validation?.team_name && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Equipa</span>
+                  <span className="text-sm text-muted-foreground">{tx('Equipa')}</span>
                   <span className="text-sm font-medium">{validation.team_name}</span>
                 </div>
               )}
               {validation?.player_name && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Atleta</span>
+                  <span className="text-sm text-muted-foreground">{tx('Atleta')}</span>
                   <span className="text-sm font-medium">{validation.player_name}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Convidado</span>
+                <span className="text-sm text-muted-foreground">{tx('Convidado')}</span>
                 <span className="text-sm font-medium">{validation?.recipient_name}</span>
               </div>
             </div>
@@ -336,19 +337,19 @@ export default function AcceptInvite() {
             <Alert>
               <AlertDescription className="text-xs">
                 {inviteType === 'guardian'
-                  ? 'Ao aceitar, terá acesso ao chat, calendário de jogos, treinos e convocatórias do(s) atleta(s) vinculado(s).'
+                  ? tx('Ao aceitar, terá acesso ao chat, calendário de jogos, treinos e convocatórias do(s) atleta(s) vinculado(s).')
                   : inviteType === 'player'
-                  ? 'Ao aceitar, terá acesso ao chat, calendário, treinos e convocatórias da sua equipa.'
-                  : 'Ao aceitar, terá acesso às ferramentas de gestão do contexto indicado.'}
+                  ? tx('Ao aceitar, terá acesso ao chat, calendário, treinos e convocatórias da sua equipa.')
+                  : tx('Ao aceitar, terá acesso às ferramentas de gestão do contexto indicado.')}
               </AlertDescription>
             </Alert>
 
             <Button className="w-full" onClick={handleAccept} disabled={acceptInvite.isPending}>
               {acceptInvite.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {user ? 'Aceitar convite' : 'Continuar'}
+              {user ? tx('Aceitar convite') : tx('Continuar')}
             </Button>
             <Button variant="ghost" className="w-full" onClick={() => navigate('/auth')}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Cancelar
+              <ArrowLeft className="h-4 w-4 mr-2" /> {tx('Cancelar')}
             </Button>
           </CardContent>
         </Card>
@@ -361,44 +362,44 @@ export default function AcceptInvite() {
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Criar conta ou entrar</CardTitle>
+          <CardTitle>{tx('Criar conta ou entrar')}</CardTitle>
           <CardDescription>
-            {INVITE_TYPE_DESCRIPTIONS[inviteType] || 'Crie a sua conta para continuar.'}
+            {INVITE_TYPE_DESCRIPTIONS[inviteType] || tx('Crie a sua conta para continuar.')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 bg-muted/50 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Perfil do convite</span>
+            <span className="text-xs text-muted-foreground">{tx('Perfil do convite')}</span>
             <Badge variant="secondary">{inviteLabel}</Badge>
           </div>
 
           <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as 'login' | 'signup')}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signup">Criar Conta</TabsTrigger>
-              <TabsTrigger value="login">Já tenho conta</TabsTrigger>
+              <TabsTrigger value="signup">{tx('Criar Conta')}</TabsTrigger>
+              <TabsTrigger value="login">{tx('Já tenho conta')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-3 mt-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-name">Nome completo</Label>
+                  <Label htmlFor="signup-name">{tx('Nome completo')}</Label>
                   <Input id="signup-name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-username">Username</Label>
+                  <Label htmlFor="signup-username">{tx('Username')}</Label>
                   <Input id="signup-username" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase())} required />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{tx('Email')}</Label>
                   <Input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="signup-pw">Password</Label>
+                  <Label htmlFor="signup-pw">{tx('Password')}</Label>
                   <Input id="signup-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Criar conta e aceitar convite
+                  {tx('Criar conta e aceitar convite')}
                 </Button>
               </form>
             </TabsContent>
@@ -406,23 +407,23 @@ export default function AcceptInvite() {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-3 mt-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">{tx('Email')}</Label>
                   <Input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="login-pw">Password</Label>
+                  <Label htmlFor="login-pw">{tx('Password')}</Label>
                   <Input id="login-pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Entrar e aceitar convite
+                  {tx('Entrar e aceitar convite')}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
           <Button variant="ghost" className="w-full mt-3" onClick={() => setStep('preview')}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
+            <ArrowLeft className="h-4 w-4 mr-2" /> {tx('Voltar')}
           </Button>
         </CardContent>
       </Card>

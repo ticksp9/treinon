@@ -12,6 +12,7 @@ import { TransactionsList } from '@/components/finances/TransactionsList';
 import { OverduePayments } from '@/components/finances/OverduePayments';
 import { PageLoading, AccessDenied } from '@/components/ui/page-states';
 import { useState } from 'react';
+import { tx } from '@/lib/i18n/ui';
 
 export default function Finances() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export default function Finances() {
 
   if (roleLoading) {
     return (
-      <AppLayout title="Finanças">
+      <AppLayout title={tx('Finanças')}>
         <PageLoading />
       </AppLayout>
     );
@@ -28,18 +29,18 @@ export default function Finances() {
 
   if (!isClubAdmin || !clubId) {
     return (
-      <AppLayout title="Finanças">
-        <AccessDenied message="Esta funcionalidade está disponível apenas para administradores de clubes." />
+      <AppLayout title={tx('Finanças')}>
+        <AccessDenied message={tx('Esta funcionalidade está disponível apenas para administradores de clubes.')} />
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout title="Finanças">
+    <AppLayout title={tx('Finanças')}>
       <div className="space-y-6">
         <PageHeader
-          title="Finanças"
-          description="Gestão financeira do clube"
+          title={tx('Finanças')}
+          description={tx('Gestão financeira do clube')}
           icon={<Wallet className="w-6 h-6 text-primary" />}
         />
 
@@ -47,27 +48,27 @@ export default function Finances() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="player-fees" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span>Mensalidades</span>
+              <span>{tx('Mensalidades')}</span>
             </TabsTrigger>
             <TabsTrigger value="overdue" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span>Em Atraso</span>
+              <span>{tx('Em Atraso')}</span>
             </TabsTrigger>
             <TabsTrigger value="members" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <span>Sócios</span>
+              <span>{tx('Sócios')}</span>
             </TabsTrigger>
             <TabsTrigger value="tickets" className="flex items-center gap-2">
               <Ticket className="w-4 h-4" />
-              <span>Bilheteira</span>
+              <span>{tx('Bilheteira')}</span>
             </TabsTrigger>
             <TabsTrigger value="sponsors" className="flex items-center gap-2">
               <Handshake className="w-4 h-4" />
-              <span>Patrocínios</span>
+              <span>{tx('Patrocínios')}</span>
             </TabsTrigger>
             <TabsTrigger value="transactions" className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />
-              <span>Transações</span>
+              <span>{tx('Transações')}</span>
             </TabsTrigger>
           </TabsList>
 

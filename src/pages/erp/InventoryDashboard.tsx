@@ -11,6 +11,7 @@ import { StockTab } from '@/components/inventory/StockTab';
 import { MovementsTab } from '@/components/inventory/MovementsTab';
 import { AllocationsTab } from '@/components/inventory/AllocationsTab';
 import { MaintenanceTab } from '@/components/inventory/MaintenanceTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function InventoryDashboard() {
   const { isClubAdmin, loading: roleLoading } = useUserRole();
@@ -21,25 +22,25 @@ export default function InventoryDashboard() {
   }
 
   if (!isClubAdmin) {
-    return <AppLayout><div><Card><CardContent className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3><p className="text-muted-foreground">Apenas administradores de clubes.</p></CardContent></Card></div></AppLayout>;
+    return <AppLayout><div><Card><CardContent className="py-12 text-center"><Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3><p className="text-muted-foreground">{tx('Apenas administradores de clubes.')}</p></CardContent></Card></div></AppLayout>;
   }
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Ativos & Inventário</h1>
-          <p className="text-muted-foreground">Gestão de ativos, stock, equipamentos e consumos por equipa</p>
+          <h1 className="text-2xl font-display font-bold">{tx('Ativos & Inventário')}</h1>
+          <p className="text-muted-foreground">{tx('Gestão de ativos, stock, equipamentos e consumos por equipa')}</p>
         </div>
 
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="assets">Ativos</TabsTrigger>
-            <TabsTrigger value="stock">Stock</TabsTrigger>
-            <TabsTrigger value="movements">Movimentos</TabsTrigger>
-            <TabsTrigger value="allocations">Alocações & Kits</TabsTrigger>
-            <TabsTrigger value="maintenance">Manutenção</TabsTrigger>
+            <TabsTrigger value="overview">{tx('Visão Geral')}</TabsTrigger>
+            <TabsTrigger value="assets">{tx('Ativos')}</TabsTrigger>
+            <TabsTrigger value="stock">{tx('Stock')}</TabsTrigger>
+            <TabsTrigger value="movements">{tx('Movimentos')}</TabsTrigger>
+            <TabsTrigger value="allocations">{tx('Alocações & Kits')}</TabsTrigger>
+            <TabsTrigger value="maintenance">{tx('Manutenção')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">

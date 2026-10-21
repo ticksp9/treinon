@@ -11,6 +11,7 @@ import {
   PIPELINE_STAGE_LABELS,
   type ProspectSummary,
 } from '@/hooks/useScouting';
+import { tx } from '@/lib/i18n/ui';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'];
 
@@ -93,22 +94,22 @@ export function ScoutingOverviewTab() {
   return (
     <div className="space-y-6 mt-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={Users} title="Prospects Ativos" value={total} />
-        <KpiCard icon={Eye} title="Observações" value={obsCount || 0} />
-        <KpiCard icon={Target} title="Alta Prioridade" value={highPriority} accent />
-        <KpiCard icon={TrendingUp} title="Em Shortlist" value={shortlisted} />
+        <KpiCard icon={Users} title={tx('Prospects Ativos')} value={total} />
+        <KpiCard icon={Eye} title={tx('Observações')} value={obsCount || 0} />
+        <KpiCard icon={Target} title={tx('Alta Prioridade')} value={highPriority} accent />
+        <KpiCard icon={TrendingUp} title={tx('Em Shortlist')} value={shortlisted} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard icon={CheckCircle} title="Aprovados" value={approved} />
-        <KpiCard icon={AlertTriangle} title="Trials" value={trialsCount || 0} />
-        <KpiCard icon={Target} title="Necessidades Abertas" value={needsCount || 0} accent />
-        <KpiCard icon={Eye} title="Late Developers" value={prospects?.filter(p => p.is_late_developer).length || 0} />
+        <KpiCard icon={CheckCircle} title={tx('Aprovados')} value={approved} />
+        <KpiCard icon={AlertTriangle} title={tx('Trials')} value={trialsCount || 0} />
+        <KpiCard icon={Target} title={tx('Necessidades Abertas')} value={needsCount || 0} accent />
+        <KpiCard icon={Eye} title={tx('Late Developers')} value={prospects?.filter(p => p.is_late_developer).length || 0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-base">Prospects por Posição</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{tx('Prospects por Posição')}</CardTitle></CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={positionChart}>
@@ -123,7 +124,7 @@ export function ScoutingOverviewTab() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Prospects por Prioridade</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{tx('Prospects por Prioridade')}</CardTitle></CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

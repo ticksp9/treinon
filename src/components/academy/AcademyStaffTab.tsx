@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAcademy } from '@/hooks/useAcademy';
 import { AlertTriangle } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 export function AcademyStaffTab() {
   const { staffAssignments, ageGroups } = useAcademy();
@@ -21,7 +22,7 @@ export function AcademyStaffTab() {
           <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-amber-600" />
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              <span className="font-medium">{expiringLicenses.length}</span> membro(s) do staff com qualificação/licença vencida
+              <span className="font-medium">{expiringLicenses.length}</span> {tx('membro(s) do staff com qualificação/licença vencida')}
             </p>
           </CardContent>
         </Card>
@@ -29,21 +30,21 @@ export function AcademyStaffTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Staff da Formação</CardTitle>
+          <CardTitle>{tx('Staff da Formação')}</CardTitle>
         </CardHeader>
         <CardContent>
           {staff.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum staff registado na academia.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhum staff registado na academia.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Utilizador</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Escalão</TableHead>
-                  <TableHead>Qualificação</TableHead>
-                  <TableHead>Licença até</TableHead>
-                  <TableHead>Época</TableHead>
+                  <TableHead>{tx('Utilizador')}</TableHead>
+                  <TableHead>{tx('Função')}</TableHead>
+                  <TableHead>{tx('Escalão')}</TableHead>
+                  <TableHead>{tx('Qualificação')}</TableHead>
+                  <TableHead>{tx('Licença até')}</TableHead>
+                  <TableHead>{tx('Época')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

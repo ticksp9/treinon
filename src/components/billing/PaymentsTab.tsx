@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePayments } from '@/hooks/useBilling';
 import { CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -19,9 +20,9 @@ export function PaymentsTab({ clubId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div><h3 className="font-semibold">Pagamentos Recebidos</h3><p className="text-sm text-muted-foreground">Histórico de pagamentos registados</p></div>
+      <div><h3 className="font-semibold">{tx('Pagamentos Recebidos')}</h3><p className="text-sm text-muted-foreground">{tx('Histórico de pagamentos registados')}</p></div>
       {(!payments || payments.length === 0) ? (
-        <Card><CardContent className="py-12 text-center"><CreditCard className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">Sem pagamentos registados</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><CreditCard className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">{tx('Sem pagamentos registados')}</p></CardContent></Card>
       ) : (
         <div className="space-y-2">
           {payments.map((p: any) => (
@@ -29,13 +30,13 @@ export function PaymentsTab({ clubId }: Props) {
               <CardContent className="flex items-center justify-between py-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{(p.players as any)?.name || 'N/A'}</span>
+                    <span className="font-medium text-sm">{(p.players as any)?.name || tx('N/A')}</span>
                     <Badge variant="outline">{METHOD_LABELS[p.payment_method] || p.payment_method}</Badge>
                     <Badge variant={p.status === 'confirmed' ? 'default' : 'secondary'}>{p.status}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {format(new Date(p.payment_date), 'dd/MM/yyyy')}
-                    {p.transaction_reference && ` · Ref: ${p.transaction_reference}`}
+                    {p.transaction_reference && tx(' · Ref: {{v0}}', { v0: p.transaction_reference })}
                   </p>
                   {(p.payment_allocations as any[])?.length > 0 && (
                     <p className="text-xs text-muted-foreground">

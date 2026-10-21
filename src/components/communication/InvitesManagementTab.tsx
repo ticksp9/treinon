@@ -23,6 +23,7 @@ import {
   Search, Filter, Ban, Zap,
 } from 'lucide-react';
 import { PROFILE_LABELS, CHANNEL_LABELS } from '@/lib/invite-templates';
+import { tx } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
   pending: 'Pendente',
@@ -97,9 +98,9 @@ function InviteDetailDialog({ inviteId, open, onClose }: { inviteId: string | nu
   const handleRetry = async (deliveryId: string) => {
     try {
       await manualRetry.mutateAsync(deliveryId);
-      toast.success('Retry iniciado com sucesso');
+      toast.success(tx('Retry iniciado com sucesso'));
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao tentar retry');
+      toast.error(err.message || tx('Erro ao tentar retry'));
     }
   };
 
@@ -107,17 +108,17 @@ function InviteDetailDialog({ inviteId, open, onClose }: { inviteId: string | nu
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detalhes do Convite</DialogTitle>
+          <DialogTitle>{tx('Detalhes do Convite')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Deliveries */}
           <div>
-            <h4 className="text-sm font-semibold mb-2">Envios</h4>
+            <h4 className="text-sm font-semibold mb-2">{tx('Envios')}</h4>
             {delLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : deliveries.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem envios registados</p>
+              <p className="text-xs text-muted-foreground">{tx('Sem envios registados')}</p>
             ) : (
               <div className="space-y-2">
                 {deliveries.map((d) => {
@@ -143,32 +144,32 @@ function InviteDetailDialog({ inviteId, open, onClose }: { inviteId: string | nu
                               className="h-6 px-1.5"
                               onClick={() => handleRetry(d.id)}
                               disabled={manualRetry.isPending}
-                              title="Retry manual"
+                              title={tx('Retry manual')}
                             >
                               <Zap className="h-3 w-3" />
                             </Button>
                           )}
                         </div>
                       </div>
-                      {d.recipient_email && <p className="text-muted-foreground">Para: {d.recipient_email}</p>}
-                      {d.recipient_phone && <p className="text-muted-foreground">Tel: {d.recipient_phone}</p>}
+                      {d.recipient_email && <p className="text-muted-foreground">{tx('Para:')}{' '}{d.recipient_email}</p>}
+                      {d.recipient_phone && <p className="text-muted-foreground">{tx('Tel:')}{' '}{d.recipient_phone}</p>}
                       {d.provider_name && d.provider_name !== 'none' && (
-                        <p className="text-muted-foreground">Provider: {d.provider_name}</p>
+                        <p className="text-muted-foreground">{tx('Provider:')}{' '}{d.provider_name}</p>
                       )}
                       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-muted-foreground">
-                        {d.sent_at && <span>Enviado: {format(new Date(d.sent_at), "d MMM HH:mm", { locale: pt })}</span>}
-                        {d.delivered_at && <span>Entregue: {format(new Date(d.delivered_at), "d MMM HH:mm", { locale: pt })}</span>}
-                        {d.opened_at && <span>Aberto: {format(new Date(d.opened_at), "d MMM HH:mm", { locale: pt })}</span>}
-                        {d.clicked_at && <span>Clicado: {format(new Date(d.clicked_at), "d MMM HH:mm", { locale: pt })}</span>}
-                        {d.accepted_at && <span className="text-primary font-medium">Aceite: {format(new Date(d.accepted_at), "d MMM HH:mm", { locale: pt })}</span>}
+                        {d.sent_at && <span>{tx('Enviado:')}{' '}{format(new Date(d.sent_at), "d MMM HH:mm", { locale: pt })}</span>}
+                        {d.delivered_at && <span>{tx('Entregue:')}{' '}{format(new Date(d.delivered_at), "d MMM HH:mm", { locale: pt })}</span>}
+                        {d.opened_at && <span>{tx('Aberto:')}{' '}{format(new Date(d.opened_at), "d MMM HH:mm", { locale: pt })}</span>}
+                        {d.clicked_at && <span>{tx('Clicado:')}{' '}{format(new Date(d.clicked_at), "d MMM HH:mm", { locale: pt })}</span>}
+                        {d.accepted_at && <span className="text-primary font-medium">{tx('Aceite:')}{' '}{format(new Date(d.accepted_at), "d MMM HH:mm", { locale: pt })}</span>}
                       </div>
                       {d.retry_count > 0 && (
                         <p className="text-muted-foreground">
-                          Retries: {d.retry_count}/{d.max_retries}
-                          {d.next_retry_at && ` • Próximo: ${format(new Date(d.next_retry_at), "d MMM HH:mm", { locale: pt })}`}
+                          {tx('Retries:')}{' '}{d.retry_count}/{d.max_retries}
+                          {d.next_retry_at && tx(' • Próximo: {{v0}}', { v0: format(new Date(d.next_retry_at), "d MMM HH:mm", { locale: pt }) })}
                         </p>
                       )}
-                      {d.failure_reason && <p className="text-destructive">Erro: {d.failure_reason}</p>}
+                      {d.failure_reason && <p className="text-destructive">{tx('Erro:')}{' '}{d.failure_reason}</p>}
                     </div>
                   );
                 })}
@@ -178,11 +179,11 @@ function InviteDetailDialog({ inviteId, open, onClose }: { inviteId: string | nu
 
           {/* Events */}
           <div>
-            <h4 className="text-sm font-semibold mb-2">Histórico de Eventos</h4>
+            <h4 className="text-sm font-semibold mb-2">{tx('Histórico de Eventos')}</h4>
             {evtLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : events.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sem eventos registados</p>
+              <p className="text-xs text-muted-foreground">{tx('Sem eventos registados')}</p>
             ) : (
               <div className="space-y-1">
                 {events.map((evt) => (
@@ -257,9 +258,9 @@ export function InvitesManagementTab() {
   const handleRevoke = async (id: string) => {
     try {
       await revokeInvite.mutateAsync(id);
-      toast.success('Convite revogado');
+      toast.success(tx('Convite revogado'));
     } catch {
-      toast.error('Erro ao revogar');
+      toast.error(tx('Erro ao revogar'));
     }
   };
 
@@ -278,13 +279,13 @@ export function InvitesManagementTab() {
             base_url: window.location.origin,
           },
         });
-        toast.success('Convite reenviado por email!');
+        toast.success(tx('Convite reenviado por email!'));
       } catch {
         navigator.clipboard.writeText(link);
-        toast.success('Convite reenviado! Link copiado.');
+        toast.success(tx('Convite reenviado! Link copiado.'));
       }
     } catch {
-      toast.error('Erro ao reenviar');
+      toast.error(tx('Erro ao reenviar'));
     }
   };
 
@@ -303,7 +304,7 @@ export function InvitesManagementTab() {
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Pesquisar nome, email, código..."
+            placeholder={tx('Pesquisar nome, email, código...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8 h-9 text-sm"
@@ -315,11 +316,11 @@ export function InvitesManagementTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pending">Pendente</SelectItem>
-            <SelectItem value="accepted">Aceite</SelectItem>
-            <SelectItem value="expired">Expirado</SelectItem>
-            <SelectItem value="revoked">Revogado</SelectItem>
+            <SelectItem value="all">{tx('Todos')}</SelectItem>
+            <SelectItem value="pending">{tx('Pendente')}</SelectItem>
+            <SelectItem value="accepted">{tx('Aceite')}</SelectItem>
+            <SelectItem value="expired">{tx('Expirado')}</SelectItem>
+            <SelectItem value="revoked">{tx('Revogado')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={channelFilter} onValueChange={setChannelFilter}>
@@ -327,10 +328,10 @@ export function InvitesManagementTab() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Canal</SelectItem>
-            <SelectItem value="email">Email</SelectItem>
+            <SelectItem value="all">{tx('Canal')}</SelectItem>
+            <SelectItem value="email">{tx('Email')}</SelectItem>
             <SelectItem value="sms">SMS</SelectItem>
-            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            <SelectItem value="whatsapp">{tx('WhatsApp')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -338,10 +339,10 @@ export function InvitesManagementTab() {
       {filteredInvites.length === 0 ? (
         <EmptyState
           icon={<Users className="h-8 w-8" />}
-          title={invites.length === 0 ? "Sem convites enviados" : "Nenhum resultado"}
+          title={invites.length === 0 ? tx('Sem convites enviados') : tx('Nenhum resultado')}
           description={invites.length === 0
-            ? "Use os botões de convite para convidar pessoas para a plataforma."
-            : "Tente alterar os filtros de pesquisa."}
+            ? tx('Use os botões de convite para convidar pessoas para a plataforma.')
+            : tx('Tente alterar os filtros de pesquisa.')}
         />
       ) : (
         <div className="space-y-2">
@@ -360,8 +361,8 @@ export function InvitesManagementTab() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
-                    {inv.teams?.name && <span>Equipa: {inv.teams.name}</span>}
-                    {inv.players?.name && <span>Atleta: {inv.players.name}</span>}
+                    {inv.teams?.name && <span>{tx('Equipa:')}{' '}{inv.teams.name}</span>}
+                    {inv.players?.name && <span>{tx('Atleta:')}{' '}{inv.players.name}</span>}
                     {inv.email && (
                       <span className="flex items-center gap-1">
                         <Mail className="h-3 w-3" />{inv.email}
@@ -381,7 +382,7 @@ export function InvitesManagementTab() {
                         className="flex items-center gap-1 hover:text-foreground"
                         onClick={() => {
                           navigator.clipboard.writeText(inv.invite_code);
-                          toast.success('Código copiado');
+                          toast.success(tx('Código copiado'));
                         }}
                       >
                         <Copy className="h-3 w-3" /> {inv.invite_code}
@@ -394,7 +395,7 @@ export function InvitesManagementTab() {
                     size="sm"
                     variant="ghost"
                     onClick={() => setDetailInviteId(inv.id)}
-                    title="Ver detalhes e tracking"
+                    title={tx('Ver detalhes e tracking')}
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </Button>
@@ -404,7 +405,7 @@ export function InvitesManagementTab() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleResend(inv.id)}
-                        title="Reenviar"
+                        title={tx('Reenviar')}
                         disabled={resendInvite.isPending}
                       >
                         <RefreshCw className="h-3.5 w-3.5" />
@@ -414,7 +415,7 @@ export function InvitesManagementTab() {
                         variant="ghost"
                         className="text-destructive"
                         onClick={() => handleRevoke(inv.id)}
-                        title="Revogar"
+                        title={tx('Revogar')}
                         disabled={revokeInvite.isPending}
                       >
                         <XCircle className="h-3.5 w-3.5" />

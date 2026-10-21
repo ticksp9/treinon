@@ -18,6 +18,7 @@ import { pt } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AttendanceSheetPanel } from './AttendanceSheetPanel';
 import { cleanSchedule, plannedTrainings } from '@/lib/attendance-sheet';
+import { tx } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -54,13 +55,13 @@ interface TrainingDay {
 }
 
 const WEEKDAYS = [
-  { value: 1, label: 'Segunda-feira' },
-  { value: 2, label: 'Terça-feira' },
-  { value: 3, label: 'Quarta-feira' },
-  { value: 4, label: 'Quinta-feira' },
-  { value: 5, label: 'Sexta-feira' },
-  { value: 6, label: 'Sábado' },
-  { value: 0, label: 'Domingo' },
+  { value: 1, get label() { return tx('Segunda-feira'); } },
+  { value: 2, get label() { return tx('Terça-feira'); } },
+  { value: 3, get label() { return tx('Quarta-feira'); } },
+  { value: 4, get label() { return tx('Quinta-feira'); } },
+  { value: 5, get label() { return tx('Sexta-feira'); } },
+  { value: 6, get label() { return tx('Sábado'); } },
+  { value: 0, get label() { return tx('Domingo'); } },
 ];
 
 export function TrainingAttendance() {
@@ -226,7 +227,7 @@ export function TrainingAttendance() {
 
   const addTrainingDay = () => {
     if (trainingDays.some(d => d.day === newTrainingDay.day)) {
-      toast.error('Este dia já foi adicionado');
+      toast.error(tx('Este dia já foi adicionado'));
       return;
     }
     setTrainingDays(prev => [...prev, { ...newTrainingDay }]);
@@ -238,7 +239,7 @@ export function TrainingAttendance() {
 
   const generateWeeklySessions = async () => {
     if (!user || !selectedTeam || trainingDays.length === 0) {
-      toast.error('Configure os dias de treino primeiro');
+      toast.error(tx('Configure os dias de treino primeiro'));
       return;
     }
 
@@ -275,7 +276,7 @@ export function TrainingAttendance() {
       }
 
       if (sessionsToCreate.length === 0) {
-        toast.success('Dias de treino guardados. Os treinos até essa data já estavam criados.');
+        toast.success(tx('Dias de treino guardados. Os treinos até essa data já estavam criados.'));
         setConfigDialogOpen(false);
         return;
       }
@@ -286,11 +287,11 @@ export function TrainingAttendance() {
 
       if (error) throw error;
 
-      toast.success(`Dias de treino guardados e ${sessionsToCreate.length} treinos criados até ${format(end, 'dd/MM')}${jointIds.length ? ' (para as equipas que treinam juntas)' : ''}.`);
+      toast.success(tx('Dias de treino guardados e {{v0}} treinos criados até {{v1}}{{v2}}.', { v0: sessionsToCreate.length, v1: format(end, 'dd/MM'), v2: jointIds.length ? ' (para as equipas que treinam juntas)' : '' }));
       setConfigDialogOpen(false);
       fetchSessions();
     } catch (error: any) {
-      toast.error('Erro ao criar sessões: ' + error.message);
+      toast.error(tx('Erro ao criar sessões: ') + error.message);
     } finally {
       setGenerating(false);
     }
@@ -321,32 +322,32 @@ export function TrainingAttendance() {
         .insert(records);
 
       if (error) throw error;
-      toast.success('Presenças guardadas!');
+      toast.success(tx('Presenças guardadas!'));
       // two trainings missed in a row without a reason: the club coordinator is told right away
       if (selectedTeam) {
         sendNotice({ kind: 'absence_alert', team_id: selectedTeam }).then((r) => {
-          if ((r.groups?.coordenador ?? 0) > 0) toast.info('O coordenador foi avisado: há jogadores com dois treinos seguidos sem motivo de falta.');
+          if ((r.groups?.coordenador ?? 0) > 0) toast.info(tx('O coordenador foi avisado: há jogadores com dois treinos seguidos sem motivo de falta.'));
         });
       }
     } catch (error: any) {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     } finally {
       setSaving(false);
     }
   };
 
   const deleteSession = async (sessionId: string) => {
-    if (!confirm('Eliminar esta sessão de treino?')) return;
+    if (!confirm(tx('Eliminar esta sessão de treino?'))) return;
 
     try {
       await supabase.from('training_attendance').delete().eq('session_id', sessionId);
       const { error } = await supabase.from('training_sessions').delete().eq('id', sessionId);
 
       if (error) throw error;
-      toast.success('Sessão eliminada');
+      toast.success(tx('Sessão eliminada'));
       fetchSessions();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(tx('Erro ao eliminar: ') + error.message);
     }
   };
 
@@ -358,7 +359,7 @@ export function TrainingAttendance() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -369,9 +370,9 @@ export function TrainingAttendance() {
       <Card>
         <CardContent className="py-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem Equipas</h3>
+          <h3 className="text-lg font-semibold mb-2">{tx('Sem Equipas')}</h3>
           <p className="text-muted-foreground">
-            Crie uma equipa primeiro para registar presenças.
+            {tx('Crie uma equipa primeiro para registar presenças.')}
           </p>
         </CardContent>
       </Card>
@@ -385,19 +386,19 @@ export function TrainingAttendance() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Folha de Presenças
+            {tx('Folha de Presenças')}
           </CardTitle>
           <CardDescription>
-            Defina os dias de treino da equipa; a app cria os treinos e a folha para os jogadores assinarem
+            {tx('Defina os dias de treino da equipa; a app cria os treinos e a folha para os jogadores assinarem')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Equipa</Label>
+              <Label>{tx('Equipa')}</Label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma equipa" />
+                  <SelectValue placeholder={tx('Selecione uma equipa')} />
                 </SelectTrigger>
                 <SelectContent>
                   {teams.map(team => (
@@ -410,10 +411,10 @@ export function TrainingAttendance() {
             </div>
 
             <div className="space-y-2">
-              <Label>Sessão de Treino</Label>
+              <Label>{tx('Sessão de Treino')}</Label>
               <Select value={selectedSession} onValueChange={setSelectedSession}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma sessão" />
+                  <SelectValue placeholder={tx('Selecione uma sessão')} />
                 </SelectTrigger>
                 <SelectContent>
                   {sessions.map(session => (
@@ -431,21 +432,21 @@ export function TrainingAttendance() {
                 <DialogTrigger asChild>
                   <Button variant="default">
                     <Settings className="w-4 h-4 mr-2" />
-                    Configurar Treinos
+                    {tx('Configurar Treinos')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Configurar Dias de Treino</DialogTitle>
+                    <DialogTitle>{tx('Configurar Dias de Treino')}</DialogTitle>
                     <DialogDescription>
-                      Adicione os dias e horários de treino para gerar automaticamente as sessões semanais
+                      {tx('Adicione os dias e horários de treino para gerar automaticamente as sessões semanais')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     {/* Add training day */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <Label>Dia da Semana</Label>
+                        <Label>{tx('Dia da Semana')}</Label>
                         <Select
                           value={newTrainingDay.day.toString()}
                           onValueChange={v => setNewTrainingDay(prev => ({ ...prev, day: parseInt(v) }))}
@@ -463,7 +464,7 @@ export function TrainingAttendance() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Hora</Label>
+                        <Label>{tx('Hora')}</Label>
                         <div className="flex gap-2">
                           <Input
                             type="time"
@@ -480,7 +481,7 @@ export function TrainingAttendance() {
                     {/* List of added days */}
                     {trainingDays.length > 0 && (
                       <div className="space-y-2">
-                        <Label>Dias Configurados</Label>
+                        <Label>{tx('Dias Configurados')}</Label>
                         <div className="space-y-2">
                           {trainingDays
                             .sort((a, b) => (a.day === 0 ? 7 : a.day) - (b.day === 0 ? 7 : b.day))
@@ -509,8 +510,8 @@ export function TrainingAttendance() {
                     {/* teams of the same training */}
                     {teams.filter(t => t.id !== selectedTeam).length > 0 && (
                       <div className="space-y-2">
-                        <Label>Treina junto com</Label>
-                        <p className="text-xs text-muted-foreground">Equipas que treinam juntas e só se separam nos jogos: os treinos são criados para todas e a folha de presenças leva os jogadores de todas.</p>
+                        <Label>{tx('Treina junto com')}</Label>
+                        <p className="text-xs text-muted-foreground">{tx('Equipas que treinam juntas e só se separam nos jogos: os treinos são criados para todas e a folha de presenças leva os jogadores de todas.')}</p>
                         {teams.filter(t => t.id !== selectedTeam).map(t => (
                           <label key={t.id} className="flex items-center gap-2 text-sm">
                             <Checkbox checked={jointIds.includes(t.id)} onCheckedChange={(v) => setJointIds(prev => v ? [...prev, t.id] : prev.filter(x => x !== t.id))} />
@@ -522,15 +523,15 @@ export function TrainingAttendance() {
 
                     {/* Location and Duration */}
                     <div className="space-y-2">
-                      <Label>Local (opcional)</Label>
+                      <Label>{tx('Local (opcional)')}</Label>
                       <Input
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        placeholder="Ex: Campo Principal"
+                        placeholder={tx('Ex: Campo Principal')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Duração (minutos)</Label>
+                      <Label>{tx('Duração (minutos)')}</Label>
                       <Input
                         type="number"
                         value={duration}
@@ -539,9 +540,9 @@ export function TrainingAttendance() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Criar os treinos até</Label>
+                      <Label>{tx('Criar os treinos até')}</Label>
                       <Input type="date" value={until} onChange={e => setUntil(e.target.value)} />
-                      <p className="text-xs text-muted-foreground">Os dias ficam guardados na equipa. Dias que já têm treino não são repetidos.</p>
+                      <p className="text-xs text-muted-foreground">{tx('Os dias ficam guardados na equipa. Dias que já têm treino não são repetidos.')}</p>
                     </div>
 
                     <Button
@@ -549,7 +550,7 @@ export function TrainingAttendance() {
                       className="w-full"
                       disabled={trainingDays.length === 0 || generating || !until}
                     >
-                      {generating ? 'A criar...' : 'Guardar dias e criar treinos'}
+                      {generating ? tx('A criar...') : tx('Guardar dias e criar treinos')}
                     </Button>
                   </div>
                 </DialogContent>
@@ -576,7 +577,7 @@ export function TrainingAttendance() {
                   if (error) { toast.error(error.message); return; }
                   setSessions(prev => prev.map(x => x.id === selectedSessionData.id ? { ...x, prevention_warmup: !!v } as TrainingSession : x));
                 }} />
-              Fizemos o aquecimento de prevenção (FIFA 11+ Kids)
+              {tx('Fizemos o aquecimento de prevenção (FIFA 11+ Kids)')}
             </label>
           )}
           {selectedSessionData && (
@@ -614,14 +615,14 @@ export function TrainingAttendance() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle>Lista de Jogadores</CardTitle>
+                <CardTitle>{tx('Lista de Jogadores')}</CardTitle>
                 <CardDescription>
                   {presentCount} de {totalPlayers} presentes
                 </CardDescription>
               </div>
               <Button onClick={saveAttendance} disabled={saving}>
                 <Save className="w-4 h-4 mr-2" />
-                {saving ? 'A guardar...' : 'Guardar Presenças'}
+                {saving ? tx('A guardar...') : tx('Guardar Presenças')}
               </Button>
             </div>
           </CardHeader>
@@ -629,7 +630,7 @@ export function TrainingAttendance() {
             <datalist id="absence-reasons">
               <option value="Doença" /><option value="Lesão" /><option value="Escola" /><option value="Motivo familiar" /><option value="Avisou" />
             </datalist>
-            <p className="mb-2 text-xs text-muted-foreground">Escreva o motivo quando alguém falta e avisou. Duas faltas seguidas sem motivo geram um alerta para o coordenador do clube.</p>
+            <p className="mb-2 text-xs text-muted-foreground">{tx('Escreva o motivo quando alguém falta e avisou. Duas faltas seguidas sem motivo geram um alerta para o coordenador do clube.')}</p>
             <div className="space-y-2">
               {players.map(player => (
                 <div
@@ -652,7 +653,7 @@ export function TrainingAttendance() {
                         </Badge>
                       )}
                       <span className="font-medium">{player.name}</span>
-                      {warned[player.id] && <Badge variant="outline" className="border-accent text-accent">Avisou</Badge>}
+                      {warned[player.id] && <Badge variant="outline" className="border-accent text-accent">{tx('Avisou')}</Badge>}
                       {player.position && (
                         <span className="text-sm text-muted-foreground">({player.position})</span>
                       )}
@@ -663,15 +664,15 @@ export function TrainingAttendance() {
                       <Input
                         className="h-8 w-32 text-xs sm:w-48"
                         maxLength={120}
-                        placeholder="Motivo da falta"
+                        placeholder={tx('Motivo da falta')}
                         list="absence-reasons"
                         value={attendance[player.id]?.notes ?? ''}
                         onChange={(e) => setReason(player.id, e.target.value)}
-                        aria-label={`Motivo da falta de ${player.name}`}
+                        aria-label={tx('Motivo da falta de {{v0}}', { v0: player.name })}
                       />
                     )}
                     <Badge variant={attendance[player.id]?.present ? 'default' : 'secondary'}>
-                      {attendance[player.id]?.present ? 'Presente' : 'Ausente'}
+                      {attendance[player.id]?.present ? tx('Presente') : tx('Ausente')}
                     </Badge>
                   </div>
                 </div>
@@ -686,7 +687,7 @@ export function TrainingAttendance() {
           <CardContent className="py-8 text-center">
             <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              Esta equipa não tem jogadores registados.
+              {tx('Esta equipa não tem jogadores registados.')}
             </p>
           </CardContent>
         </Card>

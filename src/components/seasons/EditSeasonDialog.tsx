@@ -15,6 +15,7 @@ import {
   SeasonAlreadyExistsError,
   type SeasonRow,
 } from '@/lib/season-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   season: SeasonRow | null;
@@ -41,7 +42,7 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
 
   const save = useMutation({
     mutationFn: async () => {
-      if (!season || !scope) throw new Error('Sem contexto');
+      if (!season || !scope) throw new Error(tx('Sem contexto'));
       return updateSeason(season, scope, {
         name: form.name,
         start_date: form.start_date,
@@ -51,16 +52,16 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
       });
     },
     onSuccess: (s) => {
-      toast.success(`Época ${s.name} atualizada`);
+      toast.success(tx('Época {{v0}} atualizada', { v0: s.name }));
       onSaved();
       onOpenChange(false);
     },
     onError: (e: any) => {
       if (e instanceof SeasonAlreadyExistsError) {
-        toast.error(`Já existe a época ${e.season.name} neste contexto.`);
+        toast.error(tx('Já existe a época {{v0}} neste contexto.', { v0: e.season.name }));
         return;
       }
-      toast.error(e.message ?? 'Não foi possível guardar');
+      toast.error(e.message ?? tx('Não foi possível guardar'));
     },
   });
 
@@ -72,12 +73,12 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
     <Dialog open={!!season} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Editar época {season?.name}</DialogTitle>
-          <DialogDescription>{rules.reason ?? 'Altere o nome, o período e as notas desta época.'}</DialogDescription>
+          <DialogTitle>{tx('Editar época')}{' '}{season?.name}</DialogTitle>
+          <DialogDescription>{rules.reason ?? tx('Altere o nome, o período e as notas desta época.')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label htmlFor="season-name">Nome</Label>
+            <Label htmlFor="season-name">{tx('Nome')}</Label>
             <Input
               id="season-name"
               value={form.name}
@@ -85,12 +86,12 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             {!nameOk && form.name && (
-              <p className="text-xs text-destructive">Formato inválido. Use AAAA/AAAA com anos consecutivos.</p>
+              <p className="text-xs text-destructive">{tx('Formato inválido. Use AAAA/AAAA com anos consecutivos.')}</p>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label htmlFor="season-start">Início</Label>
+              <Label htmlFor="season-start">{tx('Início')}</Label>
               <Input
                 id="season-start"
                 type="date"
@@ -100,7 +101,7 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="season-end">Fim</Label>
+              <Label htmlFor="season-end">{tx('Fim')}</Label>
               <Input
                 id="season-end"
                 type="date"
@@ -110,10 +111,10 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
               />
             </div>
           </div>
-          {!datesOk && <p className="text-xs text-destructive">A data de início tem de ser anterior à data de fim.</p>}
+          {!datesOk && <p className="text-xs text-destructive">{tx('A data de início tem de ser anterior à data de fim.')}</p>}
           {periodWarning && <p className="text-xs text-amber-600 dark:text-amber-400">{periodWarning}</p>}
           <div className="space-y-1">
-            <Label htmlFor="season-ref">Data de referência (escalões)</Label>
+            <Label htmlFor="season-ref">{tx('Data de referência (escalões)')}</Label>
             <Input
               id="season-ref"
               type="date"
@@ -123,14 +124,14 @@ export function EditSeasonDialog({ season, onOpenChange, onSaved }: Props) {
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="season-notes">Notas</Label>
+            <Label htmlFor="season-notes">{tx('Notas')}</Label>
             <Textarea id="season-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tx('Cancelar')}</Button>
           <Button disabled={!nameOk || !datesOk || save.isPending} onClick={() => save.mutate()}>
-            Guardar
+            {tx('Guardar')}
           </Button>
         </DialogFooter>
       </DialogContent>

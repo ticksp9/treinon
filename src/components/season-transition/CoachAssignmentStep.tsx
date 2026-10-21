@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { UserCog, Plus, X, Save } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AGE_CATEGORIES } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface CoachAssignmentStepProps {
   seasonId: string;
@@ -43,10 +44,10 @@ interface CoachAssignment {
 }
 
 const COACH_ROLES = [
-  { value: 'head_coach', label: 'Treinador Principal' },
-  { value: 'assistant', label: 'Treinador Adjunto' },
-  { value: 'goalkeeper_coach', label: 'Treinador de Guarda-Redes' },
-  { value: 'fitness_coach', label: 'Preparador Físico' },
+  { value: 'head_coach', get label() { return tx('Treinador Principal'); } },
+  { value: 'assistant', get label() { return tx('Treinador Adjunto'); } },
+  { value: 'goalkeeper_coach', get label() { return tx('Treinador de Guarda-Redes'); } },
+  { value: 'fitness_coach', get label() { return tx('Preparador Físico'); } },
 ];
 
 export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssignmentStepProps) {
@@ -293,12 +294,12 @@ export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssig
       }
     },
     onSuccess: () => {
-      toast.success('Atribuições de treinadores guardadas');
+      toast.success(tx('Atribuições de treinadores guardadas'));
       queryClient.invalidateQueries({ queryKey: ['season-coach-assignments', seasonId] });
       setHasChanges(false);
     },
     onError: (error: any) => {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     },
   });
 
@@ -326,16 +327,16 @@ export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssig
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <UserCog className="w-5 h-5" />
-            Atribuição de Treinadores
+            {tx('Atribuição de Treinadores')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Defina os treinadores para cada equipa na época {seasonName}
+            {tx('Defina os treinadores para cada equipa na época')}{' '}{seasonName}
           </p>
         </div>
         {hasChanges && (
           <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
             <Save className="w-4 h-4 mr-2" />
-            {saveMutation.isPending ? 'A guardar...' : 'Guardar Alterações'}
+            {saveMutation.isPending ? tx('A guardar...') : tx('Guardar Alterações')}
           </Button>
         )}
       </div>
@@ -344,7 +345,7 @@ export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssig
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-6 text-center">
             <p className="text-amber-600">
-              Nenhum treinador associado ao clube. Adicione treinadores primeiro.
+              {tx('Nenhum treinador associado ao clube. Adicione treinadores primeiro.')}
             </p>
           </CardContent>
         </Card>
@@ -370,12 +371,12 @@ export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssig
                       onValueChange={(value) => updateAssignment(team.id, index, { coach_id: value })}
                     >
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Selecionar treinador..." />
+                        <SelectValue placeholder={tx('Selecionar treinador...')} />
                       </SelectTrigger>
                       <SelectContent>
                         {clubCoaches?.map(coach => (
                           <SelectItem key={coach.coach_id} value={coach.coach_id}>
-                            {coach.profile?.full_name || coach.profile?.email || 'Treinador'}
+                            {coach.profile?.full_name || coach.profile?.email || tx('Treinador')}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -412,7 +413,7 @@ export function CoachAssignmentStep({ seasonId, clubId, seasonName }: CoachAssig
                   onClick={() => addCoachToTeam(team.id)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Treinador
+                  {tx('Adicionar Treinador')}
                 </Button>
               </CardContent>
             </Card>

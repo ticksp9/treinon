@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { listAvailableFormations, expectedPlayersForSport, type SportType } from '@/lib/tactical-formations';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   sportType: SportType | string;
@@ -23,7 +24,7 @@ export function FormationPicker({ sportType, value, onChange, disabled }: Props)
       <Badge variant="outline">{expected} jog.</Badge>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="h-8 w-36">
-          <SelectValue placeholder="Formação" />
+          <SelectValue placeholder={tx('Formação')} />
         </SelectTrigger>
         <SelectContent>
           {available.map((f) => (

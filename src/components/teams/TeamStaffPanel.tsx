@@ -11,15 +11,16 @@ import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 export const TEAM_PERMS = [
-  { key: 'matches', label: 'Jogos e jogo ao vivo', help: 'Convocados, onze, jogo ao vivo, relatório' },
-  { key: 'trainings', label: 'Treinos e exercícios', help: 'Criar e editar treinos' },
-  { key: 'attendance', label: 'Presenças', help: 'Marcar presenças nos treinos' },
-  { key: 'players_edit', label: 'Fichas dos jogadores', help: 'Criar e editar dados dos jogadores' },
-  { key: 'evaluations', label: 'Avaliações e notas', help: 'Ver e fazer avaliações' },
-  { key: 'medical', label: 'Saúde e lesões', help: 'Dados médicos (sensíveis)' },
-  { key: 'invites', label: 'Convites', help: 'Convidar pais e atletas' },
+  { key: 'matches', get label() { return tx('Jogos e jogo ao vivo'); }, get help() { return tx('Convocados, onze, jogo ao vivo, relatório'); } },
+  { key: 'trainings', get label() { return tx('Treinos e exercícios'); }, get help() { return tx('Criar e editar treinos'); } },
+  { key: 'attendance', get label() { return tx('Presenças'); }, get help() { return tx('Marcar presenças nos treinos'); } },
+  { key: 'players_edit', get label() { return tx('Fichas dos jogadores'); }, get help() { return tx('Criar e editar dados dos jogadores'); } },
+  { key: 'evaluations', get label() { return tx('Avaliações e notas'); }, get help() { return tx('Ver e fazer avaliações'); } },
+  { key: 'medical', get label() { return tx('Saúde e lesões'); }, get help() { return tx('Dados médicos (sensíveis)'); } },
+  { key: 'invites', get label() { return tx('Convites'); }, get help() { return tx('Convidar pais e atletas'); } },
 ] as const;
 export type TeamPermKey = (typeof TEAM_PERMS)[number]['key'];
 
@@ -65,16 +66,16 @@ export function TeamStaffPanel({ teamId, canManageAll }: { teamId: string; canMa
   const toggle = async (r: Row, key: TeamPermKey, value: boolean) => {
     const perms = { ...(r.permissions ?? {}), [key]: value };
     const { error } = await supabase.rpc('set_team_coach_permissions' as never, { _team: teamId, _coach: r.coach_id, _perms: perms } as never);
-    if (error) return toast.error('Não foi possível alterar: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível alterar: ') + error.message);
     qc.invalidateQueries({ queryKey: ['team-staff', teamId] });
   };
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" />Equipa técnica e permissões</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4" />{tx('Equipa técnica e permissões')}</CardTitle>
         <CardDescription>
-          {canManageAll ? 'Defina o que cada treinador pode ver e fazer nesta equipa.' : myRole === 'head_coach' ? 'Defina o que os seus adjuntos podem fazer.' : 'As permissões de cada membro da equipa técnica.'}
+          {canManageAll ? tx('Defina o que cada treinador pode ver e fazer nesta equipa.') : myRole === 'head_coach' ? tx('Defina o que os seus adjuntos podem fazer.') : tx('As permissões de cada membro da equipa técnica.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -82,8 +83,8 @@ export function TeamStaffPanel({ teamId, canManageAll }: { teamId: string; canMa
           <div key={r.coach_id} className="rounded-md border p-3">
             <div className="mb-2 flex items-center gap-2">
               <span className="font-medium">{r.name}</span>
-              <Badge variant={r.role === 'assistant_coach' ? 'outline' : 'secondary'}>{r.role === 'assistant_coach' ? 'Adjunto' : 'Principal'}</Badge>
-              {r.coach_id === user?.id && <span className="text-xs text-muted-foreground">(eu)</span>}
+              <Badge variant={r.role === 'assistant_coach' ? 'outline' : 'secondary'}>{r.role === 'assistant_coach' ? tx('Adjunto') : tx('Principal')}</Badge>
+              {r.coach_id === user?.id && <span className="text-xs text-muted-foreground">{tx('(eu)')}</span>}
             </div>
             <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
               {TEAM_PERMS.map((p) => {

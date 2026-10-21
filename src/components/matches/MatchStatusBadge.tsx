@@ -1,16 +1,17 @@
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Check, Clock, Lock, Pencil, RotateCcw } from 'lucide-react';
 import { type ReportStatus } from '@/lib/match-report-service';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_CONFIG: Record<ReportStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
-  draft: { label: 'Rascunho', variant: 'outline', icon: <Pencil className="w-3 h-3" /> },
-  in_progress: { label: 'Em preenchimento', variant: 'secondary', icon: <Clock className="w-3 h-3" /> },
-  pending_completion: { label: 'A completar', variant: 'secondary', icon: <Clock className="w-3 h-3" /> },
-  pending_review: { label: 'A rever', variant: 'secondary', icon: <AlertTriangle className="w-3 h-3" /> },
-  finalized: { label: 'Finalizado', variant: 'default', icon: <Check className="w-3 h-3" /> },
-  reopened: { label: 'Reaberto', variant: 'destructive', icon: <RotateCcw className="w-3 h-3" /> },
-  corrected: { label: 'Corrigido', variant: 'default', icon: <Check className="w-3 h-3" /> },
-  locked: { label: 'Bloqueado', variant: 'outline', icon: <Lock className="w-3 h-3" /> },
+  draft: { get label() { return tx('Rascunho'); }, variant: 'outline', icon: <Pencil className="w-3 h-3" /> },
+  in_progress: { get label() { return tx('Em preenchimento'); }, variant: 'secondary', icon: <Clock className="w-3 h-3" /> },
+  pending_completion: { get label() { return tx('A completar'); }, variant: 'secondary', icon: <Clock className="w-3 h-3" /> },
+  pending_review: { get label() { return tx('A rever'); }, variant: 'secondary', icon: <AlertTriangle className="w-3 h-3" /> },
+  finalized: { get label() { return tx('Finalizado'); }, variant: 'default', icon: <Check className="w-3 h-3" /> },
+  reopened: { get label() { return tx('Reaberto'); }, variant: 'destructive', icon: <RotateCcw className="w-3 h-3" /> },
+  corrected: { get label() { return tx('Corrigido'); }, variant: 'default', icon: <Check className="w-3 h-3" /> },
+  locked: { get label() { return tx('Bloqueado'); }, variant: 'outline', icon: <Lock className="w-3 h-3" /> },
 };
 
 interface MatchStatusBadgeProps {
@@ -33,10 +34,10 @@ export function MatchStatusBadge({ status, showIcon = true, className }: MatchSt
 // Game status badges
 export function GameStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
-    scheduled: { label: 'Agendado', className: 'bg-secondary text-secondary-foreground' },
-    in_progress: { label: 'Em Curso', className: 'bg-green-600 text-white' },
-    completed: { label: 'Terminado', className: 'bg-muted text-muted-foreground' },
-    cancelled: { label: 'Cancelado', className: 'bg-destructive text-destructive-foreground' },
+    scheduled: { label: tx('Agendado'), className: 'bg-secondary text-secondary-foreground' },
+    in_progress: { label: tx('Em Curso'), className: 'bg-green-600 text-white' },
+    completed: { label: tx('Terminado'), className: 'bg-muted text-muted-foreground' },
+    cancelled: { label: tx('Cancelado'), className: 'bg-destructive text-destructive-foreground' },
   };
   
   const c = config[status] || { label: status, className: '' };

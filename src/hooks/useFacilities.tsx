@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from '@/hooks/use-toast';
+import { tx } from '@/lib/i18n/ui';
 
 // ── Pure business logic (exported for tests) ──────────────────────
 export function computeOccupancyRate(
@@ -180,12 +181,12 @@ export function useFacilities() {
 
   const createFacility = useMutation({
     mutationFn: async (d: { name: string; facility_code: string; facility_type: string; ownership_type: string; address?: string }) => {
-      if (!clubId) throw new Error('No club');
+      if (!clubId) throw new Error(tx('No club'));
       const { error } = await supabase.from('facilities').insert({ ...d, club_id: clubId });
       if (error) throw error;
     },
-    onSuccess: () => { invalidateAll(); toast({ title: 'Instalação criada' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { invalidateAll(); toast({ title: tx('Instalação criada') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const createSpace = useMutation({
@@ -193,31 +194,31 @@ export function useFacilities() {
       const { error } = await supabase.from('facility_spaces').insert(d);
       if (error) throw error;
     },
-    onSuccess: () => { invalidateAll(); toast({ title: 'Espaço criado' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { invalidateAll(); toast({ title: tx('Espaço criado') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const createReservation = useMutation({
     mutationFn: async (d: { facility_id: string; facility_space_id: string; reservation_type: string; starts_at: string; ends_at: string; team_id?: string; notes?: string }) => {
-      if (!clubId) throw new Error('No club');
+      if (!clubId) throw new Error(tx('No club'));
       const conflicts = detectConflicts(new Date(d.starts_at), new Date(d.ends_at), d.facility_space_id, reservations as any);
-      if (conflicts.length) throw new Error(`Conflito com ${conflicts.length} reserva(s) existente(s)`);
+      if (conflicts.length) throw new Error(tx('Conflito com {{v0}} reserva(s) existente(s)', { v0: conflicts.length }));
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from('facility_reservations').insert({ ...d, club_id: clubId, requester_user_id: user!.id });
       if (error) throw error;
     },
-    onSuccess: () => { invalidateAll(); toast({ title: 'Reserva criada' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { invalidateAll(); toast({ title: tx('Reserva criada') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const createWorkOrder = useMutation({
     mutationFn: async (d: { facility_id: string; title: string; work_order_type: string; priority: string; facility_space_id?: string }) => {
-      if (!clubId) throw new Error('No club');
+      if (!clubId) throw new Error(tx('No club'));
       const { error } = await supabase.from('facility_work_orders').insert({ ...d, club_id: clubId });
       if (error) throw error;
     },
-    onSuccess: () => { invalidateAll(); toast({ title: 'Ordem de trabalho criada' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { invalidateAll(); toast({ title: tx('Ordem de trabalho criada') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const isLoading = facilitiesLoading;

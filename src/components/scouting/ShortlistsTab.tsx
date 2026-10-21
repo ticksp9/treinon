@@ -15,6 +15,7 @@ import { Plus, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { PRIORITY_OPTIONS } from '@/hooks/useScouting';
 import { POSITIONS } from '@/lib/player-constants';
+import { tx } from '@/lib/i18n/ui';
 
 export function ShortlistsTab() {
   const { clubId } = useUserRole();
@@ -52,17 +53,17 @@ export function ShortlistsTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scouting-shortlists', clubId] });
-      toast.success('Shortlist criada');
+      toast.success(tx('Shortlist criada'));
       setOpen(false);
     },
-    onError: () => toast.error('Erro ao criar shortlist'),
+    onError: () => toast.error(tx('Erro ao criar shortlist')),
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const name = fd.get('name')?.toString().trim();
-    if (!name) { toast.error('Nome é obrigatório'); return; }
+    if (!name) { toast.error(tx('Nome é obrigatório')); return; }
     createMutation.mutate({
       name,
       description: fd.get('description'),
@@ -76,29 +77,29 @@ export function ShortlistsTab() {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Shortlists ({shortlists?.length || 0})</h3>
+        <h3 className="text-lg font-semibold">{tx('Shortlists (')}{shortlists?.length || 0})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Nova Shortlist</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{tx('Nova Shortlist')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Shortlist</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Shortlist')}</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div><Label>Nome *</Label><Input name="name" required /></div>
-              <div><Label>Descrição</Label><Input name="description" /></div>
+              <div><Label>{tx('Nome *')}</Label><Input name="name" required /></div>
+              <div><Label>{tx('Descrição')}</Label><Input name="description" /></div>
               <div>
-                <Label>Posição Alvo</Label>
+                <Label>{tx('Posição Alvo')}</Label>
                 <Select name="target_position">
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{POSITIONS.football.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Urgência</Label>
+                <Label>{tx('Urgência')}</Label>
                 <Select name="urgency">
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{PRIORITY_OPTIONS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>Criar</Button>
+              <Button type="submit" className="w-full" disabled={createMutation.isPending}>{tx('Criar')}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -106,7 +107,7 @@ export function ShortlistsTab() {
 
       {(shortlists?.length || 0) === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
-          <Target className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>Nenhuma shortlist criada.</p>
+          <Target className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>{tx('Nenhuma shortlist criada.')}</p>
         </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

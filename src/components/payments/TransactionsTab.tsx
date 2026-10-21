@@ -3,13 +3,14 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentTransactions } from '@/hooks/usePaymentIntents';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
 const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  succeeded: { label: 'Confirmado', variant: 'default' },
-  pending: { label: 'Pendente', variant: 'secondary' },
-  failed: { label: 'Falhado', variant: 'destructive' },
+  succeeded: { get label() { return tx('Confirmado'); }, variant: 'default' },
+  pending: { get label() { return tx('Pendente'); }, variant: 'secondary' },
+  failed: { get label() { return tx('Falhado'); }, variant: 'destructive' },
 };
 
 const METHOD_MAP: Record<string, string> = {
@@ -25,11 +26,11 @@ export function TransactionsTab({ clubId }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="font-semibold">Transações</h3>
-        <p className="text-sm text-muted-foreground">Histórico de transações confirmadas pelo provider</p>
+        <h3 className="font-semibold">{tx('Transações')}</h3>
+        <p className="text-sm text-muted-foreground">{tx('Histórico de transações confirmadas pelo provider')}</p>
       </div>
       {(!txns || txns.length === 0) ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">Sem transações registadas</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">{tx('Sem transações registadas')}</CardContent></Card>
       ) : (
         <div className="space-y-2">
           {txns.map((t: any) => {
@@ -39,11 +40,11 @@ export function TransactionsTab({ clubId }: Props) {
                 <CardContent className="flex items-center justify-between py-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{(t.charges as any)?.description || t.transaction_reference || 'Transação'}</span>
+                      <span className="font-medium text-sm">{(t.charges as any)?.description || t.transaction_reference || tx('Transação')}</span>
                       <Badge variant="outline">{METHOD_MAP[t.payment_method_code] || t.payment_method_code}</Badge>
                       <Badge variant={status.variant}>{status.label}</Badge>
-                      {t.refund_status && <Badge variant="destructive">Reembolso: {t.refund_status}</Badge>}
-                      {t.dispute_status && <Badge variant="destructive">Disputa: {t.dispute_status}</Badge>}
+                      {t.refund_status && <Badge variant="destructive">{tx('Reembolso:')}{' '}{t.refund_status}</Badge>}
+                      {t.dispute_status && <Badge variant="destructive">{tx('Disputa:')}{' '}{t.dispute_status}</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {format(new Date(t.transaction_date), 'dd/MM/yyyy HH:mm')}
@@ -54,7 +55,7 @@ export function TransactionsTab({ clubId }: Props) {
                   <div className="text-right">
                     <p className="text-lg font-bold text-green-600">{fmt(Number(t.gross_amount))}</p>
                     {Number(t.fee_amount) > 0 && (
-                      <p className="text-xs text-muted-foreground">Taxa: {fmt(Number(t.fee_amount))} · Líq: {fmt(Number(t.net_amount))}</p>
+                      <p className="text-xs text-muted-foreground">{tx('Taxa:')}{' '}{fmt(Number(t.fee_amount))} {tx('· Líq:')}{' '}{fmt(Number(t.net_amount))}</p>
                     )}
                   </div>
                 </CardContent>

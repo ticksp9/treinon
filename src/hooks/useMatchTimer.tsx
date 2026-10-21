@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface UseMatchTimerProps {
   partDurationMinutes: number;
@@ -28,7 +29,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       if (!alertsTriggeredRef.current.has('approaching')) {
         alertsTriggeredRef.current.add('approaching');
         onTimeAlert?.('approaching');
-        toast.warning('⏱️ Faltam 2 minutos para o fim do tempo regulamentar', {
+        toast.warning(tx('⏱️ Faltam 2 minutos para o fim do tempo regulamentar'), {
           duration: 5000,
         });
         // Play sound
@@ -41,7 +42,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       if (!alertsTriggeredRef.current.has('regulation_end')) {
         alertsTriggeredRef.current.add('regulation_end');
         onTimeAlert?.('regulation_end');
-        toast.info('⏱️ Tempo regulamentar terminado', {
+        toast.info(tx('⏱️ Tempo regulamentar terminado'), {
           duration: 5000,
         });
         playAlertSound('whistle');
@@ -53,7 +54,7 @@ export function useMatchTimer({ partDurationMinutes, onTimeAlert }: UseMatchTime
       if (!alertsTriggeredRef.current.has('overtime')) {
         alertsTriggeredRef.current.add('overtime');
         onTimeAlert?.('overtime');
-        toast.warning('⏱️ +5 minutos após o tempo regulamentar', {
+        toast.warning(tx('⏱️ +5 minutos após o tempo regulamentar'), {
           duration: 5000,
         });
         playAlertSound('beep');

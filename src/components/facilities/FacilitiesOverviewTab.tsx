@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CalendarDays, Wrench, AlertTriangle, DollarSign, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { computeOccupancyRate, computeCostsByFacility } from '@/hooks/useFacilities';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   facilities: any[];
@@ -30,12 +31,12 @@ export function FacilitiesOverviewTab({ facilities, spaces, reservations, workOr
   const chartData = facilities.map(f => ({ name: f.name.slice(0, 20), custos: costsByFacility[f.id] || 0 })).filter(d => d.custos > 0);
 
   const kpis = [
-    { label: 'Instalações', value: activeFacilities, icon: Building2 },
-    { label: 'Espaços/Campos', value: activeSpaces, icon: MapPin },
-    { label: 'Ocupação (30d)', value: `${occupancy}%`, icon: CalendarDays },
-    { label: 'Manutenções Abertas', value: openWO, icon: Wrench },
-    { label: 'Docs a Expirar', value: expiringDocs, icon: AlertTriangle },
-    { label: 'Custos Operacionais', value: `€${totalCosts.toLocaleString('pt-PT')}`, icon: DollarSign },
+    { label: tx('Instalações'), value: activeFacilities, icon: Building2 },
+    { label: tx('Espaços/Campos'), value: activeSpaces, icon: MapPin },
+    { label: tx('Ocupação (30d)'), value: `${occupancy}%`, icon: CalendarDays },
+    { label: tx('Manutenções Abertas'), value: openWO, icon: Wrench },
+    { label: tx('Docs a Expirar'), value: expiringDocs, icon: AlertTriangle },
+    { label: tx('Custos Operacionais'), value: `€${totalCosts.toLocaleString('pt-PT')}`, icon: DollarSign },
   ];
 
   return (
@@ -53,7 +54,7 @@ export function FacilitiesOverviewTab({ facilities, spaces, reservations, workOr
       </div>
       {chartData.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Custos por Instalação</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{tx('Custos por Instalação')}</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>

@@ -69,7 +69,7 @@ export function MatchEvents({ events, onDeleteEvent, canEdit }: MatchEventsProps
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Incidências ({events.length})</CardTitle>
+        <CardTitle>{tx('Incidências (')}{events.length})</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="max-h-[60vh] md:max-h-none">
@@ -91,7 +91,7 @@ export function MatchEvents({ events, onDeleteEvent, canEdit }: MatchEventsProps
                   </div>
                   <div className="text-sm">
                     {event.is_opponent ? (
-                      <span className="text-muted-foreground">(Adversário)</span>
+                      <span className="text-muted-foreground">{tx('(Adversário)')}</span>
                     ) : event.player ? (
                       <span>
                         {event.player.number && `${event.player.number}. `}
@@ -100,7 +100,7 @@ export function MatchEvents({ events, onDeleteEvent, canEdit }: MatchEventsProps
                     ) : null}
                     {event.assist_player && (
                       <span className="text-muted-foreground ml-2">
-                        (Assist: {event.assist_player.name})
+                        {tx('(Assist:')}{' '}{event.assist_player.name})
                       </span>
                     )}
                   </div>

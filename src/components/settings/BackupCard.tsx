@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { backupFileName, describeBackup, formatSize, type AutoCopy, type BackupFile } from '@/lib/backup';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -60,11 +61,11 @@ export function BackupCard() {
     try {
       const { data, error } = await supabase.functions.invoke('club-backup', { body: { action: 'download', name: c.name } });
       const file = (typeof data === 'string' ? JSON.parse(data) : data) as BackupFile & { error?: string };
-      if (error || !file || file.error) throw new Error(file?.error || error?.message || 'sem resposta');
+      if (error || !file || file.error) throw new Error(file?.error || error?.message || tx('sem resposta'));
       save(file, backupFileName(file));
       setLast(describeBackup(file));
     } catch (e) {
-      toast.error('Não foi possível descarregar a cópia: ' + (e as Error).message);
+      toast.error(tx('Não foi possível descarregar a cópia: ') + (e as Error).message);
     } finally {
       setFetching(null);
     }
@@ -74,14 +75,14 @@ export function BackupCard() {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke('club-backup', { body: {} });
-      if (error || !data || (data as { error?: string }).error) throw new Error((data as { error?: string })?.error || error?.message || 'sem resposta');
+      if (error || !data || (data as { error?: string }).error) throw new Error((data as { error?: string })?.error || error?.message || tx('sem resposta'));
       const file = data as BackupFile;
       save(file, backupFileName(file));
       setLast(describeBackup(file));
-      toast.success('Cópia de segurança descarregada. Guarde o ficheiro num sítio seguro.');
+      toast.success(tx('Cópia de segurança descarregada. Guarde o ficheiro num sítio seguro.'));
       qc.invalidateQueries({ queryKey: ['backup-log'] });
     } catch (e) {
-      toast.error('Não foi possível fazer a cópia: ' + (e as Error).message);
+      toast.error(tx('Não foi possível fazer a cópia: ') + (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -90,28 +91,27 @@ export function BackupCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display text-base"><DatabaseBackup className="h-4 w-4" />Cópia de segurança</CardTitle>
+        <CardTitle className="flex items-center gap-2 font-display text-base"><DatabaseBackup className="h-4 w-4" />{tx('Cópia de segurança')}</CardTitle>
         <CardDescription>
-          Descarrega um ficheiro com {isClubAdmin ? 'tudo o que é do clube' : 'tudo o que é seu'}: equipas, jogadores, jogos, treinos, presenças, avaliações, comunicação e eventos.
-          O mesmo ficheiro serve para repor os dados ou para os levar para outra base de dados (do clube ou num servidor próprio).
+          {tx('Descarrega um ficheiro com')}{' '}{isClubAdmin ? tx('tudo o que é do clube') : tx('tudo o que é seu')}{tx(': equipas, jogadores, jogos, treinos, presenças, avaliações, comunicação e eventos. O mesmo ficheiro serve para repor os dados ou para os levar para outra base de dados (do clube ou num servidor próprio).')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button onClick={download} disabled={busy}>
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-          Fazer e descarregar uma cópia agora
+          {tx('Fazer e descarregar uma cópia agora')}
         </Button>
         {last && <p className="text-sm font-medium">{last}</p>}
 
         <div className="rounded-md border p-3">
-          <p className="text-sm font-medium">Cópias automáticas</p>
+          <p className="text-sm font-medium">{tx('Cópias automáticas')}</p>
           <p className="mb-2 text-xs text-muted-foreground">
-            Todas as noites o servidor guarda uma cópia. Ficam as últimas {auto?.keep ?? 14}; pode descarregar qualquer uma.
+            {tx('Todas as noites o servidor guarda uma cópia. Ficam as últimas')}{' '}{auto?.keep ?? 14}{tx('; pode descarregar qualquer uma.')}
           </p>
           {!auto ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : auto.copies.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ainda não há nenhuma: a primeira é feita esta noite.</p>
+            <p className="text-sm text-muted-foreground">{tx('Ainda não há nenhuma: a primeira é feita esta noite.')}</p>
           ) : (
             <ul className="divide-y text-sm">
               {auto.copies.map((c) => (
@@ -119,7 +119,7 @@ export function BackupCard() {
                   <span className="min-w-0"><span className="block font-medium first-letter:uppercase">{new Date(c.date + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
                   {c.size != null && <span className="block text-xs text-muted-foreground">{formatSize(c.size)}</span>}</span>
                   <Button size="sm" variant="outline" className="ml-auto h-8 shrink-0" disabled={fetching === c.name} onClick={() => downloadAuto(c)}>
-                    {fetching === c.name ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}Descarregar
+                    {fetching === c.name ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Download className="mr-1.5 h-4 w-4" />}{tx('Descarregar')}
                   </Button>
                 </li>
               ))}
@@ -127,8 +127,8 @@ export function BackupCard() {
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {lastLog ? `Última cópia: ${new Date(lastLog.created_at).toLocaleString('pt-PT', { dateStyle: 'long', timeStyle: 'short' })}.` : 'Ainda não foi feita nenhuma cópia.'}
-          {' '}O ficheiro tem dados pessoais de menores e dos encarregados: guarde-o protegido e não o partilhe. Não inclui palavras-passe nem os ficheiros carregados (fotografias e documentos).
+          {lastLog ? tx('Última cópia: {{v0}}.', { v0: new Date(lastLog.created_at).toLocaleString('pt-PT', { dateStyle: 'long', timeStyle: 'short' }) }) : tx('Ainda não foi feita nenhuma cópia.')}
+          {' '}{tx('O ficheiro tem dados pessoais de menores e dos encarregados: guarde-o protegido e não o partilhe. Não inclui palavras-passe nem os ficheiros carregados (fotografias e documentos).')}
         </p>
       </CardContent>
     </Card>

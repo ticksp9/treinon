@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAcademy } from '@/hooks/useAcademy';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Ativo',
@@ -36,22 +37,22 @@ export function AcademyAthletesTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Atletas da Formação</CardTitle>
+          <CardTitle>{tx('Atletas da Formação')}</CardTitle>
         </CardHeader>
         <CardContent>
           {profiles.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum atleta registado na academia.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhum atleta registado na academia.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Jogador ID</TableHead>
-                  <TableHead>Escalão</TableHead>
-                  <TableHead>Posição</TableHead>
-                  <TableHead>Pé</TableHead>
-                  <TableHead>Entrada</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Época</TableHead>
+                  <TableHead>{tx('Jogador ID')}</TableHead>
+                  <TableHead>{tx('Escalão')}</TableHead>
+                  <TableHead>{tx('Posição')}</TableHead>
+                  <TableHead>{tx('Pé')}</TableHead>
+                  <TableHead>{tx('Entrada')}</TableHead>
+                  <TableHead>{tx('Status')}</TableHead>
+                  <TableHead>{tx('Época')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

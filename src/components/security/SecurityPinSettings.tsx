@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { tx } from '@/lib/i18n/ui';
 
 export function SecurityPinSettings() {
   const { hasPin, isPinVerified, createPin, changePin, deletePin, lockSensitiveData } = useSecurityPin();
@@ -27,7 +28,7 @@ export function SecurityPinSettings() {
   const handleDeletePin = async (pin: string) => {
     const result = await deletePin(pin);
     if (result.success) {
-      toast.success('PIN eliminado com sucesso');
+      toast.success(tx('PIN eliminado com sucesso'));
       setShowDeletePinDialog(false);
     }
     return result;
@@ -39,10 +40,10 @@ export function SecurityPinSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-primary" />
-            Segurança de Dados Pessoais
+            {tx('Segurança de Dados Pessoais')}
           </CardTitle>
           <CardDescription>
-            Configure um PIN para proteger dados sensíveis dos jogadores (morada, contactos, documentos de identificação).
+            {tx('Configure um PIN para proteger dados sensíveis dos jogadores (morada, contactos, documentos de identificação).')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -54,9 +55,9 @@ export function SecurityPinSettings() {
                     <Lock className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">PIN de Segurança Ativo</p>
+                    <p className="font-medium">{tx('PIN de Segurança Ativo')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Os dados sensíveis estão protegidos
+                      {tx('Os dados sensíveis estão protegidos')}
                     </p>
                   </div>
                 </>
@@ -66,23 +67,23 @@ export function SecurityPinSettings() {
                     <Unlock className="w-5 h-5 text-warning" />
                   </div>
                   <div>
-                    <p className="font-medium">Sem PIN Configurado</p>
+                    <p className="font-medium">{tx('Sem PIN Configurado')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Os dados sensíveis não estão protegidos
+                      {tx('Os dados sensíveis não estão protegidos')}
                     </p>
                   </div>
                 </>
               )}
             </div>
             <Badge variant={hasPin ? 'default' : 'secondary'}>
-              {hasPin ? 'Protegido' : 'Não Protegido'}
+              {hasPin ? tx('Protegido') : tx('Não Protegido')}
             </Badge>
           </div>
 
           {isPinVerified && (
             <div className="flex items-center justify-between p-3 bg-success/10 border border-success/20 rounded-lg">
               <span className="text-sm text-success">
-                Sessão desbloqueada - dados sensíveis visíveis
+                {tx('Sessão desbloqueada - dados sensíveis visíveis')}
               </span>
               <Button 
                 variant="outline" 
@@ -90,7 +91,7 @@ export function SecurityPinSettings() {
                 onClick={lockSensitiveData}
               >
                 <Lock className="w-4 h-4 mr-1" />
-                Bloquear
+                {tx('Bloquear')}
               </Button>
             </div>
           )}
@@ -99,13 +100,13 @@ export function SecurityPinSettings() {
             {!hasPin ? (
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Shield className="w-4 h-4 mr-2" />
-                Criar PIN de Segurança
+                {tx('Criar PIN de Segurança')}
               </Button>
             ) : (
               <>
                 <Button variant="outline" onClick={() => setShowChangeDialog(true)}>
                   <Settings className="w-4 h-4 mr-2" />
-                  Alterar PIN
+                  {tx('Alterar PIN')}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -113,20 +114,20 @@ export function SecurityPinSettings() {
                   onClick={() => setShowDeleteConfirm(true)}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Remover PIN
+                  {tx('Remover PIN')}
                 </Button>
               </>
             )}
           </div>
 
           <div className="p-4 bg-card border rounded-lg space-y-2">
-            <h4 className="font-medium text-sm">Dados protegidos pelo PIN:</h4>
+            <h4 className="font-medium text-sm">{tx('Dados protegidos pelo PIN:')}</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Morada e localização</li>
-              <li>• Número de telefone e email</li>
-              <li>• Dados dos pais/encarregados de educação</li>
-              <li>• Documentos de identificação (CC, NIF)</li>
-              <li>• Certificados médicos</li>
+              <li>{tx('• Morada e localização')}</li>
+              <li>{tx('• Número de telefone e email')}</li>
+              <li>{tx('• Dados dos pais/encarregados de educação')}</li>
+              <li>{tx('• Documentos de identificação (CC, NIF)')}</li>
+              <li>{tx('• Certificados médicos')}</li>
             </ul>
           </div>
         </CardContent>
@@ -149,14 +150,13 @@ export function SecurityPinSettings() {
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover PIN de Segurança?</AlertDialogTitle>
+            <AlertDialogTitle>{tx('Remover PIN de Segurança?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Isto irá remover a proteção dos dados sensíveis dos jogadores. 
-              Qualquer pessoa com acesso à aplicação poderá ver moradas, contactos e documentos.
+              {tx('Isto irá remover a proteção dos dados sensíveis dos jogadores. Qualquer pessoa com acesso à aplicação poderá ver moradas, contactos e documentos.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={() => {
@@ -164,7 +164,7 @@ export function SecurityPinSettings() {
                 setShowDeletePinDialog(true);
               }}
             >
-              Continuar
+              {tx('Continuar')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -175,8 +175,8 @@ export function SecurityPinSettings() {
         onOpenChange={setShowDeletePinDialog}
         mode="verify"
         onSubmit={handleDeletePin}
-        title="Confirmar Remoção do PIN"
-        description="Introduza o seu PIN atual para confirmar a remoção."
+        title={tx('Confirmar Remoção do PIN')}
+        description={tx('Introduza o seu PIN atual para confirmar a remoção.')}
       />
     </>
   );

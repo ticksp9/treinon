@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { phaseOf, PROTOCOL_LABEL, type RehabProtocol } from '@/lib/rehab';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -41,8 +42,8 @@ export function FamilyRehab() {
 
   const tick = async (e: Ex) => {
     const { error } = await db.from('injury_exercise_logs').insert({ exercise_id: e.id, player_id: e.player_id, done_on: today(), pain: pain[e.id] ?? null, logged_by: user!.id });
-    if (error && error.code !== '23505') return toast.error('Não foi possível registar: ' + error.message);
-    toast.success('Registado. O fisioterapeuta vê que foi feito.');
+    if (error && error.code !== '23505') return toast.error(tx('Não foi possível registar: ') + error.message);
+    toast.success(tx('Registado. O fisioterapeuta vê que foi feito.'));
     qc.invalidateQueries({ queryKey: ['family-rehab', user?.id] });
   };
 
@@ -52,7 +53,7 @@ export function FamilyRehab() {
   return (
     <Card className="border-primary/40">
       <CardContent className="space-y-3 p-4">
-        <p className="flex items-center gap-2 font-semibold"><HeartPulse className="h-4 w-4 text-primary" />Exercícios de recuperação</p>
+        <p className="flex items-center gap-2 font-semibold"><HeartPulse className="h-4 w-4 text-primary" />{tx('Exercícios de recuperação')}</p>
         {[...byPlayer.entries()].map(([pid, list]) => {
           const inj = data.injuries.find((i) => i.id === list[0].injury_id);
           const ph = inj ? phaseOf(inj.rehab_protocol, inj.rehab_phase) : null;
@@ -60,7 +61,7 @@ export function FamilyRehab() {
             <div key={pid} className="space-y-2">
               <p className="text-sm">
                 <span className="font-medium">{list[0].player?.name}</span>
-                {ph && inj?.rehab_protocol && <span className="text-muted-foreground"> · {PROTOCOL_LABEL[inj.rehab_protocol]}, fase {inj.rehab_phase}/6: {ph.name}</span>}
+                {ph && inj?.rehab_protocol && <span className="text-muted-foreground"> · {PROTOCOL_LABEL[inj.rehab_protocol]}{tx(', fase')}{' '}{inj.rehab_phase}/6: {ph.name}</span>}
               </p>
               {list.map((e) => {
                 const isDone = data.done.has(e.id);
@@ -70,22 +71,22 @@ export function FamilyRehab() {
                       <span className="font-medium">{e.title}</span>
                       {e.dose && <span className="text-sm text-muted-foreground">{e.dose}</span>}
                       {e.frequency && <span className="text-sm text-muted-foreground">· {e.frequency}</span>}
-                      {e.video_url && <a href={e.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary"><ExternalLink className="h-3.5 w-3.5" />Ver vídeo</a>}
+                      {e.video_url && <a href={e.video_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary"><ExternalLink className="h-3.5 w-3.5" />{tx('Ver vídeo')}</a>}
                     </div>
                     {e.instructions && <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{e.instructions}</p>}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {isDone ? (
-                        <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600"><Check className="h-4 w-4" />Feito hoje</span>
+                        <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600"><Check className="h-4 w-4" />{tx('Feito hoje')}</span>
                       ) : (
                         <>
                           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            Dor (0–10)
-                            <select className="rounded border bg-background px-1 py-0.5 text-sm" value={pain[e.id] ?? ''} onChange={(ev) => setPain((p) => ({ ...p, [e.id]: Number(ev.target.value) }))} aria-label={`Dor ao fazer ${e.title}`}>
+                            {tx('Dor (0–10)')}
+                            <select className="rounded border bg-background px-1 py-0.5 text-sm" value={pain[e.id] ?? ''} onChange={(ev) => setPain((p) => ({ ...p, [e.id]: Number(ev.target.value) }))} aria-label={tx('Dor ao fazer {{v0}}', { v0: e.title })}>
                               <option value="">—</option>
                               {Array.from({ length: 11 }, (_, i) => <option key={i} value={i}>{i}</option>)}
                             </select>
                           </label>
-                          <Button size="sm" onClick={() => tick(e)}><Check className="mr-1 h-4 w-4" />Fiz hoje</Button>
+                          <Button size="sm" onClick={() => tick(e)}><Check className="mr-1 h-4 w-4" />{tx('Fiz hoje')}</Button>
                         </>
                       )}
                     </div>

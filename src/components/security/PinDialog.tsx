@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, Shield, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface PinDialogProps {
   open: boolean;
@@ -44,7 +45,7 @@ export function PinDialog({
         }
         const result = await onSubmit(pin);
         if (result.success) {
-          toast.success('PIN de segurança criado com sucesso!');
+          toast.success(tx('PIN de segurança criado com sucesso!'));
           onOpenChange(false);
           resetForm();
         } else {
@@ -53,7 +54,7 @@ export function PinDialog({
       } else if (mode === 'verify') {
         const result = await onSubmit(pin);
         if (result.success) {
-          toast.success('PIN verificado!');
+          toast.success(tx('PIN verificado!'));
           onOpenChange(false);
           resetForm();
         } else {
@@ -67,7 +68,7 @@ export function PinDialog({
         }
         const result = await onSubmit(pin, newPin);
         if (result.success) {
-          toast.success('PIN alterado com sucesso!');
+          toast.success(tx('PIN alterado com sucesso!'));
           onOpenChange(false);
           resetForm();
         } else {
@@ -124,7 +125,7 @@ export function PinDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="pin">
-              {mode === 'change' ? 'PIN Atual' : 'PIN (4-6 dígitos)'}
+              {mode === 'change' ? tx('PIN Atual') : tx('PIN (4-6 dígitos)')}
             </Label>
             <div className="relative">
               <Input
@@ -155,7 +156,7 @@ export function PinDialog({
             <>
               <div className="space-y-2">
                 <Label htmlFor="newPin">
-                  {mode === 'change' ? 'Novo PIN' : 'Confirmar PIN'}
+                  {mode === 'change' ? tx('Novo PIN') : tx('Confirmar PIN')}
                 </Label>
                 <Input
                   id="newPin"
@@ -176,7 +177,7 @@ export function PinDialog({
 
               {mode === 'change' && (
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPin">Confirmar Novo PIN</Label>
+                  <Label htmlFor="confirmPin">{tx('Confirmar Novo PIN')}</Label>
                   <Input
                     id="confirmPin"
                     type={showPin ? 'text' : 'password'}
@@ -199,11 +200,11 @@ export function PinDialog({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {tx('Cancelar')}
             </Button>
             <Button type="submit" disabled={loading}>
               <Lock className="w-4 h-4 mr-2" />
-              {loading ? 'A processar...' : mode === 'verify' ? 'Verificar' : 'Guardar'}
+              {loading ? tx('A processar...') : mode === 'verify' ? tx('Verificar') : tx('Guardar')}
             </Button>
           </div>
         </form>

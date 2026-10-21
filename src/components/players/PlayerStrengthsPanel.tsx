@@ -11,6 +11,7 @@ import { Plus, X, ThumbsUp, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   playerId: string;
@@ -49,7 +50,7 @@ function FocusPanel({ playerId, kind, canEdit = true }: Props) {
 
   const add = useMutation({
     mutationFn: async (label: string) => {
-      if (!user) throw new Error('Sem sessão');
+      if (!user) throw new Error(tx('Sem sessão'));
       const { error } = await supabase.from('player_strengths_focus' as any).insert({
         player_id: playerId,
         kind,
@@ -62,7 +63,7 @@ function FocusPanel({ playerId, kind, canEdit = true }: Props) {
       setNewLabel('');
       qc.invalidateQueries({ queryKey });
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   const remove = useMutation({
@@ -91,20 +92,20 @@ function FocusPanel({ playerId, kind, canEdit = true }: Props) {
       </CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">A carregar…</p>
+          <p className="text-sm text-muted-foreground">{tx('A carregar…')}</p>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sem entradas.</p>
+          <p className="text-sm text-muted-foreground">{tx('Sem entradas.')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {items.map((it) => (
               <Badge key={it.id} className={`${tone} gap-1 pr-1`}>
-                <span title={`Atualizado ${format(new Date(it.updated_at), 'dd MMM yyyy', { locale: pt })}`}>
+                <span title={tx('Atualizado {{v0}}', { v0: format(new Date(it.updated_at), 'dd MMM yyyy', { locale: pt }) })}>
                   {it.label}
                 </span>
                 {canEdit && (
                   <button
                     type="button"
-                    aria-label="Remover"
+                    aria-label={tx('Remover')}
                     onClick={() => remove.mutate(it.id)}
                     className="rounded-full hover:bg-background/50 p-0.5"
                   >
@@ -121,7 +122,7 @@ function FocusPanel({ playerId, kind, canEdit = true }: Props) {
             <Input
               value={newLabel}
               onChange={(e) => setNewLabel(e.target.value)}
-              placeholder={kind === 'strength' ? 'Ex: Boa receção orientada' : 'Ex: Tomada de decisão'}
+              placeholder={kind === 'strength' ? tx('Ex: Boa receção orientada') : tx('Ex: Tomada de decisão')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && newLabel.trim()) add.mutate(newLabel.trim());
               }}
@@ -138,7 +139,7 @@ function FocusPanel({ playerId, kind, canEdit = true }: Props) {
 
         {items[0]?.updated_at && (
           <p className="text-[11px] text-muted-foreground">
-            Última atualização: {format(new Date(items[0].updated_at), "dd MMM yyyy", { locale: pt })}
+            {tx('Última atualização:')}{' '}{format(new Date(items[0].updated_at), "dd MMM yyyy", { locale: pt })}
           </p>
         )}
       </CardContent>

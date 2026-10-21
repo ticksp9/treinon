@@ -8,14 +8,15 @@ import { DRILLS, SESSION_PLANS } from '@/lib/drill-library';
 import { SUPPORT_EMAIL } from '@/lib/app-config';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { isNativeApp } from '@/lib/native-files';
+import { tx } from '@/lib/i18n/ui';
 
 const FEATURES = [
-  { icon: Timer, title: 'Jogo ao vivo', text: 'Cronómetro, golos, cartões e substituições. Os minutos de cada jogador calculados sozinhos — justos para todos na formação.' },
-  { icon: BookOpen, title: `${DRILLS.length} exercícios e ${SESSION_PLANS.length} treinos prontos`, text: 'Com esquema, pontos-chave e progressões, de Petizes a Seniores. Filtro "só bolas e cones" para quem tem pouco material.' },
-  { icon: WifiOff, title: 'Funciona sem rede', text: 'No campo sem internet tudo fica guardado no telemóvel e sincroniza quando voltar a haver rede.' },
-  { icon: Share2, title: 'Partilha no WhatsApp', text: 'Convocatórias, treinos e resultados enviados para o grupo da equipa num toque.' },
-  { icon: Users, title: 'Plantel e épocas', text: 'Fichas, presenças, avaliações e passagem de escalão automática pela regra das associações.' },
-  { icon: ShieldCheck, title: 'Dados protegidos', text: 'Pensado para dados de menores: acesso por perfis, pais só veem o seu filho, servidores na Europa.' },
+  { icon: Timer, get title() { return tx('Jogo ao vivo'); }, get text() { return tx('Cronómetro, golos, cartões e substituições. Os minutos de cada jogador calculados sozinhos — justos para todos na formação.'); } },
+  { icon: BookOpen, get title() { return tx('{{v0}} exercícios e {{v1}} treinos prontos', { v0: DRILLS.length, v1: SESSION_PLANS.length }); }, get text() { return tx('Com esquema, pontos-chave e progressões, de Petizes a Seniores. Filtro "só bolas e cones" para quem tem pouco material.'); } },
+  { icon: WifiOff, get title() { return tx('Funciona sem rede'); }, get text() { return tx('No campo sem internet tudo fica guardado no telemóvel e sincroniza quando voltar a haver rede.'); } },
+  { icon: Share2, get title() { return tx('Partilha no WhatsApp'); }, get text() { return tx('Convocatórias, treinos e resultados enviados para o grupo da equipa num toque.'); } },
+  { icon: Users, get title() { return tx('Plantel e épocas'); }, get text() { return tx('Fichas, presenças, avaliações e passagem de escalão automática pela regra das associações.'); } },
+  { icon: ShieldCheck, get title() { return tx('Dados protegidos'); }, get text() { return tx('Pensado para dados de menores: acesso por perfis, pais só veem o seu filho, servidores na Europa.'); } },
 ];
 
 const STEPS = [
@@ -35,14 +36,14 @@ export default function Index() {
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
             <img src="/icon.svg" alt="" className="h-9 w-9 rounded-md" />
-            <span className="font-display text-xl font-bold tracking-tight">TreinON</span>
+            <span className="font-display text-xl font-bold tracking-tight">{tx('TreinON')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => navigate('/biblioteca')} className="hidden sm:inline-flex">Biblioteca</Button>
-            {!isNativeApp() && <Button variant="ghost" onClick={() => navigate('/instalar')}>Instalar</Button>}
+            <Button variant="ghost" onClick={() => navigate('/biblioteca')} className="hidden sm:inline-flex">{tx('Biblioteca')}</Button>
+            {!isNativeApp() && <Button variant="ghost" onClick={() => navigate('/instalar')}>{tx('Instalar')}</Button>}
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => navigate('/auth')}>Entrar</Button>
-            <Button onClick={() => navigate('/auth?tab=signup')} className="hidden sm:inline-flex">Criar conta</Button>
+            <Button variant="ghost" onClick={() => navigate('/auth')}>{tx('Entrar')}</Button>
+            <Button onClick={() => navigate('/auth?tab=signup')} className="hidden sm:inline-flex">{tx('Criar conta')}</Button>
           </div>
         </nav>
       </header>
@@ -54,21 +55,20 @@ export default function Index() {
           <div className="container mx-auto grid items-center gap-10 px-4 py-14 md:py-20 lg:grid-cols-2">
             <div>
               <span className="mb-5 inline-flex items-center gap-2 rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
-                <Heart className="h-4 w-4" /> Gratuita para todas as equipas
+                <Heart className="h-4 w-4" /> {tx('Gratuita para todas as equipas')}
               </span>
               <h1 className="mb-5 font-display text-4xl font-bold leading-[1.1] tracking-tight md:text-6xl">
-                As ferramentas dos grandes clubes, <span className="gradient-text">ao alcance de qualquer equipa</span>.
+                {tx('As ferramentas dos grandes clubes,')}{' '}<span className="gradient-text">{tx('ao alcance de qualquer equipa')}</span>.
               </h1>
               <p className="mb-8 max-w-xl text-lg text-muted-foreground">
-                Para o treinador que faz tudo sozinho: jogo ao vivo com minutos, treinos prontos, plantel,
-                convocatórias e comunicação com os pais — no telemóvel, mesmo sem rede.
+                {tx('Para o treinador que faz tudo sozinho: jogo ao vivo com minutos, treinos prontos, plantel, convocatórias e comunicação com os pais — no telemóvel, mesmo sem rede.')}
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" onClick={() => navigate('/auth?tab=signup')} className="h-12 px-7 text-base">
-                  Começar agora — é grátis <ArrowRight className="ml-2 h-5 w-5" />
+                  {tx('Começar agora — é grátis')}{' '}<ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button size="lg" variant="outline" onClick={() => navigate('/biblioteca')} className="h-12 px-7 text-base">
-                  <BookOpen className="mr-2 h-5 w-5" /> Ver exercícios grátis
+                  <BookOpen className="mr-2 h-5 w-5" /> {tx('Ver exercícios grátis')}
                 </Button>
               </div>
               <ul className="mt-8 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
@@ -91,9 +91,9 @@ export default function Index() {
                 </div>
               </div>
               <div className="absolute -bottom-6 -left-4 rounded-lg border-l-4 border-l-accent border bg-card px-4 py-3 shadow-lg sm:-left-10">
-                <p className="text-xs text-muted-foreground">2.ª parte · 63'</p>
+                <p className="text-xs text-muted-foreground">{tx('2.ª parte · 63\'')}</p>
                 <p className="font-mono text-2xl font-semibold">2 <span className="text-muted-foreground">–</span> 1</p>
-                <p className="text-xs text-primary">Minutos atualizados ao vivo</p>
+                <p className="text-xs text-primary">{tx('Minutos atualizados ao vivo')}</p>
               </div>
             </div>
           </div>
@@ -102,8 +102,8 @@ export default function Index() {
         {/* Features */}
         <section className="container mx-auto px-4 py-16">
           <div className="mx-auto mb-10 max-w-2xl text-center">
-            <h2 className="mb-3 font-display text-3xl font-bold">Tudo o que um treinador precisa</h2>
-            <p className="text-muted-foreground">Sem publicidade, sem funcionalidades escondidas atrás de pagamento.</p>
+            <h2 className="mb-3 font-display text-3xl font-bold">{tx('Tudo o que um treinador precisa')}</h2>
+            <p className="text-muted-foreground">{tx('Sem publicidade, sem funcionalidades escondidas atrás de pagamento.')}</p>
           </div>
           <div className="mx-auto grid max-w-6xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
@@ -122,10 +122,9 @@ export default function Index() {
         <section className="border-y bg-muted/40">
           <div className="container mx-auto grid gap-8 px-4 py-14 md:grid-cols-2 md:items-center">
             <div>
-              <h2 className="mb-3 font-display text-3xl font-bold">Os dados são do clube</h2>
+              <h2 className="mb-3 font-display text-3xl font-bold">{tx('Os dados são do clube')}</h2>
               <p className="mb-5 text-muted-foreground">
-                Começa na nossa nuvem, sem custos. Se o clube preferir, os dados podem ficar numa conta própria na
-                nuvem ou num servidor do próprio clube — a app é exatamente a mesma.
+                {tx('Começa na nossa nuvem, sem custos. Se o clube preferir, os dados podem ficar numa conta própria na nuvem ou num servidor do próprio clube — a app é exatamente a mesma.')}
               </p>
               <ul className="space-y-2 text-sm">
                 {['Instala-se em Android, iPhone, iPad e Windows', 'No servidor do clube: cópias de segurança diárias automáticas', 'Pode mudar de servidor levando os seus dados'].map((x) => (
@@ -135,9 +134,9 @@ export default function Index() {
             </div>
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
               {[
-                { icon: Smartphone, label: 'Telemóvel' },
-                { icon: Zap, label: 'Nuvem TreinON' },
-                { icon: Server, label: 'Servidor do clube' },
+                { icon: Smartphone, label: tx('Telemóvel') },
+                { icon: Zap, label: tx('Nuvem TreinON') },
+                { icon: Server, label: tx('Servidor do clube') },
               ].map((x) => (
                 <div key={x.label} className="rounded-lg border bg-card p-5">
                   <x.icon className="mx-auto mb-2 h-7 w-7 text-primary" />
@@ -150,18 +149,18 @@ export default function Index() {
 
         {/* CTA */}
         <section className="container mx-auto px-4 py-16 text-center">
-          <h2 className="mb-4 font-display text-3xl font-bold">Pronto para o próximo treino?</h2>
+          <h2 className="mb-4 font-display text-3xl font-bold">{tx('Pronto para o próximo treino?')}</h2>
           <Button size="lg" onClick={() => navigate('/auth?tab=signup')} className="h-12 px-8 text-base">
-            Criar conta gratuita <ArrowRight className="ml-2 h-5 w-5" />
+            {tx('Criar conta gratuita')}{' '}<ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </section>
       </main>
 
       <footer className="border-t py-8">
         <div className="container mx-auto flex flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground sm:flex-row">
-          <p>© {new Date().getFullYear()} TreinON · Feito para o futebol de base</p>
+          <p>© {new Date().getFullYear()} {tx('TreinON · Feito para o futebol de base')}</p>
           {SUPPORT_EMAIL && (
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground">Apoio: {SUPPORT_EMAIL}</a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground">{tx('Apoio:')}{' '}{SUPPORT_EMAIL}</a>
           )}
         </div>
       </footer>

@@ -16,6 +16,7 @@ import { Plus, Eye, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { OBSERVATION_TYPES, RECOMMENDATION_OPTIONS } from '@/hooks/useScouting';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 export function ObservationsTab() {
   const { clubId } = useUserRole();
@@ -71,10 +72,10 @@ export function ObservationsTab() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scouting-observations', clubId] });
       qc.invalidateQueries({ queryKey: ['scouting-observations-count', clubId] });
-      toast.success('Observação registada com sucesso');
+      toast.success(tx('Observação registada com sucesso'));
       setOpen(false);
     },
-    onError: () => toast.error('Erro ao registar observação'),
+    onError: () => toast.error(tx('Erro ao registar observação')),
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
@@ -82,7 +83,7 @@ export function ObservationsTab() {
     const fd = new FormData(e.currentTarget);
     const form: Record<string, any> = {};
     fd.forEach((v, k) => { form[k] = v; });
-    if (!form.prospect_id) { toast.error('Selecione um prospect'); return; }
+    if (!form.prospect_id) { toast.error(tx('Selecione um prospect')); return; }
     createMutation.mutate(form);
   };
 
@@ -91,46 +92,46 @@ export function ObservationsTab() {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Observações ({observations?.length || 0})</h3>
+        <h3 className="text-lg font-semibold">{tx('Observações (')}{observations?.length || 0})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Nova Observação</Button>
+            <Button><Plus className="h-4 w-4 mr-2" />{tx('Nova Observação')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Nova Observação</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Observação')}</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <Label>Prospect *</Label>
+                <Label>{tx('Prospect *')}</Label>
                 <Select name="prospect_id">
-                  <SelectTrigger><SelectValue placeholder="Selecionar prospect" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar prospect')} /></SelectTrigger>
                   <SelectContent>{prospects?.map(p => <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Tipo</Label>
+                  <Label>{tx('Tipo')}</Label>
                   <Select name="observation_type">
-                    <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Tipo')} /></SelectTrigger>
                     <SelectContent>{OBSERVATION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div><Label>Data</Label><Input name="observation_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} /></div>
+                <div><Label>{tx('Data')}</Label><Input name="observation_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} /></div>
               </div>
-              <div><Label>Competição / Contexto</Label><Input name="competition_name" /></div>
-              <div><Label>Contexto do Jogo</Label><Input name="match_context" /></div>
-              <div><Label>Posição Observada</Label><Input name="position_observed" /></div>
-              <div><Label>Pontos Fortes</Label><Textarea name="strengths" rows={2} /></div>
-              <div><Label>Pontos a Desenvolver</Label><Textarea name="weaknesses" rows={2} /></div>
+              <div><Label>{tx('Competição / Contexto')}</Label><Input name="competition_name" /></div>
+              <div><Label>{tx('Contexto do Jogo')}</Label><Input name="match_context" /></div>
+              <div><Label>{tx('Posição Observada')}</Label><Input name="position_observed" /></div>
+              <div><Label>{tx('Pontos Fortes')}</Label><Textarea name="strengths" rows={2} /></div>
+              <div><Label>{tx('Pontos a Desenvolver')}</Label><Textarea name="weaknesses" rows={2} /></div>
               <div>
-                <Label>Recomendação</Label>
+                <Label>{tx('Recomendação')}</Label>
                 <Select name="recommendation">
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{RECOMMENDATION_OPTIONS.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Notas</Label><Textarea name="notes" rows={2} /></div>
+              <div><Label>{tx('Notas')}</Label><Textarea name="notes" rows={2} /></div>
               <Button type="submit" className="w-full" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'A registar...' : 'Registar Observação'}
+                {createMutation.isPending ? tx('A registar...') : tx('Registar Observação')}
               </Button>
             </form>
           </DialogContent>
@@ -140,7 +141,7 @@ export function ObservationsTab() {
       {(observations?.length || 0) === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
           <Eye className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p>Nenhuma observação registada.</p>
+          <p>{tx('Nenhuma observação registada.')}</p>
         </CardContent></Card>
       ) : (
         <div className="space-y-2">

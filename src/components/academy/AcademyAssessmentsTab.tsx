@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAcademy } from '@/hooks/useAcademy';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const CYCLE_STATUS_LABELS: Record<string, string> = {
   draft: 'Rascunho',
@@ -32,20 +33,20 @@ export function AcademyAssessmentsTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Ciclos de Avaliação</CardTitle>
+          <CardTitle>{tx('Ciclos de Avaliação')}</CardTitle>
         </CardHeader>
         <CardContent>
           {cycles.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum ciclo de avaliação criado.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhum ciclo de avaliação criado.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Avaliações</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{tx('Nome')}</TableHead>
+                  <TableHead>{tx('Tipo')}</TableHead>
+                  <TableHead>{tx('Período')}</TableHead>
+                  <TableHead>{tx('Avaliações')}</TableHead>
+                  <TableHead>{tx('Status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

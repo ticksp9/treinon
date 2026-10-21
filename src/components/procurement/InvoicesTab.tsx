@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 const statusLabels: Record<string, string> = {
   unpaid: 'Por pagar', partially_paid: 'Parc. Pago', paid: 'Pago', overdue: 'Vencido', disputed: 'Disputado', cancelled: 'Cancelado',
@@ -57,29 +58,29 @@ export function InvoicesTab({ clubId }: { clubId: string }) {
     <div className="space-y-4">
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Registar Fatura</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{tx('Registar Fatura')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Registar Fatura de Fornecedor</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Registar Fatura de Fornecedor')}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Fornecedor *</Label>
+                <Label>{tx('Fornecedor *')}</Label>
                 <Select value={form.vendor_id} onValueChange={v => setForm(f => ({ ...f, vendor_id: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar...')} /></SelectTrigger>
                   <SelectContent>{vendors.filter(v => v.vendor_status === 'active').map(v => <SelectItem key={v.id} value={v.id}>{v.legal_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Nº Fatura *</Label><Input value={form.invoice_number} onChange={e => setForm(f => ({ ...f, invoice_number: e.target.value }))} /></div>
+              <div><Label>{tx('Nº Fatura *')}</Label><Input value={form.invoice_number} onChange={e => setForm(f => ({ ...f, invoice_number: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Data Fatura</Label><Input type="date" value={form.invoice_date} onChange={e => setForm(f => ({ ...f, invoice_date: e.target.value }))} /></div>
-                <div><Label>Data Vencimento *</Label><Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} /></div>
+                <div><Label>{tx('Data Fatura')}</Label><Input type="date" value={form.invoice_date} onChange={e => setForm(f => ({ ...f, invoice_date: e.target.value }))} /></div>
+                <div><Label>{tx('Data Vencimento *')}</Label><Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><Label>Subtotal (€)</Label><Input type="number" value={form.subtotal} onChange={e => setForm(f => ({ ...f, subtotal: Number(e.target.value) }))} /></div>
-                <div><Label>IVA (€)</Label><Input type="number" value={form.tax_total} onChange={e => setForm(f => ({ ...f, tax_total: Number(e.target.value) }))} /></div>
+                <div><Label>{tx('Subtotal (€)')}</Label><Input type="number" value={form.subtotal} onChange={e => setForm(f => ({ ...f, subtotal: Number(e.target.value) }))} /></div>
+                <div><Label>{tx('IVA (€)')}</Label><Input type="number" value={form.tax_total} onChange={e => setForm(f => ({ ...f, tax_total: Number(e.target.value) }))} /></div>
               </div>
-              <div className="text-right font-semibold">Total: {fmt(grossTotal)}</div>
+              <div className="text-right font-semibold">{tx('Total:')}{' '}{fmt(grossTotal)}</div>
               <Button onClick={handleCreate} disabled={!form.vendor_id || !form.invoice_number || !form.due_date || createInvoice.isPending} className="w-full">
-                {createInvoice.isPending ? 'A registar...' : 'Registar Fatura'}
+                {createInvoice.isPending ? tx('A registar...') : tx('Registar Fatura')}
               </Button>
             </div>
           </DialogContent>
@@ -91,18 +92,18 @@ export function InvoicesTab({ clubId }: { clubId: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nº Fatura</TableHead>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Em Aberto</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{tx('Nº Fatura')}</TableHead>
+                <TableHead>{tx('Fornecedor')}</TableHead>
+                <TableHead>{tx('Data')}</TableHead>
+                <TableHead>{tx('Vencimento')}</TableHead>
+                <TableHead>{tx('Total')}</TableHead>
+                <TableHead>{tx('Em Aberto')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {invoices.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Sem faturas registadas</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{tx('Sem faturas registadas')}</TableCell></TableRow>
               ) : invoices.map(inv => (
                 <TableRow key={inv.id} className={isOverdue(inv) ? 'bg-destructive/5' : ''}>
                   <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
@@ -113,7 +114,7 @@ export function InvoicesTab({ clubId }: { clubId: string }) {
                   <TableCell className="font-semibold">{fmt(inv.outstanding_amount)}</TableCell>
                   <TableCell>
                     <Badge className={isOverdue(inv) ? statusColors.overdue : (statusColors[inv.payment_status] || '')}>
-                      {isOverdue(inv) ? 'Vencido' : (statusLabels[inv.payment_status] || inv.payment_status)}
+                      {isOverdue(inv) ? tx('Vencido') : (statusLabels[inv.payment_status] || inv.payment_status)}
                     </Badge>
                   </TableCell>
                 </TableRow>

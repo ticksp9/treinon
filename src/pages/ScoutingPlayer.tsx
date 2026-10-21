@@ -29,6 +29,7 @@ import {
   recommendationLabel, relativeAgeNote, statusLabel, yearOfBirth,
   type AreaKey, type Recommendation, type ScoutObservation, type ScoutPlayer, type ScoutStatus,
 } from '@/lib/player-scouting';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -78,21 +79,21 @@ export default function ScoutingPlayer() {
   const saveHeader = async (form: ScoutPlayerForm) => {
     const { error } = await db.from('scout_players').update(playerFormToRow(form)).eq('id', id);
     if (error) { fail('Não foi possível guardar', error); throw error; }
-    refresh('scout-player'); toast.success('Ficha atualizada.');
+    refresh('scout-player'); toast.success(tx('Ficha atualizada.'));
   };
   const setStatus = async (status: ScoutStatus) => {
     const { error } = await db.from('scout_players').update({ status }).eq('id', id);
     if (error) return fail('Não foi possível mudar o estado', error);
     refresh('scout-player');
-    toast.success(status === 'signed' ? 'Marcado como inscrito. Crie-o em Jogadores para entrar no plantel.' : `Estado: ${statusLabel(status)}.`);
+    toast.success(status === 'signed' ? tx('Marcado como inscrito. Crie-o em Jogadores para entrar no plantel.') : tx('Estado: {{v0}}.', { v0: statusLabel(status) }));
   };
   const remove = async () => {
-    if (!player || !window.confirm(`Apagar a ficha de "${player.name}"? As observações e o contacto são apagados.`)) return;
+    if (!player || !window.confirm(tx('Apagar a ficha de "{{v0}}"? As observações e o contacto são apagados.', { v0: player.name }))) return;
     const { data, error } = await db.from('scout_players').delete().eq('id', id).select('id');
     if (error) return fail('Não foi possível apagar', error);
-    if (!data?.length) return toast.error('Só quem criou a ficha (ou o administrador do clube) a pode apagar.');
+    if (!data?.length) return toast.error(tx('Só quem criou a ficha (ou o administrador do clube) a pode apagar.'));
     qc.invalidateQueries({ queryKey: ['scout-players-list'] });
-    toast.success('Ficha apagada.');
+    toast.success(tx('Ficha apagada.'));
     navigate('/scouting?tab=jogadores');
   };
   const saveNotes = async () => {
@@ -123,10 +124,10 @@ export default function ScoutingPlayer() {
     };
     const { error } = obs.id ? await db.from('scout_player_observations').update(row).eq('id', obs.id) : await db.from('scout_player_observations').insert({ ...row, scout_player_id: id });
     if (error) return fail('Não foi possível guardar a observação', error);
-    setObs(null); refresh('scout-player-observations'); toast.success('Observação guardada.');
+    setObs(null); refresh('scout-player-observations'); toast.success(tx('Observação guardada.'));
   };
   const removeObs = async (o: ScoutObservation) => {
-    if (!window.confirm(`Apagar a observação de ${day(o.observed_on)}?`)) return;
+    if (!window.confirm(tx('Apagar a observação de {{v0}}?', { v0: day(o.observed_on) }))) return;
     const { error } = await db.from('scout_player_observations').delete().eq('id', o.id);
     if (error) return fail('Não foi possível apagar', error);
     refresh('scout-player-observations');
@@ -139,24 +140,24 @@ export default function ScoutingPlayer() {
     const { error } = contact
       ? await db.from('scout_player_contacts').update({ contact: row.contact, permission_note: row.permission_note }).eq('scout_player_id', id)
       : await db.from('scout_player_contacts').insert(row);
-    if (error) return toast.error(error.code === '23505' ? 'Já existe um contacto guardado por outra pessoa; só ela e o administrador do clube o veem.' : 'Não foi possível guardar o contacto: ' + error.message);
-    setContactDraft(null); refresh('scout-player-contact'); toast.success('Contacto guardado.');
+    if (error) return toast.error(error.code === '23505' ? tx('Já existe um contacto guardado por outra pessoa; só ela e o administrador do clube o veem.') : tx('Não foi possível guardar o contacto: ') + error.message);
+    setContactDraft(null); refresh('scout-player-contact'); toast.success(tx('Contacto guardado.'));
   };
   const removeContact = async () => {
-    if (!window.confirm('Apagar o contacto guardado?')) return;
+    if (!window.confirm(tx('Apagar o contacto guardado?'))) return;
     const { error } = await db.from('scout_player_contacts').delete().eq('scout_player_id', id);
     if (error) return fail('Não foi possível apagar', error);
     refresh('scout-player-contact');
   };
 
-  if (isLoading) return <AppLayout title="Scouting"><p className="py-10 text-center text-sm text-muted-foreground">A carregar…</p></AppLayout>;
+  if (isLoading) return <AppLayout title={tx('Scouting')}><p className="py-10 text-center text-sm text-muted-foreground">{tx('A carregar…')}</p></AppLayout>;
   if (!player) {
     return (
-      <AppLayout title="Scouting">
+      <AppLayout title={tx('Scouting')}>
         <div className="space-y-3 py-10 text-center">
-          <p className="font-medium">Ficha não encontrada</p>
-          <p className="text-sm text-muted-foreground">Pode ter sido apagada, ou pertence a outra equipa técnica.</p>
-          <Button variant="outline" asChild><Link to="/scouting?tab=jogadores">Voltar aos jogadores</Link></Button>
+          <p className="font-medium">{tx('Ficha não encontrada')}</p>
+          <p className="text-sm text-muted-foreground">{tx('Pode ter sido apagada, ou pertence a outra equipa técnica.')}</p>
+          <Button variant="outline" asChild><Link to="/scouting?tab=jogadores">{tx('Voltar aos jogadores')}</Link></Button>
         </div>
       </AppLayout>
     );
@@ -173,10 +174,10 @@ export default function ScoutingPlayer() {
   ];
 
   return (
-    <AppLayout title="Scouting">
+    <AppLayout title={tx('Scouting')}>
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex flex-wrap items-start gap-3">
-          <Button variant="ghost" size="icon" asChild aria-label="Voltar aos jogadores"><Link to="/scouting?tab=jogadores"><ArrowLeft className="h-4 w-4" /></Link></Button>
+          <Button variant="ghost" size="icon" asChild aria-label={tx('Voltar aos jogadores')}><Link to="/scouting?tab=jogadores"><ArrowLeft className="h-4 w-4" /></Link></Button>
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-xl font-semibold">{player.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
@@ -185,16 +186,16 @@ export default function ScoutingPlayer() {
               {[player.current_club, player.category, age != null ? `${age} anos` : null].filter(Boolean).join(' · ')}
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild><Link to={`/scouting/jogadores/${player.id}/relatorio`} target="_blank"><FileText className="mr-1.5 h-4 w-4" />Relatório</Link></Button>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-1.5 h-4 w-4" />Editar</Button>
-          <Button variant="ghost" size="sm" className="text-destructive" onClick={remove}><Trash2 className="mr-1.5 h-4 w-4" />Apagar</Button>
+          <Button variant="outline" size="sm" asChild><Link to={`/scouting/jogadores/${player.id}/relatorio`} target="_blank"><FileText className="mr-1.5 h-4 w-4" />{tx('Relatório')}</Link></Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}><Pencil className="mr-1.5 h-4 w-4" />{tx('Editar')}</Button>
+          <Button variant="ghost" size="sm" className="text-destructive" onClick={remove}><Trash2 className="mr-1.5 h-4 w-4" />{tx('Apagar')}</Button>
         </div>
 
         {/* where he stands */}
         <Card>
           <CardContent className="space-y-2 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Estado</p>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Estado do jogador">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Estado')}</p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label={tx('Estado do jogador')}>
               {STATUSES.map((s) => (
                 <Button key={s.key} size="sm" variant={player.status === s.key ? 'default' : 'outline'} className="h-8" aria-pressed={player.status === s.key} title={s.hint} onClick={() => player.status !== s.key && setStatus(s.key)}>{s.label}</Button>
               ))}
@@ -215,19 +216,19 @@ export default function ScoutingPlayer() {
 
               {notes ? (
                 <div className="space-y-2">
-                  <div><Label htmlFor="sp-summary">Resumo</Label><Textarea id="sp-summary" rows={4} maxLength={4000} value={notes.summary} onChange={(e) => setNotes({ ...notes, summary: e.target.value })} placeholder="O que o distingue, onde encaixa na nossa equipa, o que falta ver." /></div>
-                  <div><Label htmlFor="sp-links">Vídeos (uma ligação por linha)</Label><Textarea id="sp-links" rows={2} value={notes.links} onChange={(e) => setNotes({ ...notes, links: e.target.value })} placeholder="https://…" /></div>
-                  <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setNotes(null)}>Cancelar</Button><Button onClick={saveNotes}>Guardar</Button></div>
+                  <div><Label htmlFor="sp-summary">{tx('Resumo')}</Label><Textarea id="sp-summary" rows={4} maxLength={4000} value={notes.summary} onChange={(e) => setNotes({ ...notes, summary: e.target.value })} placeholder={tx('O que o distingue, onde encaixa na nossa equipa, o que falta ver.')} /></div>
+                  <div><Label htmlFor="sp-links">{tx('Vídeos (uma ligação por linha)')}</Label><Textarea id="sp-links" rows={2} value={notes.links} onChange={(e) => setNotes({ ...notes, links: e.target.value })} placeholder="https://…" /></div>
+                  <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setNotes(null)}>{tx('Cancelar')}</Button><Button onClick={saveNotes}>{tx('Guardar')}</Button></div>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Resumo</p><p className="whitespace-pre-line text-sm">{player.summary || '—'}</p></div>
+                  <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{tx('Resumo')}</p><p className="whitespace-pre-line text-sm">{player.summary || '—'}</p></div>
                   {player.video_links.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {player.video_links.map((l, i) => <a key={l} href={l} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-2 hover:underline"><ExternalLink className="h-3.5 w-3.5" />Vídeo {i + 1}</a>)}
+                      {player.video_links.map((l, i) => <a key={l} href={l} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-2 hover:underline"><ExternalLink className="h-3.5 w-3.5" />{tx('Vídeo')}{' '}{i + 1}</a>)}
                     </div>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setNotes({ summary: player.summary ?? '', links: player.video_links.join('\n') })}><Pencil className="mr-1.5 h-4 w-4" />Resumo e vídeos</Button>
+                  <Button size="sm" variant="outline" onClick={() => setNotes({ summary: player.summary ?? '', links: player.video_links.join('\n') })}><Pencil className="mr-1.5 h-4 w-4" />{tx('Resumo e vídeos')}</Button>
                 </div>
               )}
             </CardContent>
@@ -236,23 +237,23 @@ export default function ScoutingPlayer() {
           <Card>
             <CardContent className="space-y-1 p-4">
               <div className="flex items-baseline justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Avaliação média</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Avaliação média')}</p>
                 <p className="font-mono text-2xl font-bold tabular-nums">{num(overall)}<span className="text-sm font-normal text-muted-foreground"> / 5</span></p>
               </div>
               <ScoutRadar values={averages} className="mx-auto w-full max-w-[17rem]" />
-              {history.length >= 2 && <><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Evolução</p><ScoutEvolution history={history} className="w-full" /></>}
-              {observations.length === 0 && <p className="text-center text-xs text-muted-foreground">O radar aparece com a primeira observação.</p>}
+              {history.length >= 2 && <><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{tx('Evolução')}</p><ScoutEvolution history={history} className="w-full" /></>}
+              {observations.length === 0 && <p className="text-center text-xs text-muted-foreground">{tx('O radar aparece com a primeira observação.')}</p>}
             </CardContent>
           </Card>
         </div>
 
         {/* observations */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide">Observações ({observations.length})</h2>
-          <Button size="sm" onClick={() => setObs(blankObs())}><Plus className="mr-1.5 h-4 w-4" />Observação</Button>
+          <h2 className="text-sm font-semibold uppercase tracking-wide">{tx('Observações (')}{observations.length})</h2>
+          <Button size="sm" onClick={() => setObs(blankObs())}><Plus className="mr-1.5 h-4 w-4" />{tx('Observação')}</Button>
         </div>
         {observations.length === 0 ? (
-          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground"><Eye className="mx-auto mb-2 h-8 w-8 opacity-50" />Ainda sem observações. Registe o que viu e dê notas de 1 a 5.</CardContent></Card>
+          <Card><CardContent className="py-10 text-center text-sm text-muted-foreground"><Eye className="mx-auto mb-2 h-8 w-8 opacity-50" />{tx('Ainda sem observações. Registe o que viu e dê notas de 1 a 5.')}</CardContent></Card>
         ) : observations.map((o) => (
           <Card key={o.id}>
             <CardContent className="space-y-2 p-3">
@@ -260,12 +261,12 @@ export default function ScoutingPlayer() {
                 <span className="font-mono text-sm tabular-nums">{day(o.observed_on)}</span>
                 {o.context && <span className="text-sm font-medium">{o.context}</span>}
                 {o.position_played && <Badge variant="outline">{o.position_played}</Badge>}
-                {o.minutes_seen != null && <span className="text-xs text-muted-foreground">{o.minutes_seen}' vistos</span>}
+                {o.minutes_seen != null && <span className="text-xs text-muted-foreground">{o.minutes_seen}{tx('\' vistos')}</span>}
                 {recommendationLabel(o.recommendation) && <Badge variant="secondary">{recommendationLabel(o.recommendation)}</Badge>}
                 <span className="ml-auto flex items-center gap-1">
-                  <span className="mr-1 font-mono text-sm font-bold tabular-nums" title="Nota desta observação">{num(observationMark(o))}</span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => editObs(o)} aria-label="Editar observação"><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeObs(o)} aria-label="Apagar observação"><Trash2 className="h-3.5 w-3.5" /></Button>
+                  <span className="mr-1 font-mono text-sm font-bold tabular-nums" title={tx('Nota desta observação')}>{num(observationMark(o))}</span>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => editObs(o)} aria-label={tx('Editar observação')}><Pencil className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => removeObs(o)} aria-label={tx('Apagar observação')}><Trash2 className="h-3.5 w-3.5" /></Button>
                 </span>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -273,8 +274,8 @@ export default function ScoutingPlayer() {
               </div>
               {(o.strengths || o.weaknesses) && (
                 <div className="grid gap-2 text-sm sm:grid-cols-2">
-                  {o.strengths && <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Fortes</p><p className="whitespace-pre-line">{o.strengths}</p></div>}
-                  {o.weaknesses && <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">A melhorar</p><p className="whitespace-pre-line">{o.weaknesses}</p></div>}
+                  {o.strengths && <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{tx('Fortes')}</p><p className="whitespace-pre-line">{o.strengths}</p></div>}
+                  {o.weaknesses && <div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{tx('A melhorar')}</p><p className="whitespace-pre-line">{o.weaknesses}</p></div>}
                 </div>
               )}
               {o.notes && <p className="whitespace-pre-line text-sm">{o.notes}</p>}
@@ -285,30 +286,30 @@ export default function ScoutingPlayer() {
         {/* contact: apart, with permission */}
         <Card>
           <CardContent className="space-y-2 p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Lock className="h-3.5 w-3.5" />Contacto</p>
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"><Lock className="h-3.5 w-3.5" />{tx('Contacto')}</p>
             {contactDraft ? (
               <div className="space-y-2">
-                <div><Label htmlFor="sc-contact">{minor ? 'Contacto do encarregado de educação' : 'Contacto'}</Label><Input id="sc-contact" maxLength={300} value={contactDraft.contact} onChange={(e) => setContactDraft({ ...contactDraft, contact: e.target.value })} placeholder="Nome e telefone ou email" /></div>
-                <div><Label htmlFor="sc-note">Como foi dado</Label><Input id="sc-note" maxLength={300} value={contactDraft.note} onChange={(e) => setContactDraft({ ...contactDraft, note: e.target.value })} placeholder="Ex.: dado pelo pai no fim do jogo de 12/10" /></div>
+                <div><Label htmlFor="sc-contact">{minor ? tx('Contacto do encarregado de educação') : tx('Contacto')}</Label><Input id="sc-contact" maxLength={300} value={contactDraft.contact} onChange={(e) => setContactDraft({ ...contactDraft, contact: e.target.value })} placeholder={tx('Nome e telefone ou email')} /></div>
+                <div><Label htmlFor="sc-note">{tx('Como foi dado')}</Label><Input id="sc-note" maxLength={300} value={contactDraft.note} onChange={(e) => setContactDraft({ ...contactDraft, note: e.target.value })} placeholder={tx('Ex.: dado pelo pai no fim do jogo de 12/10')} /></div>
                 <label className="flex items-start gap-2 text-sm">
                   <input type="checkbox" className="mt-0.5 h-4 w-4" checked={contactDraft.allowed} onChange={(e) => setContactDraft({ ...contactDraft, allowed: e.target.checked })} />
-                  <span>{minor ? 'O encarregado de educação deu este contacto e sabe que fica guardado para o clube o contactar.' : 'O jogador (ou o encarregado, se for menor) deu este contacto e sabe que fica guardado.'}</span>
+                  <span>{minor ? tx('O encarregado de educação deu este contacto e sabe que fica guardado para o clube o contactar.') : tx('O jogador (ou o encarregado, se for menor) deu este contacto e sabe que fica guardado.')}</span>
                 </label>
-                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setContactDraft(null)}>Cancelar</Button><Button onClick={saveContact} disabled={!contactDraft.allowed || !contactDraft.contact.trim()}>Guardar contacto</Button></div>
+                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setContactDraft(null)}>{tx('Cancelar')}</Button><Button onClick={saveContact} disabled={!contactDraft.allowed || !contactDraft.contact.trim()}>{tx('Guardar contacto')}</Button></div>
               </div>
             ) : contact ? (
               <div className="space-y-1">
                 <p className="text-sm font-medium">{contact.contact}</p>
                 {contact.permission_note && <p className="text-xs text-muted-foreground">{contact.permission_note}</p>}
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setContactDraft({ contact: contact.contact, note: contact.permission_note ?? '', allowed: true })}><Pencil className="mr-1.5 h-4 w-4" />Editar</Button>
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={removeContact}><Trash2 className="mr-1.5 h-4 w-4" />Apagar contacto</Button>
+                  <Button size="sm" variant="outline" onClick={() => setContactDraft({ contact: contact.contact, note: contact.permission_note ?? '', allowed: true })}><Pencil className="mr-1.5 h-4 w-4" />{tx('Editar')}</Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={removeContact}><Trash2 className="mr-1.5 h-4 w-4" />{tx('Apagar contacto')}</Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Sem contacto visível. Um contacto só se guarda com autorização de quem o deu, e só o vê quem o registou, quem criou a ficha e o administrador do clube.</p>
-                <Button size="sm" variant="outline" onClick={() => setContactDraft({ contact: '', note: '', allowed: false })}><Plus className="mr-1.5 h-4 w-4" />Registar contacto</Button>
+                <p className="text-sm text-muted-foreground">{tx('Sem contacto visível. Um contacto só se guarda com autorização de quem o deu, e só o vê quem o registou, quem criou a ficha e o administrador do clube.')}</p>
+                <Button size="sm" variant="outline" onClick={() => setContactDraft({ contact: '', note: '', allowed: false })}><Plus className="mr-1.5 h-4 w-4" />{tx('Registar contacto')}</Button>
               </div>
             )}
           </CardContent>
@@ -319,17 +320,17 @@ export default function ScoutingPlayer() {
 
       <Dialog open={!!obs} onOpenChange={(o) => !o && setObs(null)}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader><DialogTitle>{obs?.id ? 'Editar observação' : 'Nova observação'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{obs?.id ? tx('Editar observação') : tx('Nova observação')}</DialogTitle></DialogHeader>
           {obs && (
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-4">
-                <div><Label htmlFor="so-date">Data</Label><Input id="so-date" type="date" value={obs.observed_on} onChange={(e) => setObs({ ...obs, observed_on: e.target.value })} /></div>
-                <div className="sm:col-span-3"><Label htmlFor="so-ctx">Jogo ou treino</Label><Input id="so-ctx" maxLength={160} value={obs.context} onChange={(e) => setObs({ ...obs, context: e.target.value })} placeholder="Ex.: Rival FC vs Outro, distrital" /></div>
-                <div className="sm:col-span-2"><Label htmlFor="so-pos">Posição em que jogou</Label><Input id="so-pos" maxLength={20} value={obs.position_played} onChange={(e) => setObs({ ...obs, position_played: e.target.value })} /></div>
-                <div className="sm:col-span-2"><Label htmlFor="so-min">Minutos vistos</Label><Input id="so-min" inputMode="numeric" maxLength={3} value={obs.minutes_seen} onChange={(e) => setObs({ ...obs, minutes_seen: e.target.value })} /></div>
+                <div><Label htmlFor="so-date">{tx('Data')}</Label><Input id="so-date" type="date" value={obs.observed_on} onChange={(e) => setObs({ ...obs, observed_on: e.target.value })} /></div>
+                <div className="sm:col-span-3"><Label htmlFor="so-ctx">{tx('Jogo ou treino')}</Label><Input id="so-ctx" maxLength={160} value={obs.context} onChange={(e) => setObs({ ...obs, context: e.target.value })} placeholder={tx('Ex.: Rival FC vs Outro, distrital')} /></div>
+                <div className="sm:col-span-2"><Label htmlFor="so-pos">{tx('Posição em que jogou')}</Label><Input id="so-pos" maxLength={20} value={obs.position_played} onChange={(e) => setObs({ ...obs, position_played: e.target.value })} /></div>
+                <div className="sm:col-span-2"><Label htmlFor="so-min">{tx('Minutos vistos')}</Label><Input id="so-min" inputMode="numeric" maxLength={3} value={obs.minutes_seen} onChange={(e) => setObs({ ...obs, minutes_seen: e.target.value })} /></div>
               </div>
               <div className="space-y-2">
-                <p className="text-sm font-medium">Notas de 1 a 5 <span className="font-normal text-muted-foreground">(deixe em branco o que não deu para ver)</span></p>
+                <p className="text-sm font-medium">{tx('Notas de 1 a 5')}{' '}<span className="font-normal text-muted-foreground">{tx('(deixe em branco o que não deu para ver)')}</span></p>
                 {AREAS.map((a) => (
                   <div key={a.key} className="flex flex-wrap items-center gap-2">
                     <div className="w-40"><p className="text-sm font-medium">{a.label}</p><p className="text-xs text-muted-foreground">{a.hint}</p></div>
@@ -344,23 +345,23 @@ export default function ScoutingPlayer() {
                 ))}
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div><Label htmlFor="so-strong">Pontos fortes</Label><Textarea id="so-strong" rows={3} maxLength={2000} value={obs.strengths} onChange={(e) => setObs({ ...obs, strengths: e.target.value })} /></div>
-                <div><Label htmlFor="so-weak">A melhorar</Label><Textarea id="so-weak" rows={3} maxLength={2000} value={obs.weaknesses} onChange={(e) => setObs({ ...obs, weaknesses: e.target.value })} /></div>
+                <div><Label htmlFor="so-strong">{tx('Pontos fortes')}</Label><Textarea id="so-strong" rows={3} maxLength={2000} value={obs.strengths} onChange={(e) => setObs({ ...obs, strengths: e.target.value })} /></div>
+                <div><Label htmlFor="so-weak">{tx('A melhorar')}</Label><Textarea id="so-weak" rows={3} maxLength={2000} value={obs.weaknesses} onChange={(e) => setObs({ ...obs, weaknesses: e.target.value })} /></div>
               </div>
-              <div><Label htmlFor="so-notes">Notas</Label><Textarea id="so-notes" rows={3} maxLength={4000} value={obs.notes} onChange={(e) => setObs({ ...obs, notes: e.target.value })} /></div>
+              <div><Label htmlFor="so-notes">{tx('Notas')}</Label><Textarea id="so-notes" rows={3} maxLength={4000} value={obs.notes} onChange={(e) => setObs({ ...obs, notes: e.target.value })} /></div>
               <div className="max-w-xs">
-                <Label>Recomendação</Label>
+                <Label>{tx('Recomendação')}</Label>
                 <Select value={obs.recommendation} onValueChange={(v) => setObs({ ...obs, recommendation: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NO_REC}>Sem recomendação</SelectItem>
+                    <SelectItem value={NO_REC}>{tx('Sem recomendação')}</SelectItem>
                     {RECOMMENDATIONS.map((r) => <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
-          <DialogFooter><Button variant="outline" onClick={() => setObs(null)}>Cancelar</Button><Button onClick={saveObs} disabled={!obs?.observed_on}>Guardar observação</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setObs(null)}>{tx('Cancelar')}</Button><Button onClick={saveObs} disabled={!obs?.observed_on}>{tx('Guardar observação')}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </AppLayout>

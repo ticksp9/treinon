@@ -10,6 +10,7 @@ import { DrillDiagram } from './DrillDiagram';
 import { autoAnimate, elementsAt, stepCount, withBall, type DrillAnimation } from '@/lib/drill-library/animation';
 import type { DiagramEl } from '@/lib/drill-library/types';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   elements: DiagramEl[];
@@ -67,11 +68,11 @@ export function AnimatedDrill({ elements: given, anim, title, className, autoPla
       {note && <p className="text-sm text-muted-foreground">{note}</p>}
       {animation && (
         <div className="flex items-center gap-1.5">
-          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => go(current - 1)} aria-label="Passo anterior"><SkipBack className="h-4 w-4" /></Button>
-          <Button size="icon" className="h-8 w-8" onClick={() => { if (t >= steps - 1) setT(0); setPlaying((p) => !p); }} aria-label={playing ? 'Pausa' : 'Reproduzir'}>
+          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => go(current - 1)} aria-label={tx('Passo anterior')}><SkipBack className="h-4 w-4" /></Button>
+          <Button size="icon" className="h-8 w-8" onClick={() => { if (t >= steps - 1) setT(0); setPlaying((p) => !p); }} aria-label={playing ? tx('Pausa') : tx('Reproduzir')}>
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => go(current + 1)} aria-label="Passo seguinte"><SkipForward className="h-4 w-4" /></Button>
+          <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => go(current + 1)} aria-label={tx('Passo seguinte')}><SkipForward className="h-4 w-4" /></Button>
           <span className="ml-1 font-mono text-xs text-muted-foreground">passo {current + 1}/{steps}</span>
           {!compact && (
             <div className="ml-auto flex items-center gap-1">

@@ -33,6 +33,7 @@ import {
   teamSeasonLabel,
 } from '@/lib/team-season-service';
 import { countActiveEnrollmentsByTeam } from '@/lib/season-roster-service';
+import { tx } from '@/lib/i18n/ui';
 
 
 const teamSchema = z.object({
@@ -140,7 +141,7 @@ export default function Teams() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: TeamFormData) => {
-      if (!user) throw new Error('Não autenticado');
+      if (!user) throw new Error(tx('Não autenticado'));
       const chosenSeason = seasons.find((s) => s.id === formSeasonId) ?? null;
       const payload: TeamFormData = { ...data, season: chosenSeason?.name ?? data.season };
       teamSchema.parse(payload);
@@ -173,7 +174,7 @@ export default function Teams() {
       queryClient.invalidateQueries({ queryKey: queryKeys.teamsWithCounts });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams });
       queryClient.invalidateQueries({ queryKey: ['season-team-memberships'] });
-      toast.success(editingTeam ? 'Equipa atualizada com sucesso' : 'Equipa criada com sucesso');
+      toast.success(editingTeam ? tx('Equipa atualizada com sucesso') : tx('Equipa criada com sucesso'));
       setDialogOpen(false);
       resetForm();
     },
@@ -182,25 +183,25 @@ export default function Teams() {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || 'Erro ao guardar equipa');
+        toast.error(error.message || tx('Erro ao guardar equipa'));
       }
     },
   });
 
   const importTeamsMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedSeasonId) throw new Error('Nenhuma época selecionada.');
-      if (!previousSeason) throw new Error('Não existe época anterior.');
+      if (!selectedSeasonId) throw new Error(tx('Nenhuma época selecionada.'));
+      if (!previousSeason) throw new Error(tx('Não existe época anterior.'));
       return importTeamsFromPreviousSeason(previousSeason.id, selectedSeasonId);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['season-team-memberships'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.teamsWithCounts });
-      toast.success(`${result.imported} equipas associadas a ${seasonName ?? 'esta época'}.`);
+      toast.success(tx('{{v0}} equipas associadas a {{v1}}.', { v0: result.imported, v1: seasonName ?? 'esta época' }));
     },
     onError: (error: Error) => {
       console.error('[Teams] import failed', error);
-      toast.error(error.message || 'Erro ao trazer equipas');
+      toast.error(error.message || tx('Erro ao trazer equipas'));
     },
   });
 
@@ -213,10 +214,10 @@ export default function Teams() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.teamsWithCounts });
       queryClient.invalidateQueries({ queryKey: queryKeys.teams });
-      toast.success('Equipa eliminada com sucesso');
+      toast.success(tx('Equipa eliminada com sucesso'));
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao eliminar equipa');
+      toast.error(error.message || tx('Erro ao eliminar equipa'));
     },
   });
 
@@ -226,18 +227,18 @@ export default function Teams() {
   };
 
   const handleDelete = (teamId: string) => {
-    if (!confirm('Tem certeza que deseja eliminar esta equipa? Esta ação não pode ser desfeita.')) return;
+    if (!confirm(tx('Tem certeza que deseja eliminar esta equipa? Esta ação não pode ser desfeita.'))) return;
     deleteMutation.mutate(teamId);
   };
 
   const availableFormations = SPORT_TYPES[formData.sport_type as SportType]?.formations || [];
 
   return (
-    <AppLayout title="Equipas">
+    <AppLayout title={tx('Equipas')}>
       <div className="space-y-6">
         <PageHeader
-          title="As Minhas Equipas"
-          description="Gerencie as suas equipas de futebol e futsal"
+          title={tx('As Minhas Equipas')}
+          description={tx('Gerencie as suas equipas de futebol e futsal')}
           icon={<Users className="w-6 h-6 text-primary" />}
           actions={
             <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -247,25 +248,25 @@ export default function Teams() {
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Nova Equipa
+                  {tx('Nova Equipa')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <form onSubmit={handleSubmit}>
                   <DialogHeader>
                     <DialogTitle className="font-display">
-                      {editingTeam ? 'Editar Equipa' : 'Criar Nova Equipa'}
+                      {editingTeam ? tx('Editar Equipa') : tx('Criar Nova Equipa')}
                     </DialogTitle>
                     <DialogDescription>
-                      Preencha os dados da equipa. Pode criar equipas para diferentes modalidades.
+                      {tx('Preencha os dados da equipa. Pode criar equipas para diferentes modalidades.')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Nome da Equipa *</Label>
+                      <Label htmlFor="name">{tx('Nome da Equipa *')}</Label>
                       <Input
                         id="name"
-                        placeholder="Ex: Juvenis A"
+                        placeholder={tx('Ex: Juvenis A')}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
@@ -273,7 +274,7 @@ export default function Teams() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="sport_type">Modalidade *</Label>
+                      <Label htmlFor="sport_type">{tx('Modalidade *')}</Label>
                       <Select
                         value={formData.sport_type}
                         onValueChange={(value: string) => setFormData({ 
@@ -283,12 +284,12 @@ export default function Teams() {
                         })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a modalidade" />
+                          <SelectValue placeholder={tx('Selecione a modalidade')} />
                         </SelectTrigger>
                         <SelectContent>
                           {filterSportTypes(sportScope, Object.keys(SPORT_TYPES) as SportType[]).map((type) => (
                             <SelectItem key={type} value={type}>
-                              {SPORT_TYPES[type].label} ({SPORT_TYPES[type].players} jogadores)
+                              {SPORT_TYPES[type].label} ({SPORT_TYPES[type].players} {tx('jogadores)')}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -296,13 +297,13 @@ export default function Teams() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Género</Label>
+                      <Label>{tx('Género')}</Label>
                       <Select
                         value={formData.gender}
                         onValueChange={(value: string) => setFormData({ ...formData, gender: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o género" />
+                          <SelectValue placeholder={tx('Selecione o género')} />
                         </SelectTrigger>
                         <SelectContent>
                           {GENDERS.map((g) => (
@@ -316,13 +317,13 @@ export default function Teams() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="category">Escalão</Label>
+                        <Label htmlFor="category">{tx('Escalão')}</Label>
                         <Select
                           value={formData.category}
                           onValueChange={(value) => setFormData({ ...formData, category: value })}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
+                            <SelectValue placeholder={tx('Selecione')} />
                           </SelectTrigger>
                           <SelectContent>
                             {AGE_CATEGORIES.map((cat) => (
@@ -335,7 +336,7 @@ export default function Teams() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="season">Época *</Label>
+                        <Label htmlFor="season">{tx('Época *')}</Label>
                         {seasons.length > 0 ? (
                           <Select
                             value={formSeasonId ?? ''}
@@ -346,13 +347,13 @@ export default function Teams() {
                             }}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione a época" />
+                              <SelectValue placeholder={tx('Selecione a época')} />
                             </SelectTrigger>
                             <SelectContent>
                               {seasons.map((s) => (
                                 <SelectItem key={s.id} value={s.id}>
                                   {s.name}
-                                  {s.is_active ? ' (ativa)' : ''}
+                                  {s.is_active ? tx(' (ativa)') : ''}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -379,13 +380,13 @@ export default function Teams() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="formation">Formação</Label>
+                      <Label htmlFor="formation">{tx('Formação')}</Label>
                       <Select
                         value={formData.formation}
                         onValueChange={(value) => setFormData({ ...formData, formation: value })}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a formação" />
+                          <SelectValue placeholder={tx('Selecione a formação')} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableFormations.map((formation) => (
@@ -399,10 +400,10 @@ export default function Teams() {
                   </div>
                   <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                      Cancelar
+                      {tx('Cancelar')}
                     </Button>
                     <Button type="submit" disabled={saveMutation.isPending}>
-                      {saveMutation.isPending ? 'A guardar...' : editingTeam ? 'Guardar' : 'Criar Equipa'}
+                      {saveMutation.isPending ? tx('A guardar...') : editingTeam ? tx('Guardar') : tx('Criar Equipa')}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -425,14 +426,14 @@ export default function Teams() {
                 <Trophy className="w-7 h-7 text-primary" />
               </div>
             }
-            title={seasonName ? 'Esta época ainda não tem equipas.' : 'Crie a sua primeira equipa'}
+            title={seasonName ? tx('Esta época ainda não tem equipas.') : tx('Crie a sua primeira equipa')}
             description={
               seasonName
-                ? 'Crie uma equipa nesta época ou traga as equipas da época anterior (sem duplicar).'
-                : 'Comece por criar uma equipa para depois adicionar jogadores e gerir jogos.'
+                ? tx('Crie uma equipa nesta época ou traga as equipas da época anterior (sem duplicar).')
+                : tx('Comece por criar uma equipa para depois adicionar jogadores e gerir jogos.')
             }
             action={{
-              label: 'Criar Equipa',
+              label: tx('Criar Equipa'),
               onClick: () => setDialogOpen(true),
             }}
           >
@@ -445,8 +446,8 @@ export default function Teams() {
                 onClick={() => importTeamsMutation.mutate()}
               >
                 {importTeamsMutation.isPending
-                  ? 'A associar...'
-                  : `Trazer equipas de ${previousSeason.name}`}
+                  ? tx('A associar...')
+                  : tx('Trazer equipas de {{v0}}', { v0: previousSeason.name })}
               </Button>
             )}
           </EmptyState>
@@ -504,7 +505,7 @@ export default function Teams() {
                       {SPORT_TYPES[team.sport_type as SportType]?.label || team.sport_type}
                     </Badge>
                     <Badge variant={team.gender === 'female' ? 'default' : 'outline'} className="text-xs">
-                      {team.gender === 'female' ? 'Feminino' : 'Masculino'}
+                      {team.gender === 'female' ? tx('Feminino') : tx('Masculino')}
                     </Badge>
                     {team.category && (
                       <Badge variant="outline" className="text-xs">{team.category}</Badge>
@@ -518,7 +519,7 @@ export default function Teams() {
                       {(selectedSeasonId ? enrollmentCounts?.get(team.id) ?? 0 : team.players_count || 0)} jogadores
                     </span>
                     <span className="text-primary text-xs font-medium group-hover:underline">
-                      Ver detalhes →
+                      {tx('Ver detalhes →')}
                     </span>
                   </div>
                 </CardContent>

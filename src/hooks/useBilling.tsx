@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 // ========== Fee Plans ==========
 export function useFeePlans(clubId: string | undefined) {
@@ -34,9 +35,9 @@ export function useCreateFeePlan(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fee-plans'] });
-      toast.success('Plano criado com sucesso');
+      toast.success(tx('Plano criado com sucesso'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -49,9 +50,9 @@ export function useUpdateFeePlan() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fee-plans'] });
-      toast.success('Plano atualizado');
+      toast.success(tx('Plano atualizado'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -89,9 +90,9 @@ export function useCreateFeeAssignment(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fee-assignments'] });
-      toast.success('Atribuição criada');
+      toast.success(tx('Atribuição criada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -112,9 +113,9 @@ export function useBulkAssignPlan(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fee-assignments'] });
-      toast.success('Plano atribuído em lote');
+      toast.success(tx('Plano atribuído em lote'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -248,9 +249,9 @@ export function useRecordPayment(clubId: string | undefined) {
       qc.invalidateQueries({ queryKey: ['charges'] });
       qc.invalidateQueries({ queryKey: ['charges-summary'] });
       qc.invalidateQueries({ queryKey: ['payments'] });
-      toast.success('Pagamento registado');
+      toast.success(tx('Pagamento registado'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -260,7 +261,7 @@ export function useGenerateCharges(clubId: string | undefined) {
   return useMutation({
     mutationFn: async ({ month, year }: { month: number; year: number }) => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) throw new Error(tx('Not authenticated'));
       const res = await supabase.functions.invoke('billing-engine', {
         body: { action: 'generate_monthly', club_id: clubId, reference_month: month, reference_year: year },
       });
@@ -270,9 +271,9 @@ export function useGenerateCharges(clubId: string | undefined) {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['charges'] });
       qc.invalidateQueries({ queryKey: ['charges-summary'] });
-      toast.success(`Geração concluída: ${data.created} criadas, ${data.skipped} ignoradas`);
+      toast.success(tx('Geração concluída: {{v0}} criadas, {{v1}} ignoradas', { v0: data.created, v1: data.skipped }));
     },
-    onError: (e: any) => toast.error('Erro na geração: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro na geração: ') + e.message),
   });
 }
 
@@ -289,9 +290,9 @@ export function useMarkOverdue(clubId: string | undefined) {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['charges'] });
       qc.invalidateQueries({ queryKey: ['charges-summary'] });
-      toast.success(`${data.updated} cobranças marcadas como vencidas`);
+      toast.success(tx('{{v0}} cobranças marcadas como vencidas', { v0: data.updated }));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAcademy, computeRetentionRate, computePromotionRate, computeComplianceScore, computeAssessmentCompletion, computePathwayDistribution } from '@/hooks/useAcademy';
 import { Users, Target, TrendingUp, ShieldCheck, ClipboardCheck, Star, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { tx } from '@/lib/i18n/ui';
 
 const PATHWAY_COLORS: Record<string, string> = {
   active: 'hsl(var(--primary))',
@@ -62,40 +63,40 @@ export function AcademyOverviewTab() {
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <KpiCard icon={Users} label="Total Atletas" value={profiles.length} />
-        <KpiCard icon={Star} label="Alto Potencial" value={highPotential} variant="success" />
-        <KpiCard icon={AlertTriangle} label="Em Risco" value={atRisk} variant="warning" />
-        <KpiCard icon={TrendingUp} label="Taxa Retenção" value={`${retentionRate.toFixed(0)}%`} />
-        <KpiCard icon={Target} label="Taxa Promoção" value={`${promotionRate.toFixed(0)}%`} />
-        <KpiCard icon={ShieldCheck} label="Compliance" value={`${complianceScore.toFixed(0)}%`} variant={complianceScore >= 80 ? 'success' : 'warning'} />
+        <KpiCard icon={Users} label={tx('Total Atletas')} value={profiles.length} />
+        <KpiCard icon={Star} label={tx('Alto Potencial')} value={highPotential} variant="success" />
+        <KpiCard icon={AlertTriangle} label={tx('Em Risco')} value={atRisk} variant="warning" />
+        <KpiCard icon={TrendingUp} label={tx('Taxa Retenção')} value={`${retentionRate.toFixed(0)}%`} />
+        <KpiCard icon={Target} label={tx('Taxa Promoção')} value={`${promotionRate.toFixed(0)}%`} />
+        <KpiCard icon={ShieldCheck} label={tx('Compliance')} value={`${complianceScore.toFixed(0)}%`} variant={complianceScore >= 80 ? 'success' : 'warning'} />
       </div>
 
       {/* Program status + Assessment completion */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Programa de Formação</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tx('Programa de Formação')}</CardTitle></CardHeader>
           <CardContent>
             {activeProgram ? (
               <div className="space-y-2">
                 <p className="font-medium">{activeProgram.name}</p>
                 <Badge variant="secondary">{activeProgram.status}</Badge>
-                <p className="text-sm text-muted-foreground">Versão {activeProgram.version_no} · Época {activeProgram.season || '—'}</p>
+                <p className="text-sm text-muted-foreground">{tx('Versão')}{' '}{activeProgram.version_no} {tx('· Época')}{' '}{activeProgram.season || '—'}</p>
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">Nenhum programa ativo</p>
+              <p className="text-muted-foreground text-sm">{tx('Nenhum programa ativo')}</p>
             )}
             <div className="mt-4 space-y-1">
-              <p className="text-sm text-muted-foreground">Escalões: <span className="font-medium text-foreground">{groups.length}</span></p>
-              <p className="text-sm text-muted-foreground">Staff ativo: <span className="font-medium text-foreground">{staff.length}</span></p>
+              <p className="text-sm text-muted-foreground">{tx('Escalões:')}{' '}<span className="font-medium text-foreground">{groups.length}</span></p>
+              <p className="text-sm text-muted-foreground">{tx('Staff ativo:')}{' '}<span className="font-medium text-foreground">{staff.length}</span></p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Avaliações</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> {tx('Avaliações')}</CardTitle></CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{assessmentCompletion.submitted}/{assessmentCompletion.total}</div>
-            <p className="text-sm text-muted-foreground">Completude: {assessmentCompletion.rate.toFixed(0)}%</p>
+            <p className="text-sm text-muted-foreground">{tx('Completude:')}{' '}{assessmentCompletion.rate.toFixed(0)}%</p>
             <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${assessmentCompletion.rate}%` }} />
             </div>
@@ -106,7 +107,7 @@ export function AcademyOverviewTab() {
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
-          <CardHeader><CardTitle className="text-sm">Distribuição por Escalão</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tx('Distribuição por Escalão')}</CardTitle></CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={groupDistribution}>
@@ -120,7 +121,7 @@ export function AcademyOverviewTab() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">Distribuição Pathway</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tx('Distribuição Pathway')}</CardTitle></CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

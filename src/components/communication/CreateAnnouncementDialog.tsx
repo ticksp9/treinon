@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { MessageCircle } from 'lucide-react';
 import { announcementText, openWhatsApp, sendNotice, toastNotice } from '@/lib/notice';
+import { tx } from '@/lib/i18n/ui';
 
 interface CreateAnnouncementDialogProps {
   clubId: string | null;
@@ -44,11 +45,11 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
-      toast.error('Título e conteúdo são obrigatórios');
+      toast.error(tx('Título e conteúdo são obrigatórios'));
       return;
     }
     if (targetType === 'channel' && !channelId) {
-      toast.error(channels.length ? 'Escolha o grupo que vai receber o anúncio' : 'Crie primeiro um grupo (ex.: Pais Sub-13) para ter a quem enviar');
+      toast.error(channels.length ? tx('Escolha o grupo que vai receber o anúncio') : tx('Crie primeiro um grupo (ex.: Pais Sub-13) para ter a quem enviar'));
       return;
     }
     const emailIt = byEmail && targetType === 'channel';
@@ -63,7 +64,7 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
       },
       {
         onSuccess: (created) => {
-          toast.success('Anúncio publicado no grupo');
+          toast.success(tx('Anúncio publicado no grupo'));
           // the app alone reaches nobody who does not open it
           if (emailIt && created?.id) sendNotice({ kind: 'announcement', announcement_id: created.id }).then(toastNotice);
           setTitle('');
@@ -72,7 +73,7 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
           setTargetValue('');
           onClose();
         },
-        onError: () => toast.error('Erro ao enviar anúncio'),
+        onError: () => toast.error(tx('Erro ao enviar anúncio')),
       }
     );
   };
@@ -81,23 +82,23 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Novo Anúncio</DialogTitle>
+          <DialogTitle>{tx('Novo Anúncio')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Título *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Treino cancelado amanhã" />
+            <Label>{tx('Título *')}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tx('Ex: Treino cancelado amanhã')} />
           </div>
           <div>
-            <Label>Conteúdo *</Label>
-            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Detalhes do anúncio..." rows={4} />
+            <Label>{tx('Conteúdo *')}</Label>
+            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={tx('Detalhes do anúncio...')} rows={4} />
           </div>
           <div className="flex items-center gap-3">
             <Switch checked={isImportant} onCheckedChange={setIsImportant} />
-            <Label className="cursor-pointer">Marcar como importante</Label>
+            <Label className="cursor-pointer">{tx('Marcar como importante')}</Label>
           </div>
           <div>
-            <Label>Destinatários</Label>
+            <Label>{tx('Destinatários')}</Label>
             <Select value={targetType} onValueChange={setTargetType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -121,9 +122,9 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
           </div>
           {targetType === 'channel' && (
             <div>
-              <Label>Grupo</Label>
+              <Label>{tx('Grupo')}</Label>
               <Select value={channelId} onValueChange={setChannelId}>
-                <SelectTrigger><SelectValue placeholder="Selecionar grupo" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar grupo')} /></SelectTrigger>
                 <SelectContent>
                   {channels.map((ch) => (
                     <SelectItem key={ch.id} value={ch.id}>{ch.name}</SelectItem>
@@ -134,16 +135,16 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
           )}
           {targetType !== 'channel' && targetType !== 'club' && (
             <div>
-              <Label>Valor (ex: Sub-13, Treinadores)</Label>
-              <Input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder="Especificar..." />
+              <Label>{tx('Valor (ex: Sub-13, Treinadores)')}</Label>
+              <Input value={targetValue} onChange={(e) => setTargetValue(e.target.value)} placeholder={tx('Especificar...')} />
             </div>
           )}
           {targetType === 'channel' && (
             <div className="flex items-start gap-3 rounded-md border p-3">
               <Switch checked={byEmail} onCheckedChange={setByEmail} className="mt-0.5" />
               <div>
-                <Label className="cursor-pointer">Avisar também por email</Label>
-                <p className="text-xs text-muted-foreground">Vai para quem está no grupo e para os emails dos pais que estão na ficha dos jogadores, mesmo que ainda não tenham conta.</p>
+                <Label className="cursor-pointer">{tx('Avisar também por email')}</Label>
+                <p className="text-xs text-muted-foreground">{tx('Vai para quem está no grupo e para os emails dos pais que estão na ficha dos jogadores, mesmo que ainda não tenham conta.')}</p>
               </div>
             </div>
           )}
@@ -154,13 +155,13 @@ export function CreateAnnouncementDialog({ clubId, channels, open, onClose }: Cr
               className="mr-auto"
               disabled={!title.trim() || !content.trim()}
               onClick={() => openWhatsApp(announcementText({ title, content, priority: isImportant ? 'important' : 'normal' }))}
-              title="Abre o WhatsApp com o texto escrito; escolha o grupo dos pais"
+              title={tx('Abre o WhatsApp com o texto escrito; escolha o grupo dos pais')}
             >
-              <MessageCircle className="mr-1.5 h-4 w-4" />WhatsApp
+              <MessageCircle className="mr-1.5 h-4 w-4" />{tx('WhatsApp')}
             </Button>
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={createAnnouncement.isPending}>
-              {createAnnouncement.isPending ? 'A enviar...' : 'Enviar Anúncio'}
+              {createAnnouncement.isPending ? tx('A enviar...') : tx('Enviar Anúncio')}
             </Button>
           </div>
         </div>

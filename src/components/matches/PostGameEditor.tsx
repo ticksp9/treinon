@@ -37,6 +37,7 @@ import {
 import { getMatchRuleSnapshot, type MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
+import { tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -213,11 +214,11 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         onStatusChange('pending_completion');
       }
 
-      toast.success('Rascunho guardado com sucesso');
+      toast.success(tx('Rascunho guardado com sucesso'));
       await fetchData();
     } catch (error) {
       console.error('Error saving draft:', error);
-      toast.error('Erro ao guardar rascunho');
+      toast.error(tx('Erro ao guardar rascunho'));
     } finally {
       setSaving(false);
     }
@@ -261,10 +262,10 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
       await updateReportStatus(matchId, nextStatus, user.id);
       onStatusChange(nextStatus);
 
-      toast.success('Relatório finalizado com sucesso');
+      toast.success(tx('Relatório finalizado com sucesso'));
     } catch (error) {
       console.error('Error finalizing:', error);
-      toast.error('Erro ao finalizar relatório');
+      toast.error(tx('Erro ao finalizar relatório'));
     } finally {
       setSaving(false);
     }
@@ -272,7 +273,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
 
   const handleReopen = async () => {
     if (!user || !reopenReason.trim()) {
-      toast.error('Indique o motivo da reabertura');
+      toast.error(tx('Indique o motivo da reabertura'));
       return;
     }
     try {
@@ -280,9 +281,9 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
       onStatusChange('reopened');
       setShowReopenDialog(false);
       setReopenReason('');
-      toast.success('Relatório reaberto para edição');
+      toast.success(tx('Relatório reaberto para edição'));
     } catch (error) {
-      toast.error('Erro ao reabrir relatório');
+      toast.error(tx('Erro ao reabrir relatório'));
     }
   };
 
@@ -308,13 +309,13 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         minute: newEvent.minute,
       });
 
-      toast.success('Evento adicionado');
+      toast.success(tx('Evento adicionado'));
       setShowAddEventDialog(false);
       setNewEvent({ event_type: 'goal', minute: 0, player_id: '', is_opponent: false, assist_player_id: '', notes: '' });
       await fetchData();
     } catch (error) {
       console.error('Error adding event:', error);
-      toast.error('Erro ao adicionar evento');
+      toast.error(tx('Erro ao adicionar evento'));
     }
   };
 
@@ -329,10 +330,10 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         minute: deletedEvent?.minute,
       }, null);
 
-      toast.success('Evento removido');
+      toast.success(tx('Evento removido'));
       await fetchData();
     } catch (error) {
-      toast.error('Erro ao remover evento');
+      toast.error(tx('Erro ao remover evento'));
     }
   };
 
@@ -352,7 +353,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-        <p className="text-muted-foreground">A carregar dados do jogo...</p>
+        <p className="text-muted-foreground">{tx('A carregar dados do jogo...')}</p>
       </div>
     );
   }
@@ -385,19 +386,19 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
               {!isEditable && (
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
                   <AlertTriangle className="w-4 h-4" />
-                  Relatório não editável neste estado
+                  {tx('Relatório não editável neste estado')}
                 </span>
               )}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={loadHistory}>
                 <History className="w-4 h-4 mr-1" />
-                Histórico
+                {tx('Histórico')}
               </Button>
               {canReopen && (
                 <Button variant="outline" size="sm" onClick={() => setShowReopenDialog(true)}>
                   <RotateCcw className="w-4 h-4 mr-1" />
-                  Reabrir
+                  {tx('Reabrir')}
                 </Button>
               )}
             </div>
@@ -410,13 +411,13 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="w-4 h-4" />
-            Resultado
+            {tx('Resultado')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Golos a Favor</Label>
+              <Label>{tx('Golos a Favor')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -426,7 +427,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
               />
             </div>
             <div>
-              <Label>Golos Contra</Label>
+              <Label>{tx('Golos Contra')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -445,35 +446,35 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Eventos ({events.length})
+              {tx('Eventos (')}{events.length})
             </span>
             {isEditable && (
               <Button size="sm" variant="outline" onClick={() => setShowAddEventDialog(true)}>
                 <Plus className="w-4 h-4 mr-1" />
-                Adicionar
+                {tx('Adicionar')}
               </Button>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {events.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Sem eventos registados</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{tx('Sem eventos registados')}</p>
           ) : (
             events.map(event => (
               <div key={event.id} className="flex items-center justify-between p-2 bg-secondary/30 rounded">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{event.minute}'</Badge>
                   <span className="text-sm font-medium">
-                    {event.event_type === 'goal' ? '⚽ Golo' :
-                     event.event_type === 'own_goal' ? '⚽ Auto-golo' :
-                     event.event_type === 'yellow_card' ? '🟨 Amarelo' :
-                     event.event_type === 'red_card' ? '🟥 Vermelho' :
-                     event.event_type === 'substitution_in' ? '↗ Entrou' :
-                     event.event_type === 'substitution_out' ? '↘ Saiu' :
+                    {event.event_type === 'goal' ? tx('⚽ Golo') :
+                     event.event_type === 'own_goal' ? tx('⚽ Auto-golo') :
+                     event.event_type === 'yellow_card' ? tx('🟨 Amarelo') :
+                     event.event_type === 'red_card' ? tx('🟥 Vermelho') :
+                     event.event_type === 'substitution_in' ? tx('↗ Entrou') :
+                     event.event_type === 'substitution_out' ? tx('↘ Saiu') :
                      event.event_type}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {event.is_opponent ? '(Adversário)' : event.player?.name || ''}
+                    {event.is_opponent ? tx('(Adversário)') : event.player?.name || ''}
                   </span>
                 </div>
                 {isEditable && (
@@ -492,7 +493,7 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            Minutos Jogados (recalculados)
+            {tx('Minutos Jogados (recalculados)')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -533,14 +534,14 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Pencil className="w-4 h-4" />
-            Notas do Treinador
+            {tx('Notas do Treinador')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             value={notes}
             onChange={e => setNotes(e.target.value)}
-            placeholder="Observações sobre o jogo..."
+            placeholder={tx('Observações sobre o jogo...')}
             disabled={!isEditable}
             rows={4}
           />
@@ -554,17 +555,17 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
 
       {/* Actions */}
       <div className="flex gap-3 justify-end">
-        <Button variant="outline" onClick={onClose}>Fechar</Button>
+        <Button variant="outline" onClick={onClose}>{tx('Fechar')}</Button>
         {isEditable && (
           <>
             <Button variant="secondary" onClick={handleSaveDraft} disabled={saving}>
               <Save className="w-4 h-4 mr-1" />
-              {saving ? 'A guardar...' : 'Guardar Rascunho'}
+              {saving ? tx('A guardar...') : tx('Guardar Rascunho')}
             </Button>
             {canFinalize && (
-              <Button onClick={handleFinalize} disabled={saving || hasBlockingIssues} title={hasBlockingIssues ? 'Resolva os conflitos bloqueantes antes de finalizar' : ''}>
+              <Button onClick={handleFinalize} disabled={saving || hasBlockingIssues} title={hasBlockingIssues ? tx('Resolva os conflitos bloqueantes antes de finalizar') : ''}>
                 <CheckCircle className="w-4 h-4 mr-1" />
-                {saving ? 'A finalizar...' : 'Finalizar Relatório'}
+                {saving ? tx('A finalizar...') : tx('Finalizar Relatório')}
               </Button>
             )}
           </>
@@ -575,32 +576,32 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
       <Dialog open={showAddEventDialog} onOpenChange={setShowAddEventDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Adicionar Evento</DialogTitle>
-            <DialogDescription>Adicione um evento ao relatório do jogo.</DialogDescription>
+            <DialogTitle>{tx('Adicionar Evento')}</DialogTitle>
+            <DialogDescription>{tx('Adicione um evento ao relatório do jogo.')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Tipo</Label>
+              <Label>{tx('Tipo')}</Label>
               <Select value={newEvent.event_type} onValueChange={v => setNewEvent(prev => ({ ...prev, event_type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="goal">Golo</SelectItem>
-                  <SelectItem value="own_goal">Auto-golo</SelectItem>
-                  <SelectItem value="yellow_card">Cartão Amarelo</SelectItem>
-                  <SelectItem value="red_card">Cartão Vermelho</SelectItem>
-                  <SelectItem value="substitution_in">Entrada</SelectItem>
-                  <SelectItem value="substitution_out">Saída</SelectItem>
+                  <SelectItem value="goal">{tx('Golo')}</SelectItem>
+                  <SelectItem value="own_goal">{tx('Auto-golo')}</SelectItem>
+                  <SelectItem value="yellow_card">{tx('Cartão Amarelo')}</SelectItem>
+                  <SelectItem value="red_card">{tx('Cartão Vermelho')}</SelectItem>
+                  <SelectItem value="substitution_in">{tx('Entrada')}</SelectItem>
+                  <SelectItem value="substitution_out">{tx('Saída')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Minuto</Label>
+              <Label>{tx('Minuto')}</Label>
               <Input type="number" min={0} value={newEvent.minute} onChange={e => setNewEvent(prev => ({ ...prev, minute: parseInt(e.target.value) || 0 }))} />
             </div>
             <div>
-              <Label>Jogador</Label>
+              <Label>{tx('Jogador')}</Label>
               <Select value={newEvent.player_id} onValueChange={v => setNewEvent(prev => ({ ...prev, player_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecionar jogador" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar jogador')} /></SelectTrigger>
                 <SelectContent>
                   {allPlayers.map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} - ` : ''}{p.name}</SelectItem>
@@ -610,11 +611,11 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
             </div>
             {newEvent.event_type === 'goal' && (
               <div>
-                <Label>Assistência</Label>
+                <Label>{tx('Assistência')}</Label>
                 <Select value={newEvent.assist_player_id || '__none__'} onValueChange={v => setNewEvent(prev => ({ ...prev, assist_player_id: v === '__none__' ? '' : v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar (opcional)" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar (opcional)')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">Nenhuma</SelectItem>
+                    <SelectItem value="__none__">{tx('Nenhuma')}</SelectItem>
                     {allPlayers.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.number ? `${p.number} - ` : ''}{p.name}</SelectItem>
                     ))}
@@ -623,13 +624,13 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
               </div>
             )}
             <div>
-              <Label>Notas</Label>
-              <Input value={newEvent.notes} onChange={e => setNewEvent(prev => ({ ...prev, notes: e.target.value }))} placeholder="Opcional" />
+              <Label>{tx('Notas')}</Label>
+              <Input value={newEvent.notes} onChange={e => setNewEvent(prev => ({ ...prev, notes: e.target.value }))} placeholder={tx('Opcional')} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddEventDialog(false)}>Cancelar</Button>
-            <Button onClick={handleAddEvent}>Adicionar</Button>
+            <Button variant="outline" onClick={() => setShowAddEventDialog(false)}>{tx('Cancelar')}</Button>
+            <Button onClick={handleAddEvent}>{tx('Adicionar')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -638,16 +639,16 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
       <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reabrir Relatório</DialogTitle>
-            <DialogDescription>Indique o motivo para reabrir o relatório finalizado.</DialogDescription>
+            <DialogTitle>{tx('Reabrir Relatório')}</DialogTitle>
+            <DialogDescription>{tx('Indique o motivo para reabrir o relatório finalizado.')}</DialogDescription>
           </DialogHeader>
           <div>
-            <Label>Motivo da reabertura</Label>
-            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder="Ex: Corrigir substituição registada incorretamente" rows={3} />
+            <Label>{tx('Motivo da reabertura')}</Label>
+            <Textarea value={reopenReason} onChange={e => setReopenReason(e.target.value)} placeholder={tx('Ex: Corrigir substituição registada incorretamente')} rows={3} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>Cancelar</Button>
-            <Button onClick={handleReopen}>Confirmar Reabertura</Button>
+            <Button variant="outline" onClick={() => setShowReopenDialog(false)}>{tx('Cancelar')}</Button>
+            <Button onClick={handleReopen}>{tx('Confirmar Reabertura')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -656,35 +657,35 @@ export function PostGameEditor({ matchId, teamId, reportStatus, onStatusChange, 
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico do Relatório</DialogTitle>
-            <DialogDescription>Versões e alterações registadas.</DialogDescription>
+            <DialogTitle>{tx('Histórico do Relatório')}</DialogTitle>
+            <DialogDescription>{tx('Versões e alterações registadas.')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">Versões ({versions.length})</h4>
+              <h4 className="font-semibold mb-2">{tx('Versões (')}{versions.length})</h4>
               {versions.map((v: any) => (
                 <div key={v.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Versão {v.version_no}</span>
+                    <span>{tx('Versão')}{' '}{v.version_no}</span>
                     <span className="text-muted-foreground">{new Date(v.created_at).toLocaleString('pt-PT')}</span>
                   </div>
                 </div>
               ))}
-              {versions.length === 0 && <p className="text-sm text-muted-foreground">Sem versões guardadas</p>}
+              {versions.length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem versões guardadas')}</p>}
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold mb-2">Auditoria ({auditLogs.length})</h4>
+              <h4 className="font-semibold mb-2">{tx('Auditoria (')}{auditLogs.length})</h4>
               {auditLogs.map((log: any) => (
                 <div key={log.id} className="p-2 border rounded mb-2 text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium">{log.action}</span>
                     <span className="text-muted-foreground">{new Date(log.created_at).toLocaleString('pt-PT')}</span>
                   </div>
-                  {log.reason && <p className="text-muted-foreground text-xs mt-1">Motivo: {log.reason}</p>}
+                  {log.reason && <p className="text-muted-foreground text-xs mt-1">{tx('Motivo:')}{' '}{log.reason}</p>}
                 </div>
               ))}
-              {auditLogs.length === 0 && <p className="text-sm text-muted-foreground">Sem registos de auditoria</p>}
+              {auditLogs.length === 0 && <p className="text-sm text-muted-foreground">{tx('Sem registos de auditoria')}</p>}
             </div>
           </div>
         </DialogContent>

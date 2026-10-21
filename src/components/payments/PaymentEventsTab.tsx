@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentEvents } from '@/hooks/usePaymentIntents';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -28,11 +29,11 @@ export function PaymentEventsTab({ clubId }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="font-semibold">Eventos & Auditoria</h3>
-        <p className="text-sm text-muted-foreground">Trilha de auditoria de todos os eventos de pagamento</p>
+        <h3 className="font-semibold">{tx('Eventos & Auditoria')}</h3>
+        <p className="text-sm text-muted-foreground">{tx('Trilha de auditoria de todos os eventos de pagamento')}</p>
       </div>
       {(!events || events.length === 0) ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">Sem eventos registados</CardContent></Card>
+        <Card><CardContent className="py-12 text-center text-muted-foreground">{tx('Sem eventos registados')}</CardContent></Card>
       ) : (
         <div className="space-y-1.5">
           {events.map((e: any) => (

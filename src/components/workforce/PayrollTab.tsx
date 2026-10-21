@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Plus } from 'lucide-react';
 import type { PayrollCycle, PayrollEntry, PersonRegistry } from '@/hooks/useWorkforce';
 import { computePayrollTotals } from '@/hooks/useWorkforce';
+import { tx } from '@/lib/i18n/ui';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -56,31 +57,31 @@ export function PayrollTab({ cycles, entries, people, isLoading, onAddCycle }: P
     <div className="space-y-6">
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Bruto</p><p className="text-lg font-bold">{fmt(totals.gross)}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Descontos</p><p className="text-lg font-bold text-destructive">-{fmt(totals.deductions)}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Encargos</p><p className="text-lg font-bold">{fmt(totals.employerCharges)}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Líquido</p><p className="text-lg font-bold">{fmt(totals.net)}</p></CardContent></Card>
-        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">Custo Total</p><p className="text-lg font-bold text-primary">{fmt(totals.totalCost)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">{tx('Bruto')}</p><p className="text-lg font-bold">{fmt(totals.gross)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">{tx('Descontos')}</p><p className="text-lg font-bold text-destructive">-{fmt(totals.deductions)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">{tx('Encargos')}</p><p className="text-lg font-bold">{fmt(totals.employerCharges)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">{tx('Líquido')}</p><p className="text-lg font-bold">{fmt(totals.net)}</p></CardContent></Card>
+        <Card><CardContent className="pt-4"><p className="text-xs text-muted-foreground">{tx('Custo Total')}</p><p className="text-lg font-bold text-primary">{fmt(totals.totalCost)}</p></CardContent></Card>
       </div>
 
       {/* Cycles */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Ciclos de Processamento</CardTitle>
+          <CardTitle>{tx('Ciclos de Processamento')}</CardTitle>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> Novo Ciclo</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> {tx('Novo Ciclo')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Criar Ciclo de Payroll</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Criar Ciclo de Payroll')}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Mês</Label><Input type="number" min={1} max={12} value={form.period_month} onChange={e => setForm(f => ({ ...f, period_month: e.target.value }))} /></div>
-                  <div><Label>Ano</Label><Input type="number" value={form.fiscal_year} onChange={e => setForm(f => ({ ...f, fiscal_year: e.target.value }))} /></div>
+                  <div><Label>{tx('Mês')}</Label><Input type="number" min={1} max={12} value={form.period_month} onChange={e => setForm(f => ({ ...f, period_month: e.target.value }))} /></div>
+                  <div><Label>{tx('Ano')}</Label><Input type="number" value={form.fiscal_year} onChange={e => setForm(f => ({ ...f, fiscal_year: e.target.value }))} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Início *</Label><Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} /></div>
-                  <div><Label>Fim *</Label><Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} /></div>
+                  <div><Label>{tx('Início *')}</Label><Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} /></div>
+                  <div><Label>{tx('Fim *')}</Label><Input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} /></div>
                 </div>
-                <Button onClick={handleAdd} className="w-full">Criar Ciclo</Button>
+                <Button onClick={handleAdd} className="w-full">{tx('Criar Ciclo')}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -89,16 +90,16 @@ export function PayrollTab({ cycles, entries, people, isLoading, onAddCycle }: P
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Período</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Fim</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>{tx('Período')}</TableHead>
+                <TableHead>{tx('Tipo')}</TableHead>
+                <TableHead>{tx('Início')}</TableHead>
+                <TableHead>{tx('Fim')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {cycles.length === 0 ? (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Sem ciclos</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{tx('Sem ciclos')}</TableCell></TableRow>
               ) : cycles.map(c => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.period_month}/{c.fiscal_year}</TableCell>
@@ -116,17 +117,17 @@ export function PayrollTab({ cycles, entries, people, isLoading, onAddCycle }: P
       {/* Entries */}
       {entries.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Lançamentos</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tx('Lançamentos')}</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Pessoa</TableHead>
-                  <TableHead>Bruto</TableHead>
-                  <TableHead>Descontos</TableHead>
-                  <TableHead>Encargos</TableHead>
-                  <TableHead>Líquido</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>{tx('Pessoa')}</TableHead>
+                  <TableHead>{tx('Bruto')}</TableHead>
+                  <TableHead>{tx('Descontos')}</TableHead>
+                  <TableHead>{tx('Encargos')}</TableHead>
+                  <TableHead>{tx('Líquido')}</TableHead>
+                  <TableHead>{tx('Estado')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

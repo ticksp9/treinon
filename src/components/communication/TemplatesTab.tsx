@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileText, Plus, Trash2, Copy, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface TemplatesTabProps {
   clubId: string | null;
@@ -51,17 +52,17 @@ export function TemplatesTab({ clubId, userId, onUseTemplate }: TemplatesTabProp
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Modelos</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">{tx('Modelos')}</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Novo Modelo
+          <Plus className="h-4 w-4 mr-1" /> {tx('Novo Modelo')}
         </Button>
       </div>
 
       {templates.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhum modelo criado</p>
-          <p className="text-xs mt-1">Crie modelos para reutilizar em anúncios e lembretes</p>
+          <p className="text-sm">{tx('Nenhum modelo criado')}</p>
+          <p className="text-xs mt-1">{tx('Crie modelos para reutilizar em anúncios e lembretes')}</p>
         </div>
       ) : (
         <ScrollArea className="max-h-[60vh] md:max-h-none">
@@ -95,7 +96,7 @@ export function TemplatesTab({ clubId, userId, onUseTemplate }: TemplatesTabProp
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => deleteTemplate.mutate(t.id, { onSuccess: () => toast.success('Modelo removido') })}
+                        onClick={() => deleteTemplate.mutate(t.id, { onSuccess: () => toast.success(tx('Modelo removido')) })}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -130,18 +131,18 @@ function CreateTemplateDialog({
 
   const handleSubmit = () => {
     if (!title.trim() || !content.trim()) {
-      toast.error('Título e conteúdo são obrigatórios');
+      toast.error(tx('Título e conteúdo são obrigatórios'));
       return;
     }
     create.mutate(
       { title: title.trim(), content: content.trim(), category, scope },
       {
         onSuccess: () => {
-          toast.success('Modelo criado');
+          toast.success(tx('Modelo criado'));
           setTitle(''); setContent('');
           onClose();
         },
-        onError: () => toast.error('Erro ao criar modelo'),
+        onError: () => toast.error(tx('Erro ao criar modelo')),
       }
     );
   };
@@ -154,41 +155,41 @@ function CreateTemplateDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Modelo</DialogTitle>
+          <DialogTitle>{tx('Novo Modelo')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Título *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Lembrete de treino" />
+            <Label>{tx('Título *')}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tx('Ex: Lembrete de treino')} />
           </div>
           <div>
-            <Label>Categoria</Label>
+            <Label>{tx('Categoria')}</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="announcement">Anúncio</SelectItem>
-                <SelectItem value="reminder">Lembrete</SelectItem>
-                <SelectItem value="attendance">Presença</SelectItem>
+                <SelectItem value="announcement">{tx('Anúncio')}</SelectItem>
+                <SelectItem value="reminder">{tx('Lembrete')}</SelectItem>
+                <SelectItem value="attendance">{tx('Presença')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Âmbito</Label>
+            <Label>{tx('Âmbito')}</Label>
             <Select value={scope} onValueChange={setScope}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="personal">Pessoal</SelectItem>
-                <SelectItem value="team">Equipa</SelectItem>
-                <SelectItem value="club">Clube</SelectItem>
+                <SelectItem value="personal">{tx('Pessoal')}</SelectItem>
+                <SelectItem value="team">{tx('Equipa')}</SelectItem>
+                <SelectItem value="club">{tx('Clube')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Conteúdo *</Label>
+            <Label>{tx('Conteúdo *')}</Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Escreva o modelo aqui. Use variáveis como {equipa}, {data}, {hora}..."
+              placeholder={tx('Escreva o modelo aqui. Use variáveis como {equipa}, {data}, {hora}...')}
               rows={4}
             />
             <div className="flex flex-wrap gap-1 mt-1">
@@ -205,9 +206,9 @@ function CreateTemplateDialog({
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={create.isPending}>
-              {create.isPending ? 'A criar...' : 'Criar Modelo'}
+              {create.isPending ? tx('A criar...') : tx('Criar Modelo')}
             </Button>
           </div>
         </div>

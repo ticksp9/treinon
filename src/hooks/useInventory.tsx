@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useToast } from '@/hooks/use-toast';
+import { tx } from '@/lib/i18n/ui';
 
 // ── helpers ──
 export function computeStockHealth(items: Array<{ current_stock: number; minimum_stock: number; reorder_point: number }>) {
@@ -154,8 +155,8 @@ export function useInventory() {
       const { error } = await supabase.from('asset_items').insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-assets'] }); toast({ title: 'Ativo criado' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-assets'] }); toast({ title: tx('Ativo criado') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const createStockItem = useMutation({
@@ -164,8 +165,8 @@ export function useInventory() {
       const { error } = await supabase.from('stock_items').insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-stock'] }); toast({ title: 'Item de stock criado' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-stock'] }); toast({ title: tx('Item de stock criado') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   const createMovement = useMutation({
@@ -174,8 +175,8 @@ export function useInventory() {
       const { error } = await supabase.from('stock_movements').insert(payload);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-movements', 'inventory-stock'] }); toast({ title: 'Movimento registado' }); },
-    onError: (e: Error) => toast({ title: 'Erro', description: e.message, variant: 'destructive' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['inventory-movements', 'inventory-stock'] }); toast({ title: tx('Movimento registado') }); },
+    onError: (e: Error) => toast({ title: tx('Erro'), description: e.message, variant: 'destructive' }),
   });
 
   return {

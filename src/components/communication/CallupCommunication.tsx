@@ -19,6 +19,7 @@ import {
   useCallupNotifications,
 } from '@/hooks/useCommunicationPhase3';
 import { EmptyState } from '@/components/ui/page-states';
+import { tx } from '@/lib/i18n/ui';
 
 interface CallupCommunicationProps {
   matchId: string;
@@ -53,7 +54,7 @@ export function CallupCommunication({
   const calledUp = playerIds.map(id => playerNames[id]).filter(Boolean).sort((a, b) => a.localeCompare(b, 'pt'));
   /** email to the parents of the called-up players (accounts and emails on the player record) */
   const emailParents = async (message?: string) => {
-    if (playerIds.length === 0) return toast.error('Sem jogadores convocados');
+    if (playerIds.length === 0) return toast.error(tx('Sem jogadores convocados'));
     setEmailing(true);
     toastNotice(await sendNotice({ kind: 'callup', match_id: matchId, player_ids: playerIds, message: message || undefined, to: { parents: true }, resend: true }));
     setEmailing(false);
@@ -68,12 +69,12 @@ export function CallupCommunication({
 
   const handleInitConfirmations = () => {
     if (playerIds.length === 0) {
-      toast.error('Sem jogadores convocados');
+      toast.error(tx('Sem jogadores convocados'));
       return;
     }
     createConfirmations.mutate({ matchId, playerIds }, {
-      onSuccess: () => toast.success('Confirmações criadas para os convocados'),
-      onError: () => toast.error('Erro ao criar confirmações'),
+      onSuccess: () => toast.success(tx('Confirmações criadas para os convocados')),
+      onError: () => toast.error(tx('Erro ao criar confirmações')),
     });
   };
 
@@ -103,7 +104,7 @@ export function CallupCommunication({
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Trophy className="h-4 w-4" />
-            Confirmações da Convocatória
+            {tx('Confirmações da Convocatória')}
           </CardTitle>
           <CardDescription className="text-xs">
             {opponentName} · {format(new Date(matchDate), "d MMM, HH:mm", { locale: pt })}
@@ -112,11 +113,11 @@ export function CallupCommunication({
         <CardContent>
           {total === 0 ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Nenhuma confirmação solicitada ainda.</p>
+              <p className="text-sm text-muted-foreground">{tx('Nenhuma confirmação solicitada ainda.')}</p>
               {canManage && playerIds.length > 0 && (
                 <Button size="sm" onClick={handleInitConfirmations} disabled={createConfirmations.isPending}>
                   {createConfirmations.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                  Solicitar Confirmação ({playerIds.length} convocados)
+                  {tx('Solicitar Confirmação (')}{playerIds.length} {tx('convocados)')}
                 </Button>
               )}
             </div>
@@ -136,17 +137,17 @@ export function CallupCommunication({
                 <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded">
                   <CheckCircle2 className="h-4 w-4 mx-auto text-green-600 mb-1" />
                   <p className="text-lg font-bold text-green-600">{confirmed.length}</p>
-                  <p className="text-xs text-muted-foreground">Confirmados</p>
+                  <p className="text-xs text-muted-foreground">{tx('Confirmados')}</p>
                 </div>
                 <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded">
                   <XCircle className="h-4 w-4 mx-auto text-red-600 mb-1" />
                   <p className="text-lg font-bold text-red-600">{declined.length}</p>
-                  <p className="text-xs text-muted-foreground">Recusados</p>
+                  <p className="text-xs text-muted-foreground">{tx('Recusados')}</p>
                 </div>
                 <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
                   <Clock className="h-4 w-4 mx-auto text-yellow-600 mb-1" />
                   <p className="text-lg font-bold text-yellow-600">{pending.length}</p>
-                  <p className="text-xs text-muted-foreground">Pendentes</p>
+                  <p className="text-xs text-muted-foreground">{tx('Pendentes')}</p>
                 </div>
               </div>
 
@@ -160,7 +161,7 @@ export function CallupCommunication({
                         variant={c.status === 'confirmed' ? 'default' : c.status === 'declined' ? 'destructive' : 'secondary'}
                         className="text-xs"
                       >
-                        {c.status === 'confirmed' ? 'Confirmado' : c.status === 'declined' ? 'Recusado' : 'Pendente'}
+                        {c.status === 'confirmed' ? tx('Confirmado') : c.status === 'declined' ? tx('Recusado') : tx('Pendente')}
                       </Badge>
                     </div>
                   ))}
@@ -173,13 +174,13 @@ export function CallupCommunication({
           {canManage && (
             <div className="flex gap-2 mt-3 flex-wrap">
               <Button size="sm" onClick={() => emailParents()} disabled={emailing}>
-                {emailing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />} Enviar aos pais por email
+                {emailing ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Mail className="h-3 w-3 mr-1" />} {tx('Enviar aos pais por email')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => shareWhatsApp()}>
-                <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+                <MessageCircle className="h-3 w-3 mr-1" /> {tx('WhatsApp')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setNotifyDialogOpen(true)}>
-                <Bell className="h-3 w-3 mr-1" /> Com mensagem
+                <Bell className="h-3 w-3 mr-1" /> {tx('Com mensagem')}
               </Button>
               {pending.length > 0 && (
                 <Button
@@ -192,7 +193,7 @@ export function CallupCommunication({
                     setNotifyDialogOpen(true);
                   }}
                 >
-                  <AlertTriangle className="h-3 w-3 mr-1" /> Lembrar Pendentes ({pending.length})
+                  <AlertTriangle className="h-3 w-3 mr-1" /> {tx('Lembrar Pendentes (')}{pending.length})
                 </Button>
               )}
             </div>
@@ -204,7 +205,7 @@ export function CallupCommunication({
       {notifications.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Histórico de Notificações</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{tx('Histórico de Notificações')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -212,12 +213,12 @@ export function CallupCommunication({
                 <div key={n.id} className="flex items-center justify-between text-xs p-2 bg-muted/20 rounded">
                   <div className="flex items-center gap-2">
                     <Send className="h-3 w-3 text-muted-foreground" />
-                    <span>{n.notification_type === 'callup_published' ? 'Convocatória publicada' :
-                      n.notification_type === 'confirmation_reminder' ? 'Lembrete de confirmação' :
-                      n.notification_type === 'callup_updated' ? 'Convocatória atualizada' : n.notification_type}</span>
+                    <span>{n.notification_type === 'callup_published' ? tx('Convocatória publicada') :
+                      n.notification_type === 'confirmation_reminder' ? tx('Lembrete de confirmação') :
+                      n.notification_type === 'callup_updated' ? tx('Convocatória atualizada') : n.notification_type}</span>
                   </div>
                   <span className="text-muted-foreground">
-                    {n.sent_at ? format(new Date(n.sent_at), "d MMM, HH:mm", { locale: pt }) : 'Não enviado'}
+                    {n.sent_at ? format(new Date(n.sent_at), "d MMM, HH:mm", { locale: pt }) : tx('Não enviado')}
                   </span>
                 </div>
               ))}
@@ -230,53 +231,53 @@ export function CallupCommunication({
       <Dialog open={notifyDialogOpen} onOpenChange={setNotifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enviar convocatória</DialogTitle>
-            <DialogDescription>Vai por email para os pais dos convocados do jogo contra {opponentName}, com a sua mensagem.</DialogDescription>
+            <DialogTitle>{tx('Enviar convocatória')}</DialogTitle>
+            <DialogDescription>{tx('Vai por email para os pais dos convocados do jogo contra')}{' '}{opponentName}{tx(', com a sua mensagem.')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium">Tipo</label>
+              <label className="text-sm font-medium">{tx('Tipo')}</label>
               <Select value={notifyType} onValueChange={setNotifyType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="callup_published">Convocatória Publicada</SelectItem>
-                  <SelectItem value="callup_updated">Convocatória Atualizada</SelectItem>
-                  <SelectItem value="callup_reminder">Lembrete do Jogo</SelectItem>
-                  <SelectItem value="confirmation_reminder">Lembrete de Confirmação</SelectItem>
+                  <SelectItem value="callup_published">{tx('Convocatória Publicada')}</SelectItem>
+                  <SelectItem value="callup_updated">{tx('Convocatória Atualizada')}</SelectItem>
+                  <SelectItem value="callup_reminder">{tx('Lembrete do Jogo')}</SelectItem>
+                  <SelectItem value="confirmation_reminder">{tx('Lembrete de Confirmação')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Audiência</label>
+              <label className="text-sm font-medium">{tx('Audiência')}</label>
               <Select value={notifyAudience} onValueChange={setNotifyAudience}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="convocados">Convocados</SelectItem>
-                  <SelectItem value="pais_convocados">Pais dos Convocados</SelectItem>
-                  <SelectItem value="full_team">Equipa Completa</SelectItem>
-                  <SelectItem value="staff">Staff Técnico</SelectItem>
-                  <SelectItem value="pendentes">Pendentes de Confirmação</SelectItem>
+                  <SelectItem value="convocados">{tx('Convocados')}</SelectItem>
+                  <SelectItem value="pais_convocados">{tx('Pais dos Convocados')}</SelectItem>
+                  <SelectItem value="full_team">{tx('Equipa Completa')}</SelectItem>
+                  <SelectItem value="staff">{tx('Staff Técnico')}</SelectItem>
+                  <SelectItem value="pendentes">{tx('Pendentes de Confirmação')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Mensagem (opcional)</label>
+              <label className="text-sm font-medium">{tx('Mensagem (opcional)')}</label>
               <Textarea
                 value={notifyMessage}
                 onChange={e => setNotifyMessage(e.target.value)}
-                placeholder="Mensagem adicional..."
+                placeholder={tx('Mensagem adicional...')}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" className="sm:mr-auto" onClick={() => shareWhatsApp(notifyMessage)}>
-              <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+              <MessageCircle className="h-3 w-3 mr-1" /> {tx('WhatsApp')}
             </Button>
-            <Button variant="outline" onClick={() => setNotifyDialogOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setNotifyDialogOpen(false)}>{tx('Cancelar')}</Button>
             <Button onClick={handleSendNotification} disabled={sendNotification.isPending}>
               {sendNotification.isPending && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-              <Send className="h-3 w-3 mr-1" /> Enviar
+              <Send className="h-3 w-3 mr-1" /> {tx('Enviar')}
             </Button>
           </DialogFooter>
         </DialogContent>

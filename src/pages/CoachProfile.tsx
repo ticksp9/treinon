@@ -7,6 +7,7 @@ import { User, GraduationCap, Briefcase } from 'lucide-react';
 import { CoachProfileForm } from '@/components/coaches/CoachProfileForm';
 import { CoachDiplomas } from '@/components/coaches/CoachDiplomas';
 import { CoachHistory } from '@/components/coaches/CoachHistory';
+import { tx } from '@/lib/i18n/ui';
 
 export default function CoachProfile() {
   const { user, loading } = useAuth();
@@ -32,9 +33,9 @@ export default function CoachProfile() {
           <Card>
             <CardContent className="py-12 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Sessão Necessária</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Sessão Necessária')}</h3>
               <p className="text-muted-foreground">
-                Faça login para aceder ao seu perfil de treinador.
+                {tx('Faça login para aceder ao seu perfil de treinador.')}
               </p>
             </CardContent>
           </Card>
@@ -47,9 +48,9 @@ export default function CoachProfile() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Perfil do Treinador</h1>
+          <h1 className="text-2xl font-display font-bold">{tx('Perfil do Treinador')}</h1>
           <p className="text-muted-foreground">
-            Gerir o seu currículo e formações
+            {tx('Gerir o seu currículo e formações')}
           </p>
         </div>
 
@@ -57,15 +58,15 @@ export default function CoachProfile() {
           <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="profile" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              <span>Perfil</span>
+              <span>{tx('Perfil')}</span>
             </TabsTrigger>
             <TabsTrigger value="diplomas" className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4" />
-              <span>Diplomas</span>
+              <span>{tx('Diplomas')}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
-              <span>Histórico</span>
+              <span>{tx('Histórico')}</span>
             </TabsTrigger>
           </TabsList>
 

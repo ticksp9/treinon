@@ -16,6 +16,7 @@ import type { CommunicationChannelType } from '@/lib/communication-permissions';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface CreateChannelDialogProps {
   clubId: string | null;
@@ -25,29 +26,29 @@ interface CreateChannelDialogProps {
 }
 
 const channelTypeLabels: Record<string, { label: string; desc: string }> = {
-  official_club: { label: 'Oficial do Clube', desc: 'Comunicação institucional do clube' },
-  official_team: { label: 'Oficial da Equipa', desc: 'Comunicação oficial da equipa' },
-  official: { label: 'Oficial', desc: 'Comunicação institucional' },
-  team: { label: 'Equipa', desc: 'Canal associado a uma equipa' },
-  age_group: { label: 'Escalão', desc: 'Canal por escalão (ex: Sub-13)' },
-  parents_team: { label: 'Pais da Equipa', desc: 'Canal para pais/encarregados' },
-  players_team: { label: 'Atletas da Equipa', desc: 'Canal para atletas da equipa' },
-  coaches_internal: { label: 'Técnicos (Interno)', desc: 'Só treinadores e adjuntos' },
-  staff_internal: { label: 'Staff (Interno)', desc: 'Só staff técnico' },
-  coordination_internal: { label: 'Coordenação (Interno)', desc: 'Coordenadores e direção' },
-  restricted_internal: { label: 'Interno Restrito', desc: 'Staff/treinadores apenas' },
-  mixed_controlled: { label: 'Misto Controlado', desc: 'Composição explícita' },
-  role_based: { label: 'Por Função', desc: 'Ex: só treinadores, só pais' },
-  custom: { label: 'Personalizado', desc: 'Grupo livre' },
+  official_club: { get label() { return tx('Oficial do Clube'); }, get desc() { return tx('Comunicação institucional do clube'); } },
+  official_team: { get label() { return tx('Oficial da Equipa'); }, get desc() { return tx('Comunicação oficial da equipa'); } },
+  official: { get label() { return tx('Oficial'); }, get desc() { return tx('Comunicação institucional'); } },
+  team: { get label() { return tx('Equipa'); }, get desc() { return tx('Canal associado a uma equipa'); } },
+  age_group: { get label() { return tx('Escalão'); }, get desc() { return tx('Canal por escalão (ex: Sub-13)'); } },
+  parents_team: { get label() { return tx('Pais da Equipa'); }, get desc() { return tx('Canal para pais/encarregados'); } },
+  players_team: { get label() { return tx('Atletas da Equipa'); }, get desc() { return tx('Canal para atletas da equipa'); } },
+  coaches_internal: { get label() { return tx('Técnicos (Interno)'); }, get desc() { return tx('Só treinadores e adjuntos'); } },
+  staff_internal: { get label() { return tx('Staff (Interno)'); }, get desc() { return tx('Só staff técnico'); } },
+  coordination_internal: { get label() { return tx('Coordenação (Interno)'); }, get desc() { return tx('Coordenadores e direção'); } },
+  restricted_internal: { get label() { return tx('Interno Restrito'); }, get desc() { return tx('Staff/treinadores apenas'); } },
+  mixed_controlled: { get label() { return tx('Misto Controlado'); }, get desc() { return tx('Composição explícita'); } },
+  role_based: { get label() { return tx('Por Função'); }, get desc() { return tx('Ex: só treinadores, só pais'); } },
+  custom: { get label() { return tx('Personalizado'); }, get desc() { return tx('Grupo livre'); } },
 };
 
 const visibilityScopes = [
-  { value: 'team_based', label: 'Baseado na Equipa' },
-  { value: 'age_group_based', label: 'Baseado no Escalão' },
-  { value: 'role_based', label: 'Baseado na Função' },
-  { value: 'private', label: 'Privado (só convite)' },
-  { value: 'official_broadcast', label: 'Difusão Oficial' },
-  { value: 'mixed_custom', label: 'Misto Personalizado' },
+  { value: 'team_based', get label() { return tx('Baseado na Equipa'); } },
+  { value: 'age_group_based', get label() { return tx('Baseado no Escalão'); } },
+  { value: 'role_based', get label() { return tx('Baseado na Função'); } },
+  { value: 'private', get label() { return tx('Privado (só convite)'); } },
+  { value: 'official_broadcast', get label() { return tx('Difusão Oficial'); } },
+  { value: 'mixed_custom', get label() { return tx('Misto Personalizado'); } },
 ];
 
 export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDialogProps) {
@@ -155,7 +156,7 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      toast.error('Nome do grupo é obrigatório');
+      toast.error(tx('Nome do grupo é obrigatório'));
       return;
     }
     createChannel.mutate(
@@ -183,11 +184,11 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
               .eq('id', channel.id)
               .then(() => {});
           }
-          toast.success('Grupo criado com sucesso');
+          toast.success(tx('Grupo criado com sucesso'));
           resetForm();
           onClose();
         },
-        onError: () => toast.error('Erro ao criar grupo'),
+        onError: () => toast.error(tx('Erro ao criar grupo')),
       }
     );
   };
@@ -211,19 +212,19 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
     <Dialog open={open} onOpenChange={(o) => { if (!o) { resetForm(); onClose(); } }}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Criar Grupo de Comunicação</DialogTitle>
+          <DialogTitle>{tx('Criar Grupo de Comunicação')}</DialogTitle>
           <DialogDescription>
-            Configure o tipo, visibilidade e permissões do novo grupo.
+            {tx('Configure o tipo, visibilidade e permissões do novo grupo.')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Nome *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Pais Sub-13" />
+            <Label>{tx('Nome *')}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tx('Ex: Pais Sub-13')} />
           </div>
 
           <div>
-            <Label>Tipo de Canal</Label>
+            <Label>{tx('Tipo de Canal')}</Label>
             <Select value={channelType} onValueChange={handleTypeChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -244,9 +245,9 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
 
           {['team', 'official_team', 'parents_team', 'players_team', 'age_group', 'mixed_controlled'].includes(channelType) && teams.length > 0 && (
             <div>
-              <Label>Equipa</Label>
+              <Label>{tx('Equipa')}</Label>
               <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-                <SelectTrigger><SelectValue placeholder="Selecionar equipa (opcional)" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar equipa (opcional)')} /></SelectTrigger>
                 <SelectContent>
                   {teams.map((t: any) => (
                     <SelectItem key={t.id} value={t.id}>
@@ -260,37 +261,37 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
 
           {channelType === 'age_group' && (
             <div>
-              <Label>Escalão</Label>
-              <Input value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} placeholder="Ex: Sub-13" />
+              <Label>{tx('Escalão')}</Label>
+              <Input value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)} placeholder={tx('Ex: Sub-13')} />
             </div>
           )}
 
           {channelType === 'role_based' && (
             <div>
-              <Label>Função alvo</Label>
+              <Label>{tx('Função alvo')}</Label>
               <Select value={targetRole} onValueChange={setTargetRole}>
-                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="coach">Treinadores</SelectItem>
-                  <SelectItem value="assistant_coach">Treinadores Adjuntos</SelectItem>
-                  <SelectItem value="guardian">Encarregados</SelectItem>
-                  <SelectItem value="player">Atletas</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="coordinator">Coordenadores</SelectItem>
+                  <SelectItem value="coach">{tx('Treinadores')}</SelectItem>
+                  <SelectItem value="assistant_coach">{tx('Treinadores Adjuntos')}</SelectItem>
+                  <SelectItem value="guardian">{tx('Encarregados')}</SelectItem>
+                  <SelectItem value="player">{tx('Atletas')}</SelectItem>
+                  <SelectItem value="staff">{tx('Staff')}</SelectItem>
+                  <SelectItem value="coordinator">{tx('Coordenadores')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
 
           <div>
-            <Label>Descrição</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição opcional..." rows={2} />
+            <Label>{tx('Descrição')}</Label>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={tx('Descrição opcional...')} rows={2} />
           </div>
 
           <Separator />
 
           <div>
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visibilidade</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tx('Visibilidade')}</Label>
             <Select value={visibilityScope} onValueChange={setVisibilityScope}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -302,40 +303,40 @@ export function CreateChannelDialog({ clubId, open, onClose }: CreateChannelDial
           </div>
 
           <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quem entra no grupo</Label>
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{tx('Quem entra no grupo')}</Label>
             <p className="mt-1 text-xs text-muted-foreground">
               {selectedTeamId
-                ? 'As pessoas da equipa escolhida entram sozinhas, agora e sempre que alguém novo se juntar (convite aceite, pai associado a um jogador).'
-                : 'Escolha uma equipa para as pessoas entrarem sozinhas; sem equipa, o grupo fica só consigo.'}
+                ? tx('As pessoas da equipa escolhida entram sozinhas, agora e sempre que alguém novo se juntar (convite aceite, pai associado a um jogador).')
+                : tx('Escolha uma equipa para as pessoas entrarem sozinhas; sem equipa, o grupo fica só consigo.')}
             </p>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-normal">Treinadores</Label>
+                <Label className="text-sm font-normal">{tx('Treinadores')}</Label>
                 <Switch checked={allowCoaches} onCheckedChange={setAllowCoaches} />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-normal">Staff Técnico</Label>
+                <Label className="text-sm font-normal">{tx('Staff Técnico')}</Label>
                 <Switch checked={allowStaff} onCheckedChange={setAllowStaff} />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-normal">Coordenadores</Label>
+                <Label className="text-sm font-normal">{tx('Coordenadores')}</Label>
                 <Switch checked={allowCoordinators} onCheckedChange={setAllowCoordinators} />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-normal">Encarregados de Educação</Label>
+                <Label className="text-sm font-normal">{tx('Encarregados de Educação')}</Label>
                 <Switch checked={allowGuardians} onCheckedChange={setAllowGuardians} />
               </div>
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-normal">Atletas</Label>
+                <Label className="text-sm font-normal">{tx('Atletas')}</Label>
                 <Switch checked={allowPlayers} onCheckedChange={setAllowPlayers} />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => { resetForm(); onClose(); }}>Cancelar</Button>
+            <Button variant="outline" onClick={() => { resetForm(); onClose(); }}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={createChannel.isPending}>
-              {createChannel.isPending ? 'A criar...' : 'Criar Grupo'}
+              {createChannel.isPending ? tx('A criar...') : tx('Criar Grupo')}
             </Button>
           </div>
         </div>

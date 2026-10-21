@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, List, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 export function WatchlistsTab() {
   const { clubId } = useUserRole();
@@ -48,17 +49,17 @@ export function WatchlistsTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['scouting-watchlists', clubId] });
-      toast.success('Watchlist criada');
+      toast.success(tx('Watchlist criada'));
       setOpen(false);
     },
-    onError: () => toast.error('Erro ao criar watchlist'),
+    onError: () => toast.error(tx('Erro ao criar watchlist')),
   });
 
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const name = fd.get('name')?.toString().trim();
-    if (!name) { toast.error('Nome é obrigatório'); return; }
+    if (!name) { toast.error(tx('Nome é obrigatório')); return; }
     createMutation.mutate({ name, description: fd.get('description'), watchlist_type: fd.get('watchlist_type') });
   };
 
@@ -67,15 +68,15 @@ export function WatchlistsTab() {
   return (
     <div className="space-y-4 mt-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Watchlists ({watchlists?.length || 0})</h3>
+        <h3 className="text-lg font-semibold">{tx('Watchlists (')}{watchlists?.length || 0})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Nova Watchlist</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />{tx('Nova Watchlist')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Watchlist</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Watchlist')}</DialogTitle></DialogHeader>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div><Label>Nome *</Label><Input name="name" required /></div>
-              <div><Label>Descrição</Label><Input name="description" /></div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>Criar</Button>
+              <div><Label>{tx('Nome *')}</Label><Input name="name" required /></div>
+              <div><Label>{tx('Descrição')}</Label><Input name="description" /></div>
+              <Button type="submit" className="w-full" disabled={createMutation.isPending}>{tx('Criar')}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -83,7 +84,7 @@ export function WatchlistsTab() {
 
       {(watchlists?.length || 0) === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
-          <Eye className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>Nenhuma watchlist criada.</p>
+          <Eye className="h-10 w-10 mx-auto mb-3 opacity-40" /><p>{tx('Nenhuma watchlist criada.')}</p>
         </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -11,6 +11,7 @@ import { ReservationsTab } from '@/components/facilities/ReservationsTab';
 import { MaintenanceTab } from '@/components/facilities/MaintenanceTab';
 import { CostsTab } from '@/components/facilities/CostsTab';
 import { ComplianceTab } from '@/components/facilities/ComplianceTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function FacilitiesDashboard() {
   const { isClubAdmin, loading: roleLoading } = useUserRole();
@@ -21,24 +22,24 @@ export default function FacilitiesDashboard() {
   }
 
   if (!isClubAdmin) {
-    return <AppLayout><div><Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3><p className="text-muted-foreground">Apenas administradores de clubes.</p></CardContent></Card></div></AppLayout>;
+    return <AppLayout><div><Card><CardContent className="py-12 text-center"><Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3><p className="text-muted-foreground">{tx('Apenas administradores de clubes.')}</p></CardContent></Card></div></AppLayout>;
   }
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Instalações & Campos</h1>
-          <p className="text-muted-foreground">Gestão de instalações, reservas, manutenção e custos operacionais</p>
+          <h1 className="text-2xl font-display font-bold">{tx('Instalações & Campos')}</h1>
+          <p className="text-muted-foreground">{tx('Gestão de instalações, reservas, manutenção e custos operacionais')}</p>
         </div>
         <Tabs defaultValue="overview">
           <TabsList className="flex-wrap">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="spaces">Espaços & Campos</TabsTrigger>
-            <TabsTrigger value="reservations">Reservas</TabsTrigger>
-            <TabsTrigger value="maintenance">Manutenção</TabsTrigger>
-            <TabsTrigger value="costs">Custos Operacionais</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="overview">{tx('Visão Geral')}</TabsTrigger>
+            <TabsTrigger value="spaces">{tx('Espaços & Campos')}</TabsTrigger>
+            <TabsTrigger value="reservations">{tx('Reservas')}</TabsTrigger>
+            <TabsTrigger value="maintenance">{tx('Manutenção')}</TabsTrigger>
+            <TabsTrigger value="costs">{tx('Custos Operacionais')}</TabsTrigger>
+            <TabsTrigger value="compliance">{tx('Compliance')}</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
             <FacilitiesOverviewTab {...hook} />

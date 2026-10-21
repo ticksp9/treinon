@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Upload, X, FileText, Image, Loader2, Eye, Trash2 } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerDocumentsProps {
   playerId: string;
@@ -36,13 +37,13 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
 
     if (!allowedTypes.includes(file.type)) {
       toast.error(field === 'photo_url'
-        ? 'Use apenas imagens (JPEG, PNG, WebP)'
-        : 'Use imagens ou PDF');
+        ? tx('Use apenas imagens (JPEG, PNG, WebP)')
+        : tx('Use imagens ou PDF'));
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Ficheiro demasiado grande. Máximo 10MB.');
+      toast.error(tx('Ficheiro demasiado grande. Máximo 10MB.'));
       return;
     }
 
@@ -75,11 +76,11 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
         setSignedUrls(prev => ({ ...prev, [field]: signedData.signedUrl }));
       }
 
-      toast.success('Documento carregado com sucesso!');
+      toast.success(tx('Documento carregado com sucesso!'));
       onUpdate();
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Erro ao carregar documento');
+      toast.error(tx('Erro ao carregar documento'));
     } finally {
       setIsUploading(null);
     }
@@ -112,11 +113,11 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
         return newUrls;
       });
 
-      toast.success('Documento removido');
+      toast.success(tx('Documento removido'));
       onUpdate();
     } catch (error) {
       console.error('Remove error:', error);
-      toast.error('Erro ao remover documento');
+      toast.error(tx('Erro ao remover documento'));
     }
   };
 
@@ -168,7 +169,7 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
                 onClick={() => handleView(field)}
               >
                 <Eye className="w-4 h-4 mr-1" />
-                Ver
+                {tx('Ver')}
               </Button>
               <Button
                 variant="outline"
@@ -203,10 +204,10 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
                     )}
                   </div>
                   <span className="text-sm text-muted-foreground text-center">
-                    Clique para carregar
+                    {tx('Clique para carregar')}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Máximo 10MB
+                    {tx('Máximo 10MB')}
                   </span>
                 </>
               )}
@@ -217,7 +218,7 @@ export function PlayerDocuments({ playerId, player, onUpdate }: PlayerDocumentsP
         {hasFile && (
           <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
             <FileText className="w-4 h-4" />
-            <span>Documento carregado</span>
+            <span>{tx('Documento carregado')}</span>
           </div>
         )}
       </div>

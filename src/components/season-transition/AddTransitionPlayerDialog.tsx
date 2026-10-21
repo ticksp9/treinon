@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { getBirthYear, isPlayerEligibleForAgeGroup, resolveAgeGroupForPlayer, type AgeGroupRule } from '@/lib/age-group-rules';
 import { createTransitionPlayer } from '@/lib/season-transition-service';
 import { matchTeamForAgeGroup, type ProposalRow, type TeamOption } from '@/lib/season-roster-service';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props {
   open: boolean;
@@ -92,21 +93,21 @@ export function AddTransitionPlayerDialog({
     mutationFn: async (): Promise<ProposalRow> => {
       const resolvedTeamId = teamId || matchTeamForAgeGroup(group, teams) || null;
       if (mode === 'new') {
-        if (!resolvedTeamId) throw new Error('Escolhe a equipa para o novo jogador.');
+        if (!resolvedTeamId) throw new Error(tx('Escolhe a equipa para o novo jogador.'));
         const created = await createTransitionPlayer({ name, birth_date: birthDate, team_id: resolvedTeamId });
         return buildRow(created.id, created.name, created.birth_date, resolvedTeamId);
       }
-      if (!selectedExisting) throw new Error('Escolhe um jogador.');
+      if (!selectedExisting) throw new Error(tx('Escolhe um jogador.'));
       return buildRow(selectedExisting.id, selectedExisting.name, selectedExisting.birth_date, resolvedTeamId ?? selectedExisting.team_id);
     },
     onSuccess: (row) => {
       onAdd(row);
-      toast.success(`${row.name} adicionado à nova época.`);
+      toast.success(tx('{{v0}} adicionado à nova época.', { v0: row.name }));
       onOpenChange(false);
     },
     onError: (e: unknown) => {
       console.error('[season-transition] adicionar jogador', e);
-      toast.error((e as { message?: string })?.message ?? 'Não foi possível adicionar o jogador.');
+      toast.error((e as { message?: string })?.message ?? tx('Não foi possível adicionar o jogador.'));
     },
   });
 
@@ -136,25 +137,25 @@ export function AddTransitionPlayerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Adicionar jogador</DialogTitle>
-          <DialogDescription>O jogador fica inscrito na nova época quando aplicares a transição.</DialogDescription>
+          <DialogTitle>{tx('Adicionar jogador')}</DialogTitle>
+          <DialogDescription>{tx('O jogador fica inscrito na nova época quando aplicares a transição.')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="flex gap-2">
             <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} onClick={() => setMode('existing')}>
-              Da lista
+              {tx('Da lista')}
             </Button>
             <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} onClick={() => setMode('new')}>
-              Novo jogador
+              {tx('Novo jogador')}
             </Button>
           </div>
 
           {mode === 'existing' ? (
             <div className="space-y-1">
-              <Label>Jogador</Label>
+              <Label>{tx('Jogador')}</Label>
               <Select value={playerId} onValueChange={setPlayerId}>
-                <SelectTrigger><SelectValue placeholder="Selecionar jogador" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar jogador')} /></SelectTrigger>
                 <SelectContent className="max-h-[40vh]">
                   {candidates.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
@@ -167,11 +168,11 @@ export function AddTransitionPlayerDialog({
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label>Nome</Label>
+                <Label>{tx('Nome')}</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Data de nascimento</Label>
+                <Label>{tx('Data de nascimento')}</Label>
                 <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
               </div>
             </div>
@@ -179,9 +180,9 @@ export function AddTransitionPlayerDialog({
 
           {ageGroups.length > 0 && (
             <div className="space-y-1">
-              <Label>Escalão</Label>
+              <Label>{tx('Escalão')}</Label>
               <Select value={ageGroupId} onValueChange={setAgeGroupId} disabled={!!fixedAgeGroupId}>
-                <SelectTrigger><SelectValue placeholder="Selecionar escalão" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar escalão')} /></SelectTrigger>
                 <SelectContent>
                   {ageGroups.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
                 </SelectContent>
@@ -190,9 +191,9 @@ export function AddTransitionPlayerDialog({
           )}
 
           <div className="space-y-1">
-            <Label>Equipa</Label>
+            <Label>{tx('Equipa')}</Label>
             <Select value={teamId} onValueChange={setTeamId}>
-              <SelectTrigger><SelectValue placeholder="Selecionar equipa" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Selecionar equipa')} /></SelectTrigger>
               <SelectContent>
                 {teams.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
               </SelectContent>
@@ -202,19 +203,19 @@ export function AddTransitionPlayerDialog({
           {needsConfirm && (
             <div className="border border-amber-500/40 bg-amber-500/5 rounded p-3 space-y-2">
               <p className="text-xs text-muted-foreground">
-                {name || selectedExisting?.name} não é elegível para {group?.name} ({group?.min_birth_year}–{group?.max_birth_year}).
+                {name || selectedExisting?.name} {tx('não é elegível para')}{' '}{group?.name} ({group?.min_birth_year}–{group?.max_birth_year}).
               </p>
               <label className="flex items-center gap-2 text-xs">
                 <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} />
-                Confirmo a inscrição mesmo assim.
+                {tx('Confirmo a inscrição mesmo assim.')}
               </label>
             </div>
           )}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button disabled={!canSubmit} onClick={() => add.mutate()}>Adicionar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tx('Cancelar')}</Button>
+          <Button disabled={!canSubmit} onClick={() => add.mutate()}>{tx('Adicionar')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

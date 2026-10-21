@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Wand2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { suggestBirthYears, type YearTeam } from '@/lib/player-import';
+import { tx } from '@/lib/i18n/ui';
 
 export const yearsToText = (y: number[] | null | undefined) => (y ?? []).slice().sort((a, b) => a - b).join(', ');
 export const textToYears = (s: string) =>
@@ -33,7 +34,7 @@ export function BirthYearRules({ teams, seasonStartYear, onChange, persist = tru
     onChange(next);
     if (persist) {
       const { error } = await supabase.from('teams').update({ birth_years: years } as never).eq('id', id);
-      if (error) toast.error('Não foi possível guardar os anos: ' + error.message);
+      if (error) toast.error(tx('Não foi possível guardar os anos: ') + error.message);
     }
   };
   const suggestAll = () => teams.forEach((t) => {
@@ -46,8 +47,8 @@ export function BirthYearRules({ teams, seasonStartYear, onChange, persist = tru
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">Anos de nascimento de cada equipa. Um ano pode estar em duas equipas (o jogador entra nas duas).</p>
-        <Button size="sm" variant="outline" onClick={suggestAll} title="Preenche as equipas vazias pelo escalão"><Wand2 className="mr-1.5 h-4 w-4" />Sugerir</Button>
+        <p className="text-sm text-muted-foreground">{tx('Anos de nascimento de cada equipa. Um ano pode estar em duas equipas (o jogador entra nas duas).')}</p>
+        <Button size="sm" variant="outline" onClick={suggestAll} title={tx('Preenche as equipas vazias pelo escalão')}><Wand2 className="mr-1.5 h-4 w-4" />{tx('Sugerir')}</Button>
       </div>
       <div className="divide-y rounded-md border">
         {teams.map((t) => (
@@ -58,12 +59,12 @@ export function BirthYearRules({ teams, seasonStartYear, onChange, persist = tru
             </span>
             <Input
               className="h-8 w-40"
-              placeholder="ex.: 2013, 2014"
+              placeholder={tx('ex.: 2013, 2014')}
               value={draft[t.id] ?? ''}
               onChange={(e) => setDraft((d) => ({ ...d, [t.id]: e.target.value }))}
               onBlur={(e) => { if (e.target.value !== yearsToText(t.birth_years)) commit(t.id, e.target.value); }}
               onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
-              aria-label={`Anos de nascimento de ${t.name}`}
+              aria-label={tx('Anos de nascimento de {{v0}}', { v0: t.name })}
             />
           </div>
         ))}

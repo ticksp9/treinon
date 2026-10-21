@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 // ========== Payment Intents ==========
 export function usePaymentIntents(clubId: string | undefined) {
@@ -31,7 +32,7 @@ export function useCreateCheckoutSession(clubId: string | undefined) {
       paymentMethod?: string;
     }) => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) throw new Error(tx('Not authenticated'));
       const res = await supabase.functions.invoke('create-payment', {
         body: {
           action: 'create_checkout',
@@ -51,10 +52,10 @@ export function useCreateCheckoutSession(clubId: string | undefined) {
       qc.invalidateQueries({ queryKey: ['payment-intents'] });
       if (data.checkout_url) {
         window.open(data.checkout_url, '_blank');
-        toast.success('Link de pagamento criado');
+        toast.success(tx('Link de pagamento criado'));
       }
     },
-    onError: (e: any) => toast.error('Erro ao criar pagamento: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro ao criar pagamento: ') + e.message),
   });
 }
 
@@ -75,9 +76,9 @@ export function useCreateMbWayPayment(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payment-intents'] });
-      toast.success('Pagamento MB WAY iniciado');
+      toast.success(tx('Pagamento MB WAY iniciado'));
     },
-    onError: (e: any) => toast.error('Erro MB WAY: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro MB WAY: ') + e.message),
   });
 }
 
@@ -162,9 +163,9 @@ export function useCreateBankAccount(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bank-accounts'] });
-      toast.success('Conta bancária adicionada');
+      toast.success(tx('Conta bancária adicionada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -217,9 +218,9 @@ export function useImportStatement(clubId: string | undefined) {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['bank-imports'] });
-      toast.success(`${data.rows_imported} linhas importadas`);
+      toast.success(tx('{{v0}} linhas importadas', { v0: data.rows_imported }));
     },
-    onError: (e: any) => toast.error('Erro na importação: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro na importação: ') + e.message),
   });
 }
 
@@ -236,9 +237,9 @@ export function useAutoMatch(clubId: string | undefined) {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['bank-lines'] });
       qc.invalidateQueries({ queryKey: ['bank-imports'] });
-      toast.success(`${data.matched} reconciliadas, ${data.needs_review} para revisão`);
+      toast.success(tx('{{v0}} reconciliadas, {{v1}} para revisão', { v0: data.matched, v1: data.needs_review }));
     },
-    onError: (e: any) => toast.error('Erro no matching: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro no matching: ') + e.message),
   });
 }
 
@@ -261,9 +262,9 @@ export function useManualMatch(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bank-lines'] });
-      toast.success('Reconciliação manual aplicada');
+      toast.success(tx('Reconciliação manual aplicada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -279,9 +280,9 @@ export function useReverseMatch(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['bank-lines'] });
-      toast.success('Reconciliação revertida');
+      toast.success(tx('Reconciliação revertida'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 

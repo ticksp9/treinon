@@ -11,20 +11,21 @@ import { BudgetLinesTab } from '@/components/budget/BudgetLinesTab';
 import { BudgetVarianceTab } from '@/components/budget/BudgetVarianceTab';
 import { BudgetAlertsTab } from '@/components/budget/BudgetAlertsTab';
 import { BudgetCycleManager } from '@/components/budget/BudgetCycleManager';
+import { tx } from '@/lib/i18n/ui';
 
 export default function BudgetDashboard() {
   const { isClubAdmin, clubId, loading: roleLoading } = useUserRole();
   const [activeTab, setActiveTab] = useState('overview');
 
   if (roleLoading) return <AppLayout><PageLoading /></AppLayout>;
-  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message="Apenas administradores podem aceder ao orçamento." /></AppLayout>;
+  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message={tx('Apenas administradores podem aceder ao orçamento.')} /></AppLayout>;
 
   return (
-    <AppLayout title="Orçamento">
+    <AppLayout title={tx('Orçamento')}>
       <div className="space-y-6">
         <PageHeader
-          title="Orçamento & Controlo"
-          description="Planeamento, execução e controlo orçamental"
+          title={tx('Orçamento & Controlo')}
+          description={tx('Planeamento, execução e controlo orçamental')}
           icon={<BarChart3 className="w-6 h-6 text-primary" />}
         />
 
@@ -32,23 +33,23 @@ export default function BudgetDashboard() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              <span>Visão Geral</span>
+              <span>{tx('Visão Geral')}</span>
             </TabsTrigger>
             <TabsTrigger value="cycles" className="flex items-center gap-2">
               <Settings2 className="w-4 h-4" />
-              <span>Ciclos</span>
+              <span>{tx('Ciclos')}</span>
             </TabsTrigger>
             <TabsTrigger value="lines" className="flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Linhas</span>
+              <span>{tx('Linhas')}</span>
             </TabsTrigger>
             <TabsTrigger value="variance" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              <span>Real vs Budget</span>
+              <span>{tx('Real vs Budget')}</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              <span>Alertas</span>
+              <span>{tx('Alertas')}</span>
             </TabsTrigger>
           </TabsList>
 

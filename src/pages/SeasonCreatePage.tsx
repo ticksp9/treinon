@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useSeasonScope, useSeasonsList } from '@/hooks/useSeasonContext';
 import { createSeason, activateSeason, SeasonAlreadyExistsError } from '@/lib/season-service';
+import { tx } from '@/lib/i18n/ui';
 
 export default function SeasonCreatePage() {
   const nav = useNavigate();
@@ -26,7 +27,7 @@ export default function SeasonCreatePage() {
 
   const create = useMutation({
     mutationFn: async (activate: boolean) => {
-      if (!scope) throw new Error('Sem contexto');
+      if (!scope) throw new Error(tx('Sem contexto'));
       const s = await createSeason(scope, {
         name: form.name,
         start_date: form.start_date,
@@ -38,18 +39,18 @@ export default function SeasonCreatePage() {
       return s;
     },
     onSuccess: (s, activate) => {
-      toast.success(activate ? `Época ${s.name} criada e ativa` : `Época ${s.name} criada em planeamento`);
+      toast.success(activate ? tx('Época {{v0}} criada e ativa', { v0: s.name }) : tx('Época {{v0}} criada em planeamento', { v0: s.name }));
       qc.invalidateQueries({ queryKey: ['seasons-list'] });
       qc.invalidateQueries({ queryKey: ['season-context'] });
       nav('/seasons/transition');
     },
     onError: (e: any) => {
       if (e instanceof SeasonAlreadyExistsError) {
-        toast.error(`Já existe a época ${e.season.name}.`);
+        toast.error(tx('Já existe a época {{v0}}.', { v0: e.season.name }));
         nav('/seasons');
         return;
       }
-      toast.error('Erro: ' + e.message);
+      toast.error(tx('Erro: ') + e.message);
     },
   });
 
@@ -57,44 +58,44 @@ export default function SeasonCreatePage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-2xl font-semibold">Nova Época</h1>
+      <h1 className="text-2xl font-semibold">{tx('Nova Época')}</h1>
       <Card>
-        <CardHeader><CardTitle className="text-base">Detalhes</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{tx('Detalhes')}</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="space-y-1">
-            <Label>Nome *</Label>
-            <Input value={form.name} placeholder="Ex: 2026/2027" onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label>{tx('Nome *')}</Label>
+            <Input value={form.name} placeholder={tx('Ex: 2026/2027')} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Início *</Label>
+              <Label>{tx('Início *')}</Label>
               <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label>Fim *</Label>
+              <Label>{tx('Fim *')}</Label>
               <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
             </div>
           </div>
           <div className="space-y-1">
-            <Label>Data de referência (cálculo de escalões)</Label>
+            <Label>{tx('Data de referência (cálculo de escalões)')}</Label>
             <Input type="date" value={form.reference_date} onChange={(e) => setForm({ ...form, reference_date: e.target.value })} />
-            <p className="text-xs text-muted-foreground">Se vazio, usa a data de início.</p>
+            <p className="text-xs text-muted-foreground">{tx('Se vazio, usa a data de início.')}</p>
           </div>
           <div className="space-y-1">
-            <Label>Notas</Label>
+            <Label>{tx('Notas')}</Label>
             <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
           <div className="flex flex-wrap gap-2 pt-2 border-t">
             <Button variant="outline" disabled={!ready || create.isPending} onClick={() => create.mutate(false)}>
-              Criar em planeamento
+              {tx('Criar em planeamento')}
             </Button>
             <Button disabled={!ready || create.isPending} onClick={() => create.mutate(true)}>
-              Criar e ativar
+              {tx('Criar e ativar')}
             </Button>
           </div>
           {seasons.find((s) => s.is_active) && (
             <p className="text-xs text-muted-foreground border-t pt-2">
-              Ao ativar, a época atual ({seasons.find((s) => s.is_active)?.name}) é automaticamente fechada.
+              {tx('Ao ativar, a época atual (')}{seasons.find((s) => s.is_active)?.name}{tx(') é automaticamente fechada.')}
             </p>
           )}
         </CardContent>

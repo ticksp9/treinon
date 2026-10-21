@@ -12,6 +12,7 @@ import {
   computeSquadFitness, computeExamCompliance, computeInjuryStats,
   CLEARANCE_STATUSES, INJURY_CASE_STATUSES
 } from '@/hooks/useMedical';
+import { tx } from '@/lib/i18n/ui';
 
 export function MedicalOverviewTab() {
   const { clubId } = usePhysioAccess();
@@ -132,7 +133,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{fitness.fit}</p>
-                <p className="text-xs text-muted-foreground">Atletas Aptos</p>
+                <p className="text-xs text-muted-foreground">{tx('Atletas Aptos')}</p>
               </div>
             </div>
           </CardContent>
@@ -146,7 +147,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{injuryStats.activeCases}</p>
-                <p className="text-xs text-muted-foreground">Lesões Ativas</p>
+                <p className="text-xs text-muted-foreground">{tx('Lesões Ativas')}</p>
               </div>
             </div>
           </CardContent>
@@ -160,7 +161,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{examCompliance.expired + examCompliance.expiringSoon}</p>
-                <p className="text-xs text-muted-foreground">Exames Vencidos/A Vencer</p>
+                <p className="text-xs text-muted-foreground">{tx('Exames Vencidos/A Vencer')}</p>
               </div>
             </div>
           </CardContent>
@@ -174,7 +175,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{sessions?.length || 0}</p>
-                <p className="text-xs text-muted-foreground">Sessões Fisioterapia</p>
+                <p className="text-xs text-muted-foreground">{tx('Sessões Fisioterapia')}</p>
               </div>
             </div>
           </CardContent>
@@ -191,7 +192,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{fitness.unfit}</p>
-                <p className="text-xs text-muted-foreground">Inaptos</p>
+                <p className="text-xs text-muted-foreground">{tx('Inaptos')}</p>
               </div>
             </div>
           </CardContent>
@@ -205,7 +206,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{rehabPrograms?.length || 0}</p>
-                <p className="text-xs text-muted-foreground">Rehab Ativos</p>
+                <p className="text-xs text-muted-foreground">{tx('Rehab Ativos')}</p>
               </div>
             </div>
           </CardContent>
@@ -219,7 +220,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{injuryStats.totalDaysLost}</p>
-                <p className="text-xs text-muted-foreground">Dias Perdidos</p>
+                <p className="text-xs text-muted-foreground">{tx('Dias Perdidos')}</p>
               </div>
             </div>
           </CardContent>
@@ -233,7 +234,7 @@ export function MedicalOverviewTab() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{alerts?.length || 0}</p>
-                <p className="text-xs text-muted-foreground">Alertas Ativos</p>
+                <p className="text-xs text-muted-foreground">{tx('Alertas Ativos')}</p>
               </div>
             </div>
           </CardContent>
@@ -244,12 +245,12 @@ export function MedicalOverviewTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Aptidão do Plantel</CardTitle>
-            <CardDescription>Estado de clearance global</CardDescription>
+            <CardTitle className="text-lg">{tx('Aptidão do Plantel')}</CardTitle>
+            <CardDescription>{tx('Estado de clearance global')}</CardDescription>
           </CardHeader>
           <CardContent>
             {fitnessChartData.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">Sem dados de aptidão</p>
+              <p className="text-center py-8 text-muted-foreground">{tx('Sem dados de aptidão')}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -267,12 +268,12 @@ export function MedicalOverviewTab() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Lesões por Gravidade</CardTitle>
-            <CardDescription>Distribuição de casos</CardDescription>
+            <CardTitle className="text-lg">{tx('Lesões por Gravidade')}</CardTitle>
+            <CardDescription>{tx('Distribuição de casos')}</CardDescription>
           </CardHeader>
           <CardContent>
             {severityData.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">Sem dados de lesões</p>
+              <p className="text-center py-8 text-muted-foreground">{tx('Sem dados de lesões')}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={severityData}>
@@ -290,29 +291,29 @@ export function MedicalOverviewTab() {
       {/* Compliance Summary */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Compliance de Exames</CardTitle>
+          <CardTitle className="text-lg">{tx('Compliance de Exames')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
             <div>
               <p className="text-2xl font-bold text-green-600">{examCompliance.valid}</p>
-              <p className="text-xs text-muted-foreground">Válidos</p>
+              <p className="text-xs text-muted-foreground">{tx('Válidos')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-yellow-600">{examCompliance.expiringSoon}</p>
-              <p className="text-xs text-muted-foreground">A Vencer (30d)</p>
+              <p className="text-xs text-muted-foreground">{tx('A Vencer (30d)')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-red-600">{examCompliance.expired}</p>
-              <p className="text-xs text-muted-foreground">Vencidos</p>
+              <p className="text-xs text-muted-foreground">{tx('Vencidos')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-muted-foreground">{examCompliance.missing}</p>
-              <p className="text-xs text-muted-foreground">Em Falta</p>
+              <p className="text-xs text-muted-foreground">{tx('Em Falta')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-primary">{examCompliance.complianceRate}%</p>
-              <p className="text-xs text-muted-foreground">Taxa Conformidade</p>
+              <p className="text-xs text-muted-foreground">{tx('Taxa Conformidade')}</p>
             </div>
           </div>
         </CardContent>

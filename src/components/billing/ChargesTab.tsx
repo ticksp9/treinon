@@ -10,16 +10,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, CreditCard, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos' },
-  { value: 'pending', label: 'Pendente' },
-  { value: 'overdue', label: 'Vencido' },
-  { value: 'partially_paid', label: 'Parcial' },
-  { value: 'paid', label: 'Pago' },
-  { value: 'cancelled', label: 'Cancelado' },
+  { value: 'all', get label() { return tx('Todos'); } },
+  { value: 'pending', get label() { return tx('Pendente'); } },
+  { value: 'overdue', get label() { return tx('Vencido'); } },
+  { value: 'partially_paid', get label() { return tx('Parcial'); } },
+  { value: 'paid', get label() { return tx('Pago'); } },
+  { value: 'cancelled', get label() { return tx('Cancelado'); } },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -59,7 +60,7 @@ export function ChargesTab({ clubId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-2">
-        <div><h3 className="font-semibold">Cobranças</h3><p className="text-sm text-muted-foreground">Listagem de cobranças geradas</p></div>
+        <div><h3 className="font-semibold">{tx('Cobranças')}</h3><p className="text-sm text-muted-foreground">{tx('Listagem de cobranças geradas')}</p></div>
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
@@ -73,7 +74,7 @@ export function ChargesTab({ clubId }: Props) {
       </div>
 
       {(!charges || charges.length === 0) ? (
-        <Card><CardContent className="py-12 text-center"><FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">Sem cobranças para os filtros selecionados</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">{tx('Sem cobranças para os filtros selecionados')}</p></CardContent></Card>
       ) : (
         <div className="space-y-2">
           {charges.map((c: any) => (
@@ -85,20 +86,20 @@ export function ChargesTab({ clubId }: Props) {
                     <Badge variant={STATUS_COLORS[c.status] as any || 'outline'}>{STATUS_OPTIONS.find(s => s.value === c.status)?.label || c.status}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {(c.players as any)?.name || 'N/A'} · {(c.players as any)?.teams?.name || ''} · Venc: {format(new Date(c.due_date), 'dd/MM/yyyy')}
+                    {(c.players as any)?.name || tx('N/A')} · {(c.players as any)?.teams?.name || ''} {tx('· Venc:')}{' '}{format(new Date(c.due_date), 'dd/MM/yyyy')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <div className="font-bold text-sm">{fmt(c.final_amount)}</div>
                     {c.balance_due > 0 && c.balance_due < c.final_amount && (
-                      <div className="text-xs text-amber-600">Em aberto: {fmt(c.balance_due)}</div>
+                      <div className="text-xs text-amber-600">{tx('Em aberto:')}{' '}{fmt(c.balance_due)}</div>
                     )}
-                    {c.discount_amount > 0 && <div className="text-xs text-green-600">Desc: -{fmt(c.discount_amount)}</div>}
+                    {c.discount_amount > 0 && <div className="text-xs text-green-600">{tx('Desc: -')}{fmt(c.discount_amount)}</div>}
                   </div>
                   {c.status !== 'paid' && c.status !== 'cancelled' && (
                     <Button size="sm" variant="outline" onClick={() => { setPayDialog(c); setPayAmount(String(c.balance_due)); }}>
-                      <CreditCard className="w-3 h-3 mr-1" /> Pagar
+                      <CreditCard className="w-3 h-3 mr-1" /> {tx('Pagar')}
                     </Button>
                   )}
                   {c.status === 'paid' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
@@ -111,17 +112,17 @@ export function ChargesTab({ clubId }: Props) {
 
       <Dialog open={!!payDialog} onOpenChange={() => setPayDialog(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Registar Pagamento</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tx('Registar Pagamento')}</DialogTitle></DialogHeader>
           {payDialog && (
             <div className="space-y-4">
               <p className="text-sm"><strong>{payDialog.description}</strong> — {(payDialog.players as any)?.name}</p>
-              <p className="text-sm text-muted-foreground">Em aberto: <strong>{fmt(payDialog.balance_due)}</strong></p>
+              <p className="text-sm text-muted-foreground">{tx('Em aberto:')}{' '}<strong>{fmt(payDialog.balance_due)}</strong></p>
               <div className="grid grid-cols-2 gap-3">
-                <div><Label>Valor (€)</Label><Input type="number" step="0.01" value={payAmount} onChange={e => setPayAmount(e.target.value)} /></div>
-                <div><Label>Método</Label><Select value={payMethod} onValueChange={setPayMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="cash">Dinheiro</SelectItem><SelectItem value="transfer">Transferência</SelectItem><SelectItem value="mbway">MBWay</SelectItem><SelectItem value="multibanco">Multibanco</SelectItem><SelectItem value="other">Outro</SelectItem></SelectContent></Select></div>
+                <div><Label>{tx('Valor (€)')}</Label><Input type="number" step="0.01" value={payAmount} onChange={e => setPayAmount(e.target.value)} /></div>
+                <div><Label>{tx('Método')}</Label><Select value={payMethod} onValueChange={setPayMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="cash">{tx('Dinheiro')}</SelectItem><SelectItem value="transfer">{tx('Transferência')}</SelectItem><SelectItem value="mbway">{tx('MBWay')}</SelectItem><SelectItem value="multibanco">{tx('Multibanco')}</SelectItem><SelectItem value="other">{tx('Outro')}</SelectItem></SelectContent></Select></div>
               </div>
-              <div><Label>Referência (opcional)</Label><Input value={payRef} onChange={e => setPayRef(e.target.value)} placeholder="Nº transação" /></div>
-              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setPayDialog(null)}>Cancelar</Button><Button onClick={handlePay} disabled={recordPayment.isPending}>Confirmar Pagamento</Button></div>
+              <div><Label>{tx('Referência (opcional)')}</Label><Input value={payRef} onChange={e => setPayRef(e.target.value)} placeholder={tx('Nº transação')} /></div>
+              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setPayDialog(null)}>{tx('Cancelar')}</Button><Button onClick={handlePay} disabled={recordPayment.isPending}>{tx('Confirmar Pagamento')}</Button></div>
             </div>
           )}
         </DialogContent>

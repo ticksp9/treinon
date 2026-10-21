@@ -13,14 +13,15 @@ import { useSquadProfiles, type SquadProfile } from '@/hooks/useSquadProfiles';
 import { ATTRIBUTE_CATALOG, categoryAverage } from '@/lib/player-attributes';
 import { ratingBg, ratingTone } from '@/lib/player-card';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface SquadPlayer { id: string; name: string; number?: number | null; position?: string | null }
 
 const LINES: { key: string; label: string; positions: string[] }[] = [
-  { key: 'gk', label: 'Guarda-redes', positions: ['GK'] },
-  { key: 'def', label: 'Defesas', positions: ['CB', 'LB', 'RB', 'FIX'] },
-  { key: 'mid', label: 'Médios', positions: ['CDM', 'CM', 'CAM', 'LM', 'RM', 'ALA'] },
-  { key: 'att', label: 'Avançados', positions: ['LW', 'RW', 'CF', 'ST', 'PIV', 'UNI'] },
+  { key: 'gk', get label() { return tx('Guarda-redes'); }, positions: ['GK'] },
+  { key: 'def', get label() { return tx('Defesas'); }, positions: ['CB', 'LB', 'RB', 'FIX'] },
+  { key: 'mid', get label() { return tx('Médios'); }, positions: ['CDM', 'CM', 'CAM', 'LM', 'RM', 'ALA'] },
+  { key: 'att', get label() { return tx('Avançados'); }, positions: ['LW', 'RW', 'CF', 'ST', 'PIV', 'UNI'] },
 ];
 
 const lineOf = (pos?: string | null) => LINES.find((l) => l.positions.includes((pos || '').toUpperCase()))?.key ?? 'other';
@@ -36,7 +37,7 @@ export function SquadDepth({ players }: { players: SquadPlayer[] }) {
   const toggle = (id: string) =>
     setCompare((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c.slice(-1), id]));
 
-  const groups = [...LINES, { key: 'other', label: 'Sem posição', positions: [] }]
+  const groups = [...LINES, { key: 'other', label: tx('Sem posição'), positions: [] }]
     .map((l) => ({
       ...l,
       players: players
@@ -51,12 +52,12 @@ export function SquadDepth({ players }: { players: SquadPlayer[] }) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between gap-2 text-base">
-          Plantel por posição
+          {tx('Plantel por posição')}
           {compare.length === 2 && (
-            <Button size="sm" onClick={() => setOpen(true)}><GitCompare className="mr-1.5 h-4 w-4" />Comparar</Button>
+            <Button size="sm" onClick={() => setOpen(true)}><GitCompare className="mr-1.5 h-4 w-4" />{tx('Comparar')}</Button>
           )}
         </CardTitle>
-        <CardDescription>Nota da última avaliação, forma dos últimos jogos e minutos na época. Toque em dois jogadores para os comparar.</CardDescription>
+        <CardDescription>{tx('Nota da última avaliação, forma dos últimos jogos e minutos na época. Toque em dois jogadores para os comparar.')}</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {groups.map((g) => (
@@ -93,10 +94,10 @@ export function SquadDepth({ players }: { players: SquadPlayer[] }) {
 
       <Dialog open={open && !!a && !!b} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Comparar jogadores</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tx('Comparar jogadores')}</DialogTitle></DialogHeader>
           {a && b && <Comparison a={a} b={b} />}
           <Button variant="ghost" size="sm" onClick={() => { setCompare([]); setOpen(false); }}>
-            <X className="mr-1.5 h-4 w-4" />Limpar seleção
+            <X className="mr-1.5 h-4 w-4" />{tx('Limpar seleção')}
           </Button>
         </DialogContent>
       </Dialog>
@@ -106,15 +107,15 @@ export function SquadDepth({ players }: { players: SquadPlayer[] }) {
 
 function Comparison({ a, b }: { a: { player: SquadPlayer; profile?: SquadProfile }; b: { player: SquadPlayer; profile?: SquadProfile } }) {
   const rows: { label: string; va: number | null; vb: number | null; fmt?: (v: number) => string }[] = [
-    { label: 'Nota', va: a.profile?.ability ?? null, vb: b.profile?.ability ?? null },
-    { label: 'Forma', va: a.profile?.form.average ?? null, vb: b.profile?.form.average ?? null },
+    { label: tx('Nota'), va: a.profile?.ability ?? null, vb: b.profile?.ability ?? null },
+    { label: tx('Forma'), va: a.profile?.form.average ?? null, vb: b.profile?.form.average ?? null },
     ...ATTRIBUTE_CATALOG.map((c) => ({
       label: c.label,
       va: a.profile?.attributes ? categoryAverage(a.profile.attributes, c.key) : null,
       vb: b.profile?.attributes ? categoryAverage(b.profile.attributes, c.key) : null,
     })),
-    { label: 'Minutos na época', va: a.profile?.seasonMinutes ?? 0, vb: b.profile?.seasonMinutes ?? 0, fmt: (v) => `${v}'` },
-    { label: 'Jogos na época', va: a.profile?.seasonGames ?? 0, vb: b.profile?.seasonGames ?? 0, fmt: (v) => `${v}` },
+    { label: tx('Minutos na época'), va: a.profile?.seasonMinutes ?? 0, vb: b.profile?.seasonMinutes ?? 0, fmt: (v) => `${v}'` },
+    { label: tx('Jogos na época'), va: a.profile?.seasonGames ?? 0, vb: b.profile?.seasonGames ?? 0, fmt: (v) => `${v}` },
   ];
   const show = (v: number | null, fmt?: (v: number) => string) => (v == null ? '—' : fmt ? fmt(v) : v.toFixed(1));
   return (

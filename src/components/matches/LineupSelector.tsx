@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Users, Play, Star, UserMinus, UserX } from 'lucide-react';
 import { getSportFormatRules } from '@/lib/match-playing-time';
-import { useT, tr } from '@/lib/i18n/ui';
+import { useT, tr, tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -238,7 +238,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
             <div className="space-y-3">
               <h4 className="font-semibold flex items-center gap-2 text-primary">
                 <Star className="w-4 h-4" />
-                TITULARES ({starterCount})
+                {tx('TITULARES (')}{starterCount})
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {lineups
@@ -276,7 +276,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
             <div className="space-y-3">
               <h4 className="font-semibold flex items-center gap-2 text-muted-foreground">
                 <UserMinus className="w-4 h-4" />
-                SUPLENTES ({substituteCount})
+                {tx('SUPLENTES (')}{substituteCount})
               </h4>
               {Object.entries(groupedPlayers)
                 .filter(([_, players]) => players.some(l => !selectedStarters.has(l.player_id)))

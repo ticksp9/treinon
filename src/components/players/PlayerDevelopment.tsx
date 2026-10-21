@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useSeasonContext } from '@/hooks/useSeasonContext';
+import { tx } from '@/lib/i18n/ui';
 
 interface ClubScopedProps {
   playerId: string;
@@ -23,18 +24,18 @@ interface ClubScopedProps {
 }
 
 const STATUSES = [
-  { value: 'open', label: 'Aberto' },
-  { value: 'in_progress', label: 'Em curso' },
-  { value: 'achieved', label: 'Conquistado' },
-  { value: 'partially_achieved', label: 'Parcial' },
-  { value: 'deferred', label: 'Adiado' },
-  { value: 'cancelled', label: 'Cancelado' },
+  { value: 'open', get label() { return tx('Aberto'); } },
+  { value: 'in_progress', get label() { return tx('Em curso'); } },
+  { value: 'achieved', get label() { return tx('Conquistado'); } },
+  { value: 'partially_achieved', get label() { return tx('Parcial'); } },
+  { value: 'deferred', get label() { return tx('Adiado'); } },
+  { value: 'cancelled', get label() { return tx('Cancelado'); } },
 ];
 const PRIORITIES = [
-  { value: 'low', label: 'Baixa' },
-  { value: 'medium', label: 'Média' },
-  { value: 'high', label: 'Alta' },
-  { value: 'critical', label: 'Crítica' },
+  { value: 'low', get label() { return tx('Baixa'); } },
+  { value: 'medium', get label() { return tx('Média'); } },
+  { value: 'high', get label() { return tx('Alta'); } },
+  { value: 'critical', get label() { return tx('Crítica'); } },
 ];
 
 export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) {
@@ -69,7 +70,7 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
 
   const ensurePlan = useMutation({
     mutationFn: async () => {
-      if (!clubId || !user) throw new Error('Sem clube');
+      if (!clubId || !user) throw new Error(tx('Sem clube'));
       if (plan) return plan;
       const { data, error } = await supabase
         .from('academy_development_plans')
@@ -120,12 +121,12 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Objetivo adicionado');
+      toast.success(tx('Objetivo adicionado'));
       setGoalDialog(false);
       setGoalForm({ title: '', description: '', priority: 'medium', target_date: '', success_criteria: '' });
       refetchGoals();
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   const updateGoal = useMutation({
@@ -151,7 +152,7 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          O Plano Individual está disponível em modo Clube.
+          {tx('O Plano Individual está disponível em modo Clube.')}
         </CardContent>
       </Card>
     );
@@ -161,31 +162,31 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
     <div className="space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="text-lg font-semibold">Plano Individual</h3>
+          <h3 className="text-lg font-semibold">{tx('Plano Individual')}</h3>
           {plan && (
             <p className="text-xs text-muted-foreground">
-              Versão {plan.version_no} · Estado: {plan.status}
+              {tx('Versão')}{' '}{plan.version_no} {tx('· Estado:')}{' '}{plan.status}
             </p>
           )}
         </div>
         <Dialog open={goalDialog} onOpenChange={setGoalDialog}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-1" />Novo Objetivo</Button>
+            <Button size="sm"><Plus className="w-4 h-4 mr-1" />{tx('Novo Objetivo')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Novo Objetivo Individual</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Novo Objetivo Individual')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="space-y-1">
-                <Label>Título *</Label>
+                <Label>{tx('Título *')}</Label>
                 <Input
                   value={goalForm.title}
                   onChange={(e) => setGoalForm({ ...goalForm, title: e.target.value })}
-                  placeholder="Ex: Melhorar passe longo"
+                  placeholder={tx('Ex: Melhorar passe longo')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label>Prioridade</Label>
+                  <Label>{tx('Prioridade')}</Label>
                   <Select value={goalForm.priority} onValueChange={(v) => setGoalForm({ ...goalForm, priority: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -194,20 +195,20 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label>Data alvo</Label>
+                  <Label>{tx('Data alvo')}</Label>
                   <Input type="date" value={goalForm.target_date}
                     onChange={(e) => setGoalForm({ ...goalForm, target_date: e.target.value })} />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label>Descrição</Label>
+                <Label>{tx('Descrição')}</Label>
                 <Textarea
                   value={goalForm.description}
                   onChange={(e) => setGoalForm({ ...goalForm, description: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
-                <Label>Critérios de sucesso</Label>
+                <Label>{tx('Critérios de sucesso')}</Label>
                 <Textarea
                   value={goalForm.success_criteria}
                   onChange={(e) => setGoalForm({ ...goalForm, success_criteria: e.target.value })}
@@ -218,7 +219,7 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
                 disabled={!goalForm.title || createGoal.isPending}
                 onClick={() => createGoal.mutate()}
               >
-                Guardar Objetivo
+                {tx('Guardar Objetivo')}
               </Button>
             </div>
           </DialogContent>
@@ -240,7 +241,7 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
                     {g.description && <p className="text-sm text-muted-foreground mt-1">{g.description}</p>}
                     {g.target_date && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Alvo: {format(new Date(g.target_date), 'dd MMM yyyy', { locale: pt })}
+                        {tx('Alvo:')}{' '}{format(new Date(g.target_date), 'dd MMM yyyy', { locale: pt })}
                       </p>
                     )}
                   </div>
@@ -286,7 +287,7 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <Target className="w-10 h-10 mx-auto mb-2" />
-            <p>Sem objetivos individuais.</p>
+            <p>{tx('Sem objetivos individuais.')}</p>
           </CardContent>
         </Card>
       )}
@@ -297,11 +298,11 @@ export function PlayerDevelopmentPlanTab({ playerId, clubId }: ClubScopedProps) 
 // ─────────────────────────── Observações
 
 const CONTEXTS = [
-  { value: 'training', label: 'Treino' },
-  { value: 'match', label: 'Jogo' },
-  { value: 'tournament', label: 'Torneio' },
-  { value: 'camp', label: 'Estágio' },
-  { value: 'other', label: 'Outro' },
+  { value: 'training', get label() { return tx('Treino'); } },
+  { value: 'match', get label() { return tx('Jogo'); } },
+  { value: 'tournament', get label() { return tx('Torneio'); } },
+  { value: 'camp', get label() { return tx('Estágio'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
@@ -338,7 +339,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
 
   const createObs = useMutation({
     mutationFn: async () => {
-      if (!clubId || !user) throw new Error('Sem contexto');
+      if (!clubId || !user) throw new Error(tx('Sem contexto'));
       const { error } = await supabase.from('academy_observations').insert({
         club_id: clubId,
         player_id: playerId,
@@ -352,12 +353,12 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Observação registada');
+      toast.success(tx('Observação registada'));
       setOpen(false);
       setForm({ ...form, content: '', recommendation: '', follow_up: false });
       qc.invalidateQueries({ queryKey: ['academy-observations', playerId] });
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   const deleteObs = useMutation({
@@ -372,7 +373,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
-          As Observações estão disponíveis em modo Clube.
+          {tx('As Observações estão disponíveis em modo Clube.')}
         </CardContent>
       </Card>
     );
@@ -381,22 +382,22 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Observações</h3>
+        <h3 className="text-lg font-semibold">{tx('Observações')}</h3>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-1" />Nova</Button>
+            <Button size="sm"><Plus className="w-4 h-4 mr-1" />{tx('Nova')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>Nova Observação</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Observação')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label>Data</Label>
+                  <Label>{tx('Data')}</Label>
                   <Input type="date" value={form.observation_date}
                     onChange={(e) => setForm({ ...form, observation_date: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Contexto</Label>
+                  <Label>{tx('Contexto')}</Label>
                   <Select value={form.context} onValueChange={(v) => setForm({ ...form, context: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -406,7 +407,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
                 </div>
               </div>
               <div className="space-y-1">
-                <Label>Conteúdo *</Label>
+                <Label>{tx('Conteúdo *')}</Label>
                 <Textarea
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -414,7 +415,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Recomendação</Label>
+                <Label>{tx('Recomendação')}</Label>
                 <Textarea
                   value={form.recommendation}
                   onChange={(e) => setForm({ ...form, recommendation: e.target.value })}
@@ -426,7 +427,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
                 disabled={!form.content || createObs.isPending}
                 onClick={() => createObs.mutate()}
               >
-                Guardar
+                {tx('Guardar')}
               </Button>
             </div>
           </DialogContent>
@@ -468,7 +469,7 @@ export function PlayerObservationsTab({ playerId, clubId }: ClubScopedProps) {
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <MessageSquare className="w-10 h-10 mx-auto mb-2" />
-            <p>Sem observações.</p>
+            <p>{tx('Sem observações.')}</p>
           </CardContent>
         </Card>
       )}

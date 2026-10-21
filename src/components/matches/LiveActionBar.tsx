@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { tx } from '@/lib/i18n/ui';
 
 interface LiveActionBarProps {
   onGoal: () => void;
@@ -54,7 +55,7 @@ export function LiveActionBar({
           disabled={disabled}
         >
           <span className="text-xl">⚽</span>
-          <span className="text-[10px] font-medium">Golo</span>
+          <span className="text-[10px] font-medium">{tx('Golo')}</span>
         </Button>
 
         {/* Substitution */}
@@ -66,7 +67,7 @@ export function LiveActionBar({
           disabled={disabled}
         >
           <ArrowLeftRight className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Subst.</span>
+          <span className="text-[10px] font-medium">{tx('Subst.')}</span>
         </Button>
 
         {/* Card */}
@@ -78,7 +79,7 @@ export function LiveActionBar({
           disabled={disabled}
         >
           <div className="w-4 h-5 bg-yellow-400 rounded-sm border border-yellow-500" />
-          <span className="text-[10px] font-medium">Cartão</span>
+          <span className="text-[10px] font-medium">{tx('Cartão')}</span>
         </Button>
 
         {/* Pause/Resume */}
@@ -95,7 +96,7 @@ export function LiveActionBar({
             <Play className="w-5 h-5" />
           )}
           <span className="text-[10px] font-medium">
-            {isTimerRunning ? 'Pausar' : 'Continuar'}
+            {isTimerRunning ? tx('Pausar') : tx('Continuar')}
           </span>
         </Button>
 
@@ -109,28 +110,28 @@ export function LiveActionBar({
               disabled={disabled}
             >
               <MoreHorizontal className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Mais</span>
+              <span className="text-[10px] font-medium">{tx('Mais')}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="top" className="mb-2">
             <DropdownMenuItem onClick={onOpponentGoal}>
               <span className="mr-2">⚽</span>
-              Golo do adversário
+              {tx('Golo do adversário')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onRedCard}>
               <div className="w-3 h-4 bg-red-600 rounded-sm mr-2" />
-              Cartão vermelho
+              {tx('Cartão vermelho')}
             </DropdownMenuItem>
             {onInjury && (
               <DropdownMenuItem onClick={onInjury}>
                 <HeartPulse className="w-4 h-4 mr-2" />
-                Lesão
+                {tx('Lesão')}
               </DropdownMenuItem>
             )}
             {onObservation && (
               <DropdownMenuItem onClick={onObservation}>
                 <CircleDot className="w-4 h-4 mr-2" />
-                Observação
+                {tx('Observação')}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem 

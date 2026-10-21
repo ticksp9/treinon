@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Upload, X, FileText, Image, Loader2 } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface PlayerDocumentUploadProps {
   playerId: string;
@@ -33,13 +34,13 @@ export function PlayerDocumentUpload({
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Tipo de ficheiro não suportado. Use JPEG, PNG, WebP ou PDF.');
+      toast.error(tx('Tipo de ficheiro não suportado. Use JPEG, PNG, WebP ou PDF.'));
       return;
     }
 
     // Validate file size (10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Ficheiro demasiado grande. Máximo 10MB.');
+      toast.error(tx('Ficheiro demasiado grande. Máximo 10MB.'));
       return;
     }
 
@@ -63,11 +64,11 @@ export function PlayerDocumentUpload({
       if (signedData?.signedUrl) {
         setPreviewUrl(signedData.signedUrl);
         onUploadComplete(fileName); // Store the path, not the signed URL
-        toast.success('Documento carregado com sucesso!');
+        toast.success(tx('Documento carregado com sucesso!'));
       }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Erro ao carregar documento');
+      toast.error(tx('Erro ao carregar documento'));
     } finally {
       setIsUploading(false);
     }
@@ -97,9 +98,9 @@ export function PlayerDocumentUpload({
               />
             )}
             <div className="flex-1">
-              <p className="text-sm font-medium">Documento carregado</p>
+              <p className="text-sm font-medium">{tx('Documento carregado')}</p>
               <p className="text-xs text-muted-foreground">
-                {isPdf ? 'PDF' : 'Imagem'}
+                {isPdf ? 'PDF' : tx('Imagem')}
               </p>
             </div>
             <Button
@@ -132,10 +133,10 @@ export function PlayerDocumentUpload({
                   <FileText className="w-6 h-6 text-muted-foreground" />
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  Clique para carregar imagem ou PDF
+                  {tx('Clique para carregar imagem ou PDF')}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  Máximo 10MB
+                  {tx('Máximo 10MB')}
                 </span>
               </>
             )}

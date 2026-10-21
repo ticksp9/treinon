@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { NOTICE_POINTS, POLICY_VERSION, controllerName, pendingConsents, type ChildConsent } from '@/lib/consent';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -57,14 +58,14 @@ export function ConsentDialog({ open, children, required, onClose }: DialogProps
   const allAccepted = children.every((c) => accept[c.player_id]);
   const save = async () => {
     if (!user) return;
-    if (!allAccepted) return toast.error('Para continuar tem de autorizar o tratamento dos dados de cada educando.');
+    if (!allAccepted) return toast.error(tx('Para continuar tem de autorizar o tratamento dos dados de cada educando.'));
     setSaving(true);
     const { error } = await db.from('guardian_consents').upsert(
       children.map((c) => ({ player_id: c.player_id, user_id: user.id, policy_version: POLICY_VERSION, data_processing: true, image_use: image[c.player_id] ?? null })),
       { onConflict: 'player_id,user_id' });
     setSaving(false);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
-    toast.success('Consentimento guardado.');
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
+    toast.success(tx('Consentimento guardado.'));
     qc.invalidateQueries({ queryKey: ['children-consents'] });
     onClose();
   };
@@ -77,11 +78,11 @@ export function ConsentDialog({ open, children, required, onClose }: DialogProps
         onEscapeKeyDown={(e) => required && e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" />Privacidade e consentimento</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" />{tx('Privacidade e consentimento')}</DialogTitle>
           <DialogDescription>
             {required
-              ? 'Antes de continuar, precisamos da sua autorização, como encarregado de educação, para tratar os dados de cada educando.'
-              : 'Pode rever aqui o que autorizou e mudar a sua escolha sobre o uso de imagem.'}
+              ? tx('Antes de continuar, precisamos da sua autorização, como encarregado de educação, para tratar os dados de cada educando.')
+              : tx('Pode rever aqui o que autorizou e mudar a sua escolha sobre o uso de imagem.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -100,14 +101,14 @@ export function ConsentDialog({ open, children, required, onClose }: DialogProps
               <p className="font-medium">{c.player_name}<span className="font-normal text-muted-foreground">{c.team_name ? ` · ${c.team_name}` : ''}</span></p>
               <label className="flex items-start gap-2.5 text-sm">
                 <Checkbox className="mt-0.5" checked={!!accept[c.player_id]} onCheckedChange={(v) => setAccept((a) => ({ ...a, [c.player_id]: v === true }))} />
-                <span>Autorizo que {controllerName(c)} trate os dados de <b>{c.player_name}</b> para os fins acima. <span className="text-destructive">(obrigatório)</span></span>
+                <span>{tx('Autorizo que')}{' '}{controllerName(c)} {tx('trate os dados de')}{' '}<b>{c.player_name}</b> {tx('para os fins acima.')}{' '}<span className="text-destructive">{tx('(obrigatório)')}</span></span>
               </label>
               <div className="text-sm">
-                <p className="mb-1.5 flex items-center gap-1.5"><Camera className="h-4 w-4 shrink-0 text-muted-foreground" />Fotografias e vídeos de treinos e jogos em que apareça (redes sociais e página do clube):</p>
+                <p className="mb-1.5 flex items-center gap-1.5"><Camera className="h-4 w-4 shrink-0 text-muted-foreground" />{tx('Fotografias e vídeos de treinos e jogos em que apareça (redes sociais e página do clube):')}</p>
                 <div className="flex flex-wrap gap-1.5">
-                  <Button type="button" size="sm" variant={image[c.player_id] === true ? 'default' : 'outline'} className="h-8" onClick={() => setImage((m) => ({ ...m, [c.player_id]: true }))} aria-pressed={image[c.player_id] === true}>Autorizo</Button>
-                  <Button type="button" size="sm" variant="outline" className={cn('h-8', image[c.player_id] === false && 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground')} onClick={() => setImage((m) => ({ ...m, [c.player_id]: false }))} aria-pressed={image[c.player_id] === false}>Não autorizo</Button>
-                  {image[c.player_id] == null && <span className="self-center text-xs text-muted-foreground">Opcional. Sem resposta conta como não autorizado.</span>}
+                  <Button type="button" size="sm" variant={image[c.player_id] === true ? 'default' : 'outline'} className="h-8" onClick={() => setImage((m) => ({ ...m, [c.player_id]: true }))} aria-pressed={image[c.player_id] === true}>{tx('Autorizo')}</Button>
+                  <Button type="button" size="sm" variant="outline" className={cn('h-8', image[c.player_id] === false && 'border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground')} onClick={() => setImage((m) => ({ ...m, [c.player_id]: false }))} aria-pressed={image[c.player_id] === false}>{tx('Não autorizo')}</Button>
+                  {image[c.player_id] == null && <span className="self-center text-xs text-muted-foreground">{tx('Opcional. Sem resposta conta como não autorizado.')}</span>}
                 </div>
               </div>
             </div>
@@ -116,9 +117,9 @@ export function ConsentDialog({ open, children, required, onClose }: DialogProps
 
         <DialogFooter className="gap-2 sm:gap-2">
           {required
-            ? <Button variant="ghost" onClick={() => signOut()}>Não aceito (sair)</Button>
-            : <Button variant="outline" onClick={onClose}>Fechar</Button>}
-          <Button onClick={save} disabled={saving || !allAccepted}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{required ? 'Aceitar e continuar' : 'Guardar'}</Button>
+            ? <Button variant="ghost" onClick={() => signOut()}>{tx('Não aceito (sair)')}</Button>
+            : <Button variant="outline" onClick={onClose}>{tx('Fechar')}</Button>}
+          <Button onClick={save} disabled={saving || !allAccepted}>{saving && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}{required ? tx('Aceitar e continuar') : tx('Guardar')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { UnreadCount } from '@/hooks/useCommunicationPremium';
+import { tx } from '@/lib/i18n/ui';
 
 interface ChannelListProps {
   channels: CommunicationChannel[];
@@ -124,8 +125,8 @@ export function ChannelList({ channels, selectedId, onSelect, unreadCounts = [],
     return (
       <div className="p-6 text-center text-muted-foreground">
         <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-        <p className="text-sm font-medium">Sem canais</p>
-        <p className="text-xs mt-1">Crie um grupo para começar a comunicar</p>
+        <p className="text-sm font-medium">{tx('Sem canais')}</p>
+        <p className="text-xs mt-1">{tx('Crie um grupo para começar a comunicar')}</p>
       </div>
     );
   }
@@ -208,7 +209,7 @@ export function ChannelList({ channels, selectedId, onSelect, unreadCounts = [],
                 ) : ch.description ? (
                   <p className="text-xs text-muted-foreground truncate mt-0.5">{ch.description}</p>
                 ) : (
-                  <p className="text-xs text-muted-foreground/50 truncate mt-0.5">Sem mensagens</p>
+                  <p className="text-xs text-muted-foreground/50 truncate mt-0.5">{tx('Sem mensagens')}</p>
                 )}
               </div>
             </button>

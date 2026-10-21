@@ -17,6 +17,7 @@ import { useTeamTactics } from '@/hooks/useTeamTactics';
 import { promptNewFormation, useFormationsVersion } from '@/lib/custom-formations';
 import { listAvailableFormations } from '@/lib/tactical-formations';
 import { removeTactic, setDefaultTactic, tacticsFor, upsertTactic } from '@/lib/team-tactics';
+import { tx } from '@/lib/i18n/ui';
 
 const NEW = '__new__';
 const SPORT_LABELS: Record<string, string> = { football_11: 'Futebol 11', football_9: 'Futebol 9', football_7: 'Futebol 7', football_5: 'Futebol 5', futsal: 'Futsal' };
@@ -36,22 +37,21 @@ export function TeamTacticsCard({ teamId, sportType, canEdit = true }: { teamId:
       ? await promptNewFormation(user?.id, sport, (msg, ok) => (ok ? toast.success(msg) : toast.error(msg)))
       : picked;
     if (!code) return;
-    if (await save(upsertTactic(map, sport, code))) toast.success(`${code} juntou-se às táticas da equipa.`);
+    if (await save(upsertTactic(map, sport, code))) toast.success(tx('{{v0}} juntou-se às táticas da equipa.', { v0: code }));
   };
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base"><PenTool className="h-4 w-4" />As nossas táticas</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base"><PenTool className="h-4 w-4" />{tx('As nossas táticas')}</CardTitle>
         <CardDescription>
-          As formações com que a equipa joga ({SPORT_LABELS[sport] ?? sport}). Aparecem primeiro na preparação e durante o jogo; a que tem a estrela é a que abre num jogo novo.
-          Pode mudar em qualquer altura.
+          {tx('As formações com que a equipa joga (')}{SPORT_LABELS[sport] ?? sport}{tx('). Aparecem primeiro na preparação e durante o jogo; a que tem a estrela é a que abre num jogo novo. Pode mudar em qualquer altura.')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {tactics.list.length === 0 && (
           <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-            Ainda não escolheu nenhuma: os jogos abrem na primeira formação da lista da aplicação. Junte a sua (pode criar uma nova, por exemplo 4-1-2-1).
+            {tx('Ainda não escolheu nenhuma: os jogos abrem na primeira formação da lista da aplicação. Junte a sua (pode criar uma nova, por exemplo 4-1-2-1).')}
           </p>
         )}
         <ul className="space-y-2">
@@ -62,20 +62,20 @@ export function TeamTacticsCard({ teamId, sportType, canEdit = true }: { teamId:
                 <Button
                   size="icon" variant="ghost" className="h-8 w-8 shrink-0" disabled={!canEdit || isDefault}
                   onClick={() => save(setDefaultTactic(map, sport, t.code))}
-                  aria-label={isDefault ? `${t.code} é a tática por defeito` : `Tornar ${t.code} a tática por defeito`} title={isDefault ? 'É a tática com que os jogos abrem' : 'Abrir os jogos com esta tática'}
+                  aria-label={isDefault ? tx('{{v0}} é a tática por defeito', { v0: t.code }) : tx('Tornar {{v0}} a tática por defeito', { v0: t.code })} title={isDefault ? tx('É a tática com que os jogos abrem') : tx('Abrir os jogos com esta tática')}
                 >
                   <Star className={isDefault ? 'h-4 w-4 fill-accent text-accent' : 'h-4 w-4 text-muted-foreground'} />
                 </Button>
                 <span className="font-mono text-sm font-semibold">{t.code}</span>
-                {isDefault && <Badge variant="secondary" className="h-5">Por defeito</Badge>}
+                {isDefault && <Badge variant="secondary" className="h-5">{tx('Por defeito')}</Badge>}
                 <Input
-                  className="h-8 min-w-[9rem] flex-1" maxLength={40} disabled={!canEdit} placeholder="Nome (ex.: Principal, A defender)"
+                  className="h-8 min-w-[9rem] flex-1" maxLength={40} disabled={!canEdit} placeholder={tx('Nome (ex.: Principal, A defender)')}
                   defaultValue={t.name ?? ''} key={t.code + (t.name ?? '')}
                   onBlur={(e) => { if (e.target.value.trim() !== (t.name ?? '')) save(upsertTactic(map, sport, t.code, e.target.value)); }}
-                  aria-label={`Nome da tática ${t.code}`}
+                  aria-label={tx('Nome da tática {{v0}}', { v0: t.code })}
                 />
                 {canEdit && (
-                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => save(removeTactic(map, sport, t.code))} aria-label={`Tirar ${t.code} das táticas da equipa`} title="Tirar das táticas da equipa">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" onClick={() => save(removeTactic(map, sport, t.code))} aria-label={tx('Tirar {{v0}} das táticas da equipa', { v0: t.code })} title={tx('Tirar das táticas da equipa')}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
@@ -86,14 +86,14 @@ export function TeamTacticsCard({ teamId, sportType, canEdit = true }: { teamId:
         {canEdit && (
           <div className="flex flex-wrap items-center gap-2">
             <Select value={adding} onValueChange={add}>
-              <SelectTrigger className="h-9 w-56"><SelectValue placeholder="Juntar uma formação…" /></SelectTrigger>
+              <SelectTrigger className="h-9 w-56"><SelectValue placeholder={tx('Juntar uma formação…')} /></SelectTrigger>
               <SelectContent>
                 {available.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
-                <SelectItem value={NEW} className="font-medium text-primary"><span className="flex items-center gap-1"><Plus className="h-3.5 w-3.5" />Nova formação…</span></SelectItem>
+                <SelectItem value={NEW} className="font-medium text-primary"><span className="flex items-center gap-1"><Plus className="h-3.5 w-3.5" />{tx('Nova formação…')}</span></SelectItem>
               </SelectContent>
             </Select>
             <Button asChild variant="outline" size="sm" className="h-9">
-              <Link to="/tactical-board"><PenTool className="mr-1.5 h-4 w-4" />Desenhar as posições no quadro</Link>
+              <Link to="/tactical-board"><PenTool className="mr-1.5 h-4 w-4" />{tx('Desenhar as posições no quadro')}</Link>
             </Button>
           </div>
         )}

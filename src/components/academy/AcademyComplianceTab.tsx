@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAcademy, computeComplianceScore } from '@/hooks/useAcademy';
 import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_LABELS: Record<string, string> = {
   compliant: 'Conforme',
@@ -42,7 +43,7 @@ export function AcademyComplianceTab() {
           <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
             <ShieldCheck className="h-8 w-8 text-primary" />
             <div>
-              <p className="text-xs text-muted-foreground">Score de Compliance</p>
+              <p className="text-xs text-muted-foreground">{tx('Score de Compliance')}</p>
               <p className={`text-2xl font-bold ${score >= 80 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
                 {score.toFixed(0)}%
               </p>
@@ -51,7 +52,7 @@ export function AcademyComplianceTab() {
         </Card>
         <Card>
           <CardContent className="pt-4 pb-3 px-4">
-            <p className="text-xs text-muted-foreground">Itens Pendentes</p>
+            <p className="text-xs text-muted-foreground">{tx('Itens Pendentes')}</p>
             <p className="text-2xl font-bold text-amber-600">{pendingCount}</p>
           </CardContent>
         </Card>
@@ -59,7 +60,7 @@ export function AcademyComplianceTab() {
           <CardContent className="pt-4 pb-3 px-4 flex items-center gap-3">
             <AlertTriangle className="h-8 w-8 text-destructive" />
             <div>
-              <p className="text-xs text-muted-foreground">Itens Críticos</p>
+              <p className="text-xs text-muted-foreground">{tx('Itens Críticos')}</p>
               <p className="text-2xl font-bold text-destructive">{criticalCount}</p>
             </div>
           </CardContent>
@@ -68,20 +69,20 @@ export function AcademyComplianceTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Itens de Compliance da Academia</CardTitle>
+          <CardTitle>{tx('Itens de Compliance da Academia')}</CardTitle>
         </CardHeader>
         <CardContent>
           {items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nenhum item de compliance registado.</p>
+            <p className="text-muted-foreground text-sm">{tx('Nenhum item de compliance registado.')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Severidade</TableHead>
-                  <TableHead>Prazo</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{tx('Tipo')}</TableHead>
+                  <TableHead>{tx('Descrição')}</TableHead>
+                  <TableHead>{tx('Severidade')}</TableHead>
+                  <TableHead>{tx('Prazo')}</TableHead>
+                  <TableHead>{tx('Status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, Check, User } from 'lucide-react';
 import { contextTeamIds, groupTeams, resolveActive, ROLE_LABEL, scopeToContext, type MyTeam } from '@/lib/active-team';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface Ctx {
   myTeams: MyTeam[];
@@ -98,9 +99,9 @@ export function ActiveTeamProvider({ children }: { children: ReactNode }) {
       <Dialog open={show} onOpenChange={(v) => { if (!v && !mustAsk) setOpen(false); }}>
         <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto" onInteractOutside={(e) => { if (mustAsk) e.preventDefault(); }}>
           <DialogHeader>
-            <DialogTitle>Com que equipa vai trabalhar?</DialogTitle>
+            <DialogTitle>{tx('Com que equipa vai trabalhar?')}</DialogTitle>
             <DialogDescription>
-              Os jogos, treinos e convocatórias ficam só com as equipas {groups.length > 1 ? 'desse clube' : 'escolhidas'}. Pode trocar a qualquer momento no topo do ecrã.
+              {tx('Os jogos, treinos e convocatórias ficam só com as equipas')}{' '}{groups.length > 1 ? tx('desse clube') : 'escolhidas'}{tx('. Pode trocar a qualquer momento no topo do ecrã.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -121,7 +122,7 @@ export function ActiveTeamProvider({ children }: { children: ReactNode }) {
                         <span className="block truncate font-semibold">{t.name}</span>
                         <span className="text-xs text-muted-foreground">{[t.category, ROLE_LABEL[t.my_role] ?? t.my_role].filter(Boolean).join(' · ')}</span>
                       </span>
-                      {t.id === activeId ? <Check className="h-4 w-4 text-primary" /> : <Badge variant="outline">Escolher</Badge>}
+                      {t.id === activeId ? <Check className="h-4 w-4 text-primary" /> : <Badge variant="outline">{tx('Escolher')}</Badge>}
                     </button>
                   ))}
                 </div>

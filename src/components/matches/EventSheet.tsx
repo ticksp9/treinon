@@ -188,7 +188,7 @@ export function EventSheet({
               {/* "none" needs a real value: an empty one makes the list component throw */}
               <Select value={assistPlayerId || NO_ASSIST} onValueChange={(v) => setAssistPlayerId(v === NO_ASSIST ? '' : v)}>
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecionar (opcional)" />
+                  <SelectValue placeholder={tx('Selecionar (opcional)')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_ASSIST}>{t('Nenhuma')}</SelectItem>

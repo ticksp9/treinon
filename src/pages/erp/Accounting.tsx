@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { tx } from '@/lib/i18n/ui';
 
 export default function Accounting() {
   const { user } = useAuth();
@@ -114,9 +115,9 @@ export default function Accounting() {
           <Card>
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Esta funcionalidade está disponível apenas para administradores de clubes.
+                {tx('Esta funcionalidade está disponível apenas para administradores de clubes.')}
               </p>
             </CardContent>
           </Card>
@@ -140,9 +141,9 @@ export default function Accounting() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold">Contabilidade</h1>
+            <h1 className="text-2xl font-display font-bold">{tx('Contabilidade')}</h1>
             <p className="text-muted-foreground">
-              Gestão de movimentos financeiros
+              {tx('Gestão de movimentos financeiros')}
             </p>
           </div>
           <TransactionDialog 
@@ -155,9 +156,9 @@ export default function Accounting() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="movimentos">Movimentos</TabsTrigger>
-            <TabsTrigger value="contas">Contas</TabsTrigger>
-            <TabsTrigger value="categorias">Categorias</TabsTrigger>
+            <TabsTrigger value="movimentos">{tx('Movimentos')}</TabsTrigger>
+            <TabsTrigger value="contas">{tx('Contas')}</TabsTrigger>
+            <TabsTrigger value="categorias">{tx('Categorias')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="movimentos" className="space-y-4 mt-6">
@@ -166,7 +167,7 @@ export default function Accounting() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Pesquisar movimentos..." 
+                  placeholder={tx('Pesquisar movimentos...')} 
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -175,12 +176,12 @@ export default function Accounting() {
               <Select value={filterType} onValueChange={(v) => setFilterType(v as 'all' | 'income' | 'expense')}>
                 <SelectTrigger className="w-full sm:w-48">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Tipo" />
+                  <SelectValue placeholder={tx('Tipo')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="income">Receitas</SelectItem>
-                  <SelectItem value="expense">Despesas</SelectItem>
+                  <SelectItem value="all">{tx('Todos')}</SelectItem>
+                  <SelectItem value="income">{tx('Receitas')}</SelectItem>
+                  <SelectItem value="expense">{tx('Despesas')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -195,17 +196,17 @@ export default function Accounting() {
                 ) : filteredTransactions?.length === 0 ? (
                   <div className="py-12 text-center">
                     <Wallet className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">Nenhum movimento registado</p>
+                    <p className="text-muted-foreground">{tx('Nenhum movimento registado')}</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead>Método</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
+                        <TableHead>{tx('Data')}</TableHead>
+                        <TableHead>{tx('Descrição')}</TableHead>
+                        <TableHead>{tx('Categoria')}</TableHead>
+                        <TableHead>{tx('Método')}</TableHead>
+                        <TableHead className="text-right">{tx('Valor')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -286,7 +287,7 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-transactions', clubId] });
-      toast.success('Movimento registado com sucesso');
+      toast.success(tx('Movimento registado com sucesso'));
       setOpen(false);
       setFormData({
         type: 'income',
@@ -299,7 +300,7 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
       });
     },
     onError: () => {
-      toast.error('Erro ao registar movimento');
+      toast.error(tx('Erro ao registar movimento'));
     },
   });
 
@@ -310,16 +311,16 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
-          Novo Movimento
+          {tx('Novo Movimento')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registar Movimento</DialogTitle>
+          <DialogTitle>{tx('Registar Movimento')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(formData); }} className="space-y-4">
           <div className="space-y-2">
-            <Label>Tipo</Label>
+            <Label>{tx('Tipo')}</Label>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -328,7 +329,7 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
                 onClick={() => setFormData(prev => ({ ...prev, type: 'income', category: '' }))}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
-                Receita
+                {tx('Receita')}
               </Button>
               <Button
                 type="button"
@@ -337,14 +338,14 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
                 onClick={() => setFormData(prev => ({ ...prev, type: 'expense', category: '' }))}
               >
                 <TrendingDown className="w-4 h-4 mr-2" />
-                Despesa
+                {tx('Despesa')}
               </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor (€)</Label>
+              <Label htmlFor="amount">{tx('Valor (€)')}</Label>
               <Input 
                 id="amount" 
                 type="number"
@@ -355,7 +356,7 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="date">Data</Label>
+              <Label htmlFor="date">{tx('Data')}</Label>
               <Input 
                 id="date" 
                 type="date"
@@ -367,13 +368,13 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="category">{tx('Categoria')}</Label>
             <Select 
               value={formData.category} 
               onValueChange={(v) => setFormData(prev => ({ ...prev, category: v }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar categoria" />
+                <SelectValue placeholder={tx('Selecionar categoria')} />
               </SelectTrigger>
               <SelectContent>
                 {filteredCategories.map(cat => (
@@ -384,13 +385,13 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="account">Conta</Label>
+            <Label htmlFor="account">{tx('Conta')}</Label>
             <Select 
               value={formData.account_id} 
               onValueChange={(v) => setFormData(prev => ({ ...prev, account_id: v }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecionar conta" />
+                <SelectValue placeholder={tx('Selecionar conta')} />
               </SelectTrigger>
               <SelectContent>
                 {accounts.map(acc => (
@@ -401,7 +402,7 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="payment_method">Método de Pagamento</Label>
+            <Label htmlFor="payment_method">{tx('Método de Pagamento')}</Label>
             <Select 
               value={formData.payment_method} 
               onValueChange={(v) => setFormData(prev => ({ ...prev, payment_method: v }))}
@@ -410,16 +411,16 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cash">Dinheiro</SelectItem>
-                <SelectItem value="transfer">Transferência</SelectItem>
-                <SelectItem value="mbway">MBWay</SelectItem>
-                <SelectItem value="card">Cartão</SelectItem>
+                <SelectItem value="cash">{tx('Dinheiro')}</SelectItem>
+                <SelectItem value="transfer">{tx('Transferência')}</SelectItem>
+                <SelectItem value="mbway">{tx('MBWay')}</SelectItem>
+                <SelectItem value="card">{tx('Cartão')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description">{tx('Descrição')}</Label>
             <Textarea 
               id="description" 
               rows={2}
@@ -430,10 +431,10 @@ function TransactionDialog({ clubId, userId, categories, accounts }: {
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
+              {tx('Cancelar')}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              Guardar
+              {tx('Guardar')}
             </Button>
           </div>
         </form>
@@ -461,11 +462,11 @@ function AccountsManager({ clubId, userId, accounts }: { clubId: string; userId:
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-accounts', clubId] });
-      toast.success('Conta criada');
+      toast.success(tx('Conta criada'));
       setNewAccount({ name: '', account_type: 'bank', iban: '' });
     },
     onError: () => {
-      toast.error('Erro ao criar conta');
+      toast.error(tx('Erro ao criar conta'));
     },
   });
 
@@ -473,13 +474,13 @@ function AccountsManager({ clubId, userId, accounts }: { clubId: string; userId:
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Adicionar Conta</CardTitle>
-          <CardDescription>Caixa, banco ou carteira digital</CardDescription>
+          <CardTitle>{tx('Adicionar Conta')}</CardTitle>
+          <CardDescription>{tx('Caixa, banco ou carteira digital')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="flex gap-4">
             <Input 
-              placeholder="Nome da conta"
+              placeholder={tx('Nome da conta')}
               value={newAccount.name}
               onChange={(e) => setNewAccount(prev => ({ ...prev, name: e.target.value }))}
               required
@@ -492,13 +493,13 @@ function AccountsManager({ clubId, userId, accounts }: { clubId: string; userId:
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="cash">Caixa</SelectItem>
-                <SelectItem value="bank">Banco</SelectItem>
-                <SelectItem value="digital">Digital (MBWay)</SelectItem>
+                <SelectItem value="cash">{tx('Caixa')}</SelectItem>
+                <SelectItem value="bank">{tx('Banco')}</SelectItem>
+                <SelectItem value="digital">{tx('Digital (MBWay)')}</SelectItem>
               </SelectContent>
             </Select>
             <Input 
-              placeholder="IBAN (opcional)"
+              placeholder={tx('IBAN (opcional)')}
               value={newAccount.iban}
               onChange={(e) => setNewAccount(prev => ({ ...prev, iban: e.target.value }))}
             />
@@ -551,11 +552,11 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-categories', clubId] });
-      toast.success('Categoria criada');
+      toast.success(tx('Categoria criada'));
       setNewCategory({ name: '', type: 'income' });
     },
     onError: () => {
-      toast.error('Erro ao criar categoria');
+      toast.error(tx('Erro ao criar categoria'));
     },
   });
 
@@ -569,10 +570,10 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['erp-categories', clubId] });
-      toast.success('Categoria eliminada');
+      toast.success(tx('Categoria eliminada'));
     },
     onError: () => {
-      toast.error('Erro ao eliminar categoria');
+      toast.error(tx('Erro ao eliminar categoria'));
     },
   });
 
@@ -583,12 +584,12 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Adicionar Categoria</CardTitle>
+          <CardTitle>{tx('Adicionar Categoria')}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(); }} className="flex gap-4">
             <Input 
-              placeholder="Nome da categoria"
+              placeholder={tx('Nome da categoria')}
               value={newCategory.name}
               onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
               required
@@ -601,8 +602,8 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="income">Receita</SelectItem>
-                <SelectItem value="expense">Despesa</SelectItem>
+                <SelectItem value="income">{tx('Receita')}</SelectItem>
+                <SelectItem value="expense">{tx('Despesa')}</SelectItem>
               </SelectContent>
             </Select>
             <Button type="submit" disabled={createMutation.isPending}>
@@ -617,12 +618,12 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-600">
               <TrendingUp className="w-5 h-5" />
-              Receitas
+              {tx('Receitas')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {incomeCategories.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Nenhuma categoria de receita</p>
+              <p className="text-muted-foreground text-sm">{tx('Nenhuma categoria de receita')}</p>
             ) : (
               <div className="space-y-2">
                 {incomeCategories.map(cat => (
@@ -648,12 +649,12 @@ function CategoriesManager({ clubId, userId, categories }: { clubId: string; use
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-600">
               <TrendingDown className="w-5 h-5" />
-              Despesas
+              {tx('Despesas')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {expenseCategories.length === 0 ? (
-              <p className="text-muted-foreground text-sm">Nenhuma categoria de despesa</p>
+              <p className="text-muted-foreground text-sm">{tx('Nenhuma categoria de despesa')}</p>
             ) : (
               <div className="space-y-2">
                 {expenseCategories.map(cat => (

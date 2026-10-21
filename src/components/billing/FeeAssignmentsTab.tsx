@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Users } from 'lucide-react';
 import { getCurrentSeasonName } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -70,15 +71,15 @@ export function FeeAssignmentsTab({ clubId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-2">
-        <div><h3 className="font-semibold">Atribuições de Planos</h3><p className="text-sm text-muted-foreground">Associe planos a atletas</p></div>
+        <div><h3 className="font-semibold">{tx('Atribuições de Planos')}</h3><p className="text-sm text-muted-foreground">{tx('Associe planos a atletas')}</p></div>
         <div className="flex gap-2">
           <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
-            <DialogTrigger asChild><Button variant="outline"><Users className="w-4 h-4 mr-1" /> Atribuir em Lote</Button></DialogTrigger>
+            <DialogTrigger asChild><Button variant="outline"><Users className="w-4 h-4 mr-1" /> {tx('Atribuir em Lote')}</Button></DialogTrigger>
             <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Atribuir Plano em Lote</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Atribuir Plano em Lote')}</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div><Label>Plano</Label><Select value={selectedPlan} onValueChange={setSelectedPlan}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{plans?.filter((p: any) => p.is_active).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name} ({fmt(p.amount)})</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Filtrar por equipa</Label><Select value={selectedTeam || '__all__'} onValueChange={(v) => setSelectedTeam(v === '__all__' ? '' : v)}><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger><SelectContent><SelectItem value="__all__">Todas</SelectItem>{teams?.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Plano')}</Label><Select value={selectedPlan} onValueChange={setSelectedPlan}><SelectTrigger><SelectValue placeholder={tx('Selecione...')} /></SelectTrigger><SelectContent>{plans?.filter((p: any) => p.is_active).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name} ({fmt(p.amount)})</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Filtrar por equipa')}</Label><Select value={selectedTeam || '__all__'} onValueChange={(v) => setSelectedTeam(v === '__all__' ? '' : v)}><SelectTrigger><SelectValue placeholder={tx('Todas')} /></SelectTrigger><SelectContent><SelectItem value="__all__">{tx('Todas')}</SelectItem>{teams?.map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
                 <div className="space-y-1 max-h-48 overflow-y-auto border rounded p-2">
                   {players?.map((p: any) => (
                     <label key={p.id} className="flex items-center gap-2 p-1 hover:bg-muted/50 rounded cursor-pointer">
@@ -87,24 +88,24 @@ export function FeeAssignmentsTab({ clubId }: Props) {
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">{selectedPlayers.length} atletas selecionados</p>
-                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setBulkOpen(false)}>Cancelar</Button><Button onClick={handleBulkAssign} disabled={!selectedPlan || selectedPlayers.length === 0 || bulkAssign.isPending}>Atribuir</Button></div>
+                <p className="text-xs text-muted-foreground">{selectedPlayers.length} {tx('atletas selecionados')}</p>
+                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setBulkOpen(false)}>{tx('Cancelar')}</Button><Button onClick={handleBulkAssign} disabled={!selectedPlan || selectedPlayers.length === 0 || bulkAssign.isPending}>{tx('Atribuir')}</Button></div>
               </div>
             </DialogContent>
           </Dialog>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-1" /> Individual</Button></DialogTrigger>
+            <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-1" /> {tx('Individual')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Atribuir Plano</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{tx('Atribuir Plano')}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Plano</Label><Select value={form.fee_plan_id} onValueChange={v => setForm(f => ({...f, fee_plan_id: v}))}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{plans?.filter((p: any) => p.is_active).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Atleta</Label><Select value={form.player_id} onValueChange={v => setForm(f => ({...f, player_id: v}))}><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger><SelectContent>{players?.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Plano')}</Label><Select value={form.fee_plan_id} onValueChange={v => setForm(f => ({...f, fee_plan_id: v}))}><SelectTrigger><SelectValue placeholder={tx('Selecione...')} /></SelectTrigger><SelectContent>{plans?.filter((p: any) => p.is_active).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
+                <div><Label>{tx('Atleta')}</Label><Select value={form.player_id} onValueChange={v => setForm(f => ({...f, player_id: v}))}><SelectTrigger><SelectValue placeholder={tx('Selecione...')} /></SelectTrigger><SelectContent>{players?.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent></Select></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Tipo Desconto</Label><Select value={form.discount_type || '__none__'} onValueChange={v => setForm(f => ({...f, discount_type: v === '__none__' ? '' : v}))}><SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger><SelectContent><SelectItem value="__none__">Nenhum</SelectItem><SelectItem value="percentage">Percentagem</SelectItem><SelectItem value="fixed">Fixo</SelectItem><SelectItem value="sibling">Irmão</SelectItem></SelectContent></Select></div>
-                  <div><Label>Valor Desconto</Label><Input type="number" value={form.discount_value} onChange={e => setForm(f => ({...f, discount_value: e.target.value}))} placeholder="0" /></div>
+                  <div><Label>{tx('Tipo Desconto')}</Label><Select value={form.discount_type || '__none__'} onValueChange={v => setForm(f => ({...f, discount_type: v === '__none__' ? '' : v}))}><SelectTrigger><SelectValue placeholder={tx('Nenhum')} /></SelectTrigger><SelectContent><SelectItem value="__none__">{tx('Nenhum')}</SelectItem><SelectItem value="percentage">{tx('Percentagem')}</SelectItem><SelectItem value="fixed">{tx('Fixo')}</SelectItem><SelectItem value="sibling">{tx('Irmão')}</SelectItem></SelectContent></Select></div>
+                  <div><Label>{tx('Valor Desconto')}</Label><Input type="number" value={form.discount_value} onChange={e => setForm(f => ({...f, discount_value: e.target.value}))} placeholder="0" /></div>
                 </div>
-                <div className="flex gap-4"><div className="flex items-center gap-2"><Switch checked={form.is_scholarship} onCheckedChange={v => setForm(f => ({...f, is_scholarship: v}))} /><Label>Bolsa</Label></div><div className="flex items-center gap-2"><Switch checked={form.is_exempt} onCheckedChange={v => setForm(f => ({...f, is_exempt: v}))} /><Label>Isento</Label></div></div>
-                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={handleCreate} disabled={!form.fee_plan_id || createAssignment.isPending}>Criar</Button></div>
+                <div className="flex gap-4"><div className="flex items-center gap-2"><Switch checked={form.is_scholarship} onCheckedChange={v => setForm(f => ({...f, is_scholarship: v}))} /><Label>{tx('Bolsa')}</Label></div><div className="flex items-center gap-2"><Switch checked={form.is_exempt} onCheckedChange={v => setForm(f => ({...f, is_exempt: v}))} /><Label>{tx('Isento')}</Label></div></div>
+                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setOpen(false)}>{tx('Cancelar')}</Button><Button onClick={handleCreate} disabled={!form.fee_plan_id || createAssignment.isPending}>{tx('Criar')}</Button></div>
               </div>
             </DialogContent>
           </Dialog>
@@ -112,20 +113,20 @@ export function FeeAssignmentsTab({ clubId }: Props) {
       </div>
 
       {(!assignments || assignments.length === 0) ? (
-        <Card><CardContent className="py-12 text-center"><Users className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">Nenhuma atribuição. Associe planos a atletas.</p></CardContent></Card>
+        <Card><CardContent className="py-12 text-center"><Users className="w-10 h-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground">{tx('Nenhuma atribuição. Associe planos a atletas.')}</p></CardContent></Card>
       ) : (
         <div className="grid gap-2">
           {assignments.map((a: any) => (
             <Card key={a.id} className={a.is_exempt ? 'opacity-60' : ''}>
               <CardContent className="flex items-center justify-between py-3">
                 <div>
-                  <span className="font-medium">{(a.players as any)?.name || 'Sem atleta'}</span>
+                  <span className="font-medium">{(a.players as any)?.name || tx('Sem atleta')}</span>
                   <span className="text-muted-foreground text-sm ml-2">{(a.players as any)?.teams?.name || ''}</span>
                   <div className="flex gap-1 mt-1">
                     <Badge variant="outline">{(a.fee_plans as any)?.name}</Badge>
-                    {a.is_scholarship && <Badge variant="secondary">Bolsa</Badge>}
-                    {a.is_exempt && <Badge variant="destructive">Isento</Badge>}
-                    {a.discount_type && <Badge variant="outline">Desconto: {a.discount_type} {a.discount_value}</Badge>}
+                    {a.is_scholarship && <Badge variant="secondary">{tx('Bolsa')}</Badge>}
+                    {a.is_exempt && <Badge variant="destructive">{tx('Isento')}</Badge>}
+                    {a.discount_type && <Badge variant="outline">{tx('Desconto:')}{' '}{a.discount_type} {a.discount_value}</Badge>}
                   </div>
                 </div>
                 <div className="text-right">

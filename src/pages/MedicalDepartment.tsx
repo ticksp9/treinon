@@ -31,6 +31,7 @@ import { BODY_PARTS, INJURY_TYPES } from '@/lib/player-constants';
 import { getClinicalStatusOption, CLINICAL_STATUS_OPTIONS } from '@/lib/player-availability';
 import { phaseOf } from '@/lib/rehab';
 import { MECHANISMS, careGroups, daysOut, mechanismLabel, seasonSummary, type CareGroup, type CareInjury } from '@/lib/injury-care';
+import { tx } from '@/lib/i18n/ui';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any; // newer than the generated types
@@ -47,11 +48,11 @@ interface Row extends CareInjury {
 interface PlayerOpt { id: string; name: string; number: number | null; team: { id: string; name: string } | null }
 
 const GROUPS: { key: CareGroup; title: string; hint: string; icon: typeof Activity; tone: string }[] = [
-  { key: 'to_assess', title: 'Por avaliar', hint: 'Ocorrências registadas pelos treinadores que o departamento médico ainda não viu.', icon: ClipboardCheck, tone: 'text-accent' },
-  { key: 'out', title: 'Fora (inaptos ou em recuperação)', hint: 'Não treinam nem jogam.', icon: AlertTriangle, tone: 'text-destructive' },
-  { key: 'limited', title: 'Condicionados', hint: 'Podem participar, com as restrições indicadas.', icon: Activity, tone: 'text-amber-600' },
-  { key: 'back_soon', title: 'Regressam nos próximos 7 dias', hint: 'Pela data prevista. A alta continua a ser dada pelo departamento médico.', icon: CalendarClock, tone: 'text-primary' },
-  { key: 'recently_cleared', title: 'Altas nas últimas 2 semanas', hint: 'Atenção às recaídas nas primeiras semanas.', icon: CheckCircle2, tone: 'text-emerald-600' },
+  { key: 'to_assess', get title() { return tx('Por avaliar'); }, get hint() { return tx('Ocorrências registadas pelos treinadores que o departamento médico ainda não viu.'); }, icon: ClipboardCheck, tone: 'text-accent' },
+  { key: 'out', get title() { return tx('Fora (inaptos ou em recuperação)'); }, get hint() { return tx('Não treinam nem jogam.'); }, icon: AlertTriangle, tone: 'text-destructive' },
+  { key: 'limited', get title() { return tx('Condicionados'); }, get hint() { return tx('Podem participar, com as restrições indicadas.'); }, icon: Activity, tone: 'text-amber-600' },
+  { key: 'back_soon', get title() { return tx('Regressam nos próximos 7 dias'); }, get hint() { return tx('Pela data prevista. A alta continua a ser dada pelo departamento médico.'); }, icon: CalendarClock, tone: 'text-primary' },
+  { key: 'recently_cleared', get title() { return tx('Altas nas últimas 2 semanas'); }, get hint() { return tx('Atenção às recaídas nas primeiras semanas.'); }, icon: CheckCircle2, tone: 'text-emerald-600' },
 ];
 
 export default function MedicalDepartment() {
@@ -98,19 +99,19 @@ export default function MedicalDepartment() {
 
   const markAssessed = async (r: Row) => {
     const { error } = await db.from('player_injuries').update({ assessed_at: new Date().toISOString(), assessed_by: user!.id }).eq('id', r.id);
-    if (error) return toast.error('Não foi possível guardar: ' + error.message);
+    if (error) return toast.error(tx('Não foi possível guardar: ') + error.message);
     qc.invalidateQueries({ queryKey: ['medical-dept'] });
   };
 
   return (
-    <AppLayout title="Departamento médico">
+    <AppLayout title={tx('Departamento médico')}>
       <div className="mx-auto max-w-5xl space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-2 text-xl font-semibold"><Stethoscope className="h-5 w-5 text-primary" />Departamento médico</h1>
+            <h1 className="flex items-center gap-2 text-xl font-semibold"><Stethoscope className="h-5 w-5 text-primary" />{tx('Departamento médico')}</h1>
             <p className="text-sm text-muted-foreground">
-              {isMedical ? 'As ocorrências dos treinadores chegam aqui. O detalhe de cada lesão (diagnóstico, tratamento, alta) está na ficha do jogador.'
-                : 'Quem está lesionado, até quando e com que restrições. O diagnóstico fica com o médico e o fisioterapeuta.'}
+              {isMedical ? tx('As ocorrências dos treinadores chegam aqui. O detalhe de cada lesão (diagnóstico, tratamento, alta) está na ficha do jogador.')
+                : tx('Quem está lesionado, até quando e com que restrições. O diagnóstico fica com o médico e o fisioterapeuta.')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -118,12 +119,12 @@ export default function MedicalDepartment() {
               <Select value={team} onValueChange={setTeam}>
                 <SelectTrigger className="h-9 w-44"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>Todas as equipas</SelectItem>
+                  <SelectItem value={ALL}>{tx('Todas as equipas')}</SelectItem>
                   {teams.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
-            <Button onClick={() => setReport(true)}><Plus className="mr-1.5 h-4 w-4" />Registar lesão</Button>
+            <Button onClick={() => setReport(true)}><Plus className="mr-1.5 h-4 w-4" />{tx('Registar lesão')}</Button>
           </div>
         </div>
 
@@ -131,11 +132,11 @@ export default function MedicalDepartment() {
 
         <Tabs defaultValue="injuries">
           <TabsList className="h-auto flex-wrap">
-            <TabsTrigger value="injuries">Lesões</TabsTrigger>
-            <TabsTrigger value="growth">Crescimento</TabsTrigger>
-            <TabsTrigger value="exams">Exames e seguro</TabsTrigger>
-            <TabsTrigger value="prevention">Prevenção</TabsTrigger>
-            <TabsTrigger value="season">Época</TabsTrigger>
+            <TabsTrigger value="injuries">{tx('Lesões')}</TabsTrigger>
+            <TabsTrigger value="growth">{tx('Crescimento')}</TabsTrigger>
+            <TabsTrigger value="exams">{tx('Exames e seguro')}</TabsTrigger>
+            <TabsTrigger value="prevention">{tx('Prevenção')}</TabsTrigger>
+            <TabsTrigger value="season">{tx('Época')}</TabsTrigger>
           </TabsList>
           <TabsContent value="injuries" className="space-y-4">
         {/* the season, at a glance */}
@@ -146,12 +147,12 @@ export default function MedicalDepartment() {
         </div>
         {summary.injuries > 0 && (
           <p className="text-xs text-muted-foreground">
-            Zonas mais afetadas: {summary.byPart.slice(0, 3).map((p) => `${partLabel(p.part)} (${p.n})`).join(', ') || '—'}
-            {summary.byMechanism.length > 0 && <> · Como acontecem: {summary.byMechanism.slice(0, 3).map((m) => `${(mechanismLabel(m.mechanism) ?? m.mechanism).toLowerCase()} (${m.n})`).join(', ')}</>}
+            {tx('Zonas mais afetadas:')}{' '}{summary.byPart.slice(0, 3).map((p) => `${partLabel(p.part)} (${p.n})`).join(', ') || '—'}
+            {summary.byMechanism.length > 0 && <> {tx('· Como acontecem:')}{' '}{summary.byMechanism.slice(0, 3).map((m) => `${(mechanismLabel(m.mechanism) ?? m.mechanism).toLowerCase()} (${m.n})`).join(', ')}</>}
           </p>
         )}
 
-        {isLoading ? <p className="py-10 text-center text-sm text-muted-foreground">A carregar…</p> : GROUPS.map((g) => {
+        {isLoading ? <p className="py-10 text-center text-sm text-muted-foreground">{tx('A carregar…')}</p> : GROUPS.map((g) => {
           const list = grouped[g.key];
           if (!list.length && g.key !== 'out') return null;
           return (
@@ -160,7 +161,7 @@ export default function MedicalDepartment() {
                 <h2 className={cn('flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide', g.tone)}><g.icon className="h-4 w-4" />{g.title} <span className="font-mono text-muted-foreground">({list.length})</span></h2>
                 <p className="text-xs text-muted-foreground">{g.hint}</p>
               </div>
-              {list.length === 0 ? <p className="text-sm text-muted-foreground">Ninguém. </p> : (
+              {list.length === 0 ? <p className="text-sm text-muted-foreground">{tx('Ninguém.')}{' '}</p> : (
                 <div className="divide-y rounded-md border bg-card">
                   {list.map((r) => {
                     const st = getClinicalStatusOption(r.clinical_status);
@@ -169,21 +170,21 @@ export default function MedicalDepartment() {
                       <div key={`${g.key}-${r.id}`} className="flex flex-wrap items-center gap-2 p-3">
                         <Link to={`/players/${r.player_id}?tab=health`} className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="font-medium">{r.player?.number != null && <span className="mr-1 font-mono text-muted-foreground">{r.player.number}</span>}{r.player?.name ?? 'Jogador'}</span>
+                            <span className="font-medium">{r.player?.number != null && <span className="mr-1 font-mono text-muted-foreground">{r.player.number}</span>}{r.player?.name ?? tx('Jogador')}</span>
                             {r.player?.team && <span className="text-xs text-muted-foreground">{r.player.team.name}</span>}
                             {st && <Badge variant="outline" className={st.tone}>{st.label}</Badge>}
-                            {r.is_recurrence && <Badge variant="outline" className="border-orange-500/40 text-orange-600">Recaída</Badge>}
-                            {r.rehab_phase && !r.return_date && <Badge variant="secondary">{r.rehab_protocol === 'concussion' ? 'Concussão · ' : ''}Fase {r.rehab_phase}/6 · {phaseOf(r.rehab_protocol, r.rehab_phase)?.name}</Badge>}
+                            {r.is_recurrence && <Badge variant="outline" className="border-orange-500/40 text-orange-600">{tx('Recaída')}</Badge>}
+                            {r.rehab_phase && !r.return_date && <Badge variant="secondary">{r.rehab_protocol === 'concussion' ? tx('Concussão · ') : ''}{tx('Fase')}{' '}{r.rehab_phase}/6 · {phaseOf(r.rehab_protocol, r.rehab_phase)?.name}</Badge>}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {partLabel(r.body_part)}{r.injury_type ? ` · ${typeLabel(r.injury_type).toLowerCase()}` : ''} · desde {day(r.injury_date)} ({out} {out === 1 ? 'dia' : 'dias'})
-                            {r.expected_return_date && !r.return_date && <> · regresso previsto {day(r.expected_return_date)}</>}
-                            {r.return_date && <> · alta {day(r.return_date)}</>}
+                            {partLabel(r.body_part)}{r.injury_type ? ` · ${typeLabel(r.injury_type).toLowerCase()}` : ''} {tx('· desde')}{' '}{day(r.injury_date)} ({out} {out === 1 ? 'dia' : 'dias'})
+                            {r.expected_return_date && !r.return_date && <> {tx('· regresso previsto')}{' '}{day(r.expected_return_date)}</>}
+                            {r.return_date && <> {tx('· alta')}{' '}{day(r.return_date)}</>}
                           </p>
-                          {r.restrictions && <p className="text-xs"><span className="text-muted-foreground">Restrições:</span> {r.restrictions}</p>}
+                          {r.restrictions && <p className="text-xs"><span className="text-muted-foreground">{tx('Restrições:')}</span> {r.restrictions}</p>}
                         </Link>
-                        {g.key === 'to_assess' && isMedical && <Button size="sm" variant="outline" onClick={() => markAssessed(r)}><ClipboardCheck className="mr-1.5 h-4 w-4" />Vista</Button>}
-                        <Button size="sm" variant="ghost" asChild><Link to={`/players/${r.player_id}?tab=health`}>Abrir</Link></Button>
+                        {g.key === 'to_assess' && isMedical && <Button size="sm" variant="outline" onClick={() => markAssessed(r)}><ClipboardCheck className="mr-1.5 h-4 w-4" />{tx('Vista')}</Button>}
+                        <Button size="sm" variant="ghost" asChild><Link to={`/players/${r.player_id}?tab=health`}>{tx('Abrir')}</Link></Button>
                       </div>
                     );
                   })}
@@ -226,8 +227,8 @@ function ReportInjuryDialog({ onClose, onSaved, isMedical }: { onClose: () => vo
       ...(isMedical ? { assessed_at: new Date().toISOString(), assessed_by: user!.id } : {}),
     });
     setBusy(false);
-    if (error) return toast.error('Não foi possível registar: ' + error.message);
-    toast.success(isMedical ? 'Lesão registada.' : 'Lesão registada. O departamento médico vê-a em "Por avaliar".');
+    if (error) return toast.error(tx('Não foi possível registar: ') + error.message);
+    toast.success(isMedical ? tx('Lesão registada.') : tx('Lesão registada. O departamento médico vê-a em "Por avaliar".'));
     onSaved();
   };
   const set = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
@@ -235,66 +236,66 @@ function ReportInjuryDialog({ onClose, onSaved, isMedical }: { onClose: () => vo
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Registar lesão</DialogTitle>
-          <DialogDescription>O essencial, no momento. O departamento médico completa a avaliação.</DialogDescription>
+          <DialogTitle>{tx('Registar lesão')}</DialogTitle>
+          <DialogDescription>{tx('O essencial, no momento. O departamento médico completa a avaliação.')}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label>Jogador *</Label>
+            <Label>{tx('Jogador *')}</Label>
             <Select value={f.player || undefined} onValueChange={(v) => set({ player: v })}>
-              <SelectTrigger><SelectValue placeholder="Escolher" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Escolher')} /></SelectTrigger>
               <SelectContent>{players.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}{p.team ? ` · ${p.team.name}` : ''}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label htmlFor="ri-date">Data</Label><Input id="ri-date" type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} /></div>
+          <div><Label htmlFor="ri-date">{tx('Data')}</Label><Input id="ri-date" type="date" value={f.date} onChange={(e) => set({ date: e.target.value })} /></div>
           <div>
-            <Label>Onde</Label>
+            <Label>{tx('Onde')}</Label>
             <Select value={f.context} onValueChange={(v) => set({ context: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="training">Treino</SelectItem><SelectItem value="match">Jogo</SelectItem><SelectItem value="extra">Fora do futebol</SelectItem></SelectContent>
+              <SelectContent><SelectItem value="training">{tx('Treino')}</SelectItem><SelectItem value="match">{tx('Jogo')}</SelectItem><SelectItem value="extra">{tx('Fora do futebol')}</SelectItem></SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Zona do corpo *</Label>
+            <Label>{tx('Zona do corpo *')}</Label>
             <Select value={f.body_part || undefined} onValueChange={(v) => set({ body_part: v })}>
-              <SelectTrigger><SelectValue placeholder="Escolher" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Escolher')} /></SelectTrigger>
               <SelectContent>{BODY_PARTS.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Lado</Label>
+            <Label>{tx('Lado')}</Label>
             <Select value={f.body_side} onValueChange={(v) => set({ body_side: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="left">Esquerdo</SelectItem><SelectItem value="right">Direito</SelectItem><SelectItem value="both">Os dois</SelectItem><SelectItem value="n_a">Não se aplica</SelectItem></SelectContent>
+              <SelectContent><SelectItem value="left">{tx('Esquerdo')}</SelectItem><SelectItem value="right">{tx('Direito')}</SelectItem><SelectItem value="both">{tx('Os dois')}</SelectItem><SelectItem value="n_a">{tx('Não se aplica')}</SelectItem></SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Tipo</Label>
+            <Label>{tx('Tipo')}</Label>
             <Select value={f.injury_type || undefined} onValueChange={(v) => set({ injury_type: v })}>
-              <SelectTrigger><SelectValue placeholder="Se souber" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Se souber')} /></SelectTrigger>
               <SelectContent>{INJURY_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Como aconteceu</Label>
+            <Label>{tx('Como aconteceu')}</Label>
             <Select value={f.mechanism || undefined} onValueChange={(v) => set({ mechanism: v })}>
-              <SelectTrigger><SelectValue placeholder="Escolher" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Escolher')} /></SelectTrigger>
               <SelectContent>{MECHANISMS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-2">
-            <Label>Pode continuar a treinar/jogar?</Label>
+            <Label>{tx('Pode continuar a treinar/jogar?')}</Label>
             <Select value={f.status} onValueChange={(v) => set({ status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="inapto">Não — fica de fora até ser visto</SelectItem>
-                <SelectItem value="condicionado">Sim, com cuidado (condicionado)</SelectItem>
+                <SelectItem value="inapto">{tx('Não — fica de fora até ser visto')}</SelectItem>
+                <SelectItem value="condicionado">{tx('Sim, com cuidado (condicionado)')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="sm:col-span-2"><Label htmlFor="ri-desc">O que aconteceu</Label><Textarea id="ri-desc" rows={3} maxLength={2000} value={f.description} onChange={(e) => set({ description: e.target.value })} placeholder="Ex.: choque no joelho num lance dividido; saiu a coxear, pôs gelo" /></div>
+          <div className="sm:col-span-2"><Label htmlFor="ri-desc">{tx('O que aconteceu')}</Label><Textarea id="ri-desc" rows={3} maxLength={2000} value={f.description} onChange={(e) => set({ description: e.target.value })} placeholder={tx('Ex.: choque no joelho num lance dividido; saiu a coxear, pôs gelo')} /></div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancelar</Button><Button onClick={save} disabled={busy || !f.player || !f.body_part}>Registar</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button><Button onClick={save} disabled={busy || !f.player || !f.body_part}>{tx('Registar')}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -320,28 +321,28 @@ function MedicalStaffCard({ clubId, canManage }: { clubId: string; canManage: bo
   return (
     <Card>
       <CardContent className="space-y-2 p-4">
-        <p className="text-sm font-semibold">Equipa médica do clube</p>
-        {staff.length === 0 ? <p className="text-sm text-muted-foreground">Ainda não há médico nem fisioterapeuta. Sem eles, o diagnóstico não fica visível a ninguém do clube.</p> : (
+        <p className="text-sm font-semibold">{tx('Equipa médica do clube')}</p>
+        {staff.length === 0 ? <p className="text-sm text-muted-foreground">{tx('Ainda não há médico nem fisioterapeuta. Sem eles, o diagnóstico não fica visível a ninguém do clube.')}</p> : (
           <div className="flex flex-wrap gap-2">
             {staff.map((s) => (
               <span key={s.user_id} className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm">
-                <Badge variant="secondary">{s.role === 'medico' ? 'Médico' : 'Fisioterapeuta'}</Badge>{s.name}
-                {canManage && s.email && <button type="button" onClick={() => window.confirm(`Retirar ${s.name} da equipa médica? Deixa de ver os dados clínicos.`) && call(s.email!, 'none', '% deixou a equipa médica.')} aria-label={`Retirar ${s.name}`}><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>}
+                <Badge variant="secondary">{s.role === 'medico' ? tx('Médico') : tx('Fisioterapeuta')}</Badge>{s.name}
+                {canManage && s.email && <button type="button" onClick={() => window.confirm(tx('Retirar {{v0}} da equipa médica? Deixa de ver os dados clínicos.', { v0: s.name })) && call(s.email!, 'none', '% deixou a equipa médica.')} aria-label={tx('Retirar {{v0}}', { v0: s.name })}><Trash2 className="h-3.5 w-3.5 text-destructive" /></button>}
               </span>
             ))}
           </div>
         )}
         {canManage && (
           <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[14rem] flex-1"><Label htmlFor="ms-email">Email da conta TreinON da pessoa</Label><Input id="ms-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="fisio@exemplo.pt" /></div>
+            <div className="min-w-[14rem] flex-1"><Label htmlFor="ms-email">{tx('Email da conta TreinON da pessoa')}</Label><Input id="ms-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tx('fisio@exemplo.pt')} /></div>
             <Select value={role} onValueChange={(v) => setRole(v as 'physio' | 'medico')}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="physio">Fisioterapeuta</SelectItem><SelectItem value="medico">Médico</SelectItem></SelectContent>
+              <SelectContent><SelectItem value="physio">{tx('Fisioterapeuta')}</SelectItem><SelectItem value="medico">{tx('Médico')}</SelectItem></SelectContent>
             </Select>
-            <Button onClick={() => call(email, role, `% faz agora parte da equipa médica.`)} disabled={!email.includes('@')}><UserPlus className="mr-1.5 h-4 w-4" />Dar acesso</Button>
+            <Button onClick={() => call(email, role, `% faz agora parte da equipa médica.`)} disabled={!email.includes('@')}><UserPlus className="mr-1.5 h-4 w-4" />{tx('Dar acesso')}</Button>
           </div>
         )}
-        {canManage && <p className="text-xs text-muted-foreground">A pessoa tem de ter conta na TreinON (criada em treinon.vercel.app). O médico e o fisioterapeuta veem os jogadores do clube e os dados clínicos das lesões; os treinadores e a direção veem só o estado.</p>}
+        {canManage && <p className="text-xs text-muted-foreground">{tx('A pessoa tem de ter conta na TreinON (criada em treinon.vercel.app). O médico e o fisioterapeuta veem os jogadores do clube e os dados clínicos das lesões; os treinadores e a direção veem só o estado.')}</p>}
       </CardContent>
     </Card>
   );

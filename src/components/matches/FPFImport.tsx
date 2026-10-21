@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { Download, RefreshCw, Globe, Trophy, Loader2 } from 'lucide-react';
 import { getSeasonStartYear, getSeasonName } from '@/lib/constants';
+import { tx } from '@/lib/i18n/ui';
 
 // AF Associations with their IDs in the FPF system
 const ASSOCIATIONS = [
@@ -150,13 +151,13 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
 
       if (data.success && data.competitions) {
         setCompetitions(data.competitions);
-        toast.success(`${data.competitions.length} competições encontradas`);
+        toast.success(tx('{{v0}} competições encontradas', { v0: data.competitions.length }));
       } else {
-        toast.error(data.error || 'Erro ao carregar competições');
+        toast.error(data.error || tx('Erro ao carregar competições'));
       }
     } catch (error) {
       console.error('Error fetching competitions:', error);
-      toast.error('Erro ao carregar competições da FPF');
+      toast.error(tx('Erro ao carregar competições da FPF'));
     } finally {
       setLoadingCompetitions(false);
     }
@@ -183,13 +184,13 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
       if (data.success && data.standings) {
         setStandings(data.standings);
         const seriesLabel = data.selectedSeries ? ` (${data.selectedSeries})` : '';
-        toast.success(`Classificação carregada${seriesLabel}: ${data.standings.length} equipas`);
+        toast.success(tx('Classificação carregada{{v0}}: {{v1}} equipas', { v0: seriesLabel, v1: data.standings.length }));
       } else {
-        toast.error(data.error || 'Erro ao carregar classificação');
+        toast.error(data.error || tx('Erro ao carregar classificação'));
       }
     } catch (error) {
       console.error('Error fetching standings:', error);
-      toast.error('Erro ao carregar classificação da FPF');
+      toast.error(tx('Erro ao carregar classificação da FPF'));
     } finally {
       setLoadingStandings(false);
     }
@@ -199,7 +200,7 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
     if (standings.length > 0 && onImportStandings) {
       onImportStandings(standings);
       setOpen(false);
-      toast.success('Classificação importada com sucesso');
+      toast.success(tx('Classificação importada com sucesso'));
     }
   };
 
@@ -208,14 +209,14 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Globe className="w-4 h-4 mr-1" />
-          Importar FPF
+          {tx('Importar FPF')}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5" />
-            Importar Classificação da FPF
+            {tx('Importar Classificação da FPF')}
           </DialogTitle>
         </DialogHeader>
 
@@ -223,15 +224,15 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
           {/* Step 1: Select Association & Season */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">1. Selecionar Associação e Época</CardTitle>
+              <CardTitle className="text-sm font-medium">{tx('1. Selecionar Associação e Época')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Associação</Label>
+                  <Label className="text-xs text-muted-foreground">{tx('Associação')}</Label>
                   <Select value={selectedAssociation} onValueChange={setSelectedAssociation}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a associação" />
+                      <SelectValue placeholder={tx('Selecione a associação')} />
                     </SelectTrigger>
                     <SelectContent>
                       {ASSOCIATIONS.map(af => (
@@ -241,10 +242,10 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Época</Label>
+                  <Label className="text-xs text-muted-foreground">{tx('Época')}</Label>
                   <Select value={selectedSeason} onValueChange={setSelectedSeason}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a época" />
+                      <SelectValue placeholder={tx('Selecione a época')} />
                     </SelectTrigger>
                     <SelectContent>
                       {SEASONS.map(season => (
@@ -258,12 +259,12 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                 {loadingCompetitions ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    A carregar...
+                    {tx('A carregar...')}
                   </>
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Carregar Competições
+                    {tx('Carregar Competições')}
                   </>
                 )}
               </Button>
@@ -274,16 +275,16 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
           {competitions.length > 0 && (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">2. Selecionar Competição e Série</CardTitle>
-                <CardDescription>{competitions.length} competições disponíveis</CardDescription>
+                <CardTitle className="text-sm font-medium">{tx('2. Selecionar Competição e Série')}</CardTitle>
+                <CardDescription>{competitions.length} {tx('competições disponíveis')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Competição</Label>
+                    <Label className="text-xs text-muted-foreground">{tx('Competição')}</Label>
                     <Select value={selectedCompetition} onValueChange={setSelectedCompetition}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a competição" />
+                        <SelectValue placeholder={tx('Selecione a competição')} />
                       </SelectTrigger>
                       <SelectContent>
                         {competitions.map((comp) => (
@@ -296,7 +297,7 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">Série</Label>
+                    <Label className="text-xs text-muted-foreground">{tx('Série')}</Label>
                     <Select
                       value={selectedSeries}
                       onValueChange={setSelectedSeries}
@@ -306,12 +307,12 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                         <SelectValue
                           placeholder={
                             !selectedCompetition
-                              ? 'Selecione uma competição'
+                              ? tx('Selecione uma competição')
                               : loadingSeries
-                              ? 'A carregar séries...'
+                              ? tx('A carregar séries...')
                               : seriesOptions.length === 0
-                              ? 'Sem séries'
-                              : 'Selecione a série'
+                              ? tx('Sem séries')
+                              : tx('Selecione a série')
                           }
                         />
                       </SelectTrigger>
@@ -338,12 +339,12 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                   {loadingStandings ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      A carregar...
+                      {tx('A carregar...')}
                     </>
                   ) : (
                     <>
                       <Download className="w-4 h-4 mr-2" />
-                      Carregar Classificação
+                      {tx('Carregar Classificação')}
                     </>
                   )}
                 </Button>
@@ -356,7 +357,7 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>3. Classificação</span>
+                  <span>{tx('3. Classificação')}</span>
                   <Badge variant="secondary">{standings.length} equipas</Badge>
                 </CardTitle>
               </CardHeader>
@@ -366,14 +367,14 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-12">#</TableHead>
-                        <TableHead>Equipa</TableHead>
+                        <TableHead>{tx('Equipa')}</TableHead>
                         <TableHead className="text-center">J</TableHead>
                         <TableHead className="text-center">V</TableHead>
                         <TableHead className="text-center">E</TableHead>
                         <TableHead className="text-center">D</TableHead>
                         <TableHead className="text-center">GM</TableHead>
                         <TableHead className="text-center">GS</TableHead>
-                        <TableHead className="text-center font-bold">Pts</TableHead>
+                        <TableHead className="text-center font-bold">{tx('Pts')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -397,7 +398,7 @@ export function FPFImport({ onImportStandings }: FPFImportProps) {
                 {onImportStandings && (
                   <Button onClick={handleImport} className="w-full mt-4">
                     <Download className="w-4 h-4 mr-2" />
-                    Importar Esta Classificação
+                    {tx('Importar Esta Classificação')}
                   </Button>
                 )}
               </CardContent>

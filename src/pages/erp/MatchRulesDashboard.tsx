@@ -19,14 +19,15 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import type { MatchRuleProfile } from '@/lib/match-rules-service';
+import { tx } from '@/lib/i18n/ui';
 
 const MODALITY_OPTIONS = [
-  { value: '', label: 'Todas' },
-  { value: 'football_11', label: 'Futebol 11' },
-  { value: 'football_9', label: 'Futebol 9' },
-  { value: 'football_7', label: 'Futebol 7' },
-  { value: 'football_5', label: 'Futebol 5' },
-  { value: 'futsal', label: 'Futsal' },
+  { value: '', get label() { return tx('Todas'); } },
+  { value: 'football_11', get label() { return tx('Futebol 11'); } },
+  { value: 'football_9', get label() { return tx('Futebol 9'); } },
+  { value: 'football_7', get label() { return tx('Futebol 7'); } },
+  { value: 'football_5', get label() { return tx('Futebol 5'); } },
+  { value: 'futsal', get label() { return tx('Futsal'); } },
 ];
 
 const MODALITY_LABELS: Record<string, string> = {
@@ -60,7 +61,7 @@ export default function MatchRulesDashboard() {
 
   const handleSave = () => {
     if (!editingProfile?.name || !editingProfile?.modality_code || !editingProfile?.max_players_on_field) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error(tx('Preencha todos os campos obrigatórios'));
       return;
     }
     if (editingProfile.id) {
@@ -73,7 +74,7 @@ export default function MatchRulesDashboard() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja eliminar este perfil?')) {
+    if (confirm(tx('Tem certeza que deseja eliminar este perfil?'))) {
       deleteProfile.mutate(id);
     }
   };
@@ -106,8 +107,8 @@ export default function MatchRulesDashboard() {
   return (
     <AppLayout>
       <PageHeader
-        title="Regras de Jogo"
-        description="Configuração central de regras por modalidade e escalão"
+        title={tx('Regras de Jogo')}
+        description={tx('Configuração central de regras por modalidade e escalão')}
         icon={<Settings className="h-6 w-6" />}
       />
 
@@ -118,7 +119,7 @@ export default function MatchRulesDashboard() {
               <Shield className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{systemProfiles.length}</p>
-                <p className="text-xs text-muted-foreground">Perfis do sistema</p>
+                <p className="text-xs text-muted-foreground">{tx('Perfis do sistema')}</p>
               </div>
             </div>
           </CardContent>
@@ -129,7 +130,7 @@ export default function MatchRulesDashboard() {
               <Settings className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{clubProfiles.length}</p>
-                <p className="text-xs text-muted-foreground">Perfis personalizados</p>
+                <p className="text-xs text-muted-foreground">{tx('Perfis personalizados')}</p>
               </div>
             </div>
           </CardContent>
@@ -140,7 +141,7 @@ export default function MatchRulesDashboard() {
               <Users className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{new Set(profiles?.map(p => p.modality_code)).size}</p>
-                <p className="text-xs text-muted-foreground">Modalidades</p>
+                <p className="text-xs text-muted-foreground">{tx('Modalidades')}</p>
               </div>
             </div>
           </CardContent>
@@ -151,7 +152,7 @@ export default function MatchRulesDashboard() {
               <Clock className="h-5 w-5 text-primary" />
               <div>
                 <p className="text-2xl font-bold">{new Set(profiles?.map(p => p.age_group_code)).size}</p>
-                <p className="text-xs text-muted-foreground">Escalões</p>
+                <p className="text-xs text-muted-foreground">{tx('Escalões')}</p>
               </div>
             </div>
           </CardContent>
@@ -160,8 +161,8 @@ export default function MatchRulesDashboard() {
 
       <Tabs defaultValue="profiles" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="profiles">Perfis de Regras</TabsTrigger>
-          <TabsTrigger value="audit">Histórico de Alterações</TabsTrigger>
+          <TabsTrigger value="profiles">{tx('Perfis de Regras')}</TabsTrigger>
+          <TabsTrigger value="audit">{tx('Histórico de Alterações')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profiles">
@@ -169,13 +170,13 @@ export default function MatchRulesDashboard() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Perfis de Regras</CardTitle>
-                  <CardDescription>Regras de jogo por modalidade e escalão</CardDescription>
+                  <CardTitle>{tx('Perfis de Regras')}</CardTitle>
+                  <CardDescription>{tx('Regras de jogo por modalidade e escalão')}</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
                   <Select value={modalityFilter} onValueChange={setModalityFilter}>
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Filtrar modalidade" />
+                      <SelectValue placeholder={tx('Filtrar modalidade')} />
                     </SelectTrigger>
                     <SelectContent>
                       {MODALITY_OPTIONS.map(opt => (
@@ -185,7 +186,7 @@ export default function MatchRulesDashboard() {
                   </Select>
                   {isClubAdmin && (
                     <Button onClick={openCreate} size="sm">
-                      <Plus className="h-4 w-4 mr-1" /> Novo Perfil
+                      <Plus className="h-4 w-4 mr-1" /> {tx('Novo Perfil')}
                     </Button>
                   )}
                 </div>
@@ -200,14 +201,14 @@ export default function MatchRulesDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Modalidade</TableHead>
-                      <TableHead>Escalão</TableHead>
-                      <TableHead>Tempos</TableHead>
-                      <TableHead>Máx. Campo</TableHead>
-                      <TableHead>Reentrada</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      {isClubAdmin && <TableHead className="text-right">Ações</TableHead>}
+                      <TableHead>{tx('Nome')}</TableHead>
+                      <TableHead>{tx('Modalidade')}</TableHead>
+                      <TableHead>{tx('Escalão')}</TableHead>
+                      <TableHead>{tx('Tempos')}</TableHead>
+                      <TableHead>{tx('Máx. Campo')}</TableHead>
+                      <TableHead>{tx('Reentrada')}</TableHead>
+                      <TableHead>{tx('Tipo')}</TableHead>
+                      {isClubAdmin && <TableHead className="text-right">{tx('Ações')}</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -228,12 +229,12 @@ export default function MatchRulesDashboard() {
                         <TableCell>{profile.max_players_on_field}</TableCell>
                         <TableCell>
                           <Badge variant={profile.reentry_allowed ? 'default' : 'secondary'}>
-                            {profile.reentry_allowed ? 'Sim' : 'Não'}
+                            {profile.reentry_allowed ? tx('Sim') : tx('Não')}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={profile.is_system_default ? 'outline' : 'default'}>
-                            {profile.is_system_default ? 'Sistema' : 'Clube'}
+                            {profile.is_system_default ? tx('Sistema') : tx('Clube')}
                           </Badge>
                         </TableCell>
                         {isClubAdmin && (
@@ -255,7 +256,7 @@ export default function MatchRulesDashboard() {
                     {(!profiles || profiles.length === 0) && (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                          Nenhum perfil encontrado
+                          {tx('Nenhum perfil encontrado')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -271,9 +272,9 @@ export default function MatchRulesDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <History className="h-5 w-5" />
-                Histórico de Alterações
+                {tx('Histórico de Alterações')}
               </CardTitle>
-              <CardDescription>Registo de todas as alterações a perfis de regras</CardDescription>
+              <CardDescription>{tx('Registo de todas as alterações a perfis de regras')}</CardDescription>
             </CardHeader>
             <CardContent>
               {auditLoading ? (
@@ -284,10 +285,10 @@ export default function MatchRulesDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Ação</TableHead>
-                      <TableHead>Entidade</TableHead>
-                      <TableHead>Motivo</TableHead>
+                      <TableHead>{tx('Data')}</TableHead>
+                      <TableHead>{tx('Ação')}</TableHead>
+                      <TableHead>{tx('Entidade')}</TableHead>
+                      <TableHead>{tx('Motivo')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -306,7 +307,7 @@ export default function MatchRulesDashboard() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-muted-foreground py-8">Sem alterações registadas</p>
+                <p className="text-center text-muted-foreground py-8">{tx('Sem alterações registadas')}</p>
               )}
             </CardContent>
           </Card>
@@ -317,22 +318,22 @@ export default function MatchRulesDashboard() {
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingProfile?.id ? 'Editar' : 'Novo'} Perfil de Regras</DialogTitle>
-            <DialogDescription>Configure as regras para uma modalidade e escalão</DialogDescription>
+            <DialogTitle>{editingProfile?.id ? tx('Editar') : tx('Novo')} {tx('Perfil de Regras')}</DialogTitle>
+            <DialogDescription>{tx('Configure as regras para uma modalidade e escalão')}</DialogDescription>
           </DialogHeader>
           {editingProfile && (
             <div className="space-y-4">
               <div>
-                <Label>Nome</Label>
+                <Label>{tx('Nome')}</Label>
                 <Input
                   value={editingProfile.name || ''}
                   onChange={e => setEditingProfile({ ...editingProfile, name: e.target.value })}
-                  placeholder="Ex: Futebol 7 - Infantis (Competição X)"
+                  placeholder={tx('Ex: Futebol 7 - Infantis (Competição X)')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Modalidade</Label>
+                  <Label>{tx('Modalidade')}</Label>
                   <Select
                     value={editingProfile.modality_code || 'football_11'}
                     onValueChange={v => setEditingProfile({ ...editingProfile, modality_code: v })}
@@ -346,12 +347,12 @@ export default function MatchRulesDashboard() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Escalão</Label>
+                  <Label>{tx('Escalão')}</Label>
                   <Select
                     value={editingProfile.age_group_code || ''}
                     onValueChange={v => setEditingProfile({ ...editingProfile, age_group_code: v })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>
                       {Object.entries(AGE_GROUP_LABELS).map(([code, label]) => (
                         <SelectItem key={code} value={code}>{label}</SelectItem>
@@ -361,16 +362,16 @@ export default function MatchRulesDashboard() {
                 </div>
               </div>
               <div>
-                <Label>Competição (opcional)</Label>
+                <Label>{tx('Competição (opcional)')}</Label>
                 <Input
                   value={editingProfile.competition_name || ''}
                   onChange={e => setEditingProfile({ ...editingProfile, competition_name: e.target.value })}
-                  placeholder="Ex: Campeonato Distrital"
+                  placeholder={tx('Ex: Campeonato Distrital')}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Nº Partes</Label>
+                  <Label>{tx('Nº Partes')}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -380,7 +381,7 @@ export default function MatchRulesDashboard() {
                   />
                 </div>
                 <div>
-                  <Label>1ª Parte (min)</Label>
+                  <Label>{tx('1ª Parte (min)')}</Label>
                   <Input
                     type="number"
                     min={5}
@@ -390,7 +391,7 @@ export default function MatchRulesDashboard() {
                   />
                 </div>
                 <div>
-                  <Label>2ª Parte (min)</Label>
+                  <Label>{tx('2ª Parte (min)')}</Label>
                   <Input
                     type="number"
                     min={5}
@@ -402,7 +403,7 @@ export default function MatchRulesDashboard() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Máx. jogadores em campo</Label>
+                  <Label>{tx('Máx. jogadores em campo')}</Label>
                   <Input
                     type="number"
                     min={3}
@@ -412,7 +413,7 @@ export default function MatchRulesDashboard() {
                   />
                 </div>
                 <div>
-                  <Label>Intervalo (min)</Label>
+                  <Label>{tx('Intervalo (min)')}</Label>
                   <Input
                     type="number"
                     min={0}
@@ -428,20 +429,20 @@ export default function MatchRulesDashboard() {
                     checked={editingProfile.reentry_allowed || false}
                     onCheckedChange={v => setEditingProfile({ ...editingProfile, reentry_allowed: v })}
                   />
-                  <Label>Reentrada permitida</Label>
+                  <Label>{tx('Reentrada permitida')}</Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={editingProfile.rolling_substitutions || false}
                     onCheckedChange={v => setEditingProfile({ ...editingProfile, rolling_substitutions: v })}
                   />
-                  <Label>Substituições rotativas</Label>
+                  <Label>{tx('Substituições rotativas')}</Label>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditDialog(false)}>Cancelar</Button>
+                <Button variant="outline" onClick={() => setEditDialog(false)}>{tx('Cancelar')}</Button>
                 <Button onClick={handleSave} disabled={createProfile.isPending || updateProfile.isPending}>
-                  {editingProfile.id ? 'Guardar' : 'Criar'}
+                  {editingProfile.id ? tx('Guardar') : tx('Criar')}
                 </Button>
               </div>
             </div>

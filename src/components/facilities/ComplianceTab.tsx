@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, FileCheck } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 const DOC_TYPES: Record<string, string> = {
   usage_license: 'Licença de Utilização', lease_contract: 'Contrato de Arrendamento',
@@ -29,18 +30,18 @@ export function ComplianceTab({ documents, complianceAlerts, facilities }: Props
     <div className="space-y-6">
       {(expired.length > 0 || expiring.length > 0 || complianceAlerts.length > 0) && (
         <Card className="border-destructive/50">
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" />Alertas de Conformidade</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-destructive" />{tx('Alertas de Conformidade')}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {expired.map(d => (
               <div key={d.id} className="flex justify-between items-center text-sm">
                 <span>{DOC_TYPES[d.document_type] || d.document_type} — {getFacName(d.facility_id)}</span>
-                <Badge variant="destructive">Expirado</Badge>
+                <Badge variant="destructive">{tx('Expirado')}</Badge>
               </div>
             ))}
             {expiring.map(d => (
               <div key={d.id} className="flex justify-between items-center text-sm">
                 <span>{DOC_TYPES[d.document_type] || d.document_type} — {getFacName(d.facility_id)}</span>
-                <Badge variant="outline" className="text-amber-600 border-amber-300">A expirar</Badge>
+                <Badge variant="outline" className="text-amber-600 border-amber-300">{tx('A expirar')}</Badge>
               </div>
             ))}
             {complianceAlerts.map(a => (
@@ -54,7 +55,7 @@ export function ComplianceTab({ documents, complianceAlerts, facilities }: Props
       )}
 
       <Card>
-        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileCheck className="h-5 w-5" />Documentação ({documents.length})</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileCheck className="h-5 w-5" />{tx('Documentação (')}{documents.length})</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2">
             {documents.map(d => {
@@ -64,16 +65,16 @@ export function ComplianceTab({ documents, complianceAlerts, facilities }: Props
                   <div>
                     <span className="font-medium">{DOC_TYPES[d.document_type] || d.document_type}</span>
                     <span className="text-muted-foreground"> — {getFacName(d.facility_id)}</span>
-                    {d.mandatory && <Badge variant="secondary" className="ml-2 text-xs">Obrigatório</Badge>}
+                    {d.mandatory && <Badge variant="secondary" className="ml-2 text-xs">{tx('Obrigatório')}</Badge>}
                   </div>
                   <div className="flex gap-2 items-center">
-                    {d.valid_to && <span className="text-xs text-muted-foreground">Até {new Date(d.valid_to).toLocaleDateString('pt-PT')}</span>}
-                    <Badge variant={isExpired ? 'destructive' : 'default'} className="text-xs">{isExpired ? 'Expirado' : d.status}</Badge>
+                    {d.valid_to && <span className="text-xs text-muted-foreground">{tx('Até')}{' '}{new Date(d.valid_to).toLocaleDateString('pt-PT')}</span>}
+                    <Badge variant={isExpired ? 'destructive' : 'default'} className="text-xs">{isExpired ? tx('Expirado') : d.status}</Badge>
                   </div>
                 </div>
               );
             })}
-            {documents.length === 0 && <p className="text-center text-muted-foreground">Nenhum documento registado</p>}
+            {documents.length === 0 && <p className="text-center text-muted-foreground">{tx('Nenhum documento registado')}</p>}
           </div>
         </CardContent>
       </Card>

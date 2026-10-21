@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 export interface BudgetCycle {
   id: string;
@@ -211,7 +212,7 @@ export function useBudget(clubId: string | null) {
   // Create budget cycle
   const createCycle = useMutation({
     mutationFn: async (input: { name: string; season: string; start_date: string; end_date: string; budget_scope?: string }) => {
-      if (!clubId || !user) throw new Error('Missing context');
+      if (!clubId || !user) throw new Error(tx('Missing context'));
       const { data, error } = await supabase.from('budget_cycles').insert({
         club_id: clubId,
         name: input.name,
@@ -247,9 +248,9 @@ export function useBudget(clubId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-cycles'] });
-      toast.success('Ciclo orçamental criado');
+      toast.success(tx('Ciclo orçamental criado'));
     },
-    onError: (e) => toast.error(`Erro: ${e.message}`),
+    onError: (e) => toast.error(tx('Erro: {{v0}}', { v0: e.message })),
   });
 
   // Create budget line
@@ -266,7 +267,7 @@ export function useBudget(clubId: string | null) {
       forecast_amount?: number;
       notes?: string;
     }) => {
-      if (!clubId || !user) throw new Error('Missing context');
+      if (!clubId || !user) throw new Error(tx('Missing context'));
       const { data, error } = await supabase.from('budget_lines').insert({
         budget_version_id: input.budget_version_id,
         club_id: clubId,
@@ -285,9 +286,9 @@ export function useBudget(clubId: string | null) {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['budget-lines', vars.budget_version_id] });
-      toast.success('Linha orçamental criada');
+      toast.success(tx('Linha orçamental criada'));
     },
-    onError: (e) => toast.error(`Erro: ${e.message}`),
+    onError: (e) => toast.error(tx('Erro: {{v0}}', { v0: e.message })),
   });
 
   // Update budget line
@@ -306,7 +307,7 @@ export function useBudget(clubId: string | null) {
   // Approve cycle
   const approveCycle = useMutation({
     mutationFn: async (cycleId: string) => {
-      if (!user || !clubId) throw new Error('Missing context');
+      if (!user || !clubId) throw new Error(tx('Missing context'));
       const { error } = await supabase.from('budget_cycles')
         .update({ status: 'approved', approved_by: user.id, approved_at: new Date().toISOString() })
         .eq('id', cycleId);
@@ -323,7 +324,7 @@ export function useBudget(clubId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budget-cycles'] });
-      toast.success('Orçamento aprovado');
+      toast.success(tx('Orçamento aprovado'));
     },
   });
 

@@ -246,7 +246,7 @@ export default function Matches() {
 
   const handleDeleteMatch = (match: Match) => {
     if (match.status === 'in_progress' && !canDeleteAnytime(match)) {
-      toast.error('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro (ou muda-o para amigável na preparação).');
+      toast.error(tx('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro (ou muda-o para amigável na preparação).'));
       return;
     }
     setDeleteDialogMatch(match);
@@ -384,7 +384,7 @@ export default function Matches() {
             {deletedMatches.length > 0 && (
               <TabsTrigger value="deleted" className="flex items-center gap-2">
                 <Archive className="w-4 h-4" />
-                Eliminados ({deletedMatches.length})
+                {tx('Eliminados (')}{deletedMatches.length})
               </TabsTrigger>
             )}
             {selectedMatch && (
@@ -449,7 +449,7 @@ export default function Matches() {
                       <FlaskConical className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                       <div>
                         <p className="font-medium text-amber-800 dark:text-amber-200">
-                          {testMatchesCount} jogo{testMatchesCount === 1 ? '' : 's'} de teste
+                          {testMatchesCount} jogo{testMatchesCount === 1 ? '' : 's'} {tx('de teste')}
                         </p>
                         <p className="text-xs text-amber-600 dark:text-amber-300">
                           {t('Jogos de teste não contam para estatísticas')}

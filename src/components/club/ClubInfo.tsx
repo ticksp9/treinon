@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit, Save, X, Upload, Building2, History, Target, Mail, Phone, MapPin, Calendar } from 'lucide-react';
 import { shrinkImage } from '@/lib/team-branding';
+import { tx } from '@/lib/i18n/ui';
 
 interface ClubInfoProps {
   club: any;
@@ -50,11 +51,11 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['club', clubId] });
-      toast.success('Informação do clube atualizada!');
+      toast.success(tx('Informação do clube atualizada!'));
       setIsEditing(false);
     },
     onError: (error: any) => {
-      toast.error('Erro ao atualizar: ' + error.message);
+      toast.error(tx('Erro ao atualizar: ') + error.message);
     },
   });
 
@@ -62,17 +63,17 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error('Use uma imagem PNG, JPG ou WebP.'); return; }
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) { toast.error(tx('Use uma imagem PNG, JPG ou WebP.')); return; }
 
     let blob: Blob;
-    try { blob = await shrinkImage(file); } catch { toast.error('Não foi possível ler a imagem.'); return; }
+    try { blob = await shrinkImage(file); } catch { toast.error(tx('Não foi possível ler a imagem.')); return; }
     const filePath = `clubs/${clubId}/logo-${Date.now()}.png`;
     const { error: uploadError } = await supabase.storage
       .from('crests')
       .upload(filePath, blob, { contentType: 'image/png' });
 
     if (uploadError) {
-      toast.error('Erro ao carregar logo');
+      toast.error(tx('Erro ao carregar logo'));
       return;
     }
 
@@ -81,7 +82,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
       .getPublicUrl(filePath);
 
     setFormData({ ...formData, logo_url: urlData.publicUrl });
-    toast.success('Logo carregado! Carregue em Guardar para ficar.');
+    toast.success(tx('Logo carregado! Carregue em Guardar para ficar.'));
   };
 
   if (isEditing) {
@@ -89,7 +90,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Editar Informação</span>
+            <span>{tx('Editar Informação')}</span>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -97,7 +98,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 onClick={() => setIsEditing(false)}
               >
                 <X className="w-4 h-4 mr-2" />
-                Cancelar
+                {tx('Cancelar')}
               </Button>
               <Button
                 size="sm"
@@ -105,7 +106,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 disabled={updateClub.isPending}
               >
                 <Save className="w-4 h-4 mr-2" />
-                Guardar
+                {tx('Guardar')}
               </Button>
             </div>
           </CardTitle>
@@ -113,14 +114,14 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Nome do Clube</Label>
+              <Label>{tx('Nome do Clube')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Ano de Fundação</Label>
+              <Label>{tx('Ano de Fundação')}</Label>
               <Input
                 type="number"
                 value={formData.founded_year}
@@ -128,7 +129,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{tx('Email')}</Label>
               <Input
                 type="email"
                 value={formData.email}
@@ -136,24 +137,24 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Telefone</Label>
+              <Label>{tx('Telefone')}</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Morada</Label>
+              <Label>{tx('Morada')}</Label>
               <Input
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Logo do Clube</Label>
+              <Label>{tx('Logo do Clube')}</Label>
               <div className="flex items-center gap-4">
                 {formData.logo_url && (
-                  <img src={formData.logo_url} alt="Logo" className="w-16 h-16 rounded-lg object-cover" />
+                  <img src={formData.logo_url} alt={tx('Logo')} className="w-16 h-16 rounded-lg object-cover" />
                 )}
                 <Input
                   type="file"
@@ -165,22 +166,22 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>História do Clube</Label>
+            <Label>{tx('História do Clube')}</Label>
             <Textarea
               value={formData.history}
               onChange={(e) => setFormData({ ...formData, history: e.target.value })}
               rows={4}
-              placeholder="Conte a história do seu clube..."
+              placeholder={tx('Conte a história do seu clube...')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Objetivos</Label>
+            <Label>{tx('Objetivos')}</Label>
             <Textarea
               value={formData.objectives}
               onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
               rows={4}
-              placeholder="Quais são os objetivos do clube para esta época..."
+              placeholder={tx('Quais são os objetivos do clube para esta época...')}
             />
           </div>
         </CardContent>
@@ -199,8 +200,8 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 <Mail className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{club?.email || 'Não definido'}</p>
+                <p className="text-sm text-muted-foreground">{tx('Email')}</p>
+                <p className="font-medium">{club?.email || tx('Não definido')}</p>
               </div>
             </div>
           </CardContent>
@@ -212,8 +213,8 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 <Phone className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Telefone</p>
-                <p className="font-medium">{club?.phone || 'Não definido'}</p>
+                <p className="text-sm text-muted-foreground">{tx('Telefone')}</p>
+                <p className="font-medium">{club?.phone || tx('Não definido')}</p>
               </div>
             </div>
           </CardContent>
@@ -225,8 +226,8 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 <MapPin className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Morada</p>
-                <p className="font-medium">{club?.address || 'Não definida'}</p>
+                <p className="text-sm text-muted-foreground">{tx('Morada')}</p>
+                <p className="font-medium">{club?.address || tx('Não definida')}</p>
               </div>
             </div>
           </CardContent>
@@ -238,8 +239,8 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
                 <Calendar className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Fundado</p>
-                <p className="font-medium">{club?.founded_year || 'Não definido'}</p>
+                <p className="text-sm text-muted-foreground">{tx('Fundado')}</p>
+                <p className="font-medium">{club?.founded_year || tx('Não definido')}</p>
               </div>
             </div>
           </CardContent>
@@ -251,11 +252,11 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-primary" />
-            <CardTitle>História do Clube</CardTitle>
+            <CardTitle>{tx('História do Clube')}</CardTitle>
           </div>
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
             <Edit className="w-4 h-4 mr-2" />
-            Editar
+            {tx('Editar')}
           </Button>
         </CardHeader>
         <CardContent>
@@ -263,7 +264,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
             <p className="whitespace-pre-wrap text-muted-foreground">{club.history}</p>
           ) : (
             <p className="text-muted-foreground italic">
-              Nenhuma história definida. Clique em editar para adicionar a história do seu clube.
+              {tx('Nenhuma história definida. Clique em editar para adicionar a história do seu clube.')}
             </p>
           )}
         </CardContent>
@@ -274,7 +275,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5 text-primary" />
-            <CardTitle>Objetivos</CardTitle>
+            <CardTitle>{tx('Objetivos')}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -282,7 +283,7 @@ export function ClubInfo({ club, clubId }: ClubInfoProps) {
             <p className="whitespace-pre-wrap text-muted-foreground">{club.objectives}</p>
           ) : (
             <p className="text-muted-foreground italic">
-              Nenhum objetivo definido. Clique em editar para adicionar os objetivos do clube.
+              {tx('Nenhum objetivo definido. Clique em editar para adicionar os objetivos do clube.')}
             </p>
           )}
         </CardContent>

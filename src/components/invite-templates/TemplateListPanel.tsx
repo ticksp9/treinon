@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2, MoreHorizontal, Edit, Copy, Star, StarOff, Eye, EyeOff, Mail, Phone, MessageCircle, Search, History } from 'lucide-react';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 const PROFILE_LABELS: Record<string, string> = {
   guardian: 'Encarregado',
@@ -23,9 +24,9 @@ const CHANNEL_ICONS: Record<string, typeof Mail> = {
 };
 
 const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  published: { label: 'Publicado', variant: 'default' },
-  draft: { label: 'Rascunho', variant: 'secondary' },
-  archived: { label: 'Arquivado', variant: 'outline' },
+  published: { get label() { return tx('Publicado'); }, variant: 'default' },
+  draft: { get label() { return tx('Rascunho'); }, variant: 'secondary' },
+  archived: { get label() { return tx('Arquivado'); }, variant: 'outline' },
 };
 
 interface Props {
@@ -57,7 +58,7 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
     } else {
       updateTemplate.mutate(
         { id: t.id, is_active: true, status: 'published' },
-        { onSuccess: () => toast.success('Template ativado') }
+        { onSuccess: () => toast.success(tx('Template ativado')) }
       );
     }
   };
@@ -66,20 +67,20 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
     if (!confirmAction) return;
     updateTemplate.mutate(
       { id: confirmAction.template.id, is_active: false, status: 'draft' },
-      { onSuccess: () => { toast.success('Template desativado'); setConfirmAction(null); } }
+      { onSuccess: () => { toast.success(tx('Template desativado')); setConfirmAction(null); } }
     );
   };
 
   const handleToggleDefault = (t: InviteTemplate) => {
     updateTemplate.mutate(
       { id: t.id, is_default: !t.is_default },
-      { onSuccess: () => toast.success(t.is_default ? 'Default removido' : 'Definido como default') }
+      { onSuccess: () => toast.success(t.is_default ? tx('Default removido') : tx('Definido como default')) }
     );
   };
 
   const handleDuplicate = (t: InviteTemplate) => {
     duplicateTemplate.mutate(t.id, {
-      onSuccess: () => toast.success('Template duplicado'),
+      onSuccess: () => toast.success(tx('Template duplicado')),
     });
   };
 
@@ -100,45 +101,45 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar por nome ou chave..."
+            placeholder={tx('Pesquisar por nome ou chave...')}
             className="pl-9"
           />
         </div>
         <Select value={profileFilter} onValueChange={v => setProfileFilter(v === 'all' ? '' : v)}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Todos os perfis" /></SelectTrigger>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder={tx('Todos os perfis')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os perfis</SelectItem>
+            <SelectItem value="all">{tx('Todos os perfis')}</SelectItem>
             {Object.entries(PROFILE_LABELS).map(([k, v]) => (
               <SelectItem key={k} value={k}>{v}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={channelFilter} onValueChange={v => setChannelFilter(v === 'all' ? '' : v)}>
-          <SelectTrigger className="w-[140px]"><SelectValue placeholder="Todos os canais" /></SelectTrigger>
+          <SelectTrigger className="w-[140px]"><SelectValue placeholder={tx('Todos os canais')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="email">Email</SelectItem>
+            <SelectItem value="all">{tx('Todos')}</SelectItem>
+            <SelectItem value="email">{tx('Email')}</SelectItem>
             <SelectItem value="sms">SMS</SelectItem>
-            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+            <SelectItem value="whatsapp">{tx('WhatsApp')}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={activeFilter} onValueChange={v => setActiveFilter(v === 'all' ? '' : v)}>
-          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder={tx('Estado')} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Ativos</SelectItem>
-            <SelectItem value="inactive">Inativos</SelectItem>
+            <SelectItem value="all">{tx('Todos')}</SelectItem>
+            <SelectItem value="active">{tx('Ativos')}</SelectItem>
+            <SelectItem value="inactive">{tx('Inativos')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Results count */}
-      <p className="text-xs text-muted-foreground">{templates.length} template(s) encontrado(s)</p>
+      <p className="text-xs text-muted-foreground">{templates.length} {tx('template(s) encontrado(s)')}</p>
 
       {templates.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p className="text-sm">Nenhum template encontrado</p>
-          <Button size="sm" className="mt-3" onClick={onCreate}>Criar Template</Button>
+          <p className="text-sm">{tx('Nenhum template encontrado')}</p>
+          <Button size="sm" className="mt-3" onClick={onCreate}>{tx('Criar Template')}</Button>
         </div>
       ) : (
         <div className="grid gap-3">
@@ -155,7 +156,7 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
                         <h4 className="text-sm font-semibold truncate">{t.name || t.template_key}</h4>
                         {t.is_default && (
                           <Badge className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-200">
-                            <Star className="h-3 w-3 mr-0.5" /> Default
+                            <Star className="h-3 w-3 mr-0.5" /> {tx('Default')}
                           </Badge>
                         )}
                         <Badge variant={statusInfo.variant} className="text-[10px]">
@@ -188,24 +189,24 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => onEdit(t)}>
-                          <Edit className="h-3.5 w-3.5 mr-2" /> Editar
+                          <Edit className="h-3.5 w-3.5 mr-2" /> {tx('Editar')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDuplicate(t)}>
-                          <Copy className="h-3.5 w-3.5 mr-2" /> Duplicar
+                          <Copy className="h-3.5 w-3.5 mr-2" /> {tx('Duplicar')}
                         </DropdownMenuItem>
                         {onViewHistory && (
                           <DropdownMenuItem onClick={() => onViewHistory(t)}>
-                            <History className="h-3.5 w-3.5 mr-2" /> Histórico
+                            <History className="h-3.5 w-3.5 mr-2" /> {tx('Histórico')}
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleToggleActive(t)}>
                           {t.is_active ? <EyeOff className="h-3.5 w-3.5 mr-2" /> : <Eye className="h-3.5 w-3.5 mr-2" />}
-                          {t.is_active ? 'Desativar' : 'Ativar'}
+                          {t.is_active ? tx('Desativar') : tx('Ativar')}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleToggleDefault(t)}>
                           {t.is_default ? <StarOff className="h-3.5 w-3.5 mr-2" /> : <Star className="h-3.5 w-3.5 mr-2" />}
-                          {t.is_default ? 'Remover default' : 'Definir default'}
+                          {t.is_default ? tx('Remover default') : tx('Definir default')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -221,15 +222,14 @@ export function TemplateListPanel({ onEdit, onCreate, onViewHistory }: Props) {
       <AlertDialog open={!!confirmAction} onOpenChange={(open) => { if (!open) setConfirmAction(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Desativar template?</AlertDialogTitle>
+            <AlertDialogTitle>{tx('Desativar template?')}</AlertDialogTitle>
             <AlertDialogDescription>
-              O template "{confirmAction?.template.name}" deixará de ser utilizado para novos envios.
-              Templates já enviados mantêm o conteúdo original.
+              {tx('O template "')}{confirmAction?.template.name}{tx('" deixará de ser utilizado para novos envios. Templates já enviados mantêm o conteúdo original.')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeactivate}>Desativar</AlertDialogAction>
+            <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeactivate}>{tx('Desativar')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

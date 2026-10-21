@@ -25,6 +25,7 @@ import { DrillPicker } from '@/components/library/DrillPicker';
 import { AnimatedDrill } from '@/components/library/AnimatedDrill';
 import type { DiagramEl } from '@/lib/drill-library/types';
 import type { DrillAnimation } from '@/lib/drill-library/animation';
+import { tx } from '@/lib/i18n/ui';
 
 interface Exercise {
   id: string;
@@ -68,241 +69,241 @@ const SYSTEM_TEMPLATES: Omit<Template, 'id'>[] = [
   // OFFENSIVE TEMPLATES
   {
     name: 'Ataque Rápido - Contra-Ataque',
-    description: 'Treino focado em transições rápidas e finalização após recuperação de bola.',
+    get description() { return tx('Treino focado em transições rápidas e finalização após recuperação de bola.'); },
     age_group: 'sub-15',
     focus_area: 'offensive',
     duration_minutes: 75,
     exercises: [
-      { id: '1', name: 'Ativação e Mobilidade', duration: 10, description: 'Aquecimento com mobilidade articular e ativação muscular.' },
-      { id: '2', name: 'Meinho 4x2 com Transição', duration: 12, description: 'Ao recuperar a bola, transição rápida para baliza.' },
-      { id: '3', name: '3x2 + GR em Contra-Ataque', duration: 15, description: 'Situação de superioridade numérica em contra-ataque.' },
-      { id: '4', name: 'Jogo Reduzido 5x5', duration: 20, description: 'Valorizar golos em transição rápida (contam dobro).' },
-      { id: '5', name: 'Alongamentos e Retorno à Calma', duration: 8, description: 'Alongamentos estáticos e feedback.' },
+      { id: '1', name: 'Ativação e Mobilidade', duration: 10, get description() { return tx('Aquecimento com mobilidade articular e ativação muscular.'); } },
+      { id: '2', name: 'Meinho 4x2 com Transição', duration: 12, get description() { return tx('Ao recuperar a bola, transição rápida para baliza.'); } },
+      { id: '3', name: '3x2 + GR em Contra-Ataque', duration: 15, get description() { return tx('Situação de superioridade numérica em contra-ataque.'); } },
+      { id: '4', name: 'Jogo Reduzido 5x5', duration: 20, get description() { return tx('Valorizar golos em transição rápida (contam dobro).'); } },
+      { id: '5', name: 'Alongamentos e Retorno à Calma', duration: 8, get description() { return tx('Alongamentos estáticos e feedback.'); } },
     ],
     is_system_template: true,
   },
   {
     name: 'Construção Ofensiva',
-    description: 'Trabalho de saída de bola desde o guarda-redes com progressão até finalização.',
+    get description() { return tx('Trabalho de saída de bola desde o guarda-redes com progressão até finalização.'); },
     age_group: 'sub-17',
     focus_area: 'offensive',
     duration_minutes: 90,
     exercises: [
-      { id: '1', name: 'Aquecimento com Bola', duration: 12, description: 'Passe e receção em movimento, controlo orientado.' },
-      { id: '2', name: 'Saída de Bola 4+GR vs 3', duration: 15, description: 'Defesa + GR constroem contra 3 adversários.' },
-      { id: '3', name: 'Progressão em Ondas', duration: 18, description: 'Construção desde atrás até à zona de finalização.' },
-      { id: '4', name: 'Jogo Posicional 7x7', duration: 25, description: 'Enfase na construção e saída de pressão.' },
-      { id: '5', name: 'Finalização Variada', duration: 12, description: 'Remates de diferentes posições e ângulos.' },
-      { id: '6', name: 'Retorno à Calma', duration: 8, description: 'Alongamentos e análise do treino.' },
+      { id: '1', name: 'Aquecimento com Bola', duration: 12, get description() { return tx('Passe e receção em movimento, controlo orientado.'); } },
+      { id: '2', name: 'Saída de Bola 4+GR vs 3', duration: 15, get description() { return tx('Defesa + GR constroem contra 3 adversários.'); } },
+      { id: '3', name: 'Progressão em Ondas', duration: 18, get description() { return tx('Construção desde atrás até à zona de finalização.'); } },
+      { id: '4', name: 'Jogo Posicional 7x7', duration: 25, get description() { return tx('Enfase na construção e saída de pressão.'); } },
+      { id: '5', name: 'Finalização Variada', duration: 12, get description() { return tx('Remates de diferentes posições e ângulos.'); } },
+      { id: '6', name: 'Retorno à Calma', duration: 8, get description() { return tx('Alongamentos e análise do treino.'); } },
     ],
     is_system_template: true,
   },
   // DEFENSIVE TEMPLATES
   {
     name: 'Organização Defensiva',
-    description: 'Treino focado na organização defensiva em bloco e coberturas.',
+    get description() { return tx('Treino focado na organização defensiva em bloco e coberturas.'); },
     age_group: 'sub-15',
     focus_area: 'defensive',
     duration_minutes: 75,
     exercises: [
-      { id: '1', name: 'Aquecimento Tático', duration: 10, description: 'Movimentação em bloco sem bola.' },
-      { id: '2', name: 'Basculações Defensivas', duration: 12, description: '4 defesas vs 4 atacantes - movimentação lateral.' },
-      { id: '3', name: 'Coberturas e Permutas', duration: 15, description: 'Trabalho de cobertura entre centrais e laterais.' },
-      { id: '4', name: 'Jogo 6x6 - Valorizar Defesa', duration: 20, description: 'Pontos por recuperação limpa de bola.' },
-      { id: '5', name: 'Alongamentos', duration: 8, description: 'Retorno à calma com feedback.' },
+      { id: '1', name: 'Aquecimento Tático', duration: 10, get description() { return tx('Movimentação em bloco sem bola.'); } },
+      { id: '2', name: 'Basculações Defensivas', duration: 12, get description() { return tx('4 defesas vs 4 atacantes - movimentação lateral.'); } },
+      { id: '3', name: 'Coberturas e Permutas', duration: 15, get description() { return tx('Trabalho de cobertura entre centrais e laterais.'); } },
+      { id: '4', name: 'Jogo 6x6 - Valorizar Defesa', duration: 20, get description() { return tx('Pontos por recuperação limpa de bola.'); } },
+      { id: '5', name: 'Alongamentos', duration: 8, get description() { return tx('Retorno à calma com feedback.'); } },
     ],
     is_system_template: true,
   },
   {
     name: 'Pressing Alto',
-    description: 'Treino de pressão alta e recuperação de bola em zonas avançadas.',
+    get description() { return tx('Treino de pressão alta e recuperação de bola em zonas avançadas.'); },
     age_group: 'sub-17',
     focus_area: 'pressing',
     duration_minutes: 85,
     exercises: [
-      { id: '1', name: 'Ativação Dinâmica', duration: 10, description: 'Sprints curtos e mudanças de direção.' },
-      { id: '2', name: 'Pressing em Trio', duration: 12, description: '3 jogadores pressionam 2 adversários.' },
-      { id: '3', name: 'Recuperação em Zona Alta', duration: 15, description: 'Situações de 4x3 com pressing coordenado.' },
-      { id: '4', name: 'Jogo Condicionado', duration: 25, description: 'Golos após recuperação alta valem mais.' },
-      { id: '5', name: 'Sprints de Recuperação', duration: 10, description: 'Trabalho de intensidade alta-baixa.' },
-      { id: '6', name: 'Recuperação Ativa', duration: 8, description: 'Corrida leve e alongamentos.' },
+      { id: '1', name: 'Ativação Dinâmica', duration: 10, get description() { return tx('Sprints curtos e mudanças de direção.'); } },
+      { id: '2', name: 'Pressing em Trio', duration: 12, get description() { return tx('3 jogadores pressionam 2 adversários.'); } },
+      { id: '3', name: 'Recuperação em Zona Alta', duration: 15, get description() { return tx('Situações de 4x3 com pressing coordenado.'); } },
+      { id: '4', name: 'Jogo Condicionado', duration: 25, get description() { return tx('Golos após recuperação alta valem mais.'); } },
+      { id: '5', name: 'Sprints de Recuperação', duration: 10, get description() { return tx('Trabalho de intensidade alta-baixa.'); } },
+      { id: '6', name: 'Recuperação Ativa', duration: 8, get description() { return tx('Corrida leve e alongamentos.'); } },
     ],
     is_system_template: true,
   },
   // POSSESSION TEMPLATES
   {
     name: 'Posse de Bola - Iniciação',
-    description: 'Treino de posse de bola adaptado para escalões jovens.',
+    get description() { return tx('Treino de posse de bola adaptado para escalões jovens.'); },
     age_group: 'sub-11',
     focus_area: 'possession',
     duration_minutes: 60,
     exercises: [
-      { id: '1', name: 'Aquecimento Lúdico', duration: 8, description: 'Jogos de apanhada com bola.' },
-      { id: '2', name: 'Meinho 3x1', duration: 10, description: 'Manter a posse no quadrado pequeno.' },
-      { id: '3', name: 'Passes em Movimento', duration: 10, description: 'Passe e receção com deslocamento.' },
-      { id: '4', name: 'Jogo 4x4', duration: 18, description: 'Premiar equipas que fazem mais passes.' },
-      { id: '5', name: 'Jogos de Coordenação', duration: 8, description: 'Retorno à calma com exercícios divertidos.' },
+      { id: '1', name: 'Aquecimento Lúdico', duration: 8, get description() { return tx('Jogos de apanhada com bola.'); } },
+      { id: '2', name: 'Meinho 3x1', duration: 10, get description() { return tx('Manter a posse no quadrado pequeno.'); } },
+      { id: '3', name: 'Passes em Movimento', duration: 10, get description() { return tx('Passe e receção com deslocamento.'); } },
+      { id: '4', name: 'Jogo 4x4', duration: 18, get description() { return tx('Premiar equipas que fazem mais passes.'); } },
+      { id: '5', name: 'Jogos de Coordenação', duration: 8, get description() { return tx('Retorno à calma com exercícios divertidos.'); } },
     ],
     is_system_template: true,
   },
   {
     name: 'Circulação e Posse',
-    description: 'Treino de circulação de bola com mudanças de flanco.',
+    get description() { return tx('Treino de circulação de bola com mudanças de flanco.'); },
     age_group: 'sub-15',
     focus_area: 'possession',
     duration_minutes: 80,
     exercises: [
-      { id: '1', name: 'Aquecimento com Rondo', duration: 12, description: 'Rondo 5x2 para ativar e aquecer.' },
-      { id: '2', name: 'Circulação em Y', duration: 15, description: 'Passes em estrutura Y com movimentação.' },
-      { id: '3', name: 'Mudanças de Corredor', duration: 15, description: 'Exercício de largura e profundidade.' },
-      { id: '4', name: 'Jogo Posicional 6x6+Jokers', duration: 25, description: 'Equipas com jokers para superioridade.' },
-      { id: '5', name: 'Retorno à Calma', duration: 8, description: 'Alongamentos e hidratação.' },
+      { id: '1', name: 'Aquecimento com Rondo', duration: 12, get description() { return tx('Rondo 5x2 para ativar e aquecer.'); } },
+      { id: '2', name: 'Circulação em Y', duration: 15, get description() { return tx('Passes em estrutura Y com movimentação.'); } },
+      { id: '3', name: 'Mudanças de Corredor', duration: 15, get description() { return tx('Exercício de largura e profundidade.'); } },
+      { id: '4', name: 'Jogo Posicional 6x6+Jokers', duration: 25, get description() { return tx('Equipas com jokers para superioridade.'); } },
+      { id: '5', name: 'Retorno à Calma', duration: 8, get description() { return tx('Alongamentos e hidratação.'); } },
     ],
     is_system_template: true,
   },
   // PHYSICAL TEMPLATES
   {
     name: 'Resistência com Bola',
-    description: 'Treino de resistência integrada com exercícios técnicos.',
+    get description() { return tx('Treino de resistência integrada com exercícios técnicos.'); },
     age_group: 'sub-17',
     focus_area: 'physical',
     duration_minutes: 75,
     exercises: [
-      { id: '1', name: 'Aquecimento Progressivo', duration: 10, description: 'Corrida leve com aumento gradual de intensidade.' },
-      { id: '2', name: 'Circuito Técnico-Físico', duration: 20, description: 'Estações: passe, condução, sprint, força.' },
-      { id: '3', name: 'Jogo Intenso 4x4', duration: 15, description: 'Campo pequeno, alta intensidade.' },
-      { id: '4', name: 'Sprints Intermitentes', duration: 12, description: 'Sprint 10s, recuperação 20s, 8 repetições.' },
-      { id: '5', name: 'Alongamentos e Recuperação', duration: 10, description: 'Alongamentos estáticos profundos.' },
+      { id: '1', name: 'Aquecimento Progressivo', duration: 10, get description() { return tx('Corrida leve com aumento gradual de intensidade.'); } },
+      { id: '2', name: 'Circuito Técnico-Físico', duration: 20, get description() { return tx('Estações: passe, condução, sprint, força.'); } },
+      { id: '3', name: 'Jogo Intenso 4x4', duration: 15, get description() { return tx('Campo pequeno, alta intensidade.'); } },
+      { id: '4', name: 'Sprints Intermitentes', duration: 12, get description() { return tx('Sprint 10s, recuperação 20s, 8 repetições.'); } },
+      { id: '5', name: 'Alongamentos e Recuperação', duration: 10, get description() { return tx('Alongamentos estáticos profundos.'); } },
     ],
     is_system_template: true,
   },
   {
     name: 'Força e Agilidade',
-    description: 'Trabalho de força funcional e agilidade para jovens atletas.',
+    get description() { return tx('Trabalho de força funcional e agilidade para jovens atletas.'); },
     age_group: 'sub-13',
     focus_area: 'physical',
     duration_minutes: 70,
     exercises: [
-      { id: '1', name: 'Jogos de Aquecimento', duration: 10, description: 'Aquecimento lúdico com movimentação.' },
-      { id: '2', name: 'Circuito de Agilidade', duration: 15, description: 'Escada de coordenação, cones, saltos.' },
-      { id: '3', name: 'Exercícios de Força Corporal', duration: 12, description: 'Agachamentos, prancha, lunges adaptados.' },
-      { id: '4', name: 'Jogo Reduzido', duration: 20, description: 'Aplicação em contexto de jogo.' },
-      { id: '5', name: 'Retorno à Calma', duration: 8, description: 'Alongamentos e feedback.' },
+      { id: '1', name: 'Jogos de Aquecimento', duration: 10, get description() { return tx('Aquecimento lúdico com movimentação.'); } },
+      { id: '2', name: 'Circuito de Agilidade', duration: 15, get description() { return tx('Escada de coordenação, cones, saltos.'); } },
+      { id: '3', name: 'Exercícios de Força Corporal', duration: 12, get description() { return tx('Agachamentos, prancha, lunges adaptados.'); } },
+      { id: '4', name: 'Jogo Reduzido', duration: 20, get description() { return tx('Aplicação em contexto de jogo.'); } },
+      { id: '5', name: 'Retorno à Calma', duration: 8, get description() { return tx('Alongamentos e feedback.'); } },
     ],
     is_system_template: true,
   },
   // TECHNICAL TEMPLATES
   {
     name: 'Técnica Individual - Base',
-    description: 'Trabalho de fundamentos técnicos para escalões de formação.',
+    get description() { return tx('Trabalho de fundamentos técnicos para escalões de formação.'); },
     age_group: 'sub-9',
     focus_area: 'technical',
     duration_minutes: 55,
     exercises: [
-      { id: '1', name: 'Aquecimento com Bola', duration: 8, description: 'Cada jogador com bola, exercícios livres.' },
-      { id: '2', name: 'Condução de Bola', duration: 10, description: 'Percursos com cones, diferentes pés.' },
-      { id: '3', name: 'Passe a Pares', duration: 10, description: 'Passes curtos em diferentes distâncias.' },
-      { id: '4', name: 'Mini Jogos 3x3', duration: 18, description: 'Jogos em campos pequenos.' },
-      { id: '5', name: 'Jogos Lúdicos', duration: 6, description: 'Jogos divertidos de finalização.' },
+      { id: '1', name: 'Aquecimento com Bola', duration: 8, get description() { return tx('Cada jogador com bola, exercícios livres.'); } },
+      { id: '2', name: 'Condução de Bola', duration: 10, get description() { return tx('Percursos com cones, diferentes pés.'); } },
+      { id: '3', name: 'Passe a Pares', duration: 10, get description() { return tx('Passes curtos em diferentes distâncias.'); } },
+      { id: '4', name: 'Mini Jogos 3x3', duration: 18, get description() { return tx('Jogos em campos pequenos.'); } },
+      { id: '5', name: 'Jogos Lúdicos', duration: 6, get description() { return tx('Jogos divertidos de finalização.'); } },
     ],
     is_system_template: true,
   },
   {
     name: 'Passe e Receção Avançada',
-    description: 'Treino de passes longos, receção orientada e controlo sob pressão.',
+    get description() { return tx('Treino de passes longos, receção orientada e controlo sob pressão.'); },
     age_group: 'sub-15',
     focus_area: 'passing',
     duration_minutes: 80,
     exercises: [
-      { id: '1', name: 'Aquecimento Técnico', duration: 10, description: 'Passe curto e médio em triângulos.' },
-      { id: '2', name: 'Receção Orientada', duration: 15, description: 'Controlo e virar para lado oposto.' },
-      { id: '3', name: 'Passes Longos em Movimento', duration: 15, description: 'Mudanças de flanco com bola no ar.' },
-      { id: '4', name: 'Jogo com Zonas', duration: 25, description: 'Pontos extra por passes de uma zona para outra.' },
-      { id: '5', name: 'Retorno à Calma', duration: 8, description: 'Alongamentos e feedback.' },
+      { id: '1', name: 'Aquecimento Técnico', duration: 10, get description() { return tx('Passe curto e médio em triângulos.'); } },
+      { id: '2', name: 'Receção Orientada', duration: 15, get description() { return tx('Controlo e virar para lado oposto.'); } },
+      { id: '3', name: 'Passes Longos em Movimento', duration: 15, get description() { return tx('Mudanças de flanco com bola no ar.'); } },
+      { id: '4', name: 'Jogo com Zonas', duration: 25, get description() { return tx('Pontos extra por passes de uma zona para outra.'); } },
+      { id: '5', name: 'Retorno à Calma', duration: 8, get description() { return tx('Alongamentos e feedback.'); } },
     ],
     is_system_template: true,
   },
   // FINISHING TEMPLATES
   {
     name: 'Finalização Variada',
-    description: 'Treino de remates de diferentes ângulos e distâncias.',
+    get description() { return tx('Treino de remates de diferentes ângulos e distâncias.'); },
     age_group: 'sub-13',
     focus_area: 'finishing',
     duration_minutes: 70,
     exercises: [
-      { id: '1', name: 'Aquecimento com Remates', duration: 10, description: 'Remates suaves de curta distância.' },
-      { id: '2', name: 'Remates após Condução', duration: 12, description: 'Condução e remate de fora da área.' },
-      { id: '3', name: 'Cruzamento e Finalização', duration: 15, description: 'Cruzamentos e cabeceamento/remate.' },
-      { id: '4', name: '1x1 com GR', duration: 15, description: 'Situações de 1 contra 1 com finalização.' },
-      { id: '5', name: 'Jogo com Balizas Pequenas', duration: 12, description: 'Enfase na precisão.' },
-      { id: '6', name: 'Alongamentos', duration: 6, description: 'Retorno à calma.' },
+      { id: '1', name: 'Aquecimento com Remates', duration: 10, get description() { return tx('Remates suaves de curta distância.'); } },
+      { id: '2', name: 'Remates após Condução', duration: 12, get description() { return tx('Condução e remate de fora da área.'); } },
+      { id: '3', name: 'Cruzamento e Finalização', duration: 15, get description() { return tx('Cruzamentos e cabeceamento/remate.'); } },
+      { id: '4', name: '1x1 com GR', duration: 15, get description() { return tx('Situações de 1 contra 1 com finalização.'); } },
+      { id: '5', name: 'Jogo com Balizas Pequenas', duration: 12, get description() { return tx('Enfase na precisão.'); } },
+      { id: '6', name: 'Alongamentos', duration: 6, get description() { return tx('Retorno à calma.'); } },
     ],
     is_system_template: true,
   },
   // GOALKEEPER TEMPLATES
   {
     name: 'Treino Específico GR',
-    description: 'Treino completo para guarda-redes.',
+    get description() { return tx('Treino completo para guarda-redes.'); },
     age_group: 'sub-15',
     focus_area: 'goalkeeper',
     duration_minutes: 75,
     exercises: [
-      { id: '1', name: 'Aquecimento de GR', duration: 12, description: 'Mobilidade, quedas, receções simples.' },
-      { id: '2', name: 'Reflexos e Reações', duration: 12, description: 'Remates de curta distância.' },
-      { id: '3', name: 'Saídas de Baliza', duration: 12, description: 'Trabalho de timing nas saídas.' },
-      { id: '4', name: 'Jogo de Pés', duration: 10, description: 'Passe sob pressão e distribuição.' },
-      { id: '5', name: '1x1 Situacional', duration: 15, description: 'Defesas em situações de 1x1.' },
-      { id: '6', name: 'Alongamentos Específicos', duration: 8, description: 'Alongamentos para GR.' },
+      { id: '1', name: 'Aquecimento de GR', duration: 12, get description() { return tx('Mobilidade, quedas, receções simples.'); } },
+      { id: '2', name: 'Reflexos e Reações', duration: 12, get description() { return tx('Remates de curta distância.'); } },
+      { id: '3', name: 'Saídas de Baliza', duration: 12, get description() { return tx('Trabalho de timing nas saídas.'); } },
+      { id: '4', name: 'Jogo de Pés', duration: 10, get description() { return tx('Passe sob pressão e distribuição.'); } },
+      { id: '5', name: '1x1 Situacional', duration: 15, get description() { return tx('Defesas em situações de 1x1.'); } },
+      { id: '6', name: 'Alongamentos Específicos', duration: 8, get description() { return tx('Alongamentos para GR.'); } },
     ],
     is_system_template: true,
   },
   // SET PIECES
   {
     name: 'Bolas Paradas Ofensivas',
-    description: 'Treino de cantos, livres e laterais ofensivos.',
+    get description() { return tx('Treino de cantos, livres e laterais ofensivos.'); },
     age_group: 'sub-17',
     focus_area: 'set_pieces',
     duration_minutes: 70,
     exercises: [
-      { id: '1', name: 'Aquecimento', duration: 10, description: 'Aquecimento geral com bola.' },
-      { id: '2', name: 'Cantos Ofensivos', duration: 15, description: 'Marcações e movimentações nos cantos.' },
-      { id: '3', name: 'Livres Directos', duration: 12, description: 'Remates directos e colocados.' },
-      { id: '4', name: 'Livres Indirectos', duration: 12, description: 'Combinações em livres laterais.' },
-      { id: '5', name: 'Laterais em Zona Ofensiva', duration: 10, description: 'Lançamentos longos e curtos.' },
-      { id: '6', name: 'Retorno à Calma', duration: 6, description: 'Alongamentos.' },
+      { id: '1', name: 'Aquecimento', duration: 10, get description() { return tx('Aquecimento geral com bola.'); } },
+      { id: '2', name: 'Cantos Ofensivos', duration: 15, get description() { return tx('Marcações e movimentações nos cantos.'); } },
+      { id: '3', name: 'Livres Directos', duration: 12, get description() { return tx('Remates directos e colocados.'); } },
+      { id: '4', name: 'Livres Indirectos', duration: 12, get description() { return tx('Combinações em livres laterais.'); } },
+      { id: '5', name: 'Laterais em Zona Ofensiva', duration: 10, get description() { return tx('Lançamentos longos e curtos.'); } },
+      { id: '6', name: 'Retorno à Calma', duration: 6, get description() { return tx('Alongamentos.'); } },
     ],
     is_system_template: true,
   },
   // TRANSITIONS
   {
     name: 'Transições Ofensivas e Defensivas',
-    description: 'Trabalho de transições após ganhar/perder a bola.',
+    get description() { return tx('Trabalho de transições após ganhar/perder a bola.'); },
     age_group: 'sub-17',
     focus_area: 'transitions',
     duration_minutes: 85,
     exercises: [
-      { id: '1', name: 'Aquecimento Intenso', duration: 12, description: 'Sprints curtos e mudanças de direção.' },
-      { id: '2', name: 'Transição Ofensiva 3x2', duration: 15, description: 'Após recuperação, atacar rapidamente.' },
-      { id: '3', name: 'Transição Defensiva', duration: 15, description: 'Após perda, pressão imediata.' },
-      { id: '4', name: 'Jogo com Transições', duration: 25, description: 'Golos em transição valem mais.' },
-      { id: '5', name: 'Trabalho de Intensidade', duration: 10, description: 'Repetições de alta intensidade.' },
-      { id: '6', name: 'Recuperação', duration: 8, description: 'Alongamentos e hidratação.' },
+      { id: '1', name: 'Aquecimento Intenso', duration: 12, get description() { return tx('Sprints curtos e mudanças de direção.'); } },
+      { id: '2', name: 'Transição Ofensiva 3x2', duration: 15, get description() { return tx('Após recuperação, atacar rapidamente.'); } },
+      { id: '3', name: 'Transição Defensiva', duration: 15, get description() { return tx('Após perda, pressão imediata.'); } },
+      { id: '4', name: 'Jogo com Transições', duration: 25, get description() { return tx('Golos em transição valem mais.'); } },
+      { id: '5', name: 'Trabalho de Intensidade', duration: 10, get description() { return tx('Repetições de alta intensidade.'); } },
+      { id: '6', name: 'Recuperação', duration: 8, get description() { return tx('Alongamentos e hidratação.'); } },
     ],
     is_system_template: true,
   },
   // YOUNG KIDS TEMPLATES
   {
     name: 'Treino Lúdico - Petizes',
-    description: 'Treino divertido para os mais novos com jogos e brincadeiras.',
+    get description() { return tx('Treino divertido para os mais novos com jogos e brincadeiras.'); },
     age_group: 'sub-9',
     focus_area: 'technical',
     duration_minutes: 50,
     exercises: [
-      { id: '1', name: 'Jogo da Apanhada', duration: 8, description: 'Aquecimento divertido com bola.' },
-      { id: '2', name: 'Estafetas com Bola', duration: 10, description: 'Equipas competem em percursos.' },
-      { id: '3', name: 'Rei da Bola', duration: 8, description: 'Proteger a bola no quadrado.' },
-      { id: '4', name: 'Mini Jogos 3x3', duration: 18, description: 'Jogos rápidos com balizas pequenas.' },
-      { id: '5', name: 'Jogos de Coordenação', duration: 6, description: 'Brincadeiras finais.' },
+      { id: '1', name: 'Jogo da Apanhada', duration: 8, get description() { return tx('Aquecimento divertido com bola.'); } },
+      { id: '2', name: 'Estafetas com Bola', duration: 10, get description() { return tx('Equipas competem em percursos.'); } },
+      { id: '3', name: 'Rei da Bola', duration: 8, get description() { return tx('Proteger a bola no quadrado.'); } },
+      { id: '4', name: 'Mini Jogos 3x3', duration: 18, get description() { return tx('Jogos rápidos com balizas pequenas.'); } },
+      { id: '5', name: 'Jogos de Coordenação', duration: 6, get description() { return tx('Brincadeiras finais.'); } },
     ],
     is_system_template: true,
   },
@@ -467,12 +468,12 @@ export function TrainingBuilder() {
         .from('coach-documents')
         .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
-      if (signedError || !signed?.signedUrl) throw signedError ?? new Error('Falha ao assinar URL');
+      if (signedError || !signed?.signedUrl) throw signedError ?? new Error(tx('Falha ao assinar URL'));
 
       updateExercise(exerciseId, 'image_url', signed.signedUrl);
-      toast.success('Imagem carregada!');
+      toast.success(tx('Imagem carregada!'));
     } catch (error: any) {
-      toast.error('Erro ao carregar imagem: ' + error.message);
+      toast.error(tx('Erro ao carregar imagem: ') + error.message);
     }
   };
 
@@ -499,7 +500,7 @@ export function TrainingBuilder() {
 
   const handleSave = async () => {
     if (!user || !form.name) {
-      toast.error('Preencha o nome do treino');
+      toast.error(tx('Preencha o nome do treino'));
       return;
     }
 
@@ -526,20 +527,20 @@ export function TrainingBuilder() {
           .update(data)
           .eq('id', editingId);
         if (error) throw error;
-        toast.success('Treino atualizado!');
+        toast.success(tx('Treino atualizado!'));
       } else {
         const { error } = await supabase
           .from('coach_trainings')
           .insert(data);
         if (error) throw error;
-        toast.success('Treino criado!');
+        toast.success(tx('Treino criado!'));
       }
 
       setDialogOpen(false);
       resetForm();
       fetchTrainings();
     } catch (error: any) {
-      toast.error('Erro ao guardar: ' + error.message);
+      toast.error(tx('Erro ao guardar: ') + error.message);
     } finally {
       setSaving(false);
     }
@@ -575,7 +576,7 @@ export function TrainingBuilder() {
   };
 
   const deleteTraining = async (id: string) => {
-    if (!confirm('Eliminar este treino?')) return;
+    if (!confirm(tx('Eliminar este treino?'))) return;
 
     try {
       const { error } = await supabase
@@ -584,10 +585,10 @@ export function TrainingBuilder() {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Treino eliminado');
+      toast.success(tx('Treino eliminado'));
       fetchTrainings();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(tx('Erro ao eliminar: ') + error.message);
     }
   };
 
@@ -629,7 +630,7 @@ export function TrainingBuilder() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{tx('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -640,8 +641,8 @@ export function TrainingBuilder() {
       <Tabs defaultValue="trainings">
         <div className="flex justify-between items-center mb-4">
           <TabsList>
-            <TabsTrigger value="trainings">Meus Treinos</TabsTrigger>
-            <TabsTrigger value="templates">Biblioteca de Treinos</TabsTrigger>
+            <TabsTrigger value="trainings">{tx('Meus Treinos')}</TabsTrigger>
+            <TabsTrigger value="templates">{tx('Biblioteca de Treinos')}</TabsTrigger>
           </TabsList>
 
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -651,40 +652,40 @@ export function TrainingBuilder() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                Novo Treino
+                {tx('Novo Treino')}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingId ? 'Editar Treino' : 'Criar Novo Treino'}</DialogTitle>
+                <DialogTitle>{editingId ? tx('Editar Treino') : tx('Criar Novo Treino')}</DialogTitle>
               </DialogHeader>
 
               <Tabs defaultValue="info" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="info">Informações</TabsTrigger>
-                  <TabsTrigger value="exercises">Exercícios ({exercises.length})</TabsTrigger>
+                  <TabsTrigger value="info">{tx('Informações')}</TabsTrigger>
+                  <TabsTrigger value="exercises">{tx('Exercícios (')}{exercises.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="info" className="space-y-6">
                   {/* Basic Info */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 space-y-2">
-                      <Label>Nome do Treino *</Label>
+                      <Label>{tx('Nome do Treino *')}</Label>
                       <Input
                         value={form.name}
                         onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Ex: Treino Tático - Transições"
+                        placeholder={tx('Ex: Treino Tático - Transições')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Escalão</Label>
+                      <Label>{tx('Escalão')}</Label>
                       <Select
                         value={form.age_group}
                         onValueChange={(v) => setForm(prev => ({ ...prev, age_group: v }))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder={tx('Selecione')} />
                         </SelectTrigger>
                         <SelectContent>
                           {AGE_GROUPS.map((group) => (
@@ -697,7 +698,7 @@ export function TrainingBuilder() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Data do Treino</Label>
+                      <Label>{tx('Data do Treino')}</Label>
                       <Input
                         type="date"
                         value={form.training_date}
@@ -706,11 +707,11 @@ export function TrainingBuilder() {
                     </div>
 
                     <div className="col-span-2 space-y-2">
-                      <Label>Objetivos</Label>
+                      <Label>{tx('Objetivos')}</Label>
                       <Textarea
                         value={form.objectives}
                         onChange={(e) => setForm(prev => ({ ...prev, objectives: e.target.value }))}
-                        placeholder="O que pretende alcançar com este treino..."
+                        placeholder={tx('O que pretende alcançar com este treino...')}
                         rows={2}
                       />
                     </div>
@@ -718,21 +719,21 @@ export function TrainingBuilder() {
 
                   {/* Tactical Notes */}
                   <div className="space-y-2">
-                    <Label>Notas Táticas</Label>
+                    <Label>{tx('Notas Táticas')}</Label>
                     <Textarea
                       value={form.tactical_notes}
                       onChange={(e) => setForm(prev => ({ ...prev, tactical_notes: e.target.value }))}
-                      placeholder="Observações táticas, ajustes, pontos de atenção..."
+                      placeholder={tx('Observações táticas, ajustes, pontos de atenção...')}
                       rows={3}
                     />
                   </div>
 
                   {form.diagram_url && (
                     <div className="space-y-2">
-                      <Label>Diagrama do Treino</Label>
+                      <Label>{tx('Diagrama do Treino')}</Label>
                       <img 
                         src={form.diagram_url} 
-                        alt="Diagrama do treino" 
+                        alt={tx('Diagrama do treino')} 
                         className="max-w-full h-auto rounded-lg border"
                       />
                     </div>
@@ -744,7 +745,7 @@ export function TrainingBuilder() {
                 {/* Exercises */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <Label className="text-base">Exercícios</Label>
+                    <Label className="text-base">{tx('Exercícios')}</Label>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">
                         <Clock className="w-3 h-3 mr-1" />
@@ -752,15 +753,15 @@ export function TrainingBuilder() {
                       </Badge>
                       <Button type="button" size="sm" onClick={() => drawExercise(null)}>
                         <PenTool className="w-4 h-4 mr-1" />
-                        Desenhar exercício
+                        {tx('Desenhar exercício')}
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
                         <Dumbbell className="w-4 h-4 mr-1" />
-                        Dos exercícios
+                        {tx('Dos exercícios')}
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={addExercise}>
                         <Plus className="w-4 h-4 mr-1" />
-                        Adicionar
+                        {tx('Adicionar')}
                       </Button>
                       <DrillPicker open={pickerOpen} onClose={() => setPickerOpen(false)} onPick={(ex) => setExercises((prev) => [...prev, ex])} />
                     </div>
@@ -770,7 +771,7 @@ export function TrainingBuilder() {
                     <Card className="border-dashed">
                       <CardContent className="py-8 text-center">
                         <p className="text-muted-foreground">
-                          Desenhe um exercício (com animação) ou escolha dos seus exercícios e da biblioteca.
+                          {tx('Desenhe um exercício (com animação) ou escolha dos seus exercícios e da biblioteca.')}
                         </p>
                       </CardContent>
                     </Card>
@@ -791,7 +792,7 @@ export function TrainingBuilder() {
                                     <Input
                                       value={exercise.name}
                                       onChange={(e) => updateExercise(exercise.id, 'name', e.target.value)}
-                                      placeholder="Nome do exercício"
+                                      placeholder={tx('Nome do exercício')}
                                     />
                                   </div>
                                   <div>
@@ -824,20 +825,20 @@ export function TrainingBuilder() {
                                 <Textarea
                                   value={exercise.description}
                                   onChange={(e) => updateExercise(exercise.id, 'description', e.target.value)}
-                                  placeholder="Descrição do exercício..."
+                                  placeholder={tx('Descrição do exercício...')}
                                   rows={2}
                                 />
 
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Button type="button" variant="outline" size="sm" onClick={() => drawExercise(exercise)}>
                                     <PenTool className="w-4 h-4 mr-1" />
-                                    {exercise.diagram && exercise.diagram.length > 0 ? 'Editar desenho' : 'Desenhar'}
+                                    {exercise.diagram && exercise.diagram.length > 0 ? tx('Editar desenho') : tx('Desenhar')}
                                   </Button>
                                   {exercise.image_url ? (
                                     <div className="relative">
                                       <img
                                         src={exercise.image_url}
-                                        alt="Exercício"
+                                        alt={tx('Exercício')}
                                         className="h-16 w-24 object-cover rounded"
                                       />
                                       <Button
@@ -860,7 +861,7 @@ export function TrainingBuilder() {
                                       />
                                       <Button type="button" variant="outline" size="sm">
                                         <Upload className="w-4 h-4 mr-1" />
-                                        Imagem
+                                        {tx('Imagem')}
                                       </Button>
                                     </div>
                                   )}
@@ -884,14 +885,14 @@ export function TrainingBuilder() {
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" onClick={() => setViewing({ name: form.name || 'Treino', training_date: form.training_date || null, objectives: form.objectives || null, exercises })}>
                   <Eye className="w-4 h-4 mr-2" />
-                  Ver plano
+                  {tx('Ver plano')}
                 </Button>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button onClick={handleSave} disabled={saving}>
                   <Save className="w-4 h-4 mr-2" />
-                  {saving ? 'A guardar...' : 'Guardar Treino'}
+                  {saving ? tx('A guardar...') : tx('Guardar Treino')}
                 </Button>
               </div>
             </DialogContent>
@@ -903,13 +904,13 @@ export function TrainingBuilder() {
             <Card>
               <CardContent className="py-12 text-center">
                 <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Sem Treinos</h3>
+                <h3 className="text-lg font-medium mb-2">{tx('Sem Treinos')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Crie o seu primeiro plano de treino ou use um modelo da biblioteca
+                  {tx('Crie o seu primeiro plano de treino ou use um modelo da biblioteca')}
                 </p>
                 <Button onClick={() => setDialogOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar Treino
+                  {tx('Criar Treino')}
                 </Button>
               </CardContent>
             </Card>
@@ -924,7 +925,7 @@ export function TrainingBuilder() {
                         <CardDescription>
                           {training.training_date 
                             ? format(new Date(training.training_date), 'dd MMM yyyy', { locale: pt })
-                            : 'Sem data definida'
+                            : tx('Sem data definida')
                           }
                         </CardDescription>
                       </div>
@@ -953,7 +954,7 @@ export function TrainingBuilder() {
                         {training.duration_minutes} min
                       </Badge>
                       <Badge variant="outline">
-                        {training.exercises.length} exercícios
+                        {training.exercises.length} {tx('exercícios')}
                       </Badge>
                     </div>
 
@@ -971,10 +972,10 @@ export function TrainingBuilder() {
                     )}
                     <div className="mt-3 flex gap-2">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => setViewing(training)}>
-                        <Eye className="w-4 h-4 mr-1" />Ver plano
+                        <Eye className="w-4 h-4 mr-1" />{tx('Ver plano')}
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => editTraining(training)}>
-                        <Edit className="w-4 h-4 mr-1" />Editar
+                        <Edit className="w-4 h-4 mr-1" />{tx('Editar')}
                       </Button>
                     </div>
                   </CardContent>
@@ -987,7 +988,7 @@ export function TrainingBuilder() {
         <TabsContent value="templates">
           <div className="mb-8 space-y-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Treinos completos da biblioteca</h3>
+              <h3 className="text-lg font-semibold">{tx('Treinos completos da biblioteca')}</h3>
               <Badge variant="secondary">{libraryPlans.length}</Badge>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -1006,7 +1007,7 @@ export function TrainingBuilder() {
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="outline">{AGE_BANDS.filter((a) => p.ages.includes(a.value)).map((a) => a.short).join(', ')}</Badge>
                         <Badge variant="outline"><Clock className="w-3 h-3 mr-1" />{p.minutes} min</Badge>
-                        <Badge variant="outline">{items.length} exercícios</Badge>
+                        <Badge variant="outline">{items.length} {tx('exercícios')}</Badge>
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" className="flex-1" onClick={() => applyTemplate({
@@ -1014,9 +1015,9 @@ export function TrainingBuilder() {
                           duration_minutes: p.minutes, is_system_template: true,
                           exercises: drillsToExercises(items) as unknown as Exercise[],
                         })}>
-                          <Copy className="w-4 h-4 mr-2" />Usar este treino
+                          <Copy className="w-4 h-4 mr-2" />{tx('Usar este treino')}
                         </Button>
-                        <Button size="sm" variant="outline" aria-label="Ver plano" onClick={() => setViewing({ name: p.name, objectives: p.summary, exercises: drillsToExercises(items) as unknown as Exercise[] })}>
+                        <Button size="sm" variant="outline" aria-label={tx('Ver plano')} onClick={() => setViewing({ name: p.name, objectives: p.summary, exercises: drillsToExercises(items) as unknown as Exercise[] })}>
                           <Printer className="w-4 h-4" />
                         </Button>
                       </div>
@@ -1026,24 +1027,24 @@ export function TrainingBuilder() {
               })}
             </div>
           </div>
-          <h3 className="mb-3 text-lg font-semibold">Outros modelos</h3>
+          <h3 className="mb-3 text-lg font-semibold">{tx('Outros modelos')}</h3>
           {/* Filters */}
           <Card className="mb-6">
             <CardContent className="pt-4">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Filter className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Filtrar:</span>
+                  <span className="text-sm font-medium">{tx('Filtrar:')}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm">Escalão:</Label>
+                  <Label className="text-sm">{tx('Escalão:')}</Label>
                   <Select value={filterAgeGroup} onValueChange={setFilterAgeGroup}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os escalões</SelectItem>
+                      <SelectItem value="all">{tx('Todos os escalões')}</SelectItem>
                       {AGE_GROUPS.map((group) => (
                         <SelectItem key={group.value} value={group.value}>
                           {group.label}
@@ -1054,13 +1055,13 @@ export function TrainingBuilder() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Label className="text-sm">Estilo:</Label>
+                  <Label className="text-sm">{tx('Estilo:')}</Label>
                   <Select value={filterFocusArea} onValueChange={setFilterFocusArea}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os estilos</SelectItem>
+                      <SelectItem value="all">{tx('Todos os estilos')}</SelectItem>
                       {FOCUS_AREAS.map((area) => (
                         <SelectItem key={area.value} value={area.value}>
                           {area.label}
@@ -1079,7 +1080,7 @@ export function TrainingBuilder() {
                       setFilterFocusArea('all');
                     }}
                   >
-                    Limpar filtros
+                    {tx('Limpar filtros')}
                   </Button>
                 )}
               </div>
@@ -1090,9 +1091,9 @@ export function TrainingBuilder() {
             <Card>
               <CardContent className="py-12 text-center">
                 <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">Sem resultados</h3>
+                <h3 className="text-lg font-medium mb-2">{tx('Sem resultados')}</h3>
                 <p className="text-muted-foreground">
-                  Não foram encontrados treinos com os filtros selecionados
+                  {tx('Não foram encontrados treinos com os filtros selecionados')}
                 </p>
               </CardContent>
             </Card>
@@ -1117,7 +1118,7 @@ export function TrainingBuilder() {
                               <CardTitle className="text-base">{template.name}</CardTitle>
                               {template.is_system_template && (
                                 <Badge variant="secondary" className="mt-1 text-xs">
-                                  Modelo do Sistema
+                                  {tx('Modelo do Sistema')}
                                 </Badge>
                               )}
                             </div>
@@ -1133,7 +1134,7 @@ export function TrainingBuilder() {
                               {template.duration_minutes} min
                             </Badge>
                             <Badge variant="outline">
-                              {template.exercises.length} exercícios
+                              {template.exercises.length} {tx('exercícios')}
                             </Badge>
                           </div>
 
@@ -1150,7 +1151,7 @@ export function TrainingBuilder() {
                             onClick={() => applyTemplate(template)}
                           >
                             <Copy className="w-4 h-4 mr-2" />
-                            Usar este modelo
+                            {tx('Usar este modelo')}
                           </Button>
                         </CardContent>
                       </Card>

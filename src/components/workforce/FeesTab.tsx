@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ContractorFeeBatch, PersonRegistry } from '@/hooks/useWorkforce';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, string> = {
   draft: 'Rascunho', under_review: 'Em Revisão', approved: 'Aprovado', paid: 'Pago', closed: 'Fechado',
@@ -20,22 +21,22 @@ export function FeesTab({ batches, people, isLoading }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lotes de Honorários</CardTitle>
+        <CardTitle>{tx('Lotes de Honorários')}</CardTitle>
       </CardHeader>
       <CardContent>
         {batches.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Sem lotes de honorários registados.</p>
-            <p className="text-sm mt-1">Crie um lote para lançar honorários de prestadores.</p>
+            <p>{tx('Sem lotes de honorários registados.')}</p>
+            <p className="text-sm mt-1">{tx('Crie um lote para lançar honorários de prestadores.')}</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome do Lote</TableHead>
-                <TableHead>Período</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Criado em</TableHead>
+                <TableHead>{tx('Nome do Lote')}</TableHead>
+                <TableHead>{tx('Período')}</TableHead>
+                <TableHead>{tx('Estado')}</TableHead>
+                <TableHead>{tx('Criado em')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

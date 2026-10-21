@@ -10,6 +10,7 @@ import { Users, UserPlus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { AGE_CATEGORIES } from '@/lib/constants';
 import { Database } from '@/integrations/supabase/types';
+import { tx } from '@/lib/i18n/ui';
 
 type SeasonPlayerStatus = Database['public']['Enums']['season_player_status'];
 
@@ -141,10 +142,10 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
       <div>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Equipas para a Próxima Época
+          {tx('Equipas para a Próxima Época')}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Visualização das equipas com os jogadores previstos para {seasonName}
+          {tx('Visualização das equipas com os jogadores previstos para')}{' '}{seasonName}
         </p>
       </div>
 
@@ -156,7 +157,7 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
               <p className="text-2xl font-bold text-primary">
                 {playerPlans?.filter(p => p.status === 'stays').length || 0}
               </p>
-              <p className="text-sm text-muted-foreground">Mantêm-se</p>
+              <p className="text-sm text-muted-foreground">{tx('Mantêm-se')}</p>
             </div>
           </CardContent>
         </Card>
@@ -166,7 +167,7 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
               <p className="text-2xl font-bold text-amber-600">
                 {playerPlans?.filter(p => p.status === 'promotes').length || 0}
               </p>
-              <p className="text-sm text-muted-foreground">Sobem de escalão</p>
+              <p className="text-sm text-muted-foreground">{tx('Sobem de escalão')}</p>
             </div>
           </CardContent>
         </Card>
@@ -176,7 +177,7 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
               <p className="text-2xl font-bold text-destructive">
                 {leavingPlayers.length}
               </p>
-              <p className="text-sm text-muted-foreground">Saem do clube</p>
+              <p className="text-sm text-muted-foreground">{tx('Saem do clube')}</p>
             </div>
           </CardContent>
         </Card>
@@ -188,10 +189,10 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2 text-amber-600">
               <UserPlus className="w-5 h-5" />
-              Jogadores sem Equipa Atribuída
+              {tx('Jogadores sem Equipa Atribuída')}
             </CardTitle>
             <CardDescription>
-              Estes jogadores precisam de uma equipa para a próxima época
+              {tx('Estes jogadores precisam de uma equipa para a próxima época')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,20 +222,20 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
                   <Badge variant="secondary">{team.category}</Badge>
                 </div>
                 <CardDescription>
-                  {teamPlayers.length} jogadores previstos
+                  {teamPlayers.length} {tx('jogadores previstos')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {teamPlayers.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    Sem jogadores atribuídos
+                    {tx('Sem jogadores atribuídos')}
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {stayingPlayers.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">
-                          Mantêm-se ({stayingPlayers.length})
+                          {tx('Mantêm-se (')}{stayingPlayers.length})
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {stayingPlayers.map(plan => (
@@ -249,7 +250,7 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
                     {promotedPlayers.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-2">
-                          Chegam ({promotedPlayers.length})
+                          {tx('Chegam (')}{promotedPlayers.length})
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {promotedPlayers.map(plan => (
@@ -274,7 +275,7 @@ export function TeamPlanningStep({ seasonId, clubId, seasonName }: TeamPlanningS
         <Card className="border-destructive/30">
           <CardHeader>
             <CardTitle className="text-base text-destructive">
-              Jogadores que Saem do Clube
+              {tx('Jogadores que Saem do Clube')}
             </CardTitle>
           </CardHeader>
           <CardContent>

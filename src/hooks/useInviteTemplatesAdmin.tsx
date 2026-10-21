@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 export interface InviteTemplate {
   id: string;
@@ -256,7 +257,7 @@ export function useDuplicateTemplate() {
         .select('*')
         .eq('id', templateId)
         .single();
-      if (!src) throw new Error('Template not found');
+      if (!src) throw new Error(tx('Template not found'));
 
       const { data, error } = await supabase
         .from('invite_templates')

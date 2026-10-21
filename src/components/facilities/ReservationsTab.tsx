@@ -9,25 +9,26 @@ import { Label } from '@/components/ui/label';
 import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  draft: { label: 'Rascunho', variant: 'secondary' },
-  pending: { label: 'Pendente', variant: 'outline' },
-  confirmed: { label: 'Confirmada', variant: 'default' },
-  rejected: { label: 'Rejeitada', variant: 'destructive' },
-  cancelled: { label: 'Cancelada', variant: 'secondary' },
-  completed: { label: 'Concluída', variant: 'default' },
-  blocked: { label: 'Bloqueio', variant: 'destructive' },
+  draft: { get label() { return tx('Rascunho'); }, variant: 'secondary' },
+  pending: { get label() { return tx('Pendente'); }, variant: 'outline' },
+  confirmed: { get label() { return tx('Confirmada'); }, variant: 'default' },
+  rejected: { get label() { return tx('Rejeitada'); }, variant: 'destructive' },
+  cancelled: { get label() { return tx('Cancelada'); }, variant: 'secondary' },
+  completed: { get label() { return tx('Concluída'); }, variant: 'default' },
+  blocked: { get label() { return tx('Bloqueio'); }, variant: 'destructive' },
 };
 
 const TYPES = [
-  { value: 'training', label: 'Treino' },
-  { value: 'match', label: 'Jogo' },
-  { value: 'meeting', label: 'Reunião' },
-  { value: 'medical', label: 'Médico' },
-  { value: 'maintenance_block', label: 'Manutenção' },
-  { value: 'event', label: 'Evento' },
-  { value: 'internal_use', label: 'Uso Interno' },
+  { value: 'training', get label() { return tx('Treino'); } },
+  { value: 'match', get label() { return tx('Jogo'); } },
+  { value: 'meeting', get label() { return tx('Reunião'); } },
+  { value: 'medical', get label() { return tx('Médico'); } },
+  { value: 'maintenance_block', get label() { return tx('Manutenção'); } },
+  { value: 'event', get label() { return tx('Evento'); } },
+  { value: 'internal_use', get label() { return tx('Uso Interno'); } },
 ];
 
 interface Props {
@@ -58,22 +59,22 @@ export function ReservationsTab({ reservations, spaces, facilities, teams, onCre
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold">Reservas ({reservations.length})</h3>
+        <h3 className="font-semibold">{tx('Reservas (')}{reservations.length})</h3>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />Reserva</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" />{tx('Reserva')}</Button></DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nova Reserva</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Nova Reserva')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>Instalação</Label><Select value={form.facility_id} onValueChange={v => setForm(p => ({ ...p, facility_id: v, facility_space_id: '' }))}><SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger><SelectContent>{facilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select></div>
-              <div><Label>Espaço</Label><Select value={form.facility_space_id} onValueChange={v => setForm(p => ({ ...p, facility_space_id: v }))}><SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger><SelectContent>{filteredSpaces.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
-              <div><Label>Tipo</Label><Select value={form.reservation_type} onValueChange={v => setForm(p => ({ ...p, reservation_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
-              <div><Label>Equipa</Label><Select value={form.team_id} onValueChange={v => setForm(p => ({ ...p, team_id: v }))}><SelectTrigger><SelectValue placeholder="Opcional" /></SelectTrigger><SelectContent>{teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{tx('Instalação')}</Label><Select value={form.facility_id} onValueChange={v => setForm(p => ({ ...p, facility_id: v, facility_space_id: '' }))}><SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger><SelectContent>{facilities.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{tx('Espaço')}</Label><Select value={form.facility_space_id} onValueChange={v => setForm(p => ({ ...p, facility_space_id: v }))}><SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger><SelectContent>{filteredSpaces.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{tx('Tipo')}</Label><Select value={form.reservation_type} onValueChange={v => setForm(p => ({ ...p, reservation_type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select></div>
+              <div><Label>{tx('Equipa')}</Label><Select value={form.team_id} onValueChange={v => setForm(p => ({ ...p, team_id: v }))}><SelectTrigger><SelectValue placeholder={tx('Opcional')} /></SelectTrigger><SelectContent>{teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid grid-cols-2 gap-2">
-                <div><Label>Início</Label><Input type="datetime-local" value={form.starts_at} onChange={e => setForm(p => ({ ...p, starts_at: e.target.value }))} /></div>
-                <div><Label>Fim</Label><Input type="datetime-local" value={form.ends_at} onChange={e => setForm(p => ({ ...p, ends_at: e.target.value }))} /></div>
+                <div><Label>{tx('Início')}</Label><Input type="datetime-local" value={form.starts_at} onChange={e => setForm(p => ({ ...p, starts_at: e.target.value }))} /></div>
+                <div><Label>{tx('Fim')}</Label><Input type="datetime-local" value={form.ends_at} onChange={e => setForm(p => ({ ...p, ends_at: e.target.value }))} /></div>
               </div>
-              <div><Label>Notas</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
-              <Button onClick={handleCreate} className="w-full">Criar Reserva</Button>
+              <div><Label>{tx('Notas')}</Label><Input value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} /></div>
+              <Button onClick={handleCreate} className="w-full">{tx('Criar Reserva')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -100,7 +101,7 @@ export function ReservationsTab({ reservations, spaces, facilities, teams, onCre
             </Card>
           );
         })}
-        {reservations.length === 0 && <Card><CardContent className="py-6 text-center text-muted-foreground">Nenhuma reserva registada</CardContent></Card>}
+        {reservations.length === 0 && <Card><CardContent className="py-6 text-center text-muted-foreground">{tx('Nenhuma reserva registada')}</CardContent></Card>}
       </div>
     </div>
   );

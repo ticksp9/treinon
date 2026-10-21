@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
 import { hasPendingOperations } from '@/lib/offlineStorage';
+import { tx } from '@/lib/i18n/ui';
 
 export function OfflineIndicator() {
   const { isOnline } = useOnlineStatus();
@@ -44,7 +45,7 @@ export function OfflineIndicator() {
           className="bg-background shadow-lg"
         >
           <RefreshCw className={`w-4 h-4 mr-1 ${syncing ? 'animate-spin' : ''}`} />
-          Sincronizar
+          {tx('Sincronizar')}
         </Button>
       )}
       
@@ -55,12 +56,12 @@ export function OfflineIndicator() {
         {isOnline ? (
           <>
             <Wifi className="w-4 h-4" />
-            Online
+            {tx('Online')}
           </>
         ) : (
           <>
             <WifiOff className="w-4 h-4" />
-            Offline
+            {tx('Offline')}
           </>
         )}
       </Badge>

@@ -4,6 +4,7 @@
  * a blank page. The message helps support ("send me a screenshot").
  */
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { tx } from '@/lib/i18n/ui';
 
 async function clearStoredApp(keepLogin: boolean) {
   try {
@@ -37,13 +38,13 @@ export class RootErrorBoundary extends Component<{ children: ReactNode }, { erro
     const btn = 'display:block;width:100%;margin:8px 0;padding:12px;border-radius:8px;font-size:16px;border:1px solid #24558f;';
     return (
       <div style={{ fontFamily: '-apple-system, Helvetica, Arial, sans-serif', maxWidth: 480, margin: '10vh auto', padding: '0 16px', color: '#1b2230' }}>
-        <h1 style={{ fontSize: 22 }}>O TreinON teve um problema a abrir</h1>
-        <p>Tente pela ordem. Se não resolver, envie uma captura deste ecrã.</p>
-        <button style={parse(btn + 'background:#24558f;color:#fff')} onClick={() => location.reload()}>1. Recarregar</button>
-        <button style={parse(btn + 'background:#fff;color:#24558f')} onClick={() => clearStoredApp(true)}>2. Limpar a cópia guardada neste aparelho</button>
-        <button style={parse(btn + 'background:#fff;color:#b42318;border-color:#b42318')} onClick={() => clearStoredApp(false)}>3. Limpar tudo e voltar a entrar</button>
+        <h1 style={{ fontSize: 22 }}>{tx('O TreinON teve um problema a abrir')}</h1>
+        <p>{tx('Tente pela ordem. Se não resolver, envie uma captura deste ecrã.')}</p>
+        <button style={parse(btn + 'background:#24558f;color:#fff')} onClick={() => location.reload()}>{tx('1. Recarregar')}</button>
+        <button style={parse(btn + 'background:#fff;color:#24558f')} onClick={() => clearStoredApp(true)}>{tx('2. Limpar a cópia guardada neste aparelho')}</button>
+        <button style={parse(btn + 'background:#fff;color:#b42318;border-color:#b42318')} onClick={() => clearStoredApp(false)}>{tx('3. Limpar tudo e voltar a entrar')}</button>
         <p style={{ fontSize: 12, color: '#666', wordBreak: 'break-word' }}>
-          Detalhe: {error.message}
+          {tx('Detalhe:')}{' '}{error.message}
           <br />
           {navigator.userAgent}
         </p>

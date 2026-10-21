@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Users, UserCheck, TrendingUp, AlertCircle, ArrowUpRight } from "lucide-react";
+import { tx } from '@/lib/i18n/ui';
 
 interface ReportsTabProps {
   clubId: string;
@@ -134,7 +135,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-muted-foreground text-center">A carregar métricas...</p>
+          <p className="text-muted-foreground text-center">{tx('A carregar métricas...')}</p>
         </CardContent>
       </Card>
     );
@@ -144,7 +145,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-muted-foreground text-center">Sem dados disponíveis.</p>
+          <p className="text-muted-foreground text-center">{tx('Sem dados disponíveis.')}</p>
         </CardContent>
       </Card>
     );
@@ -156,33 +157,33 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jogadores</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Total Jogadores')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totals.players}</div>
             <p className="text-xs text-muted-foreground">
-              Em {metrics.totals.teams} equipas
+              {tx('Em')}{' '}{metrics.totals.teams} equipas
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Treinadores</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Total Treinadores')}</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totals.coaches}</div>
             <p className="text-xs text-muted-foreground">
-              Rácio: 1:{metrics.totals.avgRatio} jogadores
+              {tx('Rácio: 1:')}{metrics.totals.avgRatio} jogadores
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ocupação Média</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Ocupação Média')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -193,7 +194,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
 
         <Card className={metrics.alerts.noCoach.length > 0 ? "border-destructive" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alertas</CardTitle>
+            <CardTitle className="text-sm font-medium">{tx('Alertas')}</CardTitle>
             <AlertCircle className={`h-4 w-4 ${metrics.alerts.noCoach.length > 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
           </CardHeader>
           <CardContent>
@@ -201,7 +202,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
               {metrics.alerts.noCoach.length + metrics.alerts.lowOccupancy.length + metrics.alerts.highOccupancy.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              Situações a rever
+              {tx('Situações a rever')}
             </p>
           </CardContent>
         </Card>
@@ -210,8 +211,8 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
       {/* Age Group Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle>Métricas por Escalão</CardTitle>
-          <CardDescription>Distribuição de jogadores e treinadores</CardDescription>
+          <CardTitle>{tx('Métricas por Escalão')}</CardTitle>
+          <CardDescription>{tx('Distribuição de jogadores e treinadores')}</CardDescription>
         </CardHeader>
         <CardContent>
           {metrics.ageGroupMetrics.length > 0 ? (
@@ -221,7 +222,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{ag.ageGroupName}</span>
-                      <Badge variant="outline">{ag.teamCount} equipa(s)</Badge>
+                      <Badge variant="outline">{ag.teamCount} {tx('equipa(s)')}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{ag.totalPlayers} jogadores</span>
@@ -235,7 +236,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
             </div>
           ) : (
             <p className="text-muted-foreground text-center py-4">
-              Sem escalões configurados.
+              {tx('Sem escalões configurados.')}
             </p>
           )}
         </CardContent>
@@ -244,8 +245,8 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
       {/* Team Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalhes por Equipa</CardTitle>
-          <CardDescription>Ocupação e rácio jogador/treinador</CardDescription>
+          <CardTitle>{tx('Detalhes por Equipa')}</CardTitle>
+          <CardDescription>{tx('Ocupação e rácio jogador/treinador')}</CardDescription>
         </CardHeader>
         <CardContent>
           {metrics.teamMetrics.length > 0 ? (
@@ -264,13 +265,13 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Jogadores</span>
+                      <span className="text-muted-foreground">{tx('Jogadores')}</span>
                       <span className="font-medium">{team.playerCount} / {team.maxPlayers}</span>
                     </div>
                     <Progress value={team.occupancy} className="h-2" />
                     
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Treinadores</span>
+                      <span className="text-muted-foreground">{tx('Treinadores')}</span>
                       <span className={`font-medium ${team.coachCount === 0 ? 'text-destructive' : ''}`}>
                         {team.coachCount}
                       </span>
@@ -278,14 +279,14 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
                     
                     {team.coachCount > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Rácio</span>
+                        <span className="text-muted-foreground">{tx('Rácio')}</span>
                         <span className="font-medium">1:{team.playerCoachRatio}</span>
                       </div>
                     )}
                     
                     {team.coachCount === 0 && (
                       <Badge variant="destructive" className="w-full justify-center">
-                        Sem treinador
+                        {tx('Sem treinador')}
                       </Badge>
                     )}
                   </CardContent>
@@ -294,7 +295,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
             </div>
           ) : (
             <p className="text-muted-foreground text-center py-4">
-              Sem equipas configuradas.
+              {tx('Sem equipas configuradas.')}
             </p>
           )}
         </CardContent>
@@ -306,13 +307,13 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
-              Situações a Rever
+              {tx('Situações a Rever')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {metrics.alerts.noCoach.length > 0 && (
               <div>
-                <h4 className="font-medium text-destructive mb-2">Equipas sem treinador:</h4>
+                <h4 className="font-medium text-destructive mb-2">{tx('Equipas sem treinador:')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {metrics.alerts.noCoach.map(t => (
                     <Badge key={t.teamId} variant="destructive">{t.teamName}</Badge>
@@ -323,7 +324,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
             
             {metrics.alerts.lowOccupancy.length > 0 && (
               <div>
-                <h4 className="font-medium text-muted-foreground mb-2">Ocupação baixa (&lt;50%):</h4>
+                <h4 className="font-medium text-muted-foreground mb-2">{tx('Ocupação baixa (<50%):')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {metrics.alerts.lowOccupancy.map(t => (
                     <Badge key={t.teamId} variant="outline">{t.teamName} ({t.occupancy}%)</Badge>
@@ -334,7 +335,7 @@ export function ReportsTab({ clubId }: ReportsTabProps) {
             
             {metrics.alerts.highOccupancy.length > 0 && (
               <div>
-                <h4 className="font-medium text-amber-600 mb-2">Ocupação alta (&gt;90%):</h4>
+                <h4 className="font-medium text-amber-600 mb-2">{tx('Ocupação alta (>90%):')}</h4>
                 <div className="flex flex-wrap gap-2">
                   {metrics.alerts.highOccupancy.map(t => (
                     <Badge key={t.teamId} variant="secondary">{t.teamName} ({t.occupancy}%)</Badge>

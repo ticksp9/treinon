@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 export type PaymentMode = 'offline_manual' | 'stripe_connect' | 'stripe_direct' | 'future_provider';
 
@@ -69,9 +70,9 @@ export function useUpdatePaymentSettings(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['club-payment-settings'] });
-      toast.success('Configuração de pagamentos atualizada');
+      toast.success(tx('Configuração de pagamentos atualizada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -88,9 +89,9 @@ export function useCreateConnectAccount(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['club-payment-settings'] });
-      toast.success('Conta Stripe Connect criada');
+      toast.success(tx('Conta Stripe Connect criada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -112,10 +113,10 @@ export function useCreateOnboardingLink(clubId: string | undefined) {
     onSuccess: (data) => {
       if (data.url) {
         window.open(data.url, '_blank');
-        toast.success('Link de onboarding aberto');
+        toast.success(tx('Link de onboarding aberto'));
       }
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -132,9 +133,9 @@ export function useSyncConnectAccount(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['club-payment-settings'] });
-      toast.success('Estado da conta sincronizado');
+      toast.success(tx('Estado da conta sincronizado'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -151,9 +152,9 @@ export function useDisconnectAccount(clubId: string | undefined) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['club-payment-settings'] });
-      toast.success('Conta desconectada');
+      toast.success(tx('Conta desconectada'));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 
@@ -179,9 +180,9 @@ export function useRegisterManualPayment(clubId: string | undefined) {
       qc.invalidateQueries({ queryKey: ['payment-transactions'] });
       qc.invalidateQueries({ queryKey: ['payment-intents'] });
       qc.invalidateQueries({ queryKey: ['charges'] });
-      toast.success(`Pagamento registado. Saldo restante: €${data.new_balance?.toFixed(2)}`);
+      toast.success(tx('Pagamento registado. Saldo restante: €{{v0}}', { v0: data.new_balance?.toFixed(2) }));
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 }
 

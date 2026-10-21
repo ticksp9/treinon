@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 // ---- Types ----
 
@@ -108,7 +109,7 @@ export function useUpdateGuardianNotifPrefs(guardianId: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (prefs: Partial<GuardianNotificationPreferences>) => {
-      if (!guardianId) throw new Error('No guardian');
+      if (!guardianId) throw new Error(tx('No guardian'));
       const { error } = await supabase
         .from('guardian_notification_preferences')
         .upsert({
@@ -148,7 +149,7 @@ export function useRespondCallup() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: { matchId: string; playerId: string; status: string; comment?: string }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase
         .from('callup_confirmations')
         .upsert({
@@ -170,7 +171,7 @@ export function useCreateCallupConfirmations() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (data: { matchId: string; playerIds: string[]; deadline?: string }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const records = data.playerIds.map(pid => ({
         match_id: data.matchId,
         player_id: pid,
@@ -217,7 +218,7 @@ export function useSendCallupNotification() {
       targetAudience: string;
       message?: string;
     }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase.from('callup_notifications').insert({
         match_id: data.matchId,
         club_id: data.clubId,

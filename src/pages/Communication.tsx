@@ -44,6 +44,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 /**
  * Reminders and automations only store a row: nothing sends them at the set time.
@@ -132,15 +133,15 @@ export default function Communication() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Comunicação</h1>
+                <h1 className="text-2xl font-bold">{tx('Comunicação')}</h1>
                 {summary.total > 0 && (
                   <Badge className="text-xs">{summary.total} nova{summary.total > 1 ? 's' : ''}</Badge>
                 )}
               </div>
               <p className="text-muted-foreground text-sm">
                 {canManage
-                  ? 'Gestão de grupos, anúncios, convites e presenças'
-                  : 'Mensagens, anúncios e presenças da equipa'}
+                  ? tx('Gestão de grupos, anúncios, convites e presenças')
+                  : tx('Mensagens, anúncios e presenças da equipa')}
               </p>
             </div>
           </div>
@@ -165,7 +166,7 @@ export default function Communication() {
               {showNotifications && (
                 <div className="absolute right-0 top-11 z-50 w-80 bg-card border rounded-xl shadow-lg">
                   <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <h3 className="text-sm font-semibold">Notificações</h3>
+                    <h3 className="text-sm font-semibold">{tx('Notificações')}</h3>
                     <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setShowNotifications(false)}>
                       <X className="h-3 w-3" />
                     </Button>
@@ -174,7 +175,7 @@ export default function Communication() {
                     {notifications.length === 0 ? (
                       <div className="p-6 text-center text-muted-foreground">
                         <Bell className="h-6 w-6 mx-auto mb-2 opacity-40" />
-                        <p className="text-xs">Sem notificações</p>
+                        <p className="text-xs">{tx('Sem notificações')}</p>
                       </div>
                     ) : (
                       <div className="p-1">
@@ -205,7 +206,7 @@ export default function Communication() {
                                 </p>
                               </div>
                               {n.priority_level === 'urgent' && (
-                                <Badge variant="destructive" className="text-[9px] shrink-0">Urgente</Badge>
+                                <Badge variant="destructive" className="text-[9px] shrink-0">{tx('Urgente')}</Badge>
                               )}
                             </div>
                           </button>
@@ -221,36 +222,36 @@ export default function Communication() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline">
-                    <UserPlus className="h-4 w-4 mr-1" /> Convidar
+                    <UserPlus className="h-4 w-4 mr-1" /> {tx('Convidar')}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => setInviteType('guardian')}>
-                    <ShieldCheck className="h-4 w-4 mr-2" /> Encarregado
+                    <ShieldCheck className="h-4 w-4 mr-2" /> {tx('Encarregado')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setInviteType('player')}>
-                    <Users className="h-4 w-4 mr-2" /> Atleta
+                    <Users className="h-4 w-4 mr-2" /> {tx('Atleta')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setInviteType('coach')}>
-                    <UserPlus className="h-4 w-4 mr-2" /> Treinador
+                    <UserPlus className="h-4 w-4 mr-2" /> {tx('Treinador')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setInviteType('assistant_coach')}>
-                    <UserPlus className="h-4 w-4 mr-2" /> Treinador Adjunto
+                    <UserPlus className="h-4 w-4 mr-2" /> {tx('Treinador Adjunto')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setInviteType('staff')}>
-                    <UserPlus className="h-4 w-4 mr-2" /> Staff
+                    <UserPlus className="h-4 w-4 mr-2" /> {tx('Staff')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
             {showCreateChannelBtn && (
               <Button size="sm" onClick={() => setShowCreateChannel(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Criar Grupo
+                <Plus className="h-4 w-4 mr-1" /> {tx('Criar Grupo')}
               </Button>
             )}
             {showAnnounceBtn && (
               <Button size="sm" variant="outline" onClick={() => setShowCreateAnnouncement(true)}>
-                <Megaphone className="h-4 w-4 mr-1" /> Novo Anúncio
+                <Megaphone className="h-4 w-4 mr-1" /> {tx('Novo Anúncio')}
               </Button>
             )}
           </div>
@@ -261,7 +262,7 @@ export default function Communication() {
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="chat" className="flex items-center gap-1.5">
               <MessageSquare className="h-4 w-4" />
-              <span>Conversas</span>
+              <span>{tx('Conversas')}</span>
               {summary.totalMessages > 0 && (
                 <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                   {summary.totalMessages > 99 ? '99+' : summary.totalMessages}
@@ -270,40 +271,40 @@ export default function Communication() {
             </TabsTrigger>
             <TabsTrigger value="announcements" className="flex items-center gap-1.5">
               <Megaphone className="h-4 w-4" />
-              <span>Anúncios</span>
+              <span>{tx('Anúncios')}</span>
             </TabsTrigger>
             <TabsTrigger value="attendance" className="flex items-center gap-1.5">
               <ClipboardCheck className="h-4 w-4" />
-              <span>Presenças</span>
+              <span>{tx('Presenças')}</span>
             </TabsTrigger>
             {SHOW_UNSENT_FEATURES && (
               <TabsTrigger value="reminders" className="flex items-center gap-1.5">
                 <Bell className="h-4 w-4" />
-                <span>Lembretes</span>
+                <span>{tx('Lembretes')}</span>
               </TabsTrigger>
             )}
             {showInvites && (
               <TabsTrigger value="invites" className="flex items-center gap-1.5">
                 <Send className="h-4 w-4" />
-                <span>Convites</span>
+                <span>{tx('Convites')}</span>
               </TabsTrigger>
             )}
             {showTemplates && (
               <TabsTrigger value="templates" className="flex items-center gap-1.5">
                 <FileText className="h-4 w-4" />
-                <span>Modelos</span>
+                <span>{tx('Modelos')}</span>
               </TabsTrigger>
             )}
             {SHOW_UNSENT_FEATURES && showAutomations && (
               <TabsTrigger value="automations" className="flex items-center gap-1.5">
                 <Zap className="h-4 w-4" />
-                <span>Automações</span>
+                <span>{tx('Automações')}</span>
               </TabsTrigger>
             )}
             {showAnalytics && (
               <TabsTrigger value="analytics" className="flex items-center gap-1.5">
                 <BarChart3 className="h-4 w-4" />
-                <span>Analytics</span>
+                <span>{tx('Analytics')}</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -314,7 +315,7 @@ export default function Communication() {
               <div className="md:col-span-4 border-r">
                 <div className="px-4 py-3 border-b">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-muted-foreground">Canais</h2>
+                    <h2 className="text-sm font-semibold text-muted-foreground">{tx('Canais')}</h2>
                     {showCreateChannelBtn && (
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setShowCreateChannel(true)}>
                         <Plus className="h-4 w-4" />
@@ -348,11 +349,11 @@ export default function Communication() {
                     <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                       <MessageSquare className="h-8 w-8 opacity-30" />
                     </div>
-                    <p className="text-sm font-medium">Selecione um canal</p>
-                    <p className="text-xs mt-1 text-muted-foreground/70">Escolha um canal à esquerda para iniciar</p>
+                    <p className="text-sm font-medium">{tx('Selecione um canal')}</p>
+                    <p className="text-xs mt-1 text-muted-foreground/70">{tx('Escolha um canal à esquerda para iniciar')}</p>
                     {showCreateChannelBtn && channels.length === 0 && (
                       <Button size="sm" variant="link" onClick={() => setShowCreateChannel(true)} className="mt-3">
-                        <Plus className="h-3 w-3 mr-1" /> Criar primeiro grupo
+                        <Plus className="h-3 w-3 mr-1" /> {tx('Criar primeiro grupo')}
                       </Button>
                     )}
                   </div>

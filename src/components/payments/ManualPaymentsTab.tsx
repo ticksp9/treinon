@@ -8,6 +8,7 @@ import { useClubPaymentSettings } from '@/hooks/useClubPaymentSettings';
 import { ManualPaymentDialog } from './ManualPaymentDialog';
 import { HandCoins, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { clubId: string; }
 
@@ -30,24 +31,24 @@ export function ManualPaymentsTab({ clubId }: Props) {
       <div>
         <h3 className="font-semibold flex items-center gap-2">
           <HandCoins className="w-5 h-5" />
-          Pagamentos Manuais
+          {tx('Pagamentos Manuais')}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Registar pagamentos recebidos por numerário, transferência, MB Way manual, terminal ou outro método.
+          {tx('Registar pagamentos recebidos por numerário, transferência, MB Way manual, terminal ou outro método.')}
         </p>
       </div>
 
       {!isManualAllowed && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Pagamentos manuais estão desativados nas configurações do clube.</AlertDescription>
+          <AlertDescription>{tx('Pagamentos manuais estão desativados nas configurações do clube.')}</AlertDescription>
         </Alert>
       )}
 
       {pendingCharges.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhuma cobrança pendente para pagamento manual.
+            {tx('Nenhuma cobrança pendente para pagamento manual.')}
           </CardContent>
         </Card>
       ) : (
@@ -59,12 +60,12 @@ export function ManualPaymentsTab({ clubId }: Props) {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">{c.description}</span>
                     <Badge variant={c.status === 'overdue' ? 'destructive' : 'secondary'}>
-                      {c.status === 'overdue' ? 'Vencida' : c.status === 'partially_paid' ? 'Parcial' : 'Pendente'}
+                      {c.status === 'overdue' ? tx('Vencida') : c.status === 'partially_paid' ? tx('Parcial') : tx('Pendente')}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {c.players?.name && `${c.players.name} · `}
-                    Vencimento: {new Date(c.due_date).toLocaleDateString('pt-PT')}
+                    {tx('Vencimento:')}{' '}{new Date(c.due_date).toLocaleDateString('pt-PT')}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -80,7 +81,7 @@ export function ManualPaymentsTab({ clubId }: Props) {
                     onClick={() => setSelectedCharge(c)}
                     disabled={!isManualAllowed}
                   >
-                    <HandCoins className="w-4 h-4 mr-1" />Registar
+                    <HandCoins className="w-4 h-4 mr-1" />{tx('Registar')}
                   </Button>
                 </div>
               </CardContent>

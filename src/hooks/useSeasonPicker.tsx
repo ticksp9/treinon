@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSeasonsList } from '@/hooks/useSeasonContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { tx } from '@/lib/i18n/ui';
 
 export function useSeasonPicker(initial?: string | null) {
   const { data: seasons = [] } = useSeasonsList();
@@ -25,12 +26,12 @@ export function SeasonPicker({
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Select value={value ?? ''} onValueChange={onChange}>
         <SelectTrigger className="h-9 w-[200px]">
-          <SelectValue placeholder="Selecionar época" />
+          <SelectValue placeholder={tx('Selecionar época')} />
         </SelectTrigger>
         <SelectContent>
           {seasons.map((s) => (
             <SelectItem key={s.id} value={s.id}>
-              {s.name} {s.is_active ? '(ativa)' : s.status === 'archived' ? '(arquivada)' : s.status === 'closed' ? '(fechada)' : ''}
+              {s.name} {s.is_active ? tx('(ativa)') : s.status === 'archived' ? tx('(arquivada)') : s.status === 'closed' ? tx('(fechada)') : ''}
             </SelectItem>
           ))}
         </SelectContent>

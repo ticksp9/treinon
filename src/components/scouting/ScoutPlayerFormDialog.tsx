@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FOOT_LABEL, SPORT_OPTIONS } from '@/lib/opponent-scouting';
 import type { ScoutPlayer } from '@/lib/player-scouting';
+import { tx } from '@/lib/i18n/ui';
 
 export interface ScoutPlayerForm {
   name: string; birth: string; current_club: string; category: string; sport_type: string;
@@ -61,62 +62,62 @@ export function ScoutPlayerFormDialog({ open, onOpenChange, initial, onSubmit }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-        <DialogHeader><DialogTitle>{initial ? 'Editar jogador' : 'Novo jogador observado'}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{initial ? tx('Editar jogador') : tx('Novo jogador observado')}</DialogTitle></DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="sp-name">Nome *</Label>
+            <Label htmlFor="sp-name">{tx('Nome *')}</Label>
             <Input id="sp-name" maxLength={120} value={form.name} onChange={(e) => set({ name: e.target.value })} autoFocus />
           </div>
           <div>
-            <Label htmlFor="sp-birth">Nascimento</Label>
-            <Input id="sp-birth" value={form.birth} onChange={(e) => set({ birth: e.target.value })} placeholder="2014 ou 02/03/2014" aria-invalid={!birthOk} />
-            <p className="mt-1 text-xs text-muted-foreground">{birthOk ? 'Basta o ano. Com a data completa, a ficha avisa da idade relativa.' : 'Escreva o ano (2014) ou a data (02/03/2014).'}</p>
+            <Label htmlFor="sp-birth">{tx('Nascimento')}</Label>
+            <Input id="sp-birth" value={form.birth} onChange={(e) => set({ birth: e.target.value })} placeholder={tx('2014 ou 02/03/2014')} aria-invalid={!birthOk} />
+            <p className="mt-1 text-xs text-muted-foreground">{birthOk ? tx('Basta o ano. Com a data completa, a ficha avisa da idade relativa.') : tx('Escreva o ano (2014) ou a data (02/03/2014).')}</p>
           </div>
           <div>
-            <Label htmlFor="sp-height">Altura (cm)</Label>
+            <Label htmlFor="sp-height">{tx('Altura (cm)')}</Label>
             <Input id="sp-height" inputMode="numeric" maxLength={3} value={form.height_cm} onChange={(e) => set({ height_cm: e.target.value })} />
           </div>
           <div>
-            <Label htmlFor="sp-club">Clube atual</Label>
+            <Label htmlFor="sp-club">{tx('Clube atual')}</Label>
             <Input id="sp-club" maxLength={120} value={form.current_club} onChange={(e) => set({ current_club: e.target.value })} />
           </div>
           <div>
-            <Label htmlFor="sp-cat">Escalão</Label>
-            <Input id="sp-cat" maxLength={60} value={form.category} onChange={(e) => set({ category: e.target.value })} placeholder="Ex.: Seniores, Sub-15" />
+            <Label htmlFor="sp-cat">{tx('Escalão')}</Label>
+            <Input id="sp-cat" maxLength={60} value={form.category} onChange={(e) => set({ category: e.target.value })} placeholder={tx('Ex.: Seniores, Sub-15')} />
           </div>
           <div>
-            <Label>Modalidade</Label>
+            <Label>{tx('Modalidade')}</Label>
             <Select value={form.sport_type} onValueChange={(v) => set({ sport_type: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{SPORT_OPTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Pé</Label>
+            <Label>{tx('Pé')}</Label>
             <Select value={form.foot} onValueChange={(v) => set({ foot: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_FOOT}>Não sei</SelectItem>
+                <SelectItem value={NO_FOOT}>{tx('Não sei')}</SelectItem>
                 {Object.entries(FOOT_LABEL).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label htmlFor="sp-pos">Posição</Label>
-            <Input id="sp-pos" maxLength={20} value={form.position} onChange={(e) => set({ position: e.target.value })} placeholder="Ex.: MC" />
+            <Label htmlFor="sp-pos">{tx('Posição')}</Label>
+            <Input id="sp-pos" maxLength={20} value={form.position} onChange={(e) => set({ position: e.target.value })} placeholder={tx('Ex.: MC')} />
           </div>
           <div>
-            <Label htmlFor="sp-pos2">Outras posições</Label>
-            <Input id="sp-pos2" maxLength={60} value={form.other_positions} onChange={(e) => set({ other_positions: e.target.value })} placeholder="Ex.: MDC, DC" />
+            <Label htmlFor="sp-pos2">{tx('Outras posições')}</Label>
+            <Input id="sp-pos2" maxLength={60} value={form.other_positions} onChange={(e) => set({ other_positions: e.target.value })} placeholder={tx('Ex.: MDC, DC')} />
           </div>
           <div className="sm:col-span-2">
-            <Label htmlFor="sp-found">Onde foi visto / quem indicou</Label>
-            <Input id="sp-found" maxLength={200} value={form.found_at} onChange={(e) => set({ found_at: e.target.value })} placeholder="Ex.: Torneio de Páscoa; indicado pelo treinador dos Sub-15" />
+            <Label htmlFor="sp-found">{tx('Onde foi visto / quem indicou')}</Label>
+            <Input id="sp-found" maxLength={200} value={form.found_at} onChange={(e) => set({ found_at: e.target.value })} placeholder={tx('Ex.: Torneio de Páscoa; indicado pelo treinador dos Sub-15')} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={submit} disabled={busy || !form.name.trim() || !birthOk}>{initial ? 'Guardar' : 'Criar ficha'}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{tx('Cancelar')}</Button>
+          <Button onClick={submit} disabled={busy || !form.name.trim() || !birthOk}>{initial ? tx('Guardar') : tx('Criar ficha')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, Shield, Calendar, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { tx } from '@/lib/i18n/ui';
 
 export function MedicalComplianceTab() {
   const { clubId } = usePhysioAccess();
@@ -70,25 +71,25 @@ export function MedicalComplianceTab() {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-red-600">{alerts?.length || 0}</p>
-            <p className="text-xs text-muted-foreground">Alertas Ativos</p>
+            <p className="text-xs text-muted-foreground">{tx('Alertas Ativos')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-yellow-600">{pendingCompliance.length}</p>
-            <p className="text-xs text-muted-foreground">Itens Pendentes</p>
+            <p className="text-xs text-muted-foreground">{tx('Itens Pendentes')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-green-600">{completedCompliance.length}</p>
-            <p className="text-xs text-muted-foreground">Itens Concluídos</p>
+            <p className="text-xs text-muted-foreground">{tx('Itens Concluídos')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{medStaff?.length || 0}</p>
-            <p className="text-xs text-muted-foreground">Staff Médico Ativo</p>
+            <p className="text-xs text-muted-foreground">{tx('Staff Médico Ativo')}</p>
           </CardContent>
         </Card>
       </div>
@@ -96,11 +97,11 @@ export function MedicalComplianceTab() {
       {/* Active Alerts */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2"><AlertTriangle className="w-5 h-5" />Alertas Médicos Ativos</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2"><AlertTriangle className="w-5 h-5" />{tx('Alertas Médicos Ativos')}</CardTitle>
         </CardHeader>
         <CardContent>
           {alerts?.length === 0 ? (
-            <div className="text-center py-6 text-muted-foreground"><CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" /><p>Sem alertas ativos</p></div>
+            <div className="text-center py-6 text-muted-foreground"><CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" /><p>{tx('Sem alertas ativos')}</p></div>
           ) : (
             <div className="space-y-3">
               {alerts?.map(a => (
@@ -108,10 +109,10 @@ export function MedicalComplianceTab() {
                   <div>
                     <p className="font-medium">{a.title}</p>
                     {a.description && <p className="text-sm text-muted-foreground">{a.description}</p>}
-                    {a.due_date && <p className="text-xs text-muted-foreground mt-1">Vencimento: {format(new Date(a.due_date), 'dd/MM/yyyy')}</p>}
+                    {a.due_date && <p className="text-xs text-muted-foreground mt-1">{tx('Vencimento:')}{' '}{format(new Date(a.due_date), 'dd/MM/yyyy')}</p>}
                   </div>
                   <Badge variant="outline" className={severityColors[a.severity] || ''}>
-                    {a.severity === 'high' ? 'Alta' : a.severity === 'critical' ? 'Crítica' : a.severity === 'medium' ? 'Média' : 'Baixa'}
+                    {a.severity === 'high' ? tx('Alta') : a.severity === 'critical' ? tx('Crítica') : a.severity === 'medium' ? tx('Média') : tx('Baixa')}
                   </Badge>
                 </div>
               ))}
@@ -123,12 +124,12 @@ export function MedicalComplianceTab() {
       {/* Equipment Checks */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2"><Shield className="w-5 h-5" />Verificações de Equipamento Médico</CardTitle>
-          <CardDescription>Últimas inspeções</CardDescription>
+          <CardTitle className="text-lg flex items-center gap-2"><Shield className="w-5 h-5" />{tx('Verificações de Equipamento Médico')}</CardTitle>
+          <CardDescription>{tx('Últimas inspeções')}</CardDescription>
         </CardHeader>
         <CardContent>
           {equipmentChecks?.length === 0 ? (
-            <p className="text-center py-6 text-muted-foreground">Sem verificações registadas</p>
+            <p className="text-center py-6 text-muted-foreground">{tx('Sem verificações registadas')}</p>
           ) : (
             <div className="space-y-2">
               {equipmentChecks?.slice(0, 10).map(c => (
@@ -140,7 +141,7 @@ export function MedicalComplianceTab() {
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">{format(new Date(c.check_date), 'dd/MM/yyyy')}</span>
                     <Badge variant={c.check_result === 'pass' ? 'secondary' : 'destructive'}>
-                      {c.check_result === 'pass' ? 'OK' : 'Falhou'}
+                      {c.check_result === 'pass' ? 'OK' : tx('Falhou')}
                     </Badge>
                   </div>
                 </div>
@@ -153,11 +154,11 @@ export function MedicalComplianceTab() {
       {/* Medical Staff */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Staff Médico</CardTitle>
+          <CardTitle className="text-lg">{tx('Staff Médico')}</CardTitle>
         </CardHeader>
         <CardContent>
           {medStaff?.length === 0 ? (
-            <p className="text-center py-6 text-muted-foreground">Nenhum staff médico registado</p>
+            <p className="text-center py-6 text-muted-foreground">{tx('Nenhum staff médico registado')}</p>
           ) : (
             <div className="space-y-2">
               {medStaff?.map(s => (
@@ -169,10 +170,10 @@ export function MedicalComplianceTab() {
                   <div className="flex items-center gap-2">
                     {s.license_expiry && (
                       <span className="text-xs text-muted-foreground">
-                        Licença até {format(new Date(s.license_expiry), 'dd/MM/yyyy')}
+                        {tx('Licença até')}{' '}{format(new Date(s.license_expiry), 'dd/MM/yyyy')}
                       </span>
                     )}
-                    <Badge variant="secondary">Ativo</Badge>
+                    <Badge variant="secondary">{tx('Ativo')}</Badge>
                   </div>
                 </div>
               ))}

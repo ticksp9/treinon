@@ -13,6 +13,7 @@ import { Bell, CheckCircle2, Clock, Plus, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface RemindersListProps {
   clubId: string | null;
@@ -44,16 +45,16 @@ export function RemindersList({ clubId, userId, channels }: RemindersListProps) 
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">Lembretes</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground">{tx('Lembretes')}</h3>
         <Button size="sm" onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-1" /> Novo Lembrete
+          <Plus className="h-4 w-4 mr-1" /> {tx('Novo Lembrete')}
         </Button>
       </div>
 
       {reminders.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Bell className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">Nenhum lembrete configurado</p>
+          <p className="text-sm">{tx('Nenhum lembrete configurado')}</p>
         </div>
       ) : (
         <ScrollArea className="max-h-[60vh] md:max-h-none">
@@ -67,7 +68,7 @@ export function RemindersList({ clubId, userId, channels }: RemindersListProps) 
                         <Bell className="h-4 w-4 text-primary shrink-0" />
                         <h4 className="text-sm font-semibold truncate">{r.title}</h4>
                         <Badge variant={r.is_sent ? 'secondary' : 'default'} className="text-[10px]">
-                          {r.is_sent ? 'Enviado' : 'Pendente'}
+                          {r.is_sent ? tx('Enviado') : tx('Pendente')}
                         </Badge>
                       </div>
                       {r.content && <p className="text-xs text-muted-foreground line-clamp-2">{r.content}</p>}
@@ -84,7 +85,7 @@ export function RemindersList({ clubId, userId, channels }: RemindersListProps) 
                         {r.is_sent && r.sent_at && (
                           <span className="text-xs text-success flex items-center gap-1">
                             <CheckCircle2 className="h-3 w-3" />
-                            Enviado {format(new Date(r.sent_at), 'dd/MM HH:mm')}
+                            {tx('Enviado')}{' '}{format(new Date(r.sent_at), 'dd/MM HH:mm')}
                           </span>
                         )}
                       </div>
@@ -95,12 +96,12 @@ export function RemindersList({ clubId, userId, channels }: RemindersListProps) 
                         variant="outline"
                         onClick={() => {
                           markSent.mutate(r.id, {
-                            onSuccess: () => toast.success('Lembrete marcado como enviado'),
+                            onSuccess: () => toast.success(tx('Lembrete marcado como enviado')),
                           });
                         }}
                         disabled={markSent.isPending}
                       >
-                        <Send className="h-3 w-3 mr-1" /> Enviar
+                        <Send className="h-3 w-3 mr-1" /> {tx('Enviar')}
                       </Button>
                     )}
                   </div>
@@ -141,7 +142,7 @@ function CreateReminderDialog({
 
   const handleSubmit = () => {
     if (!title.trim()) {
-      toast.error('Título é obrigatório');
+      toast.error(tx('Título é obrigatório'));
       return;
     }
     createReminder.mutate(
@@ -154,13 +155,13 @@ function CreateReminderDialog({
       },
       {
         onSuccess: () => {
-          toast.success('Lembrete criado');
+          toast.success(tx('Lembrete criado'));
           setTitle('');
           setContent('');
           setScheduledFor('');
           onClose();
         },
-        onError: () => toast.error('Erro ao criar lembrete'),
+        onError: () => toast.error(tx('Erro ao criar lembrete')),
       }
     );
   };
@@ -169,30 +170,30 @@ function CreateReminderDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Lembrete</DialogTitle>
+          <DialogTitle>{tx('Novo Lembrete')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>Título *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Treino amanhã às 18h" />
+            <Label>{tx('Título *')}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={tx('Ex: Treino amanhã às 18h')} />
           </div>
           <div>
-            <Label>Tipo</Label>
+            <Label>{tx('Tipo')}</Label>
             <Select value={reminderType} onValueChange={setReminderType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="training">Treino</SelectItem>
-                <SelectItem value="match">Jogo</SelectItem>
-                <SelectItem value="attendance">Presenças</SelectItem>
-                <SelectItem value="schedule_change">Alteração Horário</SelectItem>
-                <SelectItem value="custom">Personalizado</SelectItem>
+                <SelectItem value="training">{tx('Treino')}</SelectItem>
+                <SelectItem value="match">{tx('Jogo')}</SelectItem>
+                <SelectItem value="attendance">{tx('Presenças')}</SelectItem>
+                <SelectItem value="schedule_change">{tx('Alteração Horário')}</SelectItem>
+                <SelectItem value="custom">{tx('Personalizado')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Grupo destinatário</Label>
+            <Label>{tx('Grupo destinatário')}</Label>
             <Select value={channelId} onValueChange={setChannelId}>
-              <SelectTrigger><SelectValue placeholder="Selecionar (opcional)" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={tx('Selecionar (opcional)')} /></SelectTrigger>
               <SelectContent>
                 {channels.map((ch) => (
                   <SelectItem key={ch.id} value={ch.id}>{ch.name}</SelectItem>
@@ -201,17 +202,17 @@ function CreateReminderDialog({
             </Select>
           </div>
           <div>
-            <Label>Data/Hora agendada</Label>
+            <Label>{tx('Data/Hora agendada')}</Label>
             <Input type="datetime-local" value={scheduledFor} onChange={(e) => setScheduledFor(e.target.value)} />
           </div>
           <div>
-            <Label>Mensagem</Label>
-            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Detalhes opcionais..." rows={2} />
+            <Label>{tx('Mensagem')}</Label>
+            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={tx('Detalhes opcionais...')} rows={2} />
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
             <Button onClick={handleSubmit} disabled={createReminder.isPending}>
-              {createReminder.isPending ? 'A criar...' : 'Criar Lembrete'}
+              {createReminder.isPending ? tx('A criar...') : tx('Criar Lembrete')}
             </Button>
           </div>
         </div>

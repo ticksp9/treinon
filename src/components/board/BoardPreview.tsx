@@ -6,6 +6,7 @@ import { useId } from 'react';
 import { BH, BW, positionsAt, type BoardState } from '@/lib/tactic-board';
 import { PitchLines } from '@/components/board/TacticBoard';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 const HOME = '#2563eb', AWAY = '#dc2626';
 
@@ -16,7 +17,7 @@ export function BoardPreview({ state, className, step = 0 }: { state: BoardState
   const colors = Array.from(new Set(state.drawings.map((d) => d.color)));
   const arrow = (c: string) => `url(#bp-${uid}-${colors.indexOf(c)})`;
   return (
-    <svg viewBox={viewBox} className={cn('block w-full rounded-md', className)} style={{ background: '#1f5c37' }} role="img" aria-label="Esquema tático">
+    <svg viewBox={viewBox} className={cn('block w-full rounded-md', className)} style={{ background: '#1f5c37' }} role="img" aria-label={tx('Esquema tático')}>
       <defs>
         {colors.map((c, i) => (
           <marker key={c} id={`bp-${uid}-${i}`} viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">

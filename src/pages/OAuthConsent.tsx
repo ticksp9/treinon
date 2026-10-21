@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, ShieldCheck } from "lucide-react";
+import { tx } from '@/lib/i18n/ui';
 
 type OAuthApi = {
   getAuthorizationDetails: (id: string) => Promise<{ data: any; error: any }>;
@@ -87,7 +88,7 @@ export default function OAuthConsent() {
         {error ? (
           <>
             <CardHeader>
-              <CardTitle>Não foi possível autorizar</CardTitle>
+              <CardTitle>{tx('Não foi possível autorizar')}</CardTitle>
               <CardDescription>{error}</CardDescription>
             </CardHeader>
           </>
@@ -102,40 +103,40 @@ export default function OAuthConsent() {
                 <ShieldCheck className="w-5 h-5 text-primary" />
               </div>
               <CardTitle>
-                Ligar {details.client?.name ?? "aplicação"} ao TreinON
+                {tx('Ligar')}{' '}{details.client?.name ?? tx('aplicação')} {tx('ao TreinON')}
               </CardTitle>
               <CardDescription>
-                {details.client?.name ?? "Esta aplicação"} vai poder usar as ferramentas do TreinON em teu nome.
+                {details.client?.name ?? tx('Esta aplicação')} {tx('vai poder usar as ferramentas do TreinON em teu nome.')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm space-y-1">
                 {email && (
                   <p className="text-muted-foreground">
-                    Conta: <span className="text-foreground font-medium">{email}</span>
+                    {tx('Conta:')}{' '}<span className="text-foreground font-medium">{email}</span>
                   </p>
                 )}
                 {details.client?.redirect_uri && (
                   <p className="text-muted-foreground break-all">
-                    Redireciona para: <span className="text-foreground">{details.client.redirect_uri}</span>
+                    {tx('Redireciona para:')}{' '}<span className="text-foreground">{details.client.redirect_uri}</span>
                   </p>
                 )}
                 {details.scope && (
                   <p className="text-muted-foreground">
-                    Permissões pedidas: <span className="text-foreground">{details.scope}</span>
+                    {tx('Permissões pedidas:')}{' '}<span className="text-foreground">{details.scope}</span>
                   </p>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Isto não contorna as permissões da aplicação nem as políticas de acesso do teu clube.
+                {tx('Isto não contorna as permissões da aplicação nem as políticas de acesso do teu clube.')}
               </p>
               <div className="flex gap-2">
                 <Button className="flex-1" disabled={busy} onClick={() => decide(true)}>
                   {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Aprovar
+                  {tx('Aprovar')}
                 </Button>
                 <Button variant="outline" className="flex-1" disabled={busy} onClick={() => decide(false)}>
-                  Cancelar ligação
+                  {tx('Cancelar ligação')}
                 </Button>
               </div>
             </CardContent>

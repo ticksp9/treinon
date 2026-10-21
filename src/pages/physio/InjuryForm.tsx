@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { tx } from '@/lib/i18n/ui';
 
 interface InjuryFormData {
   player_id: string;
@@ -138,12 +139,12 @@ export default function InjuryForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['physio-injuries'] });
       queryClient.invalidateQueries({ queryKey: ['physio-active-injuries'] });
-      toast.success(isEditing ? 'Lesão atualizada!' : 'Lesão registada!');
+      toast.success(isEditing ? tx('Lesão atualizada!') : tx('Lesão registada!'));
       navigate('/club/physio/injuries');
     },
     onError: (error) => {
       console.error('Error saving injury:', error);
-      toast.error('Erro ao guardar lesão');
+      toast.error(tx('Erro ao guardar lesão'));
     },
   });
 
@@ -158,19 +159,19 @@ export default function InjuryForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['physio-injuries'] });
-      toast.success('Lesão eliminada!');
+      toast.success(tx('Lesão eliminada!'));
       navigate('/club/physio/injuries');
     },
     onError: (error) => {
       console.error('Error deleting injury:', error);
-      toast.error('Erro ao eliminar lesão');
+      toast.error(tx('Erro ao eliminar lesão'));
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.player_id || !formData.body_area || !formData.injury_type) {
-      toast.error('Preencha todos os campos obrigatórios');
+      toast.error(tx('Preencha todos os campos obrigatórios'));
       return;
     }
     saveMutation.mutate(formData);
@@ -194,9 +195,9 @@ export default function InjuryForm() {
           <Card>
             <CardContent className="py-12 text-center">
               <Heart className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Acesso Restrito</h3>
+              <h3 className="text-lg font-semibold mb-2">{tx('Acesso Restrito')}</h3>
               <p className="text-muted-foreground">
-                Apenas fisioterapeutas e administradores podem registar lesões.
+                {tx('Apenas fisioterapeutas e administradores podem registar lesões.')}
               </p>
             </CardContent>
           </Card>
@@ -215,13 +216,13 @@ export default function InjuryForm() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-display font-bold">
-              {isEditing ? 'Editar Lesão' : 'Registar Lesão'}
+              {isEditing ? tx('Editar Lesão') : tx('Registar Lesão')}
             </h1>
           </div>
           {isEditing && (
             <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
               <Trash2 className="w-4 h-4 mr-2" />
-              Eliminar
+              {tx('Eliminar')}
             </Button>
           )}
         </div>
@@ -229,19 +230,19 @@ export default function InjuryForm() {
         <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>Informação da Lesão</CardTitle>
+              <CardTitle>{tx('Informação da Lesão')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Player Selection */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="player">Jogador *</Label>
+                  <Label htmlFor="player">{tx('Jogador *')}</Label>
                   <Select
                     value={formData.player_id}
                     onValueChange={(value) => setFormData({ ...formData, player_id: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar jogador" />
+                      <SelectValue placeholder={tx('Selecionar jogador')} />
                     </SelectTrigger>
                     <SelectContent>
                       {players?.map(player => (
@@ -254,7 +255,7 @@ export default function InjuryForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="start_date">Data de Início *</Label>
+                  <Label htmlFor="start_date">{tx('Data de Início *')}</Label>
                   <Input
                     id="start_date"
                     type="date"
@@ -267,13 +268,13 @@ export default function InjuryForm() {
               {/* Body Area and Type */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="body_area">Zona do Corpo *</Label>
+                  <Label htmlFor="body_area">{tx('Zona do Corpo *')}</Label>
                   <Select
                     value={formData.body_area}
                     onValueChange={(value) => setFormData({ ...formData, body_area: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar zona" />
+                      <SelectValue placeholder={tx('Selecionar zona')} />
                     </SelectTrigger>
                     <SelectContent>
                       {BODY_AREAS.map(area => (
@@ -284,13 +285,13 @@ export default function InjuryForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="injury_type">Tipo de Lesão *</Label>
+                  <Label htmlFor="injury_type">{tx('Tipo de Lesão *')}</Label>
                   <Select
                     value={formData.injury_type}
                     onValueChange={(value) => setFormData({ ...formData, injury_type: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar tipo" />
+                      <SelectValue placeholder={tx('Selecionar tipo')} />
                     </SelectTrigger>
                     <SelectContent>
                       {INJURY_TYPES.map(type => (
@@ -304,13 +305,13 @@ export default function InjuryForm() {
               {/* Severity and Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="severity">Gravidade *</Label>
+                  <Label htmlFor="severity">{tx('Gravidade *')}</Label>
                   <Select
                     value={formData.severity}
                     onValueChange={(value) => setFormData({ ...formData, severity: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar gravidade" />
+                      <SelectValue placeholder={tx('Selecionar gravidade')} />
                     </SelectTrigger>
                     <SelectContent>
                       {INJURY_SEVERITIES.map(sev => (
@@ -321,13 +322,13 @@ export default function InjuryForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">Estado</Label>
+                  <Label htmlFor="status">{tx('Estado')}</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar estado" />
+                      <SelectValue placeholder={tx('Selecionar estado')} />
                     </SelectTrigger>
                     <SelectContent>
                       {INJURY_STATUSES.map(status => (
@@ -341,7 +342,7 @@ export default function InjuryForm() {
               {/* End Date and Fit Status */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="end_date">Data de Recuperação</Label>
+                  <Label htmlFor="end_date">{tx('Data de Recuperação')}</Label>
                   <Input
                     id="end_date"
                     type="date"
@@ -352,8 +353,8 @@ export default function InjuryForm() {
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <Label htmlFor="is_fit">Apto para Competição</Label>
-                    <p className="text-xs text-muted-foreground">O jogador está autorizado a jogar</p>
+                    <Label htmlFor="is_fit">{tx('Apto para Competição')}</Label>
+                    <p className="text-xs text-muted-foreground">{tx('O jogador está autorizado a jogar')}</p>
                   </div>
                   <Switch
                     id="is_fit"
@@ -365,10 +366,10 @@ export default function InjuryForm() {
 
               {/* Restrictions */}
               <div className="space-y-2">
-                <Label htmlFor="restrictions">Restrições</Label>
+                <Label htmlFor="restrictions">{tx('Restrições')}</Label>
                 <Textarea
                   id="restrictions"
-                  placeholder="Ex: Sem exercícios de impacto, sem sprints..."
+                  placeholder={tx('Ex: Sem exercícios de impacto, sem sprints...')}
                   value={formData.restrictions}
                   onChange={(e) => setFormData({ ...formData, restrictions: e.target.value })}
                   rows={2}
@@ -377,10 +378,10 @@ export default function InjuryForm() {
 
               {/* Notes */}
               <div className="space-y-2">
-                <Label htmlFor="notes">Notas Adicionais</Label>
+                <Label htmlFor="notes">{tx('Notas Adicionais')}</Label>
                 <Textarea
                   id="notes"
-                  placeholder="Observações sobre a lesão..."
+                  placeholder={tx('Observações sobre a lesão...')}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={3}
@@ -390,11 +391,11 @@ export default function InjuryForm() {
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => navigate('/club/physio/injuries')}>
-                  Cancelar
+                  {tx('Cancelar')}
                 </Button>
                 <Button type="submit" disabled={saveMutation.isPending}>
                   <Save className="w-4 h-4 mr-2" />
-                  {saveMutation.isPending ? 'A guardar...' : 'Guardar'}
+                  {saveMutation.isPending ? tx('A guardar...') : tx('Guardar')}
                 </Button>
               </div>
             </CardContent>
@@ -405,18 +406,18 @@ export default function InjuryForm() {
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Eliminar Lesão</AlertDialogTitle>
+              <AlertDialogTitle>{tx('Eliminar Lesão')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem a certeza que deseja eliminar este registo? Esta ação não pode ser revertida.
+                {tx('Tem a certeza que deseja eliminar este registo? Esta ação não pode ser revertida.')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{tx('Cancelar')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => deleteMutation.mutate()}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Eliminar
+                {tx('Eliminar')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

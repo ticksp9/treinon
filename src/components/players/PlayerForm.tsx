@@ -10,6 +10,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { POSITIONS, FOOT_OPTIONS, ID_DOCUMENT_TYPES } from '@/lib/player-constants';
 import { Loader2, User, Users, FileText } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 const playerSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -135,15 +136,15 @@ export function PlayerForm({
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="player" className="flex items-center gap-2">
             <User className="w-4 h-4" />
-            <span>Dados</span>
+            <span>{tx('Dados')}</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span>Documentos</span>
+            <span>{tx('Documentos')}</span>
           </TabsTrigger>
           <TabsTrigger value="parents" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span>Encarregados</span>
+            <span>{tx('Encarregados')}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -151,10 +152,10 @@ export function PlayerForm({
           <div className="grid grid-cols-2 gap-4">
             {showTeamSelector && teams.length > 0 && (
               <div className="col-span-2 space-y-2">
-                <Label>Equipa *</Label>
+                <Label>{tx('Equipa *')}</Label>
                 <Select value={teamId || ''} onValueChange={(v) => setValue('team_id', v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecionar equipa" />
+                    <SelectValue placeholder={tx('Selecionar equipa')} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map((team) => (
@@ -168,17 +169,17 @@ export function PlayerForm({
             )}
 
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="name">Nome Completo *</Label>
+              <Label htmlFor="name">{tx('Nome Completo *')}</Label>
               <Input
                 id="name"
                 {...register('name')}
-                placeholder="Nome do jogador"
+                placeholder={tx('Nome do jogador')}
               />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="number">Número</Label>
+              <Label htmlFor="number">{tx('Número')}</Label>
               <Input
                 id="number"
                 type="number"
@@ -188,26 +189,26 @@ export function PlayerForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Género *</Label>
+              <Label>{tx('Género *')}</Label>
               <Select value={gender || 'male'} onValueChange={(v) => setValue('gender', v as 'male' | 'female')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder={tx('Selecionar')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Masculino</SelectItem>
-                  <SelectItem value="female">Feminino</SelectItem>
+                  <SelectItem value="male">{tx('Masculino')}</SelectItem>
+                  <SelectItem value="female">{tx('Feminino')}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Jogadoras podem jogar em equipas masculinas até 2 anos acima
+                {tx('Jogadoras podem jogar em equipas masculinas até 2 anos acima')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Posição</Label>
+              <Label>{tx('Posição')}</Label>
               <Select value={position || ''} onValueChange={(v) => setValue('position', v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder={tx('Selecionar')} />
                 </SelectTrigger>
                 <SelectContent>
                   {positions.map((pos) => (
@@ -220,7 +221,7 @@ export function PlayerForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birth_date">Data de Nascimento</Label>
+              <Label htmlFor="birth_date">{tx('Data de Nascimento')}</Label>
               <Input
                 id="birth_date"
                 type="date"
@@ -229,25 +230,25 @@ export function PlayerForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birth_place">Local de Nascimento</Label>
+              <Label htmlFor="birth_place">{tx('Local de Nascimento')}</Label>
               <Input
                 id="birth_place"
                 {...register('birth_place')}
-                placeholder="Cidade, País"
+                placeholder={tx('Cidade, País')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nationality">Nacionalidade</Label>
+              <Label htmlFor="nationality">{tx('Nacionalidade')}</Label>
               <Input
                 id="nationality"
                 {...register('nationality')}
-                placeholder="Portugal"
+                placeholder={tx('Portugal')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="height_cm">Altura (cm)</Label>
+              <Label htmlFor="height_cm">{tx('Altura (cm)')}</Label>
               <Input
                 id="height_cm"
                 type="number"
@@ -257,7 +258,7 @@ export function PlayerForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="weight_kg">Peso (kg)</Label>
+              <Label htmlFor="weight_kg">{tx('Peso (kg)')}</Label>
               <Input
                 id="weight_kg"
                 type="number"
@@ -267,10 +268,10 @@ export function PlayerForm({
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label>Pé Dominante</Label>
+              <Label>{tx('Pé Dominante')}</Label>
               <Select value={foot || ''} onValueChange={(v) => setValue('foot', v)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder={tx('Selecionar')} />
                 </SelectTrigger>
                 <SelectContent>
                   {FOOT_OPTIONS.map((opt) => (
@@ -283,20 +284,20 @@ export function PlayerForm({
             </div>
 
             <div className="col-span-2 border-t pt-4 mt-2">
-              <h4 className="font-medium mb-3">Contacto do Jogador</h4>
+              <h4 className="font-medium mb-3">{tx('Contacto do Jogador')}</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{tx('Email')}</Label>
                   <Input
                     id="email"
                     type="email"
                     {...register('email')}
-                    placeholder="jogador@email.com"
+                    placeholder={tx('jogador@email.com')}
                   />
                   {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
+                  <Label htmlFor="phone">{tx('Telefone')}</Label>
                   <Input
                     id="phone"
                     {...register('phone')}
@@ -307,20 +308,20 @@ export function PlayerForm({
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="address">Morada</Label>
+              <Label htmlFor="address">{tx('Morada')}</Label>
               <Input
                 id="address"
                 {...register('address')}
-                placeholder="Rua, número, código postal, cidade"
+                placeholder={tx('Rua, número, código postal, cidade')}
               />
             </div>
 
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="notes">Notas</Label>
+              <Label htmlFor="notes">{tx('Notas')}</Label>
               <Textarea
                 id="notes"
                 {...register('notes')}
-                placeholder="Observações sobre o jogador..."
+                placeholder={tx('Observações sobre o jogador...')}
                 rows={3}
               />
             </div>
@@ -330,13 +331,13 @@ export function PlayerForm({
         <TabsContent value="documents" className="space-y-6 mt-4">
           {/* ID Document */}
           <div className="space-y-4">
-            <h4 className="font-medium text-primary">Documento de Identificação</h4>
+            <h4 className="font-medium text-primary">{tx('Documento de Identificação')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tipo de Documento</Label>
+                <Label>{tx('Tipo de Documento')}</Label>
                 <Select value={idDocumentType || ''} onValueChange={(v) => setValue('id_document_type', v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecionar tipo" />
+                    <SelectValue placeholder={tx('Selecionar tipo')} />
                   </SelectTrigger>
                   <SelectContent>
                     {ID_DOCUMENT_TYPES.map((doc) => (
@@ -348,7 +349,7 @@ export function PlayerForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="id_document_number">Número do Documento</Label>
+                <Label htmlFor="id_document_number">{tx('Número do Documento')}</Label>
                 <Input
                   id="id_document_number"
                   {...register('id_document_number')}
@@ -356,7 +357,7 @@ export function PlayerForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="id_document_expiry">Data de Validade</Label>
+                <Label htmlFor="id_document_expiry">{tx('Data de Validade')}</Label>
                 <Input
                   id="id_document_expiry"
                   type="date"
@@ -364,11 +365,11 @@ export function PlayerForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="tax_id">NIF / Identificação Fiscal</Label>
+                <Label htmlFor="tax_id">{tx('NIF / Identificação Fiscal')}</Label>
                 <Input
                   id="tax_id"
                   {...register('tax_id')}
-                  placeholder="Número de contribuinte"
+                  placeholder={tx('Número de contribuinte')}
                 />
               </div>
             </div>
@@ -376,18 +377,18 @@ export function PlayerForm({
 
           {/* Federation & Medical */}
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-primary">Federação e Saúde</h4>
+            <h4 className="font-medium text-primary">{tx('Federação e Saúde')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="federation_id">Número de Federado</Label>
+                <Label htmlFor="federation_id">{tx('Número de Federado')}</Label>
                 <Input
                   id="federation_id"
                   {...register('federation_id')}
-                  placeholder="Número de registo na federação"
+                  placeholder={tx('Número de registo na federação')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="medical_certificate_expiry">Validade do Atestado Médico</Label>
+                <Label htmlFor="medical_certificate_expiry">{tx('Validade do Atestado Médico')}</Label>
                 <Input
                   id="medical_certificate_expiry"
                   type="date"
@@ -401,29 +402,29 @@ export function PlayerForm({
         <TabsContent value="parents" className="space-y-6 mt-4">
           {/* Parent 1 */}
           <div className="space-y-4">
-            <h4 className="font-medium text-primary">Encarregado de Educação 1</h4>
+            <h4 className="font-medium text-primary">{tx('Encarregado de Educação 1')}</h4>
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="parent_name">Nome</Label>
+                <Label htmlFor="parent_name">{tx('Nome')}</Label>
                 <Input
                   id="parent_name"
                   {...register('parent_name')}
-                  placeholder="Nome do encarregado"
+                  placeholder={tx('Nome do encarregado')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="parent_email">Email</Label>
+                  <Label htmlFor="parent_email">{tx('Email')}</Label>
                   <Input
                     id="parent_email"
                     type="email"
                     {...register('parent_email')}
-                    placeholder="email@exemplo.com"
+                    placeholder={tx('email@exemplo.com')}
                   />
                   {errors.parent_email && <p className="text-xs text-destructive">{errors.parent_email.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="parent_phone">Telefone</Label>
+                  <Label htmlFor="parent_phone">{tx('Telefone')}</Label>
                   <Input
                     id="parent_phone"
                     {...register('parent_phone')}
@@ -436,29 +437,29 @@ export function PlayerForm({
 
           {/* Parent 2 */}
           <div className="space-y-4 border-t pt-4">
-            <h4 className="font-medium text-muted-foreground">Encarregado de Educação 2 (opcional)</h4>
+            <h4 className="font-medium text-muted-foreground">{tx('Encarregado de Educação 2 (opcional)')}</h4>
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="parent_name_2">Nome</Label>
+                <Label htmlFor="parent_name_2">{tx('Nome')}</Label>
                 <Input
                   id="parent_name_2"
                   {...register('parent_name_2')}
-                  placeholder="Nome do encarregado"
+                  placeholder={tx('Nome do encarregado')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="parent_email_2">Email</Label>
+                  <Label htmlFor="parent_email_2">{tx('Email')}</Label>
                   <Input
                     id="parent_email_2"
                     type="email"
                     {...register('parent_email_2')}
-                    placeholder="email@exemplo.com"
+                    placeholder={tx('email@exemplo.com')}
                   />
                   {errors.parent_email_2 && <p className="text-xs text-destructive">{errors.parent_email_2.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="parent_phone_2">Telefone</Label>
+                  <Label htmlFor="parent_phone_2">{tx('Telefone')}</Label>
                   <Input
                     id="parent_phone_2"
                     {...register('parent_phone_2')}
@@ -474,7 +475,7 @@ export function PlayerForm({
       <DialogFooter>
         <Button type="submit" disabled={isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Guardar
+          {tx('Guardar')}
         </Button>
       </DialogFooter>
     </form>

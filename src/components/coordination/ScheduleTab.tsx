@@ -22,6 +22,7 @@ import {
 import { Plus, Trash2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { generateSchedulePdf } from "@/lib/generateSchedulePdf";
+import { tx } from '@/lib/i18n/ui';
 
 interface ScheduleTabProps {
   clubId: string;
@@ -45,13 +46,13 @@ interface Schedule {
 }
 
 const DAYS_OF_WEEK = [
-  { value: 1, label: "Segunda-feira" },
-  { value: 2, label: "Terça-feira" },
-  { value: 3, label: "Quarta-feira" },
-  { value: 4, label: "Quinta-feira" },
-  { value: 5, label: "Sexta-feira" },
-  { value: 6, label: "Sábado" },
-  { value: 7, label: "Domingo" },
+  { value: 1, get label() { return tx('Segunda-feira'); } },
+  { value: 2, get label() { return tx('Terça-feira'); } },
+  { value: 3, get label() { return tx('Quarta-feira'); } },
+  { value: 4, get label() { return tx('Quinta-feira'); } },
+  { value: 5, get label() { return tx('Sexta-feira'); } },
+  { value: 6, get label() { return tx('Sábado'); } },
+  { value: 7, get label() { return tx('Domingo'); } },
 ];
 
 const SCHEDULE_COLORS: Record<string, string> = {
@@ -137,11 +138,11 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-training-schedules', clubId] });
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-stats', clubId] });
-      toast.success("Horário adicionado com sucesso");
+      toast.success(tx('Horário adicionado com sucesso'));
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao adicionar horário: ${error.message}`);
+      toast.error(tx('Erro ao adicionar horário: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -157,10 +158,10 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-training-schedules', clubId] });
       queryClient.invalidateQueries({ queryKey: ['youth-coordination-stats', clubId] });
-      toast.success("Horário eliminado com sucesso");
+      toast.success(tx('Horário eliminado com sucesso'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao eliminar horário: ${error.message}`);
+      toast.error(tx('Erro ao eliminar horário: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -196,43 +197,43 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
 
   const handleExportPDF = () => {
     if (!schedules || schedules.length === 0) {
-      toast.warning("Não há horários para exportar");
+      toast.warning(tx('Não há horários para exportar'));
       return;
     }
     generateSchedulePdf(schedules, "Quadro Semanal");
-    toast.success("PDF gerado com sucesso");
+    toast.success(tx('PDF gerado com sucesso'));
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Quadro Semanal de Treinos</CardTitle>
+        <CardTitle>{tx('Quadro Semanal de Treinos')}</CardTitle>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportPDF}>
             <Download className="h-4 w-4 mr-2" />
-            Exportar PDF
+            {tx('Exportar PDF')}
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button disabled={!teams?.length}>
                 <Plus className="h-4 w-4 mr-2" />
-                Novo Horário
+                {tx('Novo Horário')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Novo Horário de Treino</DialogTitle>
+                <DialogTitle>{tx('Novo Horário de Treino')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="team">Equipa</Label>
+                  <Label htmlFor="team">{tx('Equipa')}</Label>
                   <Select
                     value={formData.youth_team_id}
                     onValueChange={(value) => setFormData({ ...formData, youth_team_id: value })}
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecionar equipa" />
+                      <SelectValue placeholder={tx('Selecionar equipa')} />
                     </SelectTrigger>
                     <SelectContent>
                       {teams?.map((team) => (
@@ -245,7 +246,7 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="day">Dia da Semana</Label>
+                  <Label htmlFor="day">{tx('Dia da Semana')}</Label>
                   <Select
                     value={String(formData.day_of_week)}
                     onValueChange={(value) => setFormData({ ...formData, day_of_week: parseInt(value) })}
@@ -265,7 +266,7 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start_time">Hora Início</Label>
+                    <Label htmlFor="start_time">{tx('Hora Início')}</Label>
                     <Input
                       id="start_time"
                       type="time"
@@ -275,7 +276,7 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="end_time">Hora Fim</Label>
+                    <Label htmlFor="end_time">{tx('Hora Fim')}</Label>
                     <Input
                       id="end_time"
                       type="time"
@@ -287,21 +288,21 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location">Local (opcional)</Label>
+                  <Label htmlFor="location">{tx('Local (opcional)')}</Label>
                   <Input
                     id="location"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Ex: Campo 1, Pavilhão"
+                    placeholder={tx('Ex: Campo 1, Pavilhão')}
                   />
                 </div>
 
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={resetForm}>
-                    Cancelar
+                    {tx('Cancelar')}
                   </Button>
                   <Button type="submit" disabled={createMutation.isPending}>
-                    Adicionar
+                    {tx('Adicionar')}
                   </Button>
                 </div>
               </form>
@@ -313,11 +314,11 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
         {!teams?.length ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">
-              Primeiro crie equipas no separador "Equipas".
+              {tx('Primeiro crie equipas no separador "Equipas".')}
             </p>
           </div>
         ) : isLoading ? (
-          <p className="text-muted-foreground text-center py-8">A carregar...</p>
+          <p className="text-muted-foreground text-center py-8">{tx('A carregar...')}</p>
         ) : (
           <div className="grid grid-cols-5 gap-2">
             {schedulesByDay.map((day) => (
@@ -353,7 +354,7 @@ export function ScheduleTab({ clubId }: ScheduleTabProps) {
                   ))}
                   {day.schedules.length === 0 && (
                     <div className="text-center text-muted-foreground text-xs py-4">
-                      Sem treinos
+                      {tx('Sem treinos')}
                     </div>
                   )}
                 </div>

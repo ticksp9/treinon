@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
+import { tx } from '@/lib/i18n/ui';
 
 export function useSecurityPin() {
   const { user } = useAuth();
@@ -43,14 +44,14 @@ export function useSecurityPin() {
 
   // Create a new PIN via edge function
   const createPin = useCallback(async (pin: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Não autenticado' };
+    if (!user) return { success: false, error: tx('Não autenticado') };
     
     if (pin.length < 4 || pin.length > 6) {
-      return { success: false, error: 'O PIN deve ter entre 4 e 6 dígitos' };
+      return { success: false, error: tx('O PIN deve ter entre 4 e 6 dígitos') };
     }
 
     if (!/^\d+$/.test(pin)) {
-      return { success: false, error: 'O PIN deve conter apenas números' };
+      return { success: false, error: tx('O PIN deve conter apenas números') };
     }
 
     try {
@@ -59,19 +60,19 @@ export function useSecurityPin() {
       });
 
       if (error) throw error;
-      if (!data?.success) return { success: false, error: data?.error || 'Erro ao criar PIN' };
+      if (!data?.success) return { success: false, error: data?.error || tx('Erro ao criar PIN') };
       
       setHasPin(true);
       return { success: true };
     } catch (error: any) {
       console.error('Error creating PIN:', error);
-      return { success: false, error: error.message || 'Erro ao criar PIN' };
+      return { success: false, error: error.message || tx('Erro ao criar PIN') };
     }
   }, [user]);
 
   // Verify PIN via edge function (server-side comparison)
   const verifyPin = useCallback(async (pin: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Não autenticado' };
+    if (!user) return { success: false, error: tx('Não autenticado') };
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-pin', {
@@ -87,11 +88,11 @@ export function useSecurityPin() {
         setIsPinVerified(true);
         return { success: true };
       } else {
-        return { success: false, error: data?.error || 'PIN incorreto' };
+        return { success: false, error: data?.error || tx('PIN incorreto') };
       }
     } catch (error: any) {
       console.error('Error verifying PIN:', error);
-      return { success: false, error: error.message || 'Erro ao verificar PIN' };
+      return { success: false, error: error.message || tx('Erro ao verificar PIN') };
     }
   }, [user]);
 
@@ -105,7 +106,7 @@ export function useSecurityPin() {
 
   // Change PIN via edge function
   const changePin = useCallback(async (currentPin: string, newPin: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Não autenticado' };
+    if (!user) return { success: false, error: tx('Não autenticado') };
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-pin', {
@@ -115,13 +116,13 @@ export function useSecurityPin() {
       if (error) throw error;
       return { success: data?.success ?? false, error: data?.error };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Erro ao alterar PIN' };
+      return { success: false, error: error.message || tx('Erro ao alterar PIN') };
     }
   }, [user]);
 
   // Delete PIN via edge function
   const deletePin = useCallback(async (currentPin: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user) return { success: false, error: 'Não autenticado' };
+    if (!user) return { success: false, error: tx('Não autenticado') };
 
     try {
       const { data, error } = await supabase.functions.invoke('verify-pin', {
@@ -136,7 +137,7 @@ export function useSecurityPin() {
       }
       return { success: data?.success ?? false, error: data?.error };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Erro ao eliminar PIN' };
+      return { success: false, error: error.message || tx('Erro ao eliminar PIN') };
     }
   }, [user, lockSensitiveData]);
 

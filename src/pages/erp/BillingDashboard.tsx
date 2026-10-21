@@ -11,41 +11,42 @@ import { ChargesTab } from '@/components/billing/ChargesTab';
 import { PaymentsTab } from '@/components/billing/PaymentsTab';
 import { BillingOverviewTab } from '@/components/billing/BillingOverviewTab';
 import { BillingAlertsTab } from '@/components/billing/BillingAlertsTab';
+import { tx } from '@/lib/i18n/ui';
 
 export default function BillingDashboard() {
   const { isClubAdmin, clubId, loading } = useUserRole();
   const [activeTab, setActiveTab] = useState('overview');
 
   if (loading) return <AppLayout><PageLoading /></AppLayout>;
-  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message="Disponível apenas para administradores." /></AppLayout>;
+  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message={tx('Disponível apenas para administradores.')} /></AppLayout>;
 
   return (
-    <AppLayout title="Mensalidades e Quotas">
+    <AppLayout title={tx('Mensalidades e Quotas')}>
       <div className="space-y-6">
         <PageHeader
-          title="Mensalidades e Quotas"
-          description="Gestão de cobrança recorrente, pagamentos e conta corrente"
+          title={tx('Mensalidades e Quotas')}
+          description={tx('Gestão de cobrança recorrente, pagamentos e conta corrente')}
           icon={<Wallet className="w-6 h-6 text-primary" />}
         />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" /><span>Dashboard</span>
+              <BarChart3 className="w-4 h-4" /><span>{tx('Dashboard')}</span>
             </TabsTrigger>
             <TabsTrigger value="plans" className="flex items-center gap-2">
-              <Settings2 className="w-4 h-4" /><span>Planos</span>
+              <Settings2 className="w-4 h-4" /><span>{tx('Planos')}</span>
             </TabsTrigger>
             <TabsTrigger value="assignments" className="flex items-center gap-2">
-              <Users className="w-4 h-4" /><span>Atribuições</span>
+              <Users className="w-4 h-4" /><span>{tx('Atribuições')}</span>
             </TabsTrigger>
             <TabsTrigger value="charges" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" /><span>Cobranças</span>
+              <FileText className="w-4 h-4" /><span>{tx('Cobranças')}</span>
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /><span>Pagamentos</span>
+              <CreditCard className="w-4 h-4" /><span>{tx('Pagamentos')}</span>
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" /><span>Alertas</span>
+              <AlertTriangle className="w-4 h-4" /><span>{tx('Alertas')}</span>
             </TabsTrigger>
           </TabsList>
 

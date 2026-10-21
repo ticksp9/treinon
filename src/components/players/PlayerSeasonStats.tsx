@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, Shield, Users, Calendar } from 'lucide-react';
+import { tx } from '@/lib/i18n/ui';
 
 interface SeasonStats {
   minutesPlayed: number;
@@ -42,7 +43,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.minutesPlayed}'</p>
-                <p className="text-xs text-muted-foreground">Minutos jogados</p>
+                <p className="text-xs text-muted-foreground">{tx('Minutos jogados')}</p>
               </div>
             </div>
           </CardContent>
@@ -56,7 +57,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.goals}</p>
-                <p className="text-xs text-muted-foreground">Golos marcados</p>
+                <p className="text-xs text-muted-foreground">{tx('Golos marcados')}</p>
               </div>
             </div>
           </CardContent>
@@ -71,7 +72,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.goalsConceded}</p>
-                  <p className="text-xs text-muted-foreground">Golos sofridos</p>
+                  <p className="text-xs text-muted-foreground">{tx('Golos sofridos')}</p>
                 </div>
               </div>
             </CardContent>
@@ -85,7 +86,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats.assists}</p>
-                  <p className="text-xs text-muted-foreground">Assistências</p>
+                  <p className="text-xs text-muted-foreground">{tx('Assistências')}</p>
                 </div>
               </div>
             </CardContent>
@@ -100,7 +101,7 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.matchesPlayed}</p>
-                <p className="text-xs text-muted-foreground">Jogos realizados</p>
+                <p className="text-xs text-muted-foreground">{tx('Jogos realizados')}</p>
               </div>
             </div>
           </CardContent>
@@ -109,12 +110,12 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Presença nos Treinos</CardTitle>
+          <CardTitle className="text-sm font-medium">{tx('Presença nos Treinos')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
-              {stats.trainingAttendance} de {stats.trainingSessions} sessões
+              {stats.trainingAttendance} de {stats.trainingSessions} {tx('sessões')}
             </span>
             <span className="text-sm font-semibold">{attendancePercentage}%</span>
           </div>
@@ -126,19 +127,19 @@ export function PlayerSeasonStats({ stats: rawStats, isGoalkeeper }: PlayerSeaso
         <Card>
           <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold">{stats.matchesStarted}</p>
-            <p className="text-xs text-muted-foreground">Titular</p>
+            <p className="text-xs text-muted-foreground">{tx('Titular')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold text-yellow-500">{stats.yellowCards}</p>
-            <p className="text-xs text-muted-foreground">Amarelos</p>
+            <p className="text-xs text-muted-foreground">{tx('Amarelos')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="px-1 py-3 text-center sm:p-4">
             <p className="text-xl font-bold text-red-500">{stats.redCards}</p>
-            <p className="text-xs text-muted-foreground">Vermelhos</p>
+            <p className="text-xs text-muted-foreground">{tx('Vermelhos')}</p>
           </CardContent>
         </Card>
       </div>

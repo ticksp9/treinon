@@ -24,20 +24,21 @@ import { autoAnimate, withBall, elementsAt, isArrow, isMovable, isPlayer, remove
 import { useSaveCoachDrill, type AnyDrill } from '@/lib/drill-library/custom';
 import { useUserRole } from '@/hooks/useUserRole';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 type Tool = 'move' | 'a' | 'd' | 'n' | 'gk' | 'ball' | 'cone' | 'goal' | 'goal_small' | 'zone';
 
 const TOOLS: { id: Tool; label: string; swatch?: string }[] = [
-  { id: 'move', label: 'Mover' },
-  { id: 'a', label: 'Equipa A', swatch: 'hsl(217 85% 50%)' },
-  { id: 'd', label: 'Equipa B', swatch: 'hsl(14 90% 52%)' },
-  { id: 'n', label: 'Joker', swatch: 'hsl(45 95% 48%)' },
+  { id: 'move', get label() { return tx('Mover'); } },
+  { id: 'a', get label() { return tx('Equipa A'); }, swatch: 'hsl(217 85% 50%)' },
+  { id: 'd', get label() { return tx('Equipa B'); }, swatch: 'hsl(14 90% 52%)' },
+  { id: 'n', get label() { return tx('Joker'); }, swatch: 'hsl(45 95% 48%)' },
   { id: 'gk', label: 'GR', swatch: 'hsl(280 60% 45%)' },
-  { id: 'ball', label: 'Bola', swatch: '#fff' },
-  { id: 'cone', label: 'Cone', swatch: 'hsl(28 95% 55%)' },
-  { id: 'goal', label: 'Baliza' },
-  { id: 'goal_small', label: 'Mini-baliza' },
-  { id: 'zone', label: 'Zona' },
+  { id: 'ball', get label() { return tx('Bola'); }, swatch: '#fff' },
+  { id: 'cone', get label() { return tx('Cone'); }, swatch: 'hsl(28 95% 55%)' },
+  { id: 'goal', get label() { return tx('Baliza'); } },
+  { id: 'goal_small', get label() { return tx('Mini-baliza'); } },
+  { id: 'zone', get label() { return tx('Zona'); } },
 ];
 
 const W = 100, H = 64;
@@ -157,7 +158,7 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
     set({ anim: next });
     setStep(step + 1);
     setTool('move');
-    toast.info(`Passo ${step + 2}: arraste jogadores e bola para onde vão.`);
+    toast.info(tx('Passo {{v0}}: arraste jogadores e bola para onde vão.', { v0: step + 2 }));
   };
   const deleteStep = () => {
     if (!anim || step === 0) return;
@@ -174,8 +175,8 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
   const selectedEl = selected !== null ? els[selected] : null;
 
   const doSave = async () => {
-    if (!drill.name.trim()) { toast.error('Dê um nome ao exercício.'); return; }
-    if (drill.diagram.length === 0) { toast.error('Desenhe o exercício no campo.'); return; }
+    if (!drill.name.trim()) { toast.error(tx('Dê um nome ao exercício.')); return; }
+    if (drill.diagram.length === 0) { toast.error(tx('Desenhe o exercício no campo.')); return; }
     try {
       if (onSubmit) {
         if (alsoSave) await save.mutateAsync({ drill: { ...drill, rowId: undefined }, clubId: clubId ?? null });
@@ -184,11 +185,11 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
         return;
       }
       await save.mutateAsync({ drill, clubId: clubId ?? null });
-      toast.success('Exercício guardado.');
+      toast.success(tx('Exercício guardado.'));
       onSaved?.();
       onClose();
     } catch (e) {
-      toast.error('Não foi possível guardar: ' + (e as Error).message);
+      toast.error(tx('Não foi possível guardar: ') + (e as Error).message);
     }
   };
 
@@ -196,14 +197,14 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-h-[96vh] max-w-5xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{drill.rowId ? 'Editar exercício' : 'Novo exercício'}</DialogTitle>
-          <DialogDescription>Desenhe no campo e crie passos para animar os movimentos dos jogadores e da bola.</DialogDescription>
+          <DialogTitle>{drill.rowId ? tx('Editar exercício') : tx('Novo exercício')}</DialogTitle>
+          <DialogDescription>{tx('Desenhe no campo e crie passos para animar os movimentos dos jogadores e da bola.')}</DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="draw">
           <TabsList className="grid w-full grid-cols-2 lg:hidden">
-            <TabsTrigger value="draw">Desenho</TabsTrigger>
-            <TabsTrigger value="info">Descrição</TabsTrigger>
+            <TabsTrigger value="draw">{tx('Desenho')}</TabsTrigger>
+            <TabsTrigger value="info">{tx('Descrição')}</TabsTrigger>
           </TabsList>
           <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
             {/* ─── Drawing ─── */}
@@ -260,10 +261,10 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
                     {k + 1}
                   </Button>
                 ))}
-                <Button size="sm" variant="outline" className="h-8" onClick={() => { setPreview(false); addStep(); }}><Plus className="mr-1 h-3.5 w-3.5" />Passo</Button>
-                {step > 0 && !preview && <Button size="sm" variant="ghost" className="h-8" onClick={deleteStep}><Trash2 className="mr-1 h-3.5 w-3.5" />Passo</Button>}
+                <Button size="sm" variant="outline" className="h-8" onClick={() => { setPreview(false); addStep(); }}><Plus className="mr-1 h-3.5 w-3.5" />{tx('Passo')}</Button>
+                {step > 0 && !preview && <Button size="sm" variant="ghost" className="h-8" onClick={deleteStep}><Trash2 className="mr-1 h-3.5 w-3.5" />{tx('Passo')}</Button>}
                 <Button size="sm" variant={preview ? 'secondary' : 'default'} className="ml-auto h-8" onClick={() => setPreview((p) => !p)} disabled={steps < 2}>
-                  {preview ? <><Pencil className="mr-1 h-3.5 w-3.5" />Editar</> : <><Play className="mr-1 h-3.5 w-3.5" />Ver animação</>}
+                  {preview ? <><Pencil className="mr-1 h-3.5 w-3.5" />{tx('Editar')}</> : <><Play className="mr-1 h-3.5 w-3.5" />{tx('Ver animação')}</>}
                 </Button>
               </div>
 
@@ -271,12 +272,12 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
                 <div className="space-y-2 rounded-md border p-2 text-sm">
                   <p className="text-xs text-muted-foreground">
                     {step === 0
-                      ? 'Passo 1: posição inicial. Escolha uma ferramenta e toque no campo; arraste para ajustar.'
-                      : `Passo ${step + 1}: arraste jogadores e bola para onde vão. Cones, balizas e zonas não mudam.`}
+                      ? tx('Passo 1: posição inicial. Escolha uma ferramenta e toque no campo; arraste para ajustar.')
+                      : tx('Passo {{v0}}: arraste jogadores e bola para onde vão. Cones, balizas e zonas não mudam.', { v0: step + 1 })}
                   </p>
                   {anim && (
                     <Input
-                      placeholder={`O que acontece no passo ${step + 1} (opcional)`}
+                      placeholder={tx('O que acontece no passo {{v0}} (opcional)', { v0: step + 1 })}
                       value={anim.frames[step]?.note ?? ''}
                       onChange={(e) => set({ anim: { ...anim, frames: anim.frames.map((f, k) => (k === step ? { ...f, note: e.target.value || undefined } : f)) } })}
                     />
@@ -289,23 +290,23 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
                           maxLength={3}
                           value={selectedEl.n ?? ''}
                           onChange={(e) => set({ diagram: els.map((x, k) => (k === selected ? ({ ...x, n: e.target.value } as DiagramEl) : x)) })}
-                          aria-label="Número"
+                          aria-label={tx('Número')}
                         />
                       )}
                       {selectedEl.t === 'zone' && (
                         <>
-                          <Label className="text-xs">Largura</Label>
+                          <Label className="text-xs">{tx('Largura')}</Label>
                           <Input type="number" className="h-8 w-16" value={selectedEl.w} onChange={(e) => set({ diagram: els.map((x, k) => (k === selected ? ({ ...x, w: clamp(Number(e.target.value), 4, W) } as DiagramEl) : x)) })} />
-                          <Label className="text-xs">Altura</Label>
+                          <Label className="text-xs">{tx('Altura')}</Label>
                           <Input type="number" className="h-8 w-16" value={selectedEl.h} onChange={(e) => set({ diagram: els.map((x, k) => (k === selected ? ({ ...x, h: clamp(Number(e.target.value), 4, H) } as DiagramEl) : x)) })} />
                         </>
                       )}
-                      <Button size="sm" variant="ghost" className="h-8 text-destructive" onClick={deleteSelected}><Trash2 className="mr-1 h-3.5 w-3.5" />Apagar</Button>
+                      <Button size="sm" variant="ghost" className="h-8 text-destructive" onClick={deleteSelected}><Trash2 className="mr-1 h-3.5 w-3.5" />{tx('Apagar')}</Button>
                     </div>
                   )}
                   {anim && els.some(isArrow) && (
                     <Button size="sm" variant="ghost" className="h-8" onClick={() => set({ diagram: els.filter((e) => !isArrow(e)), anim: removeArrowsKeepAnim(els, anim) })}>
-                      <Eraser className="mr-1 h-3.5 w-3.5" />Remover setas desenhadas (a animação já mostra os movimentos)
+                      <Eraser className="mr-1 h-3.5 w-3.5" />{tx('Remover setas desenhadas (a animação já mostra os movimentos)')}
                     </Button>
                   )}
                 </div>
@@ -315,37 +316,37 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
             {/* ─── Description ─── */}
             <TabsContent value="info" forceMount className="mt-3 space-y-3 data-[state=inactive]:hidden lg:!block">
               <div className="space-y-1.5">
-                <Label htmlFor="dr-name">Nome *</Label>
-                <Input id="dr-name" value={drill.name} onChange={(e) => set({ name: e.target.value })} placeholder="Ex.: Losango de passe com rotação" />
+                <Label htmlFor="dr-name">{tx('Nome *')}</Label>
+                <Input id="dr-name" value={drill.name} onChange={(e) => set({ name: e.target.value })} placeholder={tx('Ex.: Losango de passe com rotação')} />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <Label>Tipo</Label>
+                  <Label>{tx('Tipo')}</Label>
                   <Select value={drill.category} onValueChange={(v) => set({ category: v as AnyDrill['category'] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{DRILL_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Intensidade</Label>
+                  <Label>{tx('Intensidade')}</Label>
                   <Select value={drill.intensity} onValueChange={(v) => set({ intensity: v as AnyDrill['intensity'] })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="baixa">Baixa</SelectItem>
-                      <SelectItem value="media">Média</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="baixa">{tx('Baixa')}</SelectItem>
+                      <SelectItem value="media">{tx('Média')}</SelectItem>
+                      <SelectItem value="alta">{tx('Alta')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <div className="space-y-1.5"><Label className="text-xs">Min.</Label><Input type="number" value={drill.minutes} onChange={(e) => set({ minutes: Math.max(1, Number(e.target.value)) })} /></div>
-                <div className="space-y-1.5"><Label className="text-xs">Jog. mín.</Label><Input type="number" value={drill.players.min} onChange={(e) => set({ players: { ...drill.players, min: Math.max(1, Number(e.target.value)) } })} /></div>
-                <div className="space-y-1.5"><Label className="text-xs">Jog. máx.</Label><Input type="number" value={drill.players.max} onChange={(e) => set({ players: { ...drill.players, max: Math.max(1, Number(e.target.value)) } })} /></div>
-                <div className="space-y-1.5"><Label className="text-xs">Espaço</Label><Input value={drill.space} onChange={(e) => set({ space: e.target.value })} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">{tx('Min.')}</Label><Input type="number" value={drill.minutes} onChange={(e) => set({ minutes: Math.max(1, Number(e.target.value)) })} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">{tx('Jog. mín.')}</Label><Input type="number" value={drill.players.min} onChange={(e) => set({ players: { ...drill.players, min: Math.max(1, Number(e.target.value)) } })} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">{tx('Jog. máx.')}</Label><Input type="number" value={drill.players.max} onChange={(e) => set({ players: { ...drill.players, max: Math.max(1, Number(e.target.value)) } })} /></div>
+                <div className="space-y-1.5"><Label className="text-xs">{tx('Espaço')}</Label><Input value={drill.space} onChange={(e) => set({ space: e.target.value })} /></div>
               </div>
               <div className="space-y-1.5">
-                <Label>Escalões</Label>
+                <Label>{tx('Escalões')}</Label>
                 <div className="flex flex-wrap gap-1">
                   {AGE_BANDS.map((a) => (
                     <Button key={a.value} size="sm" variant={drill.ages.includes(a.value) ? 'default' : 'outline'} className="h-7 px-2 text-xs"
@@ -355,13 +356,13 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
                   ))}
                 </div>
               </div>
-              <div className="space-y-1.5"><Label>Objetivo</Label><Textarea rows={2} value={drill.objective} onChange={(e) => set({ objective: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label>Organização</Label><Textarea rows={2} value={drill.setup} onChange={(e) => set({ setup: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label>Como se joga (uma regra por linha)</Label><Textarea rows={3} value={drill.howTo.join('\n')} onChange={(e) => set({ howTo: lines(e.target.value) })} /></div>
-              <div className="space-y-1.5"><Label>Pontos-chave (um por linha)</Label><Textarea rows={2} value={drill.coachingPoints.join('\n')} onChange={(e) => set({ coachingPoints: lines(e.target.value) })} /></div>
-              <div className="space-y-1.5"><Label>Progressões (uma por linha)</Label><Textarea rows={2} value={(drill.progressions ?? []).join('\n')} onChange={(e) => set({ progressions: lines(e.target.value) })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Objetivo')}</Label><Textarea rows={2} value={drill.objective} onChange={(e) => set({ objective: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Organização')}</Label><Textarea rows={2} value={drill.setup} onChange={(e) => set({ setup: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Como se joga (uma regra por linha)')}</Label><Textarea rows={3} value={drill.howTo.join('\n')} onChange={(e) => set({ howTo: lines(e.target.value) })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Pontos-chave (um por linha)')}</Label><Textarea rows={2} value={drill.coachingPoints.join('\n')} onChange={(e) => set({ coachingPoints: lines(e.target.value) })} /></div>
+              <div className="space-y-1.5"><Label>{tx('Progressões (uma por linha)')}</Label><Textarea rows={2} value={(drill.progressions ?? []).join('\n')} onChange={(e) => set({ progressions: lines(e.target.value) })} /></div>
               <div className="space-y-1.5">
-                <Label>Material</Label>
+                <Label>{tx('Material')}</Label>
                 <div className="grid grid-cols-2 gap-1">
                   {(Object.keys(EQUIPMENT_LABELS) as Equipment[]).map((k) => (
                     <label key={k} className="flex items-center gap-2 text-sm">
@@ -373,7 +374,7 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
               </div>
               {clubId && (
                 <label className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
-                  <span>Partilhar com os treinadores do clube</span>
+                  <span>{tx('Partilhar com os treinadores do clube')}</span>
                   <Switch checked={!!drill.sharedWithClub} onCheckedChange={(v) => set({ sharedWithClub: v })} />
                 </label>
               )}
@@ -385,12 +386,12 @@ export function DrillEditor({ open, initial, onClose, onSaved, onSubmit }: Props
           {onSubmit && (
             <label className="mr-auto flex items-center gap-2 text-sm">
               <Switch checked={alsoSave} onCheckedChange={setAlsoSave} />
-              Guardar também em "Os meus exercícios"
+              {tx('Guardar também em "Os meus exercícios"')}
             </label>
           )}
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+          <Button variant="outline" onClick={onClose}>{tx('Cancelar')}</Button>
           <Button onClick={doSave} disabled={save.isPending}>
-            {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{onSubmit ? 'Usar no treino' : 'Guardar exercício'}
+            {save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{onSubmit ? tx('Usar no treino') : tx('Guardar exercício')}
           </Button>
         </div>
       </DialogContent>

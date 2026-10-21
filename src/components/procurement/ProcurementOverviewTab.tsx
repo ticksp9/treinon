@@ -7,6 +7,7 @@ import {
   TrendingDown, CheckSquare, Clock,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { tx } from '@/lib/i18n/ui';
 
 const fmt = (v: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
 
@@ -44,7 +45,7 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Fornecedores Ativos</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Fornecedores Ativos')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -54,18 +55,18 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Faturado</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Total Faturado')}</CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{fmt(totalInvoiced)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Pago: {fmt(totalPaid)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('Pago:')}{' '}{fmt(totalPaid)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Em Aberto</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Em Aberto')}</CardTitle>
             <TrendingDown className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
@@ -75,7 +76,7 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Vencido</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Vencido')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
@@ -89,29 +90,29 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Aprovações Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Aprovações Pendentes')}</CardTitle>
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingApprovals}</div>
-            <p className="text-xs text-muted-foreground mt-1">requisições por aprovar</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('requisições por aprovar')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Despesas Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Despesas Pendentes')}</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingExpenses}</div>
-            <p className="text-xs text-muted-foreground mt-1">expense claims por aprovar</p>
+            <p className="text-xs text-muted-foreground mt-1">{tx('expense claims por aprovar')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Requisições Abertas</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{tx('Requisições Abertas')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -123,7 +124,7 @@ export function ProcurementOverviewTab({ clubId }: { clubId: string }) {
       {/* Aging Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aging de Contas a Pagar</CardTitle>
+          <CardTitle className="text-base">{tx('Aging de Contas a Pagar')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64">

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { tx } from '@/lib/i18n/ui';
 
 interface TicketSalesProps {
   clubId: string;
@@ -8,10 +9,10 @@ export function TicketSales({ clubId }: TicketSalesProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bilheteira</CardTitle>
+        <CardTitle>{tx('Bilheteira')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">Gestão de bilheteira em desenvolvimento...</p>
+        <p className="text-muted-foreground">{tx('Gestão de bilheteira em desenvolvimento...')}</p>
       </CardContent>
     </Card>
   );

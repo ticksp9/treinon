@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useEffect } from 'react';
+import { tx } from '@/lib/i18n/ui';
 
 // ---- Types ----
 export interface CommunicationChannel {
@@ -185,7 +186,7 @@ export function useSendMessage(channelId: string | null) {
 
   return useMutation({
     mutationFn: async (content: string) => {
-      if (!channelId || !user) throw new Error('Missing context');
+      if (!channelId || !user) throw new Error(tx('Missing context'));
       const { error } = await supabase
         .from('communication_messages')
         .insert({ channel_id: channelId, sender_id: user.id, content });
@@ -213,7 +214,7 @@ export function useCreateChannel(clubId: string | null) {
       age_group?: string;
       target_role?: string;
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { data: channel, error } = await supabase
         .from('communication_channels')
         .insert({
@@ -302,7 +303,7 @@ export function useCreateAnnouncement(clubId: string | null) {
       target_type?: string;
       target_value?: string;
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { data: created, error } = await supabase
         .from('communication_announcements')
         .insert({
@@ -332,7 +333,7 @@ export function useMarkAnnouncementRead() {
 
   return useMutation({
     mutationFn: async (announcementId: string) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const { error } = await supabase
         .from('communication_announcement_reads')
         .upsert(
@@ -390,7 +391,7 @@ export function useCreateReminder(clubId: string | null) {
       related_match_id?: string;
       related_training_id?: string;
     }) => {
-      if (!user) throw new Error('Missing context');
+      if (!user) throw new Error(tx('Missing context'));
       const { error } = await supabase
         .from('communication_reminders')
         .insert({

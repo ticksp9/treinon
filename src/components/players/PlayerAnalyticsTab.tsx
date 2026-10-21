@@ -30,6 +30,7 @@ import {
   buildAvailabilityTimeline,
   type EvaluationRow, type LineupRow, type MatchRow, type AttendanceRow, type InjuryRow,
 } from '@/lib/player-analytics';
+import { tx } from '@/lib/i18n/ui';
 
 function EmptyChart({ title, message }: { title: string; message: string }) {
   return (
@@ -195,9 +196,9 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
           <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p className="font-medium">Ainda não há dados suficientes</p>
+          <p className="font-medium">{tx('Ainda não há dados suficientes')}</p>
           <p className="text-sm mt-1">
-            Regista treinos, jogos e avaliações para ver a progressão deste jogador.
+            {tx('Regista treinos, jogos e avaliações para ver a progressão deste jogador.')}
           </p>
         </CardContent>
       </Card>
@@ -207,20 +208,20 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi icon={<Trophy className="w-4 h-4" />} label="Jogos realizados" value={usage.matchesPlayed} />
-        <Kpi icon={<Users className="w-4 h-4" />} label="Convocado" value={usage.matchesCalled} />
-        <Kpi icon={<AlertTriangle className="w-4 h-4" />} label="Não convocado" value={usage.matchesNotCalled} />
-        <Kpi icon={<CalendarClock className="w-4 h-4" />} label="Min. totais" value={`${usage.totalMinutes}'`} />
-        <Kpi icon={<Activity className="w-4 h-4" />} label="Média min/jogo" value={`${usage.avgMinutesPerMatch.toFixed(0)}'`} />
-        <Kpi icon={<Dumbbell className="w-4 h-4" />} label="Treinos" value={`${presence.attended}/${presence.total}`} />
-        <Kpi icon={<TrendingDown className="w-4 h-4" />} label="Faltas treino" value={presence.missed} />
-        <Kpi icon={<TrendingUp className="w-4 h-4" />} label="Presença" value={`${presence.presencePct}%`} />
+        <Kpi icon={<Trophy className="w-4 h-4" />} label={tx('Jogos realizados')} value={usage.matchesPlayed} />
+        <Kpi icon={<Users className="w-4 h-4" />} label={tx('Convocado')} value={usage.matchesCalled} />
+        <Kpi icon={<AlertTriangle className="w-4 h-4" />} label={tx('Não convocado')} value={usage.matchesNotCalled} />
+        <Kpi icon={<CalendarClock className="w-4 h-4" />} label={tx('Min. totais')} value={`${usage.totalMinutes}'`} />
+        <Kpi icon={<Activity className="w-4 h-4" />} label={tx('Média min/jogo')} value={`${usage.avgMinutesPerMatch.toFixed(0)}'`} />
+        <Kpi icon={<Dumbbell className="w-4 h-4" />} label={tx('Treinos')} value={`${presence.attended}/${presence.total}`} />
+        <Kpi icon={<TrendingDown className="w-4 h-4" />} label={tx('Faltas treino')} value={presence.missed} />
+        <Kpi icon={<TrendingUp className="w-4 h-4" />} label={tx('Presença')} value={`${presence.presencePct}%`} />
       </div>
 
       {categoryEvol.some((c) => c.current != null) && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Evolução média por categoria</CardTitle>
+            <CardTitle className="text-base">{tx('Evolução média por categoria')}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {categoryEvol.map((c) => (
@@ -234,7 +235,7 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
                 </p>
                 {c.delta != null && (
                   <p className={`text-xs ${c.delta > 0 ? 'text-emerald-600' : c.delta < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                    {c.delta > 0 ? '+' : ''}{c.delta} vs. anterior
+                    {c.delta > 0 ? '+' : ''}{c.delta} {tx('vs. anterior')}
                   </p>
                 )}
               </div>
@@ -246,7 +247,7 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
       {minutesSeries.length > 0 ? (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Minutos por jogo</CardTitle>
+            <CardTitle className="text-base">{tx('Minutos por jogo')}</CardTitle>
           </CardHeader>
           <CardContent style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -269,13 +270,13 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
           </CardContent>
         </Card>
       ) : (
-        <EmptyChart title="Minutos por jogo" message="Sem jogos registados ainda." />
+        <EmptyChart title={tx('Minutos por jogo')} message={tx('Sem jogos registados ainda.')} />
       )}
 
       {periodAverages.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Média de minutos por período</CardTitle>
+            <CardTitle className="text-base">{tx('Média de minutos por período')}</CardTitle>
           </CardHeader>
           <CardContent style={{ height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -299,18 +300,18 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Convocado vs. utilizado</CardTitle>
+          <CardTitle className="text-base">{tx('Convocado vs. utilizado')}</CardTitle>
         </CardHeader>
         <CardContent style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={[
-                { label: 'Convocado',     value: usage.matchesCalled },
-                { label: 'Utilizado',     value: usage.matchesPlayed },
-                { label: 'Titular',       value: usage.matchesStarted },
-                { label: 'Suplente',      value: usage.matchesAsSub },
-                { label: 'Não usado',     value: usage.matchesUnused },
-                { label: 'Não convocado', value: usage.matchesNotCalled },
+                { label: tx('Convocado'),     value: usage.matchesCalled },
+                { label: tx('Utilizado'),     value: usage.matchesPlayed },
+                { label: tx('Titular'),       value: usage.matchesStarted },
+                { label: tx('Suplente'),      value: usage.matchesAsSub },
+                { label: tx('Não usado'),     value: usage.matchesUnused },
+                { label: tx('Não convocado'), value: usage.matchesNotCalled },
               ]}
             >
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -326,7 +327,7 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
       {evolution.length > 0 ? (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Evolução das avaliações</CardTitle>
+            <CardTitle className="text-base">{tx('Evolução das avaliações')}</CardTitle>
           </CardHeader>
           <CardContent style={{ height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
@@ -349,14 +350,14 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
           </CardContent>
         </Card>
       ) : (
-        <EmptyChart title="Evolução das avaliações" message="Cria avaliações para ver a evolução." />
+        <EmptyChart title={tx('Evolução das avaliações')} message={tx('Cria avaliações para ver a evolução.')} />
       )}
 
       {radar.some((r) => r.value > 0) ? (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
-              Perfil atual {peerAverages ? '(vs. média da posição)' : ''}
+              {tx('Perfil atual')}{' '}{peerAverages ? tx('(vs. média da posição)') : ''}
             </CardTitle>
           </CardHeader>
           <CardContent style={{ height: 320 }}>
@@ -376,44 +377,44 @@ export function PlayerAnalyticsTab({ playerId, teamId, position }: PlayerAnalyti
           </CardContent>
         </Card>
       ) : (
-        <EmptyChart title="Perfil atual" message="Sem avaliação ainda. Adiciona uma avaliação para ver o radar." />
+        <EmptyChart title={tx('Perfil atual')} message={tx('Sem avaliação ainda. Adiciona uma avaliação para ver o radar.')} />
       )}
 
       {presence.total > 0 ? (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Participação em treinos</CardTitle>
+            <CardTitle className="text-base">{tx('Participação em treinos')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between text-sm mb-2">
-              <span>Presenças</span>
+              <span>{tx('Presenças')}</span>
               <span className="font-semibold">{presence.attended} / {presence.total}</span>
             </div>
             <Progress value={presence.presencePct} className="h-2 mb-3" />
             <div className="grid grid-cols-3 gap-3 text-center text-sm">
-              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">Presente</p><p className="font-bold">{presence.attended}</p></div>
-              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">Faltou</p><p className="font-bold text-red-600">{presence.missed}</p></div>
-              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">Total</p><p className="font-bold">{presence.total}</p></div>
+              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">{tx('Presente')}</p><p className="font-bold">{presence.attended}</p></div>
+              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">{tx('Faltou')}</p><p className="font-bold text-red-600">{presence.missed}</p></div>
+              <div className="rounded border p-2"><p className="text-xs text-muted-foreground">{tx('Total')}</p><p className="font-bold">{presence.total}</p></div>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <EmptyChart title="Participação em treinos" message="Ainda não há registo de presenças." />
+        <EmptyChart title={tx('Participação em treinos')} message={tx('Ainda não há registo de presenças.')} />
       )}
 
       {availability.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Timeline de disponibilidade</CardTitle>
+            <CardTitle className="text-base">{tx('Timeline de disponibilidade')}</CardTitle>
           </CardHeader>
           <CardContent>
             <AvailabilityBar segments={availability} />
             <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-emerald-500" /> Disponível
+                <span className="w-3 h-3 rounded bg-emerald-500" /> {tx('Disponível')}
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-red-500" /> Lesionado
+                <span className="w-3 h-3 rounded bg-red-500" /> {tx('Lesionado')}
               </span>
             </div>
           </CardContent>

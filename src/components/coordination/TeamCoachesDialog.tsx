@@ -27,6 +27,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { UserPlus, Trash2 } from "lucide-react";
+import { tx } from '@/lib/i18n/ui';
 
 interface TeamCoachesDialogProps {
   open: boolean;
@@ -143,11 +144,11 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-team-coaches', team.id] });
       queryClient.invalidateQueries({ queryKey: ['youth-teams', team.club_id] });
-      toast.success("Treinador adicionado com sucesso");
+      toast.success(tx('Treinador adicionado com sucesso'));
       setSelectedCoach("");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao adicionar treinador: ${error.message}`);
+      toast.error(tx('Erro ao adicionar treinador: {{v0}}', { v0: error.message }));
     }
   });
 
@@ -163,16 +164,16 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['youth-team-coaches', team.id] });
       queryClient.invalidateQueries({ queryKey: ['youth-teams', team.club_id] });
-      toast.success("Treinador removido da equipa");
+      toast.success(tx('Treinador removido da equipa'));
     },
     onError: (error: any) => {
-      toast.error(`Erro ao remover treinador: ${error.message}`);
+      toast.error(tx('Erro ao remover treinador: {{v0}}', { v0: error.message }));
     }
   });
 
   const handleAddCoach = () => {
     if (!selectedCoach) {
-      toast.warning("Selecione um treinador");
+      toast.warning(tx('Selecione um treinador'));
       return;
     }
     addCoachMutation.mutate({ coachId: selectedCoach, role: selectedRole });
@@ -192,7 +193,7 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            Gerir Treinadores - {team.youth_age_groups.name} / {team.name}
+            {tx('Gerir Treinadores -')}{' '}{team.youth_age_groups.name} / {team.name}
           </DialogTitle>
         </DialogHeader>
 
@@ -200,10 +201,10 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
           {/* Add Coach Section */}
           <div className="flex gap-4 items-end">
             <div className="flex-1 space-y-2">
-              <label className="text-sm font-medium">Adicionar Treinador</label>
+              <label className="text-sm font-medium">{tx('Adicionar Treinador')}</label>
               <Select value={selectedCoach} onValueChange={setSelectedCoach}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar treinador" />
+                  <SelectValue placeholder={tx('Selecionar treinador')} />
                 </SelectTrigger>
                 <SelectContent>
                   {unassignedCoaches?.map((coach) => (
@@ -215,15 +216,15 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
               </Select>
             </div>
             <div className="w-40 space-y-2">
-              <label className="text-sm font-medium">Função</label>
+              <label className="text-sm font-medium">{tx('Função')}</label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="main">Principal</SelectItem>
-                  <SelectItem value="assistant">Adjunto</SelectItem>
-                  <SelectItem value="goalkeeper">Guarda-Redes</SelectItem>
+                  <SelectItem value="main">{tx('Principal')}</SelectItem>
+                  <SelectItem value="assistant">{tx('Adjunto')}</SelectItem>
+                  <SelectItem value="goalkeeper">{tx('Guarda-Redes')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -232,23 +233,23 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
               disabled={!selectedCoach || addCoachMutation.isPending}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar
+              {tx('Adicionar')}
             </Button>
           </div>
 
           {/* Current Coaches */}
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Treinadores Atuais</h4>
+            <h4 className="text-sm font-medium">{tx('Treinadores Atuais')}</h4>
             <ScrollArea className="h-[250px]">
               {loadingCurrent ? (
-                <p className="text-center py-8 text-muted-foreground">A carregar...</p>
+                <p className="text-center py-8 text-muted-foreground">{tx('A carregar...')}</p>
               ) : currentCoaches && currentCoaches.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Função</TableHead>
+                      <TableHead>{tx('Nome')}</TableHead>
+                      <TableHead>{tx('Email')}</TableHead>
+                      <TableHead>{tx('Função')}</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -256,7 +257,7 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
                     {currentCoaches.map((tc) => (
                       <TableRow key={tc.id}>
                         <TableCell className="font-medium">
-                          {tc.profiles?.full_name || 'Sem nome'}
+                          {tc.profiles?.full_name || tx('Sem nome')}
                         </TableCell>
                         <TableCell>{tc.profiles?.email}</TableCell>
                         <TableCell>
@@ -279,7 +280,7 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
                 </Table>
               ) : (
                 <p className="text-center py-8 text-muted-foreground">
-                  Nenhum treinador atribuído a esta equipa.
+                  {tx('Nenhum treinador atribuído a esta equipa.')}
                 </p>
               )}
             </ScrollArea>
@@ -287,7 +288,7 @@ export function TeamCoachesDialog({ open, onOpenChange, team }: TeamCoachesDialo
 
           {unassignedCoaches?.length === 0 && (
             <p className="text-sm text-muted-foreground text-center">
-              Todos os treinadores do clube já estão atribuídos a esta equipa.
+              {tx('Todos os treinadores do clube já estão atribuídos a esta equipa.')}
             </p>
           )}
         </div>

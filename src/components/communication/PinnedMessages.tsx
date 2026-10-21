@@ -5,6 +5,7 @@ import { Pin, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { tx } from '@/lib/i18n/ui';
 
 interface PinnedMessagesProps {
   channelId: string;
@@ -21,7 +22,7 @@ export function PinnedMessages({ channelId, canManage }: PinnedMessagesProps) {
     <div className="border-b bg-muted/30 px-3 py-2">
       <div className="flex items-center gap-1.5 mb-1">
         <Pin className="h-3 w-3 text-primary" />
-        <span className="text-xs font-medium text-primary">Mensagens fixadas ({pins.length})</span>
+        <span className="text-xs font-medium text-primary">{tx('Mensagens fixadas (')}{pins.length})</span>
       </div>
       <div className="space-y-1">
         {pins.slice(0, 3).map((pin) => (
@@ -37,7 +38,7 @@ export function PinnedMessages({ channelId, canManage }: PinnedMessagesProps) {
                 onClick={() =>
                   unpin.mutate(
                     { channelId, messageId: pin.message_id },
-                    { onSuccess: () => toast.success('Mensagem desafixada') }
+                    { onSuccess: () => toast.success(tx('Mensagem desafixada')) }
                   )
                 }
               >

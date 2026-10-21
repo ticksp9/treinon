@@ -13,6 +13,7 @@ import { PaymentEventsTab } from '@/components/payments/PaymentEventsTab';
 import { PaymentConfigTab } from '@/components/payments/PaymentConfigTab';
 import { ManualPaymentsTab } from '@/components/payments/ManualPaymentsTab';
 import { useSearchParams } from 'react-router-dom';
+import { tx } from '@/lib/i18n/ui';
 
 export default function PaymentsDashboard() {
   const { isClubAdmin, clubId, loading } = useUserRole();
@@ -21,38 +22,38 @@ export default function PaymentsDashboard() {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   if (loading) return <AppLayout><PageLoading /></AppLayout>;
-  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message="Disponível apenas para administradores financeiros." /></AppLayout>;
+  if (!isClubAdmin || !clubId) return <AppLayout><AccessDenied message={tx('Disponível apenas para administradores financeiros.')} /></AppLayout>;
 
   return (
-    <AppLayout title="Pagamentos & Reconciliação">
+    <AppLayout title={tx('Pagamentos & Reconciliação')}>
       <div className="space-y-6">
         <PageHeader
-          title="Pagamentos & Reconciliação"
-          description="Pagamentos digitais, manuais, reconciliação bancária e auditoria"
+          title={tx('Pagamentos & Reconciliação')}
+          description={tx('Pagamentos digitais, manuais, reconciliação bancária e auditoria')}
           icon={<CreditCard className="w-6 h-6 text-primary" />}
         />
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" /><span>Dashboard</span>
+              <BarChart3 className="w-4 h-4" /><span>{tx('Dashboard')}</span>
             </TabsTrigger>
             <TabsTrigger value="requests" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" /><span>Links</span>
+              <CreditCard className="w-4 h-4" /><span>{tx('Links')}</span>
             </TabsTrigger>
             <TabsTrigger value="manual" className="flex items-center gap-2">
-              <HandCoins className="w-4 h-4" /><span>Manual</span>
+              <HandCoins className="w-4 h-4" /><span>{tx('Manual')}</span>
             </TabsTrigger>
             <TabsTrigger value="transactions" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" /><span>Transações</span>
+              <FileText className="w-4 h-4" /><span>{tx('Transações')}</span>
             </TabsTrigger>
             <TabsTrigger value="reconciliation" className="flex items-center gap-2">
-              <ArrowLeftRight className="w-4 h-4" /><span>Reconciliação</span>
+              <ArrowLeftRight className="w-4 h-4" /><span>{tx('Reconciliação')}</span>
             </TabsTrigger>
             <TabsTrigger value="events" className="flex items-center gap-2">
-              <Shield className="w-4 h-4" /><span>Auditoria</span>
+              <Shield className="w-4 h-4" /><span>{tx('Auditoria')}</span>
             </TabsTrigger>
             <TabsTrigger value="config" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" /><span>Configuração</span>
+              <Settings className="w-4 h-4" /><span>{tx('Configuração')}</span>
             </TabsTrigger>
           </TabsList>
 

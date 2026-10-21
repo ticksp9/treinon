@@ -20,6 +20,7 @@ import { uploadCommunicationFile } from '@/hooks/useCommunicationPhase2';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { tx } from '@/lib/i18n/ui';
 
 interface ChatViewProps {
   channelId: string;
@@ -67,7 +68,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
     const trimmed = text.trim();
     if (!trimmed) return;
     sendMessage.mutate(trimmed, {
-      onError: () => toast.error('Erro ao enviar mensagem. Tente novamente.'),
+      onError: () => toast.error(tx('Erro ao enviar mensagem. Tente novamente.')),
     });
     setText('');
   };
@@ -91,9 +92,9 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
         attachment_url: result.url,
         attachment_name: result.name,
       });
-      toast.success('Ficheiro enviado');
+      toast.success(tx('Ficheiro enviado'));
     } catch {
-      toast.error('Erro ao enviar ficheiro');
+      toast.error(tx('Erro ao enviar ficheiro'));
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -101,7 +102,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
   const handlePin = (messageId: string) => {
     pinMessage.mutate(
       { channelId, messageId },
-      { onSuccess: () => toast.success('Mensagem fixada') }
+      { onSuccess: () => toast.success(tx('Mensagem fixada')) }
     );
   };
 
@@ -170,8 +171,8 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
             <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="h-8 w-8 opacity-40" />
             </div>
-            <p className="text-sm font-medium">Sem mensagens</p>
-            <p className="text-xs mt-1 text-muted-foreground/70">Envie a primeira mensagem para iniciar a conversa</p>
+            <p className="text-sm font-medium">{tx('Sem mensagens')}</p>
+            <p className="text-xs mt-1 text-muted-foreground/70">{tx('Envie a primeira mensagem para iniciar a conversa')}</p>
           </div>
         ) : (
           <div className="py-4 space-y-1">
@@ -232,7 +233,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
                               className="text-sm underline flex items-center gap-1.5"
                             >
                               <Paperclip className="h-3.5 w-3.5" />
-                              {attachmentName || 'Ficheiro'}
+                              {attachmentName || tx('Ficheiro')}
                             </a>
                           ) : (
                             <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{msg.content}</p>
@@ -255,7 +256,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handlePin(msg.id)}>
-                                  <Pin className="h-3.5 w-3.5 mr-2" /> Fixar mensagem
+                                  <Pin className="h-3.5 w-3.5 mr-2" /> {tx('Fixar mensagem')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -293,7 +294,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Escrever mensagem..."
+            placeholder={tx('Escrever mensagem...')}
             className="flex-1 rounded-lg"
           />
           <Button

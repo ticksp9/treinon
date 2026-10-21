@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2, Copy, UserPlus, Mail, Phone, MessageCircle, Send, Eye } from 'lucide-react';
 import { renderTemplate, validateTemplateContext, PROFILE_LABELS, CHANNEL_LABELS, type TemplateContext } from '@/lib/invite-templates';
+import { tx } from '@/lib/i18n/ui';
 
 type InviteType = 'guardian' | 'player' | 'coach' | 'assistant_coach' | 'staff';
 
@@ -121,7 +122,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
   const previewTemplate = useMemo(() => {
     const tpl = templates.find((t: any) => t.delivery_channel === previewChannel);
-    if (!tpl) return { subject: '', body: 'Sem template configurado para este canal.' };
+    if (!tpl) return { subject: '', body: tx('Sem template configurado para este canal.') };
     return {
       subject: tpl.subject_template ? renderTemplate(tpl.subject_template, templateContext) : '',
       body: renderTemplate(tpl.body_template, templateContext),
@@ -145,10 +146,10 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTeamId) { toast.error('Selecione uma equipa'); return; }
-    if (needsPlayer && !selectedPlayerId) { toast.error('Selecione um atleta'); return; }
-    if (!recipientName.trim()) { toast.error('Indique o nome do convidado'); return; }
-    if (selectedChannels.size === 0) { toast.error('Selecione pelo menos um canal de envio'); return; }
+    if (!selectedTeamId) { toast.error(tx('Selecione uma equipa')); return; }
+    if (needsPlayer && !selectedPlayerId) { toast.error(tx('Selecione um atleta')); return; }
+    if (!recipientName.trim()) { toast.error(tx('Indique o nome do convidado')); return; }
+    if (selectedChannels.size === 0) { toast.error(tx('Selecione pelo menos um canal de envio')); return; }
     if (channelErrors.length > 0) { toast.error(channelErrors[0]); return; }
 
     setSending(true);
@@ -180,15 +181,15 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
         });
-        toast.success('Convite criado e enviado!');
+        toast.success(tx('Convite criado e enviado!'));
       } catch (sendErr: any) {
         console.warn('Send failed but invite created:', sendErr);
-        toast.warning('Convite criado mas envio automático falhou. Pode copiar o link manualmente.');
+        toast.warning(tx('Convite criado mas envio automático falhou. Pode copiar o link manualmente.'));
       }
 
       setResult({ token: invData.token, code: invData.code, inviteId: invData.invite_id });
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao criar convite');
+      toast.error(err.message || tx('Erro ao criar convite'));
     } finally {
       setSending(false);
     }
@@ -198,7 +199,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copiado!');
+    toast.success(tx('Copiado!'));
   };
 
   const handleClose = () => {
@@ -220,7 +221,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
-            Convidar {PROFILE_LABELS[inviteType]}
+            {tx('Convidar')}{' '}{PROFILE_LABELS[inviteType]}
           </DialogTitle>
           <DialogDescription>{TYPE_DESCRIPTIONS[inviteType]}</DialogDescription>
         </DialogHeader>
@@ -229,9 +230,9 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Team selection */}
             <div className="space-y-2">
-              <Label>Equipa *</Label>
+              <Label>{tx('Equipa *')}</Label>
               <Select value={selectedTeamId} onValueChange={(v) => { setSelectedTeamId(v); setSelectedPlayerId(''); }}>
-                <SelectTrigger><SelectValue placeholder="Selecionar equipa" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tx('Selecionar equipa')} /></SelectTrigger>
                 <SelectContent>
                   {teams.map((t: any) => (
                     <SelectItem key={t.id} value={t.id}>
@@ -245,10 +246,10 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
             {/* Player selection */}
             {needsPlayer && (
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId} disabled={!selectedTeamId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={selectedTeamId ? 'Selecionar atleta' : 'Selecione equipa primeiro'} />
+                    <SelectValue placeholder={selectedTeamId ? tx('Selecionar atleta') : tx('Selecione equipa primeiro')} />
                   </SelectTrigger>
                   <SelectContent>
                     {players.map((p: any) => (
@@ -263,24 +264,24 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
 
             {/* Recipient info */}
             <div className="space-y-2">
-              <Label htmlFor="inv-name">Nome do convidado *</Label>
-              <Input id="inv-name" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Nome completo" required />
+              <Label htmlFor="inv-name">{tx('Nome do convidado *')}</Label>
+              <Input id="inv-name" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder={tx('Nome completo')} required />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="inv-email">Email</Label>
-                <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+                <Label htmlFor="inv-email">{tx('Email')}</Label>
+                <Input id="inv-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tx('email@exemplo.com')} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="inv-phone">Telefone</Label>
+                <Label htmlFor="inv-phone">{tx('Telefone')}</Label>
                 <Input id="inv-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+351..." />
               </div>
             </div>
 
             {/* Channel selection */}
             <div className="space-y-2">
-              <Label>Canais de envio *</Label>
+              <Label>{tx('Canais de envio *')}</Label>
               <div className="flex gap-3">
                 {(['email', 'sms', 'whatsapp'] as const).map((ch) => {
                   const Icon = CHANNEL_ICONS[ch];
@@ -307,7 +308,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
             {/* Preview toggle */}
             <div className="flex items-center justify-between">
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)}>
-                <Eye className="h-4 w-4 mr-1" /> {showPreview ? 'Ocultar preview' : 'Ver preview'}
+                <Eye className="h-4 w-4 mr-1" /> {showPreview ? tx('Ocultar preview') : tx('Ver preview')}
               </Button>
               {showPreview && selectedChannels.size > 1 && (
                 <div className="flex gap-1">
@@ -331,12 +332,12 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
               <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
                 {previewTemplate.subject && (
                   <div>
-                    <span className="text-xs font-medium text-muted-foreground">Assunto:</span>
+                    <span className="text-xs font-medium text-muted-foreground">{tx('Assunto:')}</span>
                     <p className="font-medium">{previewTemplate.subject}</p>
                   </div>
                 )}
                 <div>
-                  <span className="text-xs font-medium text-muted-foreground">Mensagem:</span>
+                  <span className="text-xs font-medium text-muted-foreground">{tx('Mensagem:')}</span>
                   <pre className="whitespace-pre-wrap text-sm mt-1 font-sans">{previewTemplate.body}</pre>
                 </div>
               </div>
@@ -346,20 +347,20 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
             <Button type="submit" className="w-full" disabled={sending || createInvite.isPending}>
               {(sending || createInvite.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Send className="h-4 w-4 mr-2" />
-              Criar e enviar convite
+              {tx('Criar e enviar convite')}
             </Button>
           </form>
         ) : (
           <div className="space-y-4">
             <Alert>
               <AlertDescription>
-                Convite criado e enviado! Os dados abaixo podem ser partilhados manualmente se necessário.
+                {tx('Convite criado e enviado! Os dados abaixo podem ser partilhados manualmente se necessário.')}
               </AlertDescription>
             </Alert>
 
             <div className="space-y-3">
               <div>
-                <Label className="text-xs text-muted-foreground">Código de acesso</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Código de acesso')}</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="outline" className="text-lg font-mono tracking-widest px-4 py-2">
                     {result.code}
@@ -371,7 +372,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground">Link direto</Label>
+                <Label className="text-xs text-muted-foreground">{tx('Link direto')}</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input value={inviteLink} readOnly className="text-xs" />
                   <Button size="sm" variant="ghost" onClick={() => copyToClipboard(inviteLink)}>
@@ -390,7 +391,7 @@ export function InviteFromCommunication({ inviteType, open, onClose }: Props) {
             </div>
 
             <Button variant="outline" className="w-full" onClick={handleClose}>
-              Fechar
+              {tx('Fechar')}
             </Button>
           </div>
         )}

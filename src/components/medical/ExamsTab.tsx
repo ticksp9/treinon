@@ -17,6 +17,7 @@ import { Plus, Calendar, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { EXAM_CATEGORIES } from '@/hooks/useMedical';
+import { tx } from '@/lib/i18n/ui';
 
 export function ExamsTab() {
   const { user } = useAuth();
@@ -63,17 +64,17 @@ export function ExamsTab() {
       queryClient.invalidateQueries({ queryKey: ['medical-exams'] });
       setShowDialog(false);
       setForm({ person_id: '', exam_type_code: '', scheduled_date: format(new Date(), 'yyyy-MM-dd'), provider_name: '', notes: '' });
-      toast.success('Exame agendado!');
+      toast.success(tx('Exame agendado!'));
     },
-    onError: () => toast.error('Erro ao agendar exame'),
+    onError: () => toast.error(tx('Erro ao agendar exame')),
   });
 
   const statuses = [
-    { value: 'scheduled', label: 'Agendado', color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
-    { value: 'in_progress', label: 'Em Andamento', color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
-    { value: 'completed', label: 'Concluído', color: 'bg-green-500/20 text-green-700 border-green-500/30' },
-    { value: 'validated', label: 'Validado', color: 'bg-green-600/20 text-green-800 border-green-600/30' },
-    { value: 'expired', label: 'Expirado', color: 'bg-red-500/20 text-red-700 border-red-500/30' },
+    { value: 'scheduled', label: tx('Agendado'), color: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+    { value: 'in_progress', label: tx('Em Andamento'), color: 'bg-yellow-500/20 text-yellow-700 border-yellow-500/30' },
+    { value: 'completed', label: tx('Concluído'), color: 'bg-green-500/20 text-green-700 border-green-500/30' },
+    { value: 'validated', label: tx('Validado'), color: 'bg-green-600/20 text-green-800 border-green-600/30' },
+    { value: 'expired', label: tx('Expirado'), color: 'bg-red-500/20 text-red-700 border-red-500/30' },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -93,55 +94,55 @@ export function ExamsTab() {
         <div className="flex gap-2 flex-1">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Pesquisar atleta..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+            <Input placeholder={tx('Pesquisar atleta...')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder={tx('Estado')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{tx('Todos')}</SelectItem>
               {statuses.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />Agendar Exame</Button>
+            <Button><Plus className="w-4 h-4 mr-2" />{tx('Agendar Exame')}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Agendar Exame Médico</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Agendar Exame Médico')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>
                     {players?.map(p => <SelectItem key={p.id} value={p.id}>#{p.number} {p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Tipo de Exame *</Label>
+                <Label>{tx('Tipo de Exame *')}</Label>
                 <Select value={form.exam_type_code} onValueChange={v => setForm({...form, exam_type_code: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>
                     {EXAM_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Data</Label>
+                <Label>{tx('Data')}</Label>
                 <Input type="date" value={form.scheduled_date} onChange={e => setForm({...form, scheduled_date: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Prestador</Label>
-                <Input placeholder="Nome do prestador..." value={form.provider_name} onChange={e => setForm({...form, provider_name: e.target.value})} />
+                <Label>{tx('Prestador')}</Label>
+                <Input placeholder={tx('Nome do prestador...')} value={form.provider_name} onChange={e => setForm({...form, provider_name: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Notas</Label>
-                <Textarea placeholder="Observações..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={2} />
+                <Label>{tx('Notas')}</Label>
+                <Textarea placeholder={tx('Observações...')} value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={2} />
               </div>
               <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || !form.exam_type_code || createMutation.isPending}>
-                Agendar
+                {tx('Agendar')}
               </Button>
             </div>
           </DialogContent>
@@ -155,19 +156,19 @@ export function ExamsTab() {
           ) : filtered?.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum exame encontrado</p>
+              <p className="text-muted-foreground">{tx('Nenhum exame encontrado')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Data Agendada</TableHead>
-                    <TableHead>Validade</TableHead>
-                    <TableHead>Prestador</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>{tx('Atleta')}</TableHead>
+                    <TableHead>{tx('Tipo')}</TableHead>
+                    <TableHead>{tx('Data Agendada')}</TableHead>
+                    <TableHead>{tx('Validade')}</TableHead>
+                    <TableHead>{tx('Prestador')}</TableHead>
+                    <TableHead>{tx('Estado')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

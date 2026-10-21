@@ -24,6 +24,7 @@ import { InjuryRehabPanel } from './InjuryRehabPanel';
 import { MECHANISMS, daysOut, isEarlyRecurrence, mechanismLabel, severityByDays } from '@/lib/injury-care';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { tx } from '@/lib/i18n/ui';
 
 interface Props { playerId: string }
 
@@ -32,16 +33,16 @@ const db = supabase as any; // newer than the generated types
 const CLINICAL_FIELDS = ['diagnosis', 'responsible_professional', 'treatment', 'treatment_plan', 'clinical_notes'] as const;
 
 const BODY_SIDES = [
-  { value: 'left', label: 'Esquerdo' },
-  { value: 'right', label: 'Direito' },
-  { value: 'both', label: 'Bilateral' },
-  { value: 'n_a', label: 'N/A' },
+  { value: 'left', get label() { return tx('Esquerdo'); } },
+  { value: 'right', get label() { return tx('Direito'); } },
+  { value: 'both', get label() { return tx('Bilateral'); } },
+  { value: 'n_a', get label() { return tx('N/A'); } },
 ];
 const CONTEXTS = [
-  { value: 'training', label: 'Treino' },
-  { value: 'match', label: 'Jogo' },
-  { value: 'extra', label: 'Extra-desportivo' },
-  { value: 'other', label: 'Outro' },
+  { value: 'training', get label() { return tx('Treino'); } },
+  { value: 'match', get label() { return tx('Jogo'); } },
+  { value: 'extra', get label() { return tx('Extra-desportivo'); } },
+  { value: 'other', get label() { return tx('Outro'); } },
 ];
 
 const emptyForm = () => ({
@@ -109,7 +110,7 @@ export function PlayerInjuries({ playerId }: Props) {
 
   const upsert = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error(tx('Not authenticated'));
       const clin = Object.fromEntries(CLINICAL_FIELDS.map((k) => [k, (form[k] as string)?.trim() || null]));
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { diagnosis: _d, responsible_professional: _r, treatment: _t, treatment_plan: _tp, clinical_notes: _c, ...rest } = form;
@@ -150,12 +151,12 @@ export function PlayerInjuries({ playerId }: Props) {
       qc.invalidateQueries({ queryKey: ['callup-availability'] });
       qc.invalidateQueries({ queryKey: ['injury-clinical', playerId] });
       qc.invalidateQueries({ queryKey: ['medical-dept'] });
-      toast.success(editingId ? 'Lesão atualizada' : 'Lesão registada');
+      toast.success(editingId ? tx('Lesão atualizada') : tx('Lesão registada'));
       setOpen(false);
       setEditingId(null);
       setForm(emptyForm());
     },
-    onError: (e: any) => toast.error('Erro: ' + e.message),
+    onError: (e: any) => toast.error(tx('Erro: ') + e.message),
   });
 
   const remove = useMutation({
@@ -167,7 +168,7 @@ export function PlayerInjuries({ playerId }: Props) {
       qc.invalidateQueries({ queryKey: ['player-injuries', playerId] });
       qc.invalidateQueries({ queryKey: ['active-injuries'] });
       qc.invalidateQueries({ queryKey: ['callup-availability'] });
-      toast.success('Lesão removida');
+      toast.success(tx('Lesão removida'));
     },
   });
 
@@ -187,7 +188,7 @@ export function PlayerInjuries({ playerId }: Props) {
       qc.invalidateQueries({ queryKey: ['player-injuries', playerId] });
       qc.invalidateQueries({ queryKey: ['active-injuries'] });
       qc.invalidateQueries({ queryKey: ['callup-availability'] });
-      toast.success('Alta clínica registada');
+      toast.success(tx('Alta clínica registada'));
     },
   });
 
@@ -236,14 +237,14 @@ export function PlayerInjuries({ playerId }: Props) {
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-semibold">
-                {availability.callable ? 'Disponível para convocatória' : 'Indisponível para convocatória'}
+                {availability.callable ? tx('Disponível para convocatória') : tx('Indisponível para convocatória')}
               </p>
               {statusOpt && (
                 <Badge variant="outline" className={statusOpt.tone}>{statusOpt.label}</Badge>
               )}
               {availability.needsClearance && (
                 <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-                  Aguarda alta clínica
+                  {tx('Aguarda alta clínica')}
                 </Badge>
               )}
             </div>
@@ -252,7 +253,7 @@ export function PlayerInjuries({ playerId }: Props) {
             )}
             {availability.restrictions && (
               <p className="text-xs mt-0.5">
-                <span className="text-muted-foreground">Restrições:</span>{' '}
+                <span className="text-muted-foreground">{tx('Restrições:')}</span>{' '}
                 <span className="font-medium">{availability.restrictions}</span>
               </p>
             )}
@@ -262,52 +263,52 @@ export function PlayerInjuries({ playerId }: Props) {
 
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Stethoscope className="w-5 h-5" /> Histórico de Lesões
+          <Stethoscope className="w-5 h-5" /> {tx('Histórico de Lesões')}
         </h3>
         <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setEditingId(null); setForm(emptyForm()); } }}>
           <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-2" />Registar Lesão</Button>
+            <Button size="sm"><Plus className="w-4 h-4 mr-2" />{tx('Registar Lesão')}</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Editar Lesão' : 'Nova Lesão'}</DialogTitle>
+              <DialogTitle>{editingId ? tx('Editar Lesão') : tx('Nova Lesão')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Data da Lesão *">
+                <Field label={tx('Data da Lesão *')}>
                   <Input type="date" value={form.injury_date} onChange={(e) => setForm({ ...form, injury_date: e.target.value })} />
                 </Field>
-                <Field label="Contexto">
+                <Field label={tx('Contexto')}>
                   <Select value={form.context} onValueChange={(v) => setForm({ ...form, context: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{CONTEXTS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
               </div>
-              <Field label="Como aconteceu">
+              <Field label={tx('Como aconteceu')}>
                 <Select value={form.mechanism || undefined} onValueChange={(v) => setForm({ ...form, mechanism: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{MECHANISMS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
                 </Select>
               </Field>
-              <Field label="O que aconteceu">
-                <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Ex.: caiu sobre o pé esquerdo depois de um salto; saiu a coxear" />
+              <Field label={tx('O que aconteceu')}>
+                <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={tx('Ex.: caiu sobre o pé esquerdo depois de um salto; saiu a coxear')} />
               </Field>
 
               <div className="grid grid-cols-3 gap-4">
-                <Field label="Tipo *">
+                <Field label={tx('Tipo *')}>
                   <Select value={form.injury_type} onValueChange={(v) => setForm({ ...form, injury_type: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{INJURY_TYPES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
-                <Field label="Zona">
+                <Field label={tx('Zona')}>
                   <Select value={form.body_part} onValueChange={(v) => setForm({ ...form, body_part: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{BODY_PARTS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
-                <Field label="Lado">
+                <Field label={tx('Lado')}>
                   <Select value={form.body_side} onValueChange={(v) => setForm({ ...form, body_side: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{BODY_SIDES.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
@@ -316,13 +317,13 @@ export function PlayerInjuries({ playerId }: Props) {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Gravidade">
+                <Field label={tx('Gravidade')}>
                   <Select value={form.severity} onValueChange={(v) => setForm({ ...form, severity: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{SEVERITY_LEVELS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
-                <Field label="Estado Clínico *">
+                <Field label={tx('Estado Clínico *')}>
                   <Select value={form.clinical_status} onValueChange={(v) => setForm({ ...form, clinical_status: v, can_play: v === 'apto' || v === 'condicionado' || v === 'retorno_progressivo' ? form.can_play : false })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{CLINICAL_STATUS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
@@ -332,37 +333,37 @@ export function PlayerInjuries({ playerId }: Props) {
 
               {access?.clinical ? (
                 <>
-                  <Field label="Diagnóstico">
-                    <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} placeholder="Ex: Rotura grau 1 isquiotibiais" />
+                  <Field label={tx('Diagnóstico')}>
+                    <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} placeholder={tx('Ex: Rotura grau 1 isquiotibiais')} />
                   </Field>
-                  <Field label="Profissional Responsável">
-                    <Input value={form.responsible_professional} onChange={(e) => setForm({ ...form, responsible_professional: e.target.value })} placeholder="Médico / Fisioterapeuta" />
+                  <Field label={tx('Profissional Responsável')}>
+                    <Input value={form.responsible_professional} onChange={(e) => setForm({ ...form, responsible_professional: e.target.value })} placeholder={tx('Médico / Fisioterapeuta')} />
                   </Field>
                 </>
               ) : (
                 <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground space-y-2">
-                  <p>O diagnóstico e as notas clínicas são dados de saúde: só o médico e o fisioterapeuta do clube os veem.</p>
-                  <Field label="O que o médico disse (opcional, fica só para o departamento médico)">
+                  <p>{tx('O diagnóstico e as notas clínicas são dados de saúde: só o médico e o fisioterapeuta do clube os veem.')}</p>
+                  <Field label={tx('O que o médico disse (opcional, fica só para o departamento médico)')}>
                     <Input value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: e.target.value })} />
                   </Field>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Data Prevista de Regresso">
+                <Field label={tx('Data Prevista de Regresso')}>
                   <Input type="date" value={form.expected_return_date} onChange={(e) => setForm({ ...form, expected_return_date: e.target.value })} />
                 </Field>
-                <Field label="Data de Alta (regresso efetivo)">
+                <Field label={tx('Data de Alta (regresso efetivo)')}>
                   <Input type="date" value={form.return_date} onChange={(e) => setForm({ ...form, return_date: e.target.value })} />
                 </Field>
               </div>
 
               {access?.clinical && (
                 <>
-                  <Field label="Plano de Tratamento">
+                  <Field label={tx('Plano de Tratamento')}>
                     <Textarea rows={2} value={form.treatment_plan} onChange={(e) => setForm({ ...form, treatment_plan: e.target.value })} />
                   </Field>
-                  <Field label="Observações Clínicas">
+                  <Field label={tx('Observações Clínicas')}>
                     <Textarea rows={2} value={form.clinical_notes} onChange={(e) => setForm({ ...form, clinical_notes: e.target.value })} />
                   </Field>
                 </>
@@ -371,31 +372,31 @@ export function PlayerInjuries({ playerId }: Props) {
               <div className="rounded-md border p-3 space-y-3 bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Pode jogar?</p>
-                    <p className="text-xs text-muted-foreground">Controla bloqueio na convocatória</p>
+                    <p className="text-sm font-medium">{tx('Pode jogar?')}</p>
+                    <p className="text-xs text-muted-foreground">{tx('Controla bloqueio na convocatória')}</p>
                   </div>
                   <Switch checked={form.can_play} onCheckedChange={(c) => setForm({ ...form, can_play: c })} />
                 </div>
-                <Field label="Restrições aplicáveis">
-                  <Input value={form.restrictions} onChange={(e) => setForm({ ...form, restrictions: e.target.value })} placeholder="Ex: máx 20 min, sem contacto" />
+                <Field label={tx('Restrições aplicáveis')}>
+                  <Input value={form.restrictions} onChange={(e) => setForm({ ...form, restrictions: e.target.value })} placeholder={tx('Ex: máx 20 min, sem contacto')} />
                 </Field>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm">Recaída de lesão anterior</p>
+                  <p className="text-sm">{tx('Recaída de lesão anterior')}</p>
                   <Switch checked={form.is_recurrence} onCheckedChange={(c) => setForm({ ...form, is_recurrence: c })} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Treinos Perdidos">
+                <Field label={tx('Treinos Perdidos')}>
                   <Input type="number" min={0} value={form.trainings_missed} onChange={(e) => setForm({ ...form, trainings_missed: Number(e.target.value) || 0 })} />
                 </Field>
-                <Field label="Jogos Perdidos">
+                <Field label={tx('Jogos Perdidos')}>
                   <Input type="number" min={0} value={form.matches_missed} onChange={(e) => setForm({ ...form, matches_missed: Number(e.target.value) || 0 })} />
                 </Field>
               </div>
 
               <Button className="w-full" onClick={() => upsert.mutate()} disabled={!form.injury_type || upsert.isPending}>
-                {editingId ? 'Atualizar' : 'Registar'}
+                {editingId ? tx('Atualizar') : tx('Registar')}
               </Button>
             </div>
           </DialogContent>
@@ -428,8 +429,8 @@ export function PlayerInjuries({ playerId }: Props) {
                           <p className="font-medium">{typeLbl}</p>
                           {sevLbl && <Badge className={`${sevLbl.color} text-white`}>{sevLbl.label}</Badge>}
                           {statusLbl && <Badge variant="outline" className={statusLbl.tone}>{statusLbl.label}</Badge>}
-                          {inj.is_recurrence && <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/30">Recaída</Badge>}
-                          {active && !inj.assessed_at && access?.club && <Badge variant="outline" className="border-accent text-accent">Por avaliar</Badge>}
+                          {inj.is_recurrence && <Badge variant="outline" className="bg-orange-500/10 text-orange-600 border-orange-500/30">{tx('Recaída')}</Badge>}
+                          {active && !inj.assessed_at && access?.club && <Badge variant="outline" className="border-accent text-accent">{tx('Por avaliar')}</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground mt-0.5">
                           {partLbl}{sideLbl && partLbl ? ` (${sideLbl})` : ''}
@@ -437,27 +438,27 @@ export function PlayerInjuries({ playerId }: Props) {
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {format(new Date(inj.injury_date), "d MMM yyyy", { locale: pt })}
-                          {inj.expected_return_date && <> · prev. {format(new Date(inj.expected_return_date), "d MMM yyyy", { locale: pt })}</>}
-                          {inj.return_date && <> → alta {format(new Date(inj.return_date), "d MMM yyyy", { locale: pt })}</>}
-                          {' · '}{out} {out === 1 ? 'dia' : 'dias'} de paragem{inj.return_date ? ` (${severityByDays(out).label.toLowerCase()})` : ''}
+                          {inj.expected_return_date && <> {tx('· prev.')}{' '}{format(new Date(inj.expected_return_date), "d MMM yyyy", { locale: pt })}</>}
+                          {inj.return_date && <> {tx('→ alta')}{' '}{format(new Date(inj.return_date), "d MMM yyyy", { locale: pt })}</>}
+                          {' · '}{out} {out === 1 ? 'dia' : 'dias'} {tx('de paragem')}{inj.return_date ? ` (${severityByDays(out).label.toLowerCase()})` : ''}
                           {mechanismLabel(inj.mechanism) && <> · {mechanismLabel(inj.mechanism)!.toLowerCase()}</>}
                         </p>
                         {inj.restrictions && (
-                          <p className="text-xs mt-1"><span className="text-muted-foreground">Restrições:</span> {inj.restrictions}</p>
+                          <p className="text-xs mt-1"><span className="text-muted-foreground">{tx('Restrições:')}</span> {inj.restrictions}</p>
                         )}
                         {(inj.trainings_missed > 0 || inj.matches_missed > 0) && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            Perdidos: {inj.trainings_missed} treinos · {inj.matches_missed} jogos
+                            {tx('Perdidos:')}{' '}{inj.trainings_missed} {tx('treinos ·')}{' '}{inj.matches_missed} jogos
                           </p>
                         )}
                         {inj.responsible_professional && (
-                          <p className="text-xs text-muted-foreground mt-1">Responsável: {inj.responsible_professional}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{tx('Responsável:')}{' '}{inj.responsible_professional}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
                       {active && (
-                        <Button size="sm" variant="outline" onClick={() => grantClearance.mutate(inj.id)} title="Dar alta clínica">
+                        <Button size="sm" variant="outline" onClick={() => grantClearance.mutate(inj.id)} title={tx('Dar alta clínica')}>
                           <ShieldCheck className="w-4 h-4" />
                         </Button>
                       )}
@@ -481,7 +482,7 @@ export function PlayerInjuries({ playerId }: Props) {
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-emerald-500" />
-            <p>Sem histórico de lesões registado</p>
+            <p>{tx('Sem histórico de lesões registado')}</p>
           </CardContent>
         </Card>
       )}

@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { INJURY_CASE_STATUSES, INJURY_CONTEXTS } from '@/hooks/useMedical';
 import { BODY_AREAS, INJURY_TYPES, INJURY_SEVERITIES } from '@/lib/physio-constants';
+import { tx } from '@/lib/i18n/ui';
 
 export function InjuryCasesTab() {
   const { user } = useAuth();
@@ -68,9 +69,9 @@ export function InjuryCasesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['injury-cases'] });
       setShowDialog(false);
-      toast.success('Caso de lesão aberto!');
+      toast.success(tx('Caso de lesão aberto!'));
     },
-    onError: () => toast.error('Erro ao registar lesão'),
+    onError: () => toast.error(tx('Erro ao registar lesão')),
   });
 
   const getStatusBadge = (status: string) => {
@@ -95,54 +96,54 @@ export function InjuryCasesTab() {
         <div className="flex gap-2 flex-1">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Pesquisar atleta..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+            <Input placeholder={tx('Pesquisar atleta...')} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="Estado" /></SelectTrigger>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder={tx('Estado')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="all">{tx('Todos')}</SelectItem>
               {INJURY_CASE_STATUSES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Novo Caso</Button></DialogTrigger>
+          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />{tx('Novo Caso')}</Button></DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Abrir Caso de Lesão</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{tx('Abrir Caso de Lesão')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label>Atleta *</Label>
+                <Label>{tx('Atleta *')}</Label>
                 <Select value={form.person_id} onValueChange={v => setForm({...form, person_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                   <SelectContent>{players?.map(p => <SelectItem key={p.id} value={p.id}>#{p.number} {p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Zona Corporal *</Label>
+                  <Label>{tx('Zona Corporal *')}</Label>
                   <Select value={form.body_area} onValueChange={v => setForm({...form, body_area: v})}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{BODY_AREAS.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Tipo *</Label>
+                  <Label>{tx('Tipo *')}</Label>
                   <Select value={form.injury_type} onValueChange={v => setForm({...form, injury_type: v})}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={tx('Selecionar')} /></SelectTrigger>
                     <SelectContent>{INJURY_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Gravidade</Label>
+                  <Label>{tx('Gravidade')}</Label>
                   <Select value={form.severity} onValueChange={v => setForm({...form, severity: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{INJURY_SEVERITIES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Contexto</Label>
+                  <Label>{tx('Contexto')}</Label>
                   <Select value={form.context} onValueChange={v => setForm({...form, context: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>{INJURY_CONTEXTS.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
@@ -150,16 +151,16 @@ export function InjuryCasesTab() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Data Evento *</Label><Input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Dias Previsto Ausência</Label><Input type="number" value={form.expected_days_out} onChange={e => setForm({...form, expected_days_out: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Data Evento *')}</Label><Input type="date" value={form.event_date} onChange={e => setForm({...form, event_date: e.target.value})} /></div>
+                <div className="space-y-2"><Label>{tx('Dias Previsto Ausência')}</Label><Input type="number" value={form.expected_days_out} onChange={e => setForm({...form, expected_days_out: e.target.value})} /></div>
               </div>
               <div className="flex items-center justify-between p-3 border rounded-lg">
-                <Label>Recorrência</Label>
+                <Label>{tx('Recorrência')}</Label>
                 <Switch checked={form.is_recurrence} onCheckedChange={c => setForm({...form, is_recurrence: c})} />
               </div>
-              <div className="space-y-2"><Label>Restrições</Label><Textarea value={form.restrictions} onChange={e => setForm({...form, restrictions: e.target.value})} rows={2} /></div>
-              <div className="space-y-2"><Label>Diagnóstico / Notas</Label><Textarea value={form.diagnosis_notes} onChange={e => setForm({...form, diagnosis_notes: e.target.value})} rows={2} /></div>
-              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || !form.body_area || !form.injury_type || createMutation.isPending}>Abrir Caso</Button>
+              <div className="space-y-2"><Label>{tx('Restrições')}</Label><Textarea value={form.restrictions} onChange={e => setForm({...form, restrictions: e.target.value})} rows={2} /></div>
+              <div className="space-y-2"><Label>{tx('Diagnóstico / Notas')}</Label><Textarea value={form.diagnosis_notes} onChange={e => setForm({...form, diagnosis_notes: e.target.value})} rows={2} /></div>
+              <Button className="w-full" onClick={() => createMutation.mutate()} disabled={!form.person_id || !form.body_area || !form.injury_type || createMutation.isPending}>{tx('Abrir Caso')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -170,20 +171,20 @@ export function InjuryCasesTab() {
           {isLoading ? (
             <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
           ) : filtered?.length === 0 ? (
-            <div className="text-center py-12"><AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">Nenhum caso de lesão</p></div>
+            <div className="text-center py-12"><AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">{tx('Nenhum caso de lesão')}</p></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Zona</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Gravidade</TableHead>
-                    <TableHead>Contexto</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Dias Afastado</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>{tx('Atleta')}</TableHead>
+                    <TableHead>{tx('Zona')}</TableHead>
+                    <TableHead>{tx('Tipo')}</TableHead>
+                    <TableHead>{tx('Gravidade')}</TableHead>
+                    <TableHead>{tx('Contexto')}</TableHead>
+                    <TableHead>{tx('Data')}</TableHead>
+                    <TableHead>{tx('Dias Afastado')}</TableHead>
+                    <TableHead>{tx('Estado')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
