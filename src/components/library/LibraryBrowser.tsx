@@ -28,7 +28,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { shareText } from '@/lib/share';
-import { tx } from '@/lib/i18n/ui';
+import { tr, tx } from '@/lib/i18n/ui';
 
 const AGE_TO_TRAINING_GROUP: Record<AgeBand, string> = {
   sub7: 'sub-7', sub9: 'sub-9', sub11: 'sub-11', sub13: 'sub-13',
@@ -46,7 +46,8 @@ type Picked = { drill: AnyDrill; minutes: number; note?: string };
 /** Still image of a drill: starting layout + first movements (animated drills) or the drawn arrows. */
 const stillOf = (d: AnyDrill) => (d.anim ? elementsAt(d.diagram, d.anim, 0, true) : d.diagram);
 const isAnimated = (d: AnyDrill) => !!d.anim || !!autoAnimate(withBall(d.diagram));
-const LIBRARY: AnyDrill[] = DRILLS.map((d) => ({ ...d, source: 'library' as const }));
+// read when shown, so the texts are in the chosen language (the library objects translate on access)
+const libraryDrills = (): AnyDrill[] => DRILLS.map((d) => ({ ...d, source: 'library' as const }));
 
 function agesLabel(ages: AgeBand[]) {
   const shorts = AGE_BANDS.filter((a) => ages.includes(a.value)).map((a) => a.short);
@@ -128,7 +129,7 @@ export function LibraryBrowser() {
 
   const drills = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return [...custom, ...LIBRARY].filter((d) =>
+    return [...custom, ...libraryDrills()].filter((d) =>
       (source === 'all' || d.source === source) &&
       (age === 'all' || d.ages.length === 0 || d.ages.includes(age)) &&
       (category === 'all' || d.category === category) &&
@@ -245,9 +246,9 @@ export function LibraryBrowser() {
           <TabsContent value="drills" className="space-y-4">
             {user && (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {([['all', 'Todos'], ['mine', 'Os meus'], ['club', 'Do clube'], ['library', 'Biblioteca TreinON']] as const).map(([v, label]) => (
+                {([['all', tr('Todos')], ['mine', tr('Os meus')], ['club', tr('Do clube')], ['library', tr('Biblioteca TreinON')]] as const).map(([v, label]) => (
                   <Button key={v} size="sm" variant={source === v ? 'secondary' : 'ghost'} onClick={() => setSource(v)} className="shrink-0">
-                    {label}{v === 'mine' ? ` (${custom.filter((d) => d.source === 'mine').length})` : ''}
+                    {tx(label)}{v === 'mine' ? ` (${custom.filter((d) => d.source === 'mine').length})` : ''}
                   </Button>
                 ))}
               </div>

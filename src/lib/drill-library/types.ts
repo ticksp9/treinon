@@ -1,16 +1,17 @@
 // TreinON drill & session library — free coaching content for teams without staff.
+import { tx } from '@/lib/i18n/ui';
 
 export type AgeBand = 'sub7' | 'sub9' | 'sub11' | 'sub13' | 'sub15' | 'sub17' | 'sub19' | 'senior';
 
 export const AGE_BANDS: { value: AgeBand; label: string; short: string }[] = [
-  { value: 'sub7', label: 'Petizes (Sub-7)', short: 'Sub-7' },
-  { value: 'sub9', label: 'Traquinas (Sub-8/9)', short: 'Sub-9' },
-  { value: 'sub11', label: 'Benjamins (Sub-10/11)', short: 'Sub-11' },
-  { value: 'sub13', label: 'Infantis (Sub-12/13)', short: 'Sub-13' },
-  { value: 'sub15', label: 'Iniciados (Sub-14/15)', short: 'Sub-15' },
-  { value: 'sub17', label: 'Juvenis (Sub-16/17)', short: 'Sub-17' },
-  { value: 'sub19', label: 'Juniores (Sub-18/19)', short: 'Sub-19' },
-  { value: 'senior', label: 'Seniores', short: 'Seniores' },
+  { value: 'sub7', get label() { return tx('Petizes (Sub-7)'); }, get short() { return tx('Sub-7'); } },
+  { value: 'sub9', get label() { return tx('Traquinas (Sub-8/9)'); }, get short() { return tx('Sub-9'); } },
+  { value: 'sub11', get label() { return tx('Benjamins (Sub-10/11)'); }, get short() { return tx('Sub-11'); } },
+  { value: 'sub13', get label() { return tx('Infantis (Sub-12/13)'); }, get short() { return tx('Sub-13'); } },
+  { value: 'sub15', get label() { return tx('Iniciados (Sub-14/15)'); }, get short() { return tx('Sub-15'); } },
+  { value: 'sub17', get label() { return tx('Juvenis (Sub-16/17)'); }, get short() { return tx('Sub-17'); } },
+  { value: 'sub19', get label() { return tx('Juniores (Sub-18/19)'); }, get short() { return tx('Sub-19'); } },
+  { value: 'senior', get label() { return tx('Seniores'); }, get short() { return tx('Seniores'); } },
 ];
 
 export type DrillCategory =
@@ -27,30 +28,30 @@ export type DrillCategory =
   | 'bolas_paradas';
 
 export const DRILL_CATEGORIES: { value: DrillCategory; label: string }[] = [
-  { value: 'aquecimento', label: 'Aquecimento' },
-  { value: 'tecnica', label: 'Técnica individual' },
-  { value: 'passe', label: 'Passe e receção' },
-  { value: 'finalizacao', label: 'Finalização' },
-  { value: 'posse', label: 'Posse de bola' },
-  { value: 'defesa', label: 'Defesa' },
-  { value: 'transicao', label: 'Transições' },
-  { value: 'jogo', label: 'Jogo reduzido' },
-  { value: 'guarda_redes', label: 'Guarda-redes' },
-  { value: 'fisico', label: 'Coordenação e físico' },
-  { value: 'bolas_paradas', label: 'Bolas paradas' },
+  { value: 'aquecimento', get label() { return tx('Aquecimento'); } },
+  { value: 'tecnica', get label() { return tx('Técnica individual'); } },
+  { value: 'passe', get label() { return tx('Passe e receção'); } },
+  { value: 'finalizacao', get label() { return tx('Finalização'); } },
+  { value: 'posse', get label() { return tx('Posse de bola'); } },
+  { value: 'defesa', get label() { return tx('Defesa'); } },
+  { value: 'transicao', get label() { return tx('Transições'); } },
+  { value: 'jogo', get label() { return tx('Jogo reduzido'); } },
+  { value: 'guarda_redes', get label() { return tx('Guarda-redes'); } },
+  { value: 'fisico', get label() { return tx('Coordenação e físico'); } },
+  { value: 'bolas_paradas', get label() { return tx('Bolas paradas'); } },
 ];
 
 export type Equipment = 'bolas' | 'cones' | 'coletes' | 'balizas_pequenas' | 'balizas' | 'escada' | 'arcos' | 'estacas';
 
 export const EQUIPMENT_LABELS: Record<Equipment, string> = {
-  bolas: 'Bolas',
-  cones: 'Cones/sinalizadores',
-  coletes: 'Coletes',
-  balizas_pequenas: 'Balizas pequenas (ou 2 cones)',
-  balizas: 'Balizas',
-  escada: 'Escada de coordenação',
-  arcos: 'Arcos',
-  estacas: 'Estacas',
+  get bolas() { return tx('Bolas'); },
+  get cones() { return tx('Cones/sinalizadores'); },
+  get coletes() { return tx('Coletes'); },
+  get balizas_pequenas() { return tx('Balizas pequenas (ou 2 cones)'); },
+  get balizas() { return tx('Balizas'); },
+  get escada() { return tx('Escada de coordenação'); },
+  get arcos() { return tx('Arcos'); },
+  get estacas() { return tx('Estacas'); },
 };
 
 /** Basic kit every team has: a low-resource drill needs nothing else. */
