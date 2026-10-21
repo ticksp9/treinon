@@ -25,6 +25,7 @@ import { applyPreciseMinutes } from '@/lib/playing-time-seconds';
 import { orderByPosition, partLineup, shortName, type PartLineup } from '@/lib/report-lineup';
 import type { LiveTactics } from '@/lib/live-tactics';
 import { deliverPdf } from '@/lib/native-files';
+import { dateLocale, isEnglish, tr, tx, useT } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -92,15 +93,16 @@ interface MatchReportProps {
 }
 
 const MODALITY_LABELS: Record<string, string> = {
-  football_11: 'Futebol 11',
-  football_9: 'Futebol 9',
-  football_7: 'Futebol 7',
-  football_5: 'Futebol 5',
-  futsal: 'Futsal',
+  football_11: tr('Futebol 11'),
+  football_9: tr('Futebol 9'),
+  football_7: tr('Futebol 7'),
+  football_5: tr('Futebol 5'),
+  futsal: tr('Futsal'),
 };
 
 export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
   const [generating, setGenerating] = useState(false);
+  const t = useT();
   // read ahead, so the PDF is made the moment the coach asks for it
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
   useEffect(() => { let on = true; imageAsDataUrl(crestUrl).then((c) => on && setCrest(c)); return () => { on = false; }; }, [crestUrl]);
@@ -184,8 +186,8 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
     if (i === 0) return enrichedPlayers.filter(p => p.isStarter).map(p => p.player.id);
     const saved = partStartersByIndex?.[String(i + 1)] ?? (i === 1 ? secondHalfStarterIds : null);
     if (saved?.length) return saved.filter(id => enrichedPlayers.some(p => p.player.id === id));
-    const t = partStartMinute[i];
-    return enrichedPlayers.filter(p => p.intervals.some(iv => iv.start <= t && iv.end > t)).map(p => p.player.id);
+    const tm = partStartMinute[i];
+    return enrichedPlayers.filter(p => p.intervals.some(iv => iv.start <= tm && iv.end > tm)).map(p => p.player.id);
   });
   const positionOf = (id: string) => lineups.find(l => l.player_id === id)?.player?.position ?? null;
   const numberOf = (id: string) => lineups.find(l => l.player_id === id)?.player?.number ?? null;
@@ -208,7 +210,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
 
   const goalsFor = match.goals_for || 0;
   const goalsAgainst = match.goals_against || 0;
-  const result = goalsFor > goalsAgainst ? 'Vitória' : goalsFor < goalsAgainst ? 'Derrota' : 'Empate';
+  const result = goalsFor > goalsAgainst ? tr('Vitória') : goalsFor < goalsAgainst ? tr('Derrota') : tr('Empate');
 
   // Helper to determine part from absolute minute
   const getPartLabel = (minute: number) => {
@@ -222,7 +224,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
   };
 
   // Format part times for display
-  const partTimesDisplay = partMinutes.map((m, i) => `${i + 1}ª Parte: ${m}'`).join(' | ');
+  const partTimesDisplay = partMinutes.map((m, i) => `${tx('{{n}}ª Parte', { n: i + 1 })}: ${m}'`).join(' | ');
 
   // Build substitution pairs from events (chronologically ordered)
   const buildSubstitutionPairs = () => {
@@ -309,15 +311,15 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       if (crest) { const h = 18; doc.addImage(crest.dataUrl, 'PNG', 14, 8, h * crest.ratio, h); }
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('RELATORIO DE JOGO', pageWidth / 2, y, { align: 'center' });
+      doc.text(tx('RELATORIO DE JOGO'), pageWidth / 2, y, { align: 'center' });
       y += 12;
 
       // ── Match info ──
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       const matchTitle = match.is_home 
-        ? `${teamName || 'Equipa'} ${goalsFor} - ${goalsAgainst} ${match.opponent_name}`
-        : `${match.opponent_name} ${goalsAgainst} - ${goalsFor} ${teamName || 'Equipa'}`;
+        ? `${teamName || tx('Equipa')} ${goalsFor} - ${goalsAgainst} ${match.opponent_name}`
+        : `${match.opponent_name} ${goalsAgainst} - ${goalsFor} ${teamName || tx('Equipa')}`;
       doc.text(matchTitle, pageWidth / 2, y, { align: 'center' });
       y += 8;
 
@@ -327,11 +329,11 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       
       const matchInfo = [];
       if (match.match_date) {
-        matchInfo.push(format(new Date(match.match_date), "dd/MM/yyyy HH:mm", { locale: pt }));
+        matchInfo.push(format(new Date(match.match_date), "dd/MM/yyyy HH:mm", { locale: dateLocale() }));
       }
-      if (match.competition) matchInfo.push(match.competition);
+      if (match.competition) matchInfo.push(tx(match.competition));
       if (match.location) matchInfo.push(match.location);
-      matchInfo.push(result);
+      matchInfo.push(tx(result));
       
       doc.text(matchInfo.join(' | '), pageWidth / 2, y, { align: 'center' });
       y += 6;
@@ -339,11 +341,11 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       // ── Modality ──
       if (sportType || ruleSnapshot) {
         const modalityLabel = ruleSnapshot
-          ? (MODALITY_LABELS[ruleSnapshot.modality_code] || ruleSnapshot.modality_code)
-          : (sportType ? (MODALITY_LABELS[sportType] || sportType) : '');
+          ? tx(MODALITY_LABELS[ruleSnapshot.modality_code] || ruleSnapshot.modality_code)
+          : (sportType ? tx(MODALITY_LABELS[sportType] || sportType) : '');
         const ageLabel = ruleSnapshot?.age_group_code ? ` | ${ruleSnapshot.age_group_code}` : '';
         const reentryLabel = ruleSnapshot
-          ? (ruleSnapshot.reentry_allowed ? ' | Reentrada permitida' : ' | Sem reentrada')
+          ? (ruleSnapshot.reentry_allowed ? ' | ' + tx('Reentrada permitida') : ' | ' + tx('Sem reentrada'))
           : '';
         doc.text(`${modalityLabel}${ageLabel}${reentryLabel}`, pageWidth / 2, y, { align: 'center' });
         y += 6;
@@ -354,16 +356,16 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       doc.setTextColor(0, 0, 0);
       // the minutes each part was meant to last (e.g. 15 + 15 + 30), not one value for all
       const regulamentarTotal = regulationPartMinutes.reduce((a, b) => a + b, 0);
-      const partTimesLines = partMinutes.map((m, i) => `${i + 1}a Parte: ${m}' (reg: ${regulationPartMinutes[i] ?? halfDuration}')`).join(' | ');
+      const partTimesLines = partMinutes.map((m, i) => tx('{{n}}a Parte: {{min}} (reg: {{reg}})', { n: i + 1, min: `${m}'`, reg: `${regulationPartMinutes[i] ?? halfDuration}'` })).join(' | ');
       doc.text(partTimesLines, pageWidth / 2, y, { align: 'center' });
       y += 5;
-      doc.text(`Total real: ${totalMinutes}' | Regulamentar: ${regulamentarTotal}'`, pageWidth / 2, y, { align: 'center' });
+      doc.text(tx('Total real: {{real}} | Regulamentar: {{reg}}', { real: `${totalMinutes}'`, reg: `${regulamentarTotal}'` }), pageWidth / 2, y, { align: 'center' });
       y += 5;
 
       // ── Tactic and starting line-up, drawn ──
       const start = lineupByPart[0];
       if (start) {
-        addSection('TATICA E ONZE INICIAL');
+        addSection(tx('TATICA E ONZE INICIAL'));
         const pw = 78, ph = 100, px = 14, py = y;
         ensureSpace(ph + 6);
         // pitch (own goal at the bottom)
@@ -386,27 +388,27 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         doc.setTextColor(0, 0, 0);
         // the tactic of every part, beside the pitch
         let ty = py + 4;
-        const tx = px + pw + 8;
+        const tX = px + pw + 8;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-        doc.text(`Tatica: ${start.formation}`, tx, ty); ty += 6;
+        doc.text(tx('Tatica: {{f}}', { f: start.formation }), tX, ty); ty += 6;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-        lineupByPart.forEach((l, i) => { doc.text(`${i + 1}a Parte: ${l?.formation ?? '-'}`, tx, ty); ty += 4.5; });
+        lineupByPart.forEach((l, i) => { doc.text(tx('{{n}}a Parte: {{f}}', { n: i + 1, f: l?.formation ?? '-' }), tX, ty); ty += 4.5; });
         if (start.estimated) {
           ty += 2; doc.setFontSize(8); doc.setTextColor(110, 110, 110);
-          const note = doc.splitTextToSize('Posicoes do onze inicial reconstituidas a partir da tatica do fim do jogo (os jogos novos guardam a tatica de cada parte).', pageWidth - tx - 14);
-          doc.text(note, tx, ty); ty += note.length * 3.6; doc.setTextColor(0, 0, 0);
+          const note = doc.splitTextToSize(tx('Posicoes do onze inicial reconstituidas a partir da tatica do fim do jogo (os jogos novos guardam a tatica de cada parte).'), pageWidth - tX - 14);
+          doc.text(note, tX, ty); ty += note.length * 3.6; doc.setTextColor(0, 0, 0);
         }
         y = py + ph + 4;
       }
 
       // ── Titulares por Parte ──
-      addSection('TITULARES POR PARTE');
+      addSection(tx('TITULARES POR PARTE'));
       doc.setFontSize(10);
       startersByPart.forEach((ids, i) => {
         const list = playersOf(ids, i);
         ensureSpace(15);
         doc.setFont('helvetica', 'bold');
-        doc.text(`${i + 1}a Parte (${list.length})${lineupByPart[i] ? ` - ${lineupByPart[i]!.formation}` : ''}:`, 14, y);
+        doc.text(`${tx('{{n}}a Parte ({{c}})', { n: i + 1, c: list.length })}${lineupByPart[i] ? ` - ${lineupByPart[i]!.formation}` : ''}:`, 14, y);
         y += 5;
         doc.setFont('helvetica', 'normal');
         const names = list.map(p => `${p.player.number || '-'} ${p.player.name}`).join(', ');
@@ -417,18 +419,18 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
 
       // ── Goals ──
       if (goals.length > 0) {
-        addSection('GOLOS');
+        addSection(tx('GOLOS'));
         doc.setFontSize(10);
         goals.forEach(goal => {
           ensureSpace(8);
           const half = getPartLabel(goal.minute);
           if (goal.event_type === 'own_goal') {
-            doc.text(`${goal.minute}' (${half}) - Auto-golo${goal.player ? ` (${goal.player.name})` : ''}`, 14, y);
+            doc.text(`${goal.minute}' (${half}) - ${tx('Auto-golo')}${goal.player ? ` (${goal.player.name})` : ''}`, 14, y);
           } else if (goal.is_opponent) {
             doc.text(`${goal.minute}' (${half}) - ${match.opponent_name}`, 14, y);
           } else {
-            const assistText = goal.assist_player ? ` (Assist: ${goal.assist_player.name})` : '';
-            doc.text(`${goal.minute}' (${half}) - ${goal.player?.name || 'Desconhecido'}${assistText}`, 14, y);
+            const assistText = goal.assist_player ? ` (${tx('Assist')}: ${goal.assist_player.name})` : '';
+            doc.text(`${goal.minute}' (${half}) - ${goal.player?.name || tx('Desconhecido')}${assistText}`, 14, y);
           }
           y += 5;
         });
@@ -436,13 +438,13 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
 
       // ── Cards ──
       if (cards.length > 0) {
-        addSection('CARTOES');
+        addSection(tx('CARTOES'));
         doc.setFontSize(10);
         cards.forEach(card => {
           ensureSpace(8);
           const half = getPartLabel(card.minute);
-          const cardType = card.event_type === 'yellow_card' ? 'Amarelo' : 'Vermelho';
-          const playerName = card.is_opponent ? match.opponent_name : (card.player?.name || 'Desconhecido');
+          const cardType = card.event_type === 'yellow_card' ? tx('Amarelo') : tx('Vermelho');
+          const playerName = card.is_opponent ? match.opponent_name : (card.player?.name || tx('Desconhecido'));
           doc.text(`${card.minute}' (${half}) - ${cardType} - ${playerName}`, 14, y);
           y += 5;
         });
@@ -451,17 +453,17 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       // ── Substitutions ──
       const subPairs = buildSubstitutionPairs();
       if (subPairs.length > 0) {
-        addSection('SUBSTITUICOES');
+        addSection(tx('SUBSTITUICOES'));
         doc.setFontSize(10);
         subPairs.forEach(pair => {
           ensureSpace(8);
-          doc.text(`${pair.minute}' (${pair.part}) - Saiu: ${pair.outName} --> Entrou: ${pair.inName}`, 14, y);
+          doc.text(`${pair.minute}' (${pair.part}) - ${tx('Saiu')}: ${pair.outName} --> ${tx('Entrou')}: ${pair.inName}`, 14, y);
           y += 5;
         });
       }
 
       // ── Player Statistics Table ──
-      addSection('ESTATISTICAS DOS JOGADORES');
+      addSection(tx('ESTATISTICAS DOS JOGADORES'));
       doc.setFontSize(9);
 
       // Column positions
@@ -474,13 +476,13 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       const colObs = 144;
 
       doc.setFont('helvetica', 'bold');
-      doc.text('Jogador', colPlayer, y);
-      doc.text('Min', colMin, y);
-      doc.text('G', colG, y);
-      doc.text('A', colA, y);
-      doc.text('CA', colCA, y);
-      doc.text('CV', colCV, y);
-      doc.text('Obs', colObs, y);
+      doc.text(tx('Jogador'), colPlayer, y);
+      doc.text(t('Min'), colMin, y);
+      doc.text(tx('G'), colG, y);
+      doc.text(tx('A'), colA, y);
+      doc.text(tx('CA'), colCA, y);
+      doc.text(tx('CV'), colCV, y);
+      doc.text(tx('Obs'), colObs, y);
       y += 2;
       doc.line(14, y, pageWidth - 14, y);
       y += 5;
@@ -533,9 +535,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
       ensureSpace(10);
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text('Legenda: G=Golos, A=Assistencias, CA=Cartoes Amarelos, CV=Cartoes Vermelhos, TIT=Titular, E=Entrou, S=Saiu', 14, y);
+      doc.text(tx('Legenda: G=Golos, A=Assistencias, CA=Cartoes Amarelos, CV=Cartoes Vermelhos, TIT=Titular, E=Entrou, S=Saiu'), 14, y);
       y += 4;
-      doc.text('Jogadores a cinzento = nao utilizados (0 minutos)', 14, y);
+      doc.text(tx('Jogadores a cinzento = nao utilizados (0 minutos)'), 14, y);
 
       // ── Footer ──
       const pageCount = doc.getNumberOfPages();
@@ -544,15 +546,15 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text(
-          `Pagina ${i} de ${pageCount} | Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
+          tx('Pagina {{i}} de {{n}} | Gerado em {{when}}', { i, n: pageCount, when: format(new Date(), 'dd/MM/yyyy HH:mm') }),
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
         );
       }
 
-      const fileName = `relatorio_jogo_${match.opponent_name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-      void deliverPdf(doc, fileName, { title: 'Relatório de jogo' });
+      const fileName = `${isEnglish() ? 'match_report' : 'relatorio_jogo'}_${match.opponent_name.replace(/\s+/g, '_').toLowerCase()}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+      void deliverPdf(doc, fileName, { title: tx('Relatório de jogo') });
     } finally {
       setGenerating(false);
     }
@@ -566,11 +568,11 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />
-              Relatório do Jogo
+              {t('Relatório do Jogo')}
             </div>
             <Button onClick={generatePdf} disabled={generating}>
               <FileDown className="w-4 h-4 mr-2" />
-              {generating ? 'A gerar...' : 'Exportar PDF'}
+              {generating ? t('A gerar...') : t('Exportar PDF')}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -578,30 +580,30 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           <div className="text-center">
             <div className="text-2xl font-bold mb-2">
               {match.is_home 
-                ? `${teamName || 'Equipa'} ${goalsFor} - ${goalsAgainst} ${match.opponent_name}`
-                : `${match.opponent_name} ${goalsAgainst} - ${goalsFor} ${teamName || 'Equipa'}`
+                ? `${teamName || t('Equipa')} ${goalsFor} - ${goalsAgainst} ${match.opponent_name}`
+                : `${match.opponent_name} ${goalsAgainst} - ${goalsFor} ${teamName || t('Equipa')}`
               }
             </div>
-            <Badge variant={result === 'Vitória' ? 'default' : result === 'Derrota' ? 'destructive' : 'secondary'}>
-              {result}
+            <Badge variant={result === tr('Vitória') ? 'default' : result === tr('Derrota') ? 'destructive' : 'secondary'}>
+              {t(result)}
             </Badge>
             <div className="text-sm text-muted-foreground mt-2">
               {ruleSnapshot && (
                 <span className="mr-2">
                   <Badge variant="outline" className="mr-1">
-                    {MODALITY_LABELS[ruleSnapshot.modality_code] || ruleSnapshot.modality_code}
+                    {t(MODALITY_LABELS[ruleSnapshot.modality_code] || ruleSnapshot.modality_code)}
                   </Badge>
                   {ruleSnapshot.age_group_code && (
                     <Badge variant="secondary" className="mr-1 capitalize">{ruleSnapshot.age_group_code}</Badge>
                   )}
                   {ruleSnapshot.reentry_allowed ? (
-                    <Badge variant="default" className="text-xs">Reentrada permitida</Badge>
+                    <Badge variant="default" className="text-xs">{t('Reentrada permitida')}</Badge>
                   ) : (
-                    <Badge variant="destructive" className="text-xs">Sem reentrada</Badge>
+                    <Badge variant="destructive" className="text-xs">{t('Sem reentrada')}</Badge>
                   )}
                 </span>
               )}
-              {partTimesDisplay} | Total: {totalMinutes}' (Regulamentar: {regulationPartMinutes.map(m => `${m}'`).join(' + ')} = {regulationPartMinutes.reduce((a, b) => a + b, 0)}')
+              {partTimesDisplay} | {t('Total')}: {totalMinutes}' ({t('Regulamentar')}: {regulationPartMinutes.map(m => `${m}'`).join(' + ')} = {regulationPartMinutes.reduce((a, b) => a + b, 0)}')
             </div>
           </div>
         </CardContent>
@@ -612,13 +614,13 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Titulares por Parte
+            {t('Titulares por Parte')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {lineupByPart[0] && (
             <div className="flex flex-wrap items-start gap-4">
-              <svg viewBox="0 0 78 100" className="w-48 shrink-0 rounded-md" role="img" aria-label={`Onze inicial em ${lineupByPart[0].formation}`}>
+              <svg viewBox="0 0 78 100" className="w-48 shrink-0 rounded-md" role="img" aria-label={t('Onze inicial em {{f}}', { f: lineupByPart[0].formation })}>
                 <rect width="78" height="100" fill="#2a7747" />
                 <g stroke="white" strokeWidth="0.4" fill="none">
                   <rect x="2" y="2" width="74" height="96" /><line x1="2" y1="50" x2="76" y2="50" /><circle cx="39" cy="50" r="9" />
@@ -637,9 +639,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
                 })}
               </svg>
               <div className="space-y-1 text-sm">
-                <p className="font-semibold">Tática: {lineupByPart[0].formation}</p>
-                {lineupByPart.map((l, i) => <p key={i} className="text-muted-foreground">{i + 1}ª Parte: {l?.formation ?? '—'}</p>)}
-                {lineupByPart[0].estimated && <p className="max-w-xs text-xs text-muted-foreground">Posições reconstituídas a partir da tática do fim do jogo. Os jogos novos guardam a tática de cada parte.</p>}
+                <p className="font-semibold">{t('Tática: {{f}}', { f: lineupByPart[0].formation })}</p>
+                {lineupByPart.map((l, i) => <p key={i} className="text-muted-foreground">{t('{{n}}ª Parte', { n: i + 1 })}: {l?.formation ?? '—'}</p>)}
+                {lineupByPart[0].estimated && <p className="max-w-xs text-xs text-muted-foreground">{t('Posições reconstituídas a partir da tática do fim do jogo. Os jogos novos guardam a tática de cada parte.')}</p>}
               </div>
             </div>
           )}
@@ -647,7 +649,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
             const list = playersOf(ids, i);
             return (
               <div key={i}>
-                <div className="text-sm font-medium mb-2">{i + 1}ª Parte ({list.length}){lineupByPart[i] ? ` · ${lineupByPart[i]!.formation}` : ''}</div>
+                <div className="text-sm font-medium mb-2">{t('{{n}}ª Parte', { n: i + 1 })} ({list.length}){lineupByPart[i] ? ` · ${lineupByPart[i]!.formation}` : ''}</div>
                 <div className="flex flex-wrap gap-1">
                   {list.map(p => (
                     <Badge key={p.player.id} variant={i === 0 ? 'secondary' : 'outline'}>
@@ -667,12 +669,12 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-4 h-4 text-green-600" />
-              Golos ({goals.length})
+              {t('Golos ({{n}})', { n: goals.length })}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {goals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sem golos</p>
+              <p className="text-sm text-muted-foreground">{t('Sem golos')}</p>
             ) : (
               goals.map(goal => {
                 const half = getPartLabel(goal.minute);
@@ -681,7 +683,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{goal.minute}' ({half})</Badge>
                       {goal.event_type === 'own_goal' ? (
-                        <span className="text-destructive">Auto-golo</span>
+                        <span className="text-destructive">{t('Auto-golo')}</span>
                       ) : goal.is_opponent ? (
                         <span>{match.opponent_name}</span>
                       ) : (
@@ -690,7 +692,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
                     </div>
                     {goal.assist_player && !goal.is_opponent && (
                       <span className="text-sm text-muted-foreground">
-                        Assist: {goal.assist_player.name}
+                        {t('Assist')}: {goal.assist_player.name}
                       </span>
                     )}
                   </div>
@@ -705,12 +707,12 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-yellow-600" />
-              Cartões ({cards.length})
+              {t('Cartões ({{n}})', { n: cards.length })}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {cards.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sem cartões</p>
+              <p className="text-sm text-muted-foreground">{t('Sem cartões')}</p>
             ) : (
               cards.map(card => {
                 const half = getPartLabel(card.minute);
@@ -732,7 +734,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
-            Estatísticas dos Jogadores
+            {t('Estatísticas dos Jogadores')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -741,17 +743,17 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-2">Jogador</th>
-                    <th className="text-center py-2 px-2">Min</th>
-                    <th className="text-center py-2 px-2">G</th>
-                    <th className="text-center py-2 px-2">A</th>
+                    <th className="text-left py-2 px-2">{t('Jogador')}</th>
+                    <th className="text-center py-2 px-2">{t('Min')}</th>
+                    <th className="text-center py-2 px-2">{t('G')}</th>
+                    <th className="text-center py-2 px-2">{t('A')}</th>
                     <th className="text-center py-2 px-2">
                       <div className="w-4 h-5 bg-yellow-400 rounded-sm mx-auto" />
                     </th>
                     <th className="text-center py-2 px-2">
                       <div className="w-4 h-5 bg-red-500 rounded-sm mx-auto" />
                     </th>
-                    <th className="text-left py-2 px-2">Obs</th>
+                    <th className="text-left py-2 px-2">{t('Obs')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -775,11 +777,11 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
                           <TooltipContent>
                             <div className="text-xs space-y-1">
                               <div className="font-medium">
-                                {stat.partMinutes.map((m, i) => `${i + 1}.ª P ${m}'`).join(' + ')} = {stat.minutesPlayed}' reais
+                                {stat.partMinutes.map((m, i) => `${tx('{{n}}.ª P', { n: i + 1 })} ${m}'`).join(' + ')} = {stat.minutesPlayed}' {t('reais')}
                               </div>
                               {stat.regulationMinutes !== stat.minutesPlayed && (
                                 <div className="text-muted-foreground">
-                                  Regulamentar: {stat.regulationMinutes}'
+                                  {t('Regulamentar')}: {stat.regulationMinutes}'
                                 </div>
                               )}
                               <div className="border-t pt-1">
@@ -817,7 +819,7 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
             </TooltipProvider>
           </div>
           <div className="text-xs text-muted-foreground mt-4">
-            Legenda: G=Golos, A=Assistências, TIT=Titular, E=Entrou, S=Saiu
+            {t('Legenda: G=Golos, A=Assistências, TIT=Titular, E=Entrou, S=Saiu')}
           </div>
         </CardContent>
       </Card>

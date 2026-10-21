@@ -36,6 +36,7 @@ import { imageAsDataUrl } from '@/lib/team-branding';
 import { shareText } from '@/lib/share';
 import { canPlayerPlayInCategory, type Gender } from '@/lib/constants';
 import { deliverPdf } from '@/lib/native-files';
+import { dateLocale, isEnglish, tr, useT } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -97,15 +98,16 @@ const POSITION_CATEGORIES = {
 };
 
 const POSITION_CATEGORY_LABELS: Record<string, string> = {
-  goalkeeper: 'Guarda-Redes',
-  defense: 'Defesas',
-  midfield: 'Médios',
-  attack: 'Atacantes',
-  other: 'Outros',
+  goalkeeper: tr('Guarda-Redes'),
+  defense: tr('Defesas'),
+  midfield: tr('Médios'),
+  attack: tr('Atacantes'),
+  other: tr('Outros'),
 };
 
 export function MatchCallup() {
   const { scopeTeams, defaultTeamId, activeTeamId } = useActiveTeam();
+  const t = useT();
   // switching team at the top of the screen re-scopes this page
   useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
@@ -143,10 +145,10 @@ export function MatchCallup() {
   };
   const NotifyOptions = (
     <div className="space-y-2 rounded-md border p-3">
-      <p className="text-sm font-medium">Enviar a convocatória por email</p>
-      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.parents} onCheckedChange={(v) => setNotify((n) => ({ ...n, parents: v }))} />Pais dos convocados</label>
-      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.players} onCheckedChange={(v) => setNotify((n) => ({ ...n, players: v }))} />Jogadores convocados</label>
-      <p className="text-xs text-muted-foreground">Diz que o jogador está convocado, a data, a hora, o local e o adversário. Numa equipa de clube, o coordenador recebe sempre a convocatória completa.</p>
+      <p className="text-sm font-medium">{t('Enviar a convocatória por email')}</p>
+      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.parents} onCheckedChange={(v) => setNotify((n) => ({ ...n, parents: v }))} />{t('Pais dos convocados')}</label>
+      <label className="flex items-center gap-2 text-sm"><Switch checked={!!notify.players} onCheckedChange={(v) => setNotify((n) => ({ ...n, players: v }))} />{t('Jogadores convocados')}</label>
+      <p className="text-xs text-muted-foreground">{t('Diz que o jogador está convocado, a data, a hora, o local e o adversário. Numa equipa de clube, o coordenador recebe sempre a convocatória completa.')}</p>
     </div>
   );
   const [deleting, setDeleting] = useState(false);
@@ -263,7 +265,7 @@ export function MatchCallup() {
       const blocked = new Map<string, string>();
       (own || []).forEach(p => {
         const r = check(p.birth_date);
-        if (!r.eligible) blocked.set(p.id, `Não pode jogar em ${team?.category}${r.reason ? ` (${r.reason})` : ''}`);
+        if (!r.eligible) blocked.set(p.id, t('Não pode jogar em {{cat}}', { cat: team?.category }) + (r.reason ? ` (${r.reason})` : ''));
       });
 
       // Players from the coach's other teams who are young enough to play here
@@ -279,7 +281,7 @@ export function MatchCallup() {
         // in friendlies the coach can call anyone (with a warning).
         guests = (others || []).map(p => {
           const r = check(p.birth_date);
-          if (!p.birth_date || !r.eligible) blocked.set(p.id, `Não pode jogar em ${team.category} em jogos oficiais${r.reason ? ` (${r.reason})` : ''}`);
+          if (!p.birth_date || !r.eligible) blocked.set(p.id, t('Não pode jogar em {{cat}} em jogos oficiais', { cat: team.category }) + (r.reason ? ` (${r.reason})` : ''));
           return { ...p, fromTeam: otherTeams.find(t => t.id === p.team_id)?.category || otherTeams.find(t => t.id === p.team_id)?.name || 'outra equipa' };
         });
       }
@@ -404,12 +406,12 @@ export function MatchCallup() {
       } else {
         const tooOld = ageBlocked.get(playerId);
         if (tooOld && !isFriendlyMatch) {
-          toast.error(`${tooOld} Num amigável pode convocar quem quiser: mude o tipo de jogo para Amigável.`);
+          toast.error(`${tooOld} ${t('Num amigável pode convocar quem quiser: mude o tipo de jogo para Amigável.')}`);
           return prev;
         }
         const av = availabilityMap.get(playerId);
         if (av && !av.callable) {
-          toast.error(`Bloqueado: ${av.reason || 'jogador indisponível clinicamente'}`);
+          toast.error(t('Bloqueado: {{why}}', { why: av.reason || t('jogador indisponível clinicamente') }));
           return prev;
         }
         next.add(playerId);
@@ -432,7 +434,7 @@ export function MatchCallup() {
   const createMatchAndCallup = async () => {
     if (!user || !selectedTeam) return;
     if (!newMatch.date || !newMatch.time || !newMatch.opponent.trim()) {
-      toast.error('Preencha data, hora e adversário');
+      toast.error(t('Preencha data, hora e adversário'));
       return;
     }
 
@@ -524,7 +526,7 @@ export function MatchCallup() {
       }
       emailCallup(matchData.id, Array.from(selectedPlayers));
 
-      toast.success('Jogo e convocatória criados! A redirecionar para Jogos...');
+      toast.success(t('Jogo e convocatória criados! A redirecionar para Jogos...'));
       setDialogOpen(false);
       setNewMatch({
         date: '',
@@ -578,7 +580,7 @@ export function MatchCallup() {
         if (error) throw error;
       }
 
-      toast.success('Convocatória guardada!');
+      toast.success(t('Convocatória guardada!'));
       emailCallup(selectedMatch, Array.from(selectedPlayers));
     } catch (error: any) {
       toast.error('Erro ao guardar: ' + error.message);
@@ -594,13 +596,13 @@ export function MatchCallup() {
     const running = matchData?.status === 'in_progress';
     const anytime = matchData?.match_type === 'friendly' || !!matchData?.is_test;
     if (running && !anytime) {
-      toast.error('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro.');
+      toast.error(t('Não podes eliminar um jogo de campeonato a decorrer. Termina o jogo primeiro.'));
       return;
     }
 
     if (!confirm(running
-      ? 'Este jogo está a decorrer. Eliminar? O relógio pára e os minutos deixam de contar.'
-      : 'Tem a certeza que deseja eliminar este jogo? Os minutos e golos deixam de contar.')) return;
+      ? t('Este jogo está a decorrer. Eliminar? O relógio pára e os minutos deixam de contar.')
+      : t('Tem a certeza que deseja eliminar este jogo? Os minutos e golos deixam de contar.'))) return;
 
     setDeleting(true);
     try {
@@ -617,7 +619,7 @@ export function MatchCallup() {
 
       if (error) throw error;
 
-      toast.success('Jogo eliminado!');
+      toast.success(t('Jogo eliminado!'));
       setSelectedMatch('');
       fetchMatches();
     } catch (error: any) {
@@ -665,7 +667,7 @@ export function MatchCallup() {
   const updateMatch = async () => {
     if (!user || !selectedMatch) return;
     if (!newMatch.date || !newMatch.time || !newMatch.opponent.trim()) {
-      toast.error('Preencha data, hora e adversário');
+      toast.error(t('Preencha data, hora e adversário'));
       return;
     }
 
@@ -715,7 +717,7 @@ export function MatchCallup() {
       if (error) throw error;
 
       setArrivalTime(newMatch.arrivalTime);
-      toast.success('Jogo atualizado!');
+      toast.success(t('Jogo atualizado!'));
       setEditDialogOpen(false);
       fetchMatches();
     } catch (error: any) {
@@ -734,9 +736,9 @@ export function MatchCallup() {
     if (!match || (match.logistics?.meet_time ?? '') === value) return;
     const logistics = { ...(match.logistics ?? {}), meet_time: value || undefined };
     const { error } = await supabase.from('matches').update({ logistics } as never).eq('id', match.id);
-    if (error) return toast.error('Não foi possível guardar a hora: ' + error.message);
+    if (error) return toast.error(t('Não foi possível guardar a hora: {{msg}}', { msg: error.message }));
     setMatches(prev => prev.map(m => (m.id === match.id ? { ...m, logistics } : m)));
-    toast.success(value ? `Hora de estar no campo: ${value}` : 'Hora de estar no campo apagada.');
+    toast.success(value ? t('Hora de estar no campo: {{time}}', { time: value }) : t('Hora de estar no campo apagada.'));
   };
 
   // Coaches send call-ups to the team's WhatsApp group
@@ -750,18 +752,18 @@ export function MatchCallup() {
       .sort((a, b) => (a.number ?? 999) - (b.number ?? 999))
       .map(p => `${p.number ? `${p.number}. ` : '• '}${p.name}`);
     const text = [
-      `⚽ *CONVOCATÓRIA* — ${team?.name ?? ''}`,
-      `🆚 ${match.opponent_name} (${match.is_home ? 'casa' : 'fora'})`,
-      `📅 ${format(date, "EEEE, dd/MM", { locale: pt })} às ${format(date, 'HH:mm')}`,
-      arrivalTime ? `⏰ No campo às ${arrivalTime}` : '',
+      `⚽ *${t('CONVOCATÓRIA')}* — ${team?.name ?? ''}`,
+      `🆚 ${match.opponent_name} (${match.is_home ? t('casa') : t('fora')})`,
+      `📅 ${format(date, "EEEE, dd/MM", { locale: dateLocale() })} ${t('às')} ${format(date, 'HH:mm')}`,
+      arrivalTime ? `⏰ ${t('No campo às {{time}}', { time: arrivalTime })}` : '',
       match.location ? `📍 ${match.location}` : '',
       '',
-      `*Convocados (${called.length}):*`,
+      `*${t('Convocados ({{n}})', { n: called.length })}:*`,
       ...called,
       '',
-      'Confirmem a presença na app TreinON. 💪',
+      t('Confirmem a presença na app TreinON. 💪'),
     ].filter((l, i, arr) => l !== '' || arr[i - 1] !== '').join('\n');
-    shareText(text, 'Convocatória');
+    shareText(text, t('Convocatória'));
   };
 
   /** the call-up as one A4 page (print, or send to the coordinator) */
@@ -771,17 +773,17 @@ export function MatchCallup() {
     const team = teams.find(t => t.id === selectedTeam);
     const grouped = groupPlayersByPosition();
     const sheet = {
-      teamName: team?.name || 'Equipa', category: team?.category ?? null,
+      teamName: team?.name || t('Equipa'), category: team?.category ?? null,
       opponent: match.opponent_name, matchDate: match.match_date, isHome: match.is_home, location: match.location,
       competition: match.competition, arrivalTime: arrivalTime || null,
       parts: match.part_regulation_minutes?.length ? match.part_regulation_minutes : null,
       crest: crestImg,
       groups: Object.entries(grouped).map(([category, list]) => ({
-        label: POSITION_CATEGORY_LABELS[category],
+        label: t(POSITION_CATEGORY_LABELS[category]),
         players: list.filter(p => selectedPlayers.has(p.id)).map(p => ({ name: p.name, number: p.number ?? null, position: p.position ?? null })),
       })),
     };
-    return { doc: buildCallupPdf(sheet), fileName: callupFileName(sheet), title: `Convocatória vs ${match.opponent_name}` };
+    return { doc: buildCallupPdf(sheet), fileName: callupFileName(sheet), title: t('Convocatória vs {{name}}', { name: match.opponent_name }) };
   };
 
   const printCallup = () => {
@@ -794,7 +796,7 @@ export function MatchCallup() {
     const pdf = callupPdf();
     if (!pdf) return;
     const how = await shareOrDownloadPdf(pdf.doc, pdf.fileName, pdf.title);
-    if (how === 'downloaded') toast.success('PDF descarregado. Anexe-o no email ou na mensagem ao coordenador.');
+    if (how === 'downloaded') toast.success(t('PDF descarregado. Anexe-o no email ou na mensagem ao coordenador.'));
   };
 
   const selectedMatchData = matches.find(m => m.id === selectedMatch);
@@ -834,7 +836,7 @@ export function MatchCallup() {
           <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Sem Equipas</h3>
           <p className="text-muted-foreground">
-            Crie uma equipa primeiro para gerar convocatórias.
+            {t('Crie uma equipa primeiro para gerar convocatórias.')}
           </p>
         </CardContent>
       </Card>
@@ -848,19 +850,19 @@ export function MatchCallup() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Folha de Convocatória
+            {t('Folha de Convocatória')}
           </CardTitle>
           <CardDescription>
-            Crie um novo jogo e selecione os jogadores a convocar
+            {t('Crie um novo jogo e selecione os jogadores a convocar')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Equipa</Label>
+              <Label>{t('Equipa')}</Label>
               <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma equipa" />
+                  <SelectValue placeholder={t('Selecione uma equipa')} />
                 </SelectTrigger>
                 <SelectContent>
                   {teams.map(team => (
@@ -873,20 +875,20 @@ export function MatchCallup() {
             </div>
 
             <div className="space-y-2">
-              <Label>Jogo</Label>
+              <Label>{t('Jogo')}</Label>
               <Select value={selectedMatch} onValueChange={setSelectedMatch}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um jogo" />
+                  <SelectValue placeholder={t('Selecione um jogo')} />
                 </SelectTrigger>
                 <SelectContent>
                   {matches.map(match => (
                     <SelectItem key={match.id} value={match.id}>
                       <div className="flex items-center gap-2">
                         {match.is_test && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">TESTE</Badge>
+                          <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">{t('TESTE')}</Badge>
                         )}
                         {match.status === 'in_progress' && (
-                          <Badge variant="destructive" className="text-[10px] px-1 py-0">A decorrer</Badge>
+                          <Badge variant="destructive" className="text-[10px] px-1 py-0">{t('A decorrer')}</Badge>
                         )}
                         <span>
                           {format(new Date(match.match_date), "dd/MM")} - {match.is_home ? 'vs' : '@'} {match.opponent_name}
@@ -899,7 +901,7 @@ export function MatchCallup() {
             </div>
 
             <div className="space-y-2">
-              <Label>Hora de estar no campo</Label>
+              <Label>{t('Hora de estar no campo')}</Label>
               <Input
                 type="time"
                 value={arrivalTime}
@@ -907,7 +909,7 @@ export function MatchCallup() {
                 onBlur={() => saveArrivalTime(arrivalTime)}
                 placeholder="HH:MM"
                 disabled={!selectedMatch}
-                aria-label="Hora de estar no campo"
+                aria-label={t('Hora de estar no campo')}
               />
             </div>
 
@@ -916,20 +918,20 @@ export function MatchCallup() {
                 <DialogTrigger asChild>
                   <Button className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Novo Jogo
+                    {t('Novo Jogo')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>Criar Novo Jogo e Convocatória</DialogTitle>
+                    <DialogTitle>{t('Criar Novo Jogo e Convocatória')}</DialogTitle>
                     <DialogDescription>
-                      Preencha os dados do jogo para criar automaticamente a convocatória
+                      {t('Preencha os dados do jogo para criar automaticamente a convocatória')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     {/* Match Type */}
                     <div className="space-y-2">
-                      <Label>Tipo de Jogo</Label>
+                      <Label>{t('Tipo de Jogo')}</Label>
                       <RadioGroup
                         value={newMatch.matchType}
                         onValueChange={v => {
@@ -950,9 +952,9 @@ export function MatchCallup() {
                           <div>
                             <Label htmlFor="championship" className="cursor-pointer font-medium flex items-center gap-1">
                               <Trophy className="w-4 h-4" />
-                              Campeonato
+                              {t('Campeonato')}
                             </Label>
-                            <p className="text-xs text-muted-foreground">Formato da equipa</p>
+                            <p className="text-xs text-muted-foreground">{t('Formato da equipa')}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50">
@@ -960,9 +962,9 @@ export function MatchCallup() {
                           <div>
                             <Label htmlFor="friendly" className="cursor-pointer font-medium flex items-center gap-1">
                               <Users className="w-4 h-4" />
-                              Amigável
+                              {t('Amigável')}
                             </Label>
-                            <p className="text-xs text-muted-foreground">Configurável</p>
+                            <p className="text-xs text-muted-foreground">{t('Configurável')}</p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-muted/50">
@@ -970,9 +972,9 @@ export function MatchCallup() {
                           <div>
                             <Label htmlFor="tournament" className="cursor-pointer font-medium flex items-center gap-1">
                               <Trophy className="w-4 h-4" />
-                              Torneio
+                              {t('Torneio')}
                             </Label>
-                            <p className="text-xs text-muted-foreground">Tempo bloqueado</p>
+                            <p className="text-xs text-muted-foreground">{t('Tempo bloqueado')}</p>
                           </div>
                         </div>
                       </RadioGroup>
@@ -981,11 +983,11 @@ export function MatchCallup() {
                     {newMatch.matchType === 'championship' && (
                       <>
                         <div className="space-y-2">
-                          <Label>Competição</Label>
+                          <Label>{t('Competição')}</Label>
                           <Input
                             value={newMatch.competition}
                             onChange={e => setNewMatch(prev => ({ ...prev, competition: e.target.value }))}
-                            placeholder="Ex: Campeonato Distrital"
+                            placeholder={t('Ex: Campeonato Distrital')}
                           />
                         </div>
                       </>
@@ -993,7 +995,7 @@ export function MatchCallup() {
 
                     {/* Parts: number and minutes of each one (e.g. Sub-12 F7: 15 + 15 + 30) */}
                     <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                      <Label>Partes e minutos</Label>
+                      <Label>{t('Partes e minutos')}</Label>
                       <PartMinutesEditor
                         value={currentParts()}
                         onChange={(partMinutes) => setNewMatch(prev => ({ ...prev, partMinutes, partsCount: partMinutes.length, partDurationMinutes: partMinutes[0] }))}
@@ -1002,15 +1004,15 @@ export function MatchCallup() {
                       />
                       <p className="text-xs text-muted-foreground">
                         {newMatch.matchType === 'championship'
-                          ? 'Vem do formato da equipa (Equipas → equipa → Formato de jogo). Pode ajustar para este jogo.'
-                          : newMatch.matchType === 'tournament' ? '⚠️ Valores bloqueados após iniciar o jogo' : 'Amigável: como combinar com o adversário.'}
+                          ? t('Vem do formato da equipa (Equipas → equipa → Formato de jogo). Pode ajustar para este jogo.')
+                          : newMatch.matchType === 'tournament' ? t('⚠️ Valores bloqueados após iniciar o jogo') : t('Amigável: como combinar com o adversário.')}
                       </p>
                     </div>
 
                     {/* Date and Time */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Data do Jogo *</Label>
+                        <Label>{t('Data do Jogo *')}</Label>
                         <Input
                           type="date"
                           value={newMatch.date}
@@ -1018,7 +1020,7 @@ export function MatchCallup() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Hora do Jogo *</Label>
+                        <Label>{t('Hora do Jogo *')}</Label>
                         <Input
                           type="time"
                           value={newMatch.time}
@@ -1029,17 +1031,17 @@ export function MatchCallup() {
 
                     {/* Opponent */}
                     <div className="space-y-2">
-                      <Label>Adversário *</Label>
+                      <Label>{t('Adversário *')}</Label>
                       <Input
                         value={newMatch.opponent}
                         onChange={e => setNewMatch(prev => ({ ...prev, opponent: e.target.value }))}
-                        placeholder="Nome do adversário"
+                        placeholder={t('Nome do adversário')}
                       />
                     </div>
 
                     {/* Home/Away */}
                     <div className="space-y-2">
-                      <Label>Local</Label>
+                      <Label>{t('Local')}</Label>
                       <div className="flex gap-2">
                         <Button
                           type="button"
@@ -1048,7 +1050,7 @@ export function MatchCallup() {
                           onClick={() => setNewMatch(prev => ({ ...prev, isHome: true }))}
                         >
                           <Home className="w-4 h-4 mr-2" />
-                          Casa
+                          {t('Casa')}
                         </Button>
                         <Button
                           type="button"
@@ -1057,24 +1059,24 @@ export function MatchCallup() {
                           onClick={() => setNewMatch(prev => ({ ...prev, isHome: false }))}
                         >
                           <Plane className="w-4 h-4 mr-2" />
-                          Fora
+                          {t('Fora')}
                         </Button>
                       </div>
                     </div>
 
                     {/* Location */}
                     <div className="space-y-2">
-                      <Label>Campo/Pavilhão</Label>
+                      <Label>{t('Campo/Pavilhão')}</Label>
                       <Input
                         value={newMatch.location}
                         onChange={e => setNewMatch(prev => ({ ...prev, location: e.target.value }))}
-                        placeholder="Ex: Estádio Municipal"
+                        placeholder={t('Ex: Estádio Municipal')}
                       />
                     </div>
 
                     {/* when the players must be at the ground */}
                     <div className="space-y-2">
-                      <Label>Hora de estar no campo</Label>
+                      <Label>{t('Hora de estar no campo')}</Label>
                       <Input
                         type="time"
                         value={newMatch.arrivalTime}
@@ -1108,10 +1110,10 @@ export function MatchCallup() {
                       />
                       <div className="flex-1">
                         <Label htmlFor="is-test-create" className="cursor-pointer font-medium text-amber-800 dark:text-amber-200">
-                          Jogo de teste
+                          {t('Jogo de teste')}
                         </Label>
                         <p className="text-xs text-amber-600 dark:text-amber-300">
-                          Não conta para estatísticas, relatórios ou PDFs
+                          {t('Não conta para estatísticas, relatórios ou PDFs')}
                         </p>
                       </div>
                     </div>
@@ -1121,13 +1123,13 @@ export function MatchCallup() {
                     {/* Quick Player Selection */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <Label>Jogadores Convocados ({selectedPlayers.size})</Label>
+                        <Label>{t('Jogadores Convocados ({{n}})', { n: selectedPlayers.size })}</Label>
                         <div className="flex gap-2">
                           <Button type="button" variant="outline" size="sm" onClick={selectAll}>
-                            Todos
+                            {t('Todos')}
                           </Button>
                           <Button type="button" variant="outline" size="sm" onClick={deselectAll}>
-                            Limpar
+                            {t('Limpar')}
                           </Button>
                         </div>
                       </div>
@@ -1153,7 +1155,7 @@ export function MatchCallup() {
                     {NotifyOptions}
 
                     <Button onClick={createMatchAndCallup} className="w-full" disabled={creating}>
-                      {creating ? 'A criar...' : 'Criar Jogo e Convocatória'}
+                      {creating ? t('A criar...') : t('Criar Jogo e Convocatória')}
                     </Button>
                   </div>
                 </DialogContent>
@@ -1172,20 +1174,20 @@ export function MatchCallup() {
                     </span>
                     {selectedMatchData.is_test && (
                       <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400">
-                        TESTE
+                        {t('TESTE')}
                       </Badge>
                     )}
                     <Badge variant={selectedMatchData.is_home ? 'default' : 'secondary'}>
-                      {selectedMatchData.is_home ? 'CASA' : 'FORA'}
+                      {selectedMatchData.is_home ? t('CASA') : t('FORA')}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>{format(new Date(selectedMatchData.match_date), "dd 'de' MMMM 'de' yyyy", { locale: pt })}</span>
+                    <span>{format(new Date(selectedMatchData.match_date), isEnglish() ? 'd MMMM yyyy' : "dd 'de' MMMM 'de' yyyy", { locale: dateLocale() })}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span>Jogo às {format(new Date(selectedMatchData.match_date), "HH:mm")}</span>
+                    <span>{t('Jogo às {{time}}', { time: format(new Date(selectedMatchData.match_date), 'HH:mm') })}</span>
                   </div>
                   {selectedMatchData.location && (
                     <div className="flex items-center gap-2">
@@ -1197,11 +1199,11 @@ export function MatchCallup() {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={openEditDialog}>
                     <Edit className="w-4 h-4 mr-1" />
-                    Editar
+                    {t('Editar')}
                   </Button>
                   <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={deleteMatch} disabled={deleting}>
                     <Trash2 className="w-4 h-4 mr-1" />
-                    {deleting ? 'A eliminar...' : 'Eliminar'}
+                    {deleting ? t('A eliminar...') : t('Eliminar')}
                   </Button>
                 </div>
               </div>
@@ -1233,7 +1235,7 @@ export function MatchCallup() {
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>Editar Jogo</DialogTitle>
+                <DialogTitle>{t('Editar Jogo')}</DialogTitle>
                 <DialogDescription>
                   Atualize os dados do jogo
                 </DialogDescription>
@@ -1241,7 +1243,7 @@ export function MatchCallup() {
               <div className="space-y-4">
                 {/* Match Type */}
                 <div className="space-y-2">
-                  <Label>Tipo de Jogo</Label>
+                  <Label>{t('Tipo de Jogo')}</Label>
                   <RadioGroup
                     value={newMatch.matchType}
                     onValueChange={v => setNewMatch(prev => ({ ...prev, matchType: v as 'championship' | 'friendly' }))}
@@ -1249,22 +1251,22 @@ export function MatchCallup() {
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="championship" id="edit-championship" />
-                      <Label htmlFor="edit-championship" className="cursor-pointer">Campeonato</Label>
+                      <Label htmlFor="edit-championship" className="cursor-pointer">{t('Campeonato')}</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="friendly" id="edit-friendly" />
-                      <Label htmlFor="edit-friendly" className="cursor-pointer">Amigável</Label>
+                      <Label htmlFor="edit-friendly" className="cursor-pointer">{t('Amigável')}</Label>
                     </div>
                   </RadioGroup>
                 </div>
 
                 {newMatch.matchType === 'championship' && (
                   <div className="space-y-2">
-                    <Label>Competição</Label>
+                    <Label>{t('Competição')}</Label>
                     <Input
                       value={newMatch.competition}
                       onChange={e => setNewMatch(prev => ({ ...prev, competition: e.target.value }))}
-                      placeholder="Ex: Campeonato Distrital"
+                      placeholder={t('Ex: Campeonato Distrital')}
                     />
                   </div>
                 )}
@@ -1272,7 +1274,7 @@ export function MatchCallup() {
                 {/* Date and Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Data do Jogo *</Label>
+                    <Label>{t('Data do Jogo *')}</Label>
                     <Input
                       type="date"
                       value={newMatch.date}
@@ -1280,7 +1282,7 @@ export function MatchCallup() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Hora do Jogo *</Label>
+                    <Label>{t('Hora do Jogo *')}</Label>
                     <Input
                       type="time"
                       value={newMatch.time}
@@ -1290,7 +1292,7 @@ export function MatchCallup() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Hora de estar no campo</Label>
+                  <Label>{t('Hora de estar no campo')}</Label>
                   <Input
                     type="time"
                     value={newMatch.arrivalTime}
@@ -1300,9 +1302,9 @@ export function MatchCallup() {
 
                 {/* Parts: a wrong number of minutes is fixed here too, until kick-off */}
                 <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                  <Label>Partes e minutos</Label>
+                  <Label>{t('Partes e minutos')}</Label>
                   {selectedMatchData?.status === 'in_progress' ? (
-                    <p className="text-sm text-muted-foreground">O jogo já começou: as partes mudam-se no próprio jogo em direto.</p>
+                    <p className="text-sm text-muted-foreground">{t('O jogo já começou: as partes mudam-se no próprio jogo em direto.')}</p>
                   ) : (
                     <PartMinutesEditor
                       value={currentParts()}
@@ -1315,17 +1317,17 @@ export function MatchCallup() {
 
                 {/* Opponent */}
                 <div className="space-y-2">
-                  <Label>Adversário *</Label>
+                  <Label>{t('Adversário *')}</Label>
                   <Input
                     value={newMatch.opponent}
                     onChange={e => setNewMatch(prev => ({ ...prev, opponent: e.target.value }))}
-                    placeholder="Nome do adversário"
+                    placeholder={t('Nome do adversário')}
                   />
                 </div>
 
                 {/* Home/Away */}
                 <div className="space-y-2">
-                  <Label>Local</Label>
+                  <Label>{t('Local')}</Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -1334,7 +1336,7 @@ export function MatchCallup() {
                       onClick={() => setNewMatch(prev => ({ ...prev, isHome: true }))}
                     >
                       <Home className="w-4 h-4 mr-2" />
-                      Casa
+                      {t('Casa')}
                     </Button>
                     <Button
                       type="button"
@@ -1343,18 +1345,18 @@ export function MatchCallup() {
                       onClick={() => setNewMatch(prev => ({ ...prev, isHome: false }))}
                     >
                       <Plane className="w-4 h-4 mr-2" />
-                      Fora
+                      {t('Fora')}
                     </Button>
                   </div>
                 </div>
 
                 {/* Location */}
                 <div className="space-y-2">
-                  <Label>Campo/Pavilhão</Label>
+                  <Label>{t('Campo/Pavilhão')}</Label>
                   <Input
                     value={newMatch.location}
                     onChange={e => setNewMatch(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Ex: Estádio Municipal"
+                    placeholder={t('Ex: Estádio Municipal')}
                   />
                 </div>
 
@@ -1367,16 +1369,16 @@ export function MatchCallup() {
                   />
                   <div className="flex-1">
                     <Label htmlFor="is-test-edit" className="cursor-pointer font-medium text-amber-800 dark:text-amber-200">
-                      Jogo de teste
+                      {t('Jogo de teste')}
                     </Label>
                     <p className="text-xs text-amber-600 dark:text-amber-300">
-                      Não conta para estatísticas, relatórios ou PDFs
+                      {t('Não conta para estatísticas, relatórios ou PDFs')}
                     </p>
                   </div>
                 </div>
 
                 <Button onClick={updateMatch} className="w-full" disabled={creating}>
-                  {creating ? 'A atualizar...' : 'Atualizar Jogo'}
+                  {creating ? t('A atualizar...') : t('Atualizar Jogo')}
                 </Button>
               </div>
             </DialogContent>
@@ -1390,11 +1392,11 @@ export function MatchCallup() {
           <CardContent className="py-8 text-center">
             <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground mb-4">
-              Não existem jogos agendados para esta equipa.
+              {t('Não existem jogos agendados para esta equipa.')}
             </p>
             <Button onClick={() => setDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Criar Primeiro Jogo
+              {t('Criar Primeiro Jogo')}
             </Button>
           </CardContent>
         </Card>
@@ -1406,24 +1408,24 @@ export function MatchCallup() {
           <CardHeader>
             <div className="flex justify-between items-center flex-wrap gap-4">
               <div>
-                <CardTitle>Jogadores Convocados</CardTitle>
+                <CardTitle>{t('Jogadores Convocados')}</CardTitle>
                 <CardDescription>
-                  {selectedPlayers.size} de {players.length} jogadores selecionados
+                  {t('{{n}} de {{total}} jogadores selecionados', { n: selectedPlayers.size, total: players.length })}
                 </CardDescription>
               </div>
               <div className="flex gap-2 flex-wrap">
                 <Button variant="outline" size="sm" onClick={selectAll}>
-                  Todos
+                  {t('Todos')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={deselectAll}>
-                  Limpar
+                  {t('Limpar')}
                 </Button>
                 <Separator orientation="vertical" className="h-8" />
                 <Button variant="outline" size="sm" onClick={printCallup} disabled={selectedPlayers.size === 0}>
                   <Printer className="w-4 h-4 mr-2" />
-                  Imprimir
+                  {t('Imprimir')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={sendCallupPdf} disabled={selectedPlayers.size === 0} title="Folha da convocatória em PDF, para enviar ao coordenador">
+                <Button variant="outline" size="sm" onClick={sendCallupPdf} disabled={selectedPlayers.size === 0} title={t('Folha da convocatória em PDF, para enviar ao coordenador')}>
                   <FileDown className="w-4 h-4 mr-2" />
                   PDF
                 </Button>
@@ -1432,7 +1434,7 @@ export function MatchCallup() {
                   WhatsApp
                 </Button>
                 <Button onClick={saveCallup}>
-                  Guardar
+                  {t('Guardar')}
                 </Button>
               </div>
             </div>
@@ -1456,7 +1458,7 @@ export function MatchCallup() {
                     <div
                       key={player.id}
                       onClick={() => !blocked && togglePlayer(player.id)}
-                      title={blocked ? `Bloqueado: ${ageReason || av?.reason || 'indisponível'}` : av?.restrictions || ''}
+                      title={blocked ? t('Bloqueado: {{why}}', { why: ageReason || av?.reason || t('indisponível') }) : av?.restrictions || ''}
                       className={`flex flex-col gap-1 p-2 rounded-lg border transition-all text-sm ${
                         blocked
                           ? 'bg-red-500/5 border-red-500/40 opacity-60 cursor-not-allowed'
@@ -1485,12 +1487,12 @@ export function MatchCallup() {
                       </div>
                       {player.fromTeam && (
                         <Badge variant="outline" className="w-fit text-[10px] py-0 px-1 border-primary/40 text-primary">
-                          Sobe do {player.fromTeam}
+                          {t('Sobe do {{team}}', { team: player.fromTeam })}
                         </Badge>
                       )}
                       {ageReason && (
                         <Badge variant="outline" className={`w-fit text-[10px] py-0 px-1 ${isFriendlyMatch ? 'border-amber-500/40 text-amber-600' : 'border-red-500/40 text-red-600'}`}>
-                          {isFriendlyMatch ? 'Fora do escalão (amigável)' : 'Idade acima do escalão'}
+                          {isFriendlyMatch ? t('Fora do escalão (amigável)') : t('Idade acima do escalão')}
                         </Badge>
                       )}
                       {(blocked || restricted) && !ageReason && statusOpt && (
@@ -1528,7 +1530,7 @@ export function MatchCallup() {
           <CardContent className="py-8 text-center">
             <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              Esta equipa não tem jogadores registados.
+              {t('Esta equipa não tem jogadores registados.')}
             </p>
           </CardContent>
         </Card>

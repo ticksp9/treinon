@@ -5,8 +5,8 @@
  */
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import { deliverPdf, isNativeApp } from '@/lib/native-files';
+import { dateLocale, isEnglish, tx } from '@/lib/i18n/ui';
 
 export interface CallupPlayer { name: string; number: number | null; position: string | null }
 export interface CallupGroup { label: string; players: CallupPlayer[] }
@@ -38,7 +38,7 @@ export function callupLayout(groups: CallupGroup[]) {
 }
 
 export const callupFileName = (s: Pick<CallupSheet, 'teamName' | 'opponent' | 'matchDate'>) =>
-  `convocatoria-${s.teamName}-vs-${s.opponent}-${format(new Date(s.matchDate), 'yyyy-MM-dd')}`
+  `${isEnglish() ? 'call-up' : 'convocatoria'}-${s.teamName}-vs-${s.opponent}-${format(new Date(s.matchDate), 'yyyy-MM-dd')}`
     .normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.pdf';
 
 export function buildCallupPdf(s: CallupSheet): jsPDF {
@@ -49,7 +49,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   // header band
   doc.setFillColor(30, 41, 59); doc.rect(0, 0, W, 28, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text('CONVOCATÓRIA', M, 13);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text(tx('CONVOCATÓRIA'), M, 13);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(12);
   doc.text(`${s.teamName}${s.category ? ` (${s.category})` : ''}`, M, 21);
   doc.setFillColor(249, 115, 22); doc.rect(0, 28, W, 1.5, 'F');
@@ -63,13 +63,13 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   // the match
   const when = new Date(s.matchDate);
   const facts: [string, string][] = [
-    ['Jogo', `${s.isHome ? s.teamName : s.opponent} vs ${s.isHome ? s.opponent : s.teamName}`],
-    ['Data', format(when, "EEEE, dd/MM/yyyy", { locale: pt })],
-    ['Hora do jogo', format(when, 'HH:mm')],
-    ...(s.arrivalTime ? [['No campo às', s.arrivalTime] as [string, string]] : []),
-    ['Local', `${s.location || '—'} (${s.isHome ? 'casa' : 'fora'})`],
-    ['Competição', s.competition || 'Campeonato'],
-    ...(partsText(s.parts) ? [['Tempo de jogo', partsText(s.parts)!] as [string, string]] : []),
+    [tx('Jogo'), `${s.isHome ? s.teamName : s.opponent} vs ${s.isHome ? s.opponent : s.teamName}`],
+    [tx('Data'), format(when, "EEEE, dd/MM/yyyy", { locale: dateLocale() })],
+    [tx('Hora do jogo'), format(when, 'HH:mm')],
+    ...(s.arrivalTime ? [[tx('No campo às'), s.arrivalTime] as [string, string]] : []),
+    [tx('Local'), `${s.location || '—'} (${s.isHome ? tx('casa') : tx('fora')})`],
+    [tx('Competição'), s.competition ? tx(s.competition) : tx('Campeonato')],
+    ...(partsText(s.parts) ? [[tx('Tempo de jogo'), partsText(s.parts)!] as [string, string]] : []),
   ];
   doc.setTextColor(15, 23, 42);
   let y = 39;
@@ -91,7 +91,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   doc.setDrawColor(30, 41, 59); doc.setLineWidth(0.6); doc.line(M, y, W - M, y);
   y += 4;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-  doc.text(`Convocados (${total})`, M, y + 3);
+  doc.text(tx('Convocados ({{n}})', { n: total }), M, y + 3);
   y += 12;
 
   // players, two columns
@@ -119,9 +119,9 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
   // footer: always at the bottom of the same page
   doc.setDrawColor(30, 41, 59); doc.setLineWidth(0.3); doc.line(W - M - 60, 272, W - M, 272);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(71, 85, 105);
-  doc.text('O treinador', W - M - 30, 277, { align: 'center' });
+  doc.text(tx('O treinador'), W - M - 30, 277, { align: 'center' });
   doc.setFontSize(8); doc.setTextColor(148, 163, 184);
-  doc.text(`Total de convocados: ${total} · Gerado no TreinON em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, M, 287);
+  doc.text(tx('Total de convocados: {{n}} · Gerado no TreinON em {{when}}', { n: total, when: format(new Date(), 'dd/MM/yyyy HH:mm') }), M, 287);
   return doc;
 }
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
-import { languages } from '@/lib/i18n';
+import { languages, READY_LANGUAGES } from '@/lib/i18n';
 
 export function useLanguage() {
   const { i18n } = useTranslation();
@@ -10,7 +10,8 @@ export function useLanguage() {
 
   useEffect(() => {
     const loadLanguagePreference = async () => {
-      let languageToUse = 'pt';
+      // what was chosen on this device; the account's choice wins when there is one
+      let languageToUse = (() => { try { return localStorage.getItem('language') || 'pt'; } catch { return 'pt'; } })();
 
       // If user is authenticated, fetch from profile
       if (user) {
@@ -25,13 +26,9 @@ export function useLanguage() {
           // Also update localStorage
           localStorage.setItem('language', profile.language);
         }
-      } else {
-        // For non-authenticated users, use localStorage
-        const storedLanguage = localStorage.getItem('language');
-        if (storedLanguage) {
-          languageToUse = storedLanguage;
-        }
       }
+      // only the languages the app is translated into
+      if (!(READY_LANGUAGES as readonly string[]).includes(languageToUse)) languageToUse = 'pt';
 
       // Apply language
       if (languageToUse !== i18n.language) {
