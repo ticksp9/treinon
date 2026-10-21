@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useT, tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -40,12 +41,12 @@ interface EventSheetProps {
 const NO_ASSIST = '__none__';
 
 const EVENT_TYPES = [
-  { value: 'goal', label: '⚽ Golo', icon: '⚽' },
-  { value: 'own_goal', label: '⚽ Auto-golo', icon: '⚽' },
-  { value: 'yellow_card', label: '🟨 Cartão amarelo', icon: '🟨' },
-  { value: 'red_card', label: '🟥 Cartão vermelho', icon: '🟥' },
-  { value: 'substitution_in', label: '↗ Entrada', icon: '↗' },
-  { value: 'substitution_out', label: '↘ Saída', icon: '↘' },
+  { value: 'goal', get label() { return tx('⚽ Golo'); }, icon: '⚽' },
+  { value: 'own_goal', get label() { return tx('⚽ Auto-golo'); }, icon: '⚽' },
+  { value: 'yellow_card', get label() { return tx('🟨 Cartão amarelo'); }, icon: '🟨' },
+  { value: 'red_card', get label() { return tx('🟥 Cartão vermelho'); }, icon: '🟥' },
+  { value: 'substitution_in', get label() { return tx('↗ Entrada'); }, icon: '↗' },
+  { value: 'substitution_out', get label() { return tx('↘ Saída'); }, icon: '↘' },
 ];
 
 export function EventSheet({
@@ -57,6 +58,7 @@ export function EventSheet({
   defaultPlayerId,
   onSubmit,
 }: EventSheetProps) {
+  const t = useT();
   const [eventType, setEventType] = useState(defaultEventType);
   const [minute, setMinute] = useState(currentMinute);
   const [playerId, setPlayerId] = useState(defaultPlayerId || '');
@@ -66,11 +68,11 @@ export function EventSheet({
 
   const handleSubmit = () => {
     if (!eventType) {
-      toast.error('Selecione o tipo de evento.');
+      toast.error(t('Selecione o tipo de evento.'));
       return;
     }
     if (minute < 0) {
-      toast.error('Minuto inválido.');
+      toast.error(t('Minuto inválido.'));
       return;
     }
 
@@ -97,14 +99,14 @@ export function EventSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-h-[80vh] rounded-t-2xl">
         <SheetHeader className="pb-2">
-          <SheetTitle>Registar evento</SheetTitle>
-          <SheetDescription>Adicione um evento ao jogo.</SheetDescription>
+          <SheetTitle>{t('Registar evento')}</SheetTitle>
+          <SheetDescription>{t('Adicione um evento ao jogo.')}</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 pb-6">
           {/* Event type - big touch targets */}
           <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Tipo de evento</Label>
+            <Label className="text-xs text-muted-foreground mb-2 block">{t('Tipo de evento')}</Label>
             <div className="grid grid-cols-3 gap-2">
               {EVENT_TYPES.map(et => (
                 <button
@@ -128,7 +130,7 @@ export function EventSheet({
 
           {/* Minute */}
           <div>
-            <Label className="text-xs text-muted-foreground">Minuto</Label>
+            <Label className="text-xs text-muted-foreground">{t('Minuto')}</Label>
             <Input
               type="number"
               min={0}
@@ -147,7 +149,7 @@ export function EventSheet({
                 onClick={() => setIsOpponent(false)}
                 className="flex-1"
               >
-                Nossa equipa
+                {t('Nossa equipa')}
               </Button>
               <Button
                 variant={isOpponent ? 'default' : 'outline'}
@@ -155,7 +157,7 @@ export function EventSheet({
                 onClick={() => setIsOpponent(true)}
                 className="flex-1"
               >
-                Adversário
+                {t('Adversário')}
               </Button>
             </div>
           )}
@@ -163,10 +165,10 @@ export function EventSheet({
           {/* Player */}
           {!isOpponent && (
             <div>
-              <Label className="text-xs text-muted-foreground">Jogador</Label>
+              <Label className="text-xs text-muted-foreground">{t('Jogador')}</Label>
               <Select value={playerId} onValueChange={setPlayerId}>
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecionar jogador" />
+                  <SelectValue placeholder={t('Selecionar jogador')} />
                 </SelectTrigger>
                 <SelectContent>
                   {players.map(p => (
@@ -182,14 +184,14 @@ export function EventSheet({
           {/* Assist for goals */}
           {eventType === 'goal' && !isOpponent && (
             <div>
-              <Label className="text-xs text-muted-foreground">Assistência (opcional)</Label>
+              <Label className="text-xs text-muted-foreground">{t('Assistência (opcional)')}</Label>
               {/* "none" needs a real value: an empty one makes the list component throw */}
               <Select value={assistPlayerId || NO_ASSIST} onValueChange={(v) => setAssistPlayerId(v === NO_ASSIST ? '' : v)}>
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Selecionar (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_ASSIST}>Nenhuma</SelectItem>
+                  <SelectItem value={NO_ASSIST}>{t('Nenhuma')}</SelectItem>
                   {players.filter(p => p.id !== playerId).map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.number ? `${p.number} - ` : ''}{p.name}
@@ -203,10 +205,10 @@ export function EventSheet({
           {/* Actions */}
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 h-12">
-              Cancelar
+              {t('Cancelar')}
             </Button>
             <Button onClick={handleSubmit} className="flex-1 h-12">
-              Guardar evento
+              {t('Guardar evento')}
             </Button>
           </div>
         </div>

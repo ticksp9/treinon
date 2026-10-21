@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSquadProfiles } from '@/hooks/useSquadProfiles';
 import { ratingBg, ratingTone } from '@/lib/player-card';
 import { cn } from '@/lib/utils';
+import { useT, tx } from '@/lib/i18n/ui';
 
 interface SquadRow { player_id: string; lineupId: string | null; name: string; number: number | null; position: string | null; foot: string | null; starter: boolean }
 
@@ -30,6 +31,7 @@ export const footLabel = (f: string | null | undefined) => (f ? FOOT[f.toLowerCa
 const trend = (t?: string) => (t === 'up' ? '▲' : t === 'down' ? '▼' : '');
 
 export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onAbsent, absences = {} }: Props) {
+  const t = useT();
   const calledIds = new Set(called.map((c) => c.player_id));
   const { data: roster = [] } = useQuery({
     queryKey: ['prep-roster', teamId],
@@ -60,15 +62,15 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onAbsent
           )}
         </td>
         <td className="py-1.5 text-center text-xs font-semibold">{r.position ?? '–'}</td>
-        <td className="py-1.5 text-center text-xs" title="Pé preferido">{footLabel(r.foot)}</td>
+        <td className="py-1.5 text-center text-xs" title={tx('Pé preferido')}>{footLabel(r.foot)}</td>
         <td className="py-1.5 text-center"><span className={cn('rounded px-1 font-mono text-xs font-bold', ratingBg(p?.ability))}>{p?.ability?.toFixed(1) ?? '—'}</span></td>
         <td className={cn('py-1.5 text-center font-mono text-xs', ratingTone(p?.form.average))}>{p?.form.average != null ? `${p.form.average.toFixed(1)}${trend(p.form.trend)}` : '—'}</td>
         <td className="py-1.5 text-right font-mono text-xs">{p?.seasonMinutes ?? 0}'</td>
         <td className="py-1 text-right">
-          {kind === 'out' && <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" onClick={() => onCallUp(r.player_id)} aria-label={`Convocar ${r.name}`} title="Convocar"><Plus className="h-4 w-4" /></Button>}
+          {kind === 'out' && <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" onClick={() => onCallUp(r.player_id)} aria-label={tx('Convocar {{name}}', { name: r.name })} title={tx('Convocar')}><Plus className="h-4 w-4" /></Button>}
           {kind !== 'out' && (
-            <Button size="sm" variant="ghost" className="h-7 px-1.5 text-xs text-destructive hover:text-destructive" onClick={() => onAbsent(r.player_id)} aria-label={`${r.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar">
-              <UserX className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Ausente</span>
+            <Button size="sm" variant="ghost" className="h-7 px-1.5 text-xs text-destructive hover:text-destructive" onClick={() => onAbsent(r.player_id)} aria-label={tx('{{name}} está ausente: retirar do jogo', { name: r.name })} title={tx('Não veio ao jogo: retirar')}>
+              <UserX className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">{t('Ausente')}</span>
             </Button>
           )}
         </td>
@@ -87,25 +89,25 @@ export function PrepSquadPanel({ teamId, called, maxStarters, onCallUp, onAbsent
 
   return (
     <div className="space-y-1.5">
-    <p className="text-xs text-muted-foreground">Faltou alguém (doença, lesão…)? Toque em <span className="font-semibold text-destructive">Ausente</span> para o tirar deste jogo antes de começar.</p>
+    <p className="text-xs text-muted-foreground">{t('Faltou alguém (doença, lesão…)? Toque em')} <span className="font-semibold text-destructive">{t('Ausente')}</span> {t('para o tirar deste jogo antes de começar.')}</p>
     <div className="overflow-x-auto rounded-md border">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-[11px] uppercase tracking-wide text-muted-foreground">
             <th className="py-1.5 font-medium">Nº</th>
-            <th className="py-1.5 text-left font-medium">Jogador</th>
-            <th className="py-1.5 font-medium">Pos</th>
-            <th className="py-1.5 font-medium" title="Pé preferido">Pé</th>
-            <th className="py-1.5 font-medium">Nota</th>
-            <th className="py-1.5 font-medium">Forma</th>
-            <th className="py-1.5 text-right font-medium" title="Minutos esta época">Min</th>
+            <th className="py-1.5 text-left font-medium">{t('Jogador')}</th>
+            <th className="py-1.5 font-medium">{t('Pos')}</th>
+            <th className="py-1.5 font-medium" title={t('Pé preferido')}>{t('Pé')}</th>
+            <th className="py-1.5 font-medium">{t('Nota')}</th>
+            <th className="py-1.5 font-medium">{t('Forma')}</th>
+            <th className="py-1.5 text-right font-medium" title={t('Minutos esta época')}>{t('Min')}</th>
             <th />
           </tr>
         </thead>
         <tbody>
-          <Section title={`Titulares (${starters.length}/${maxStarters})`} rows={starters} kind="starter" empty="Arraste jogadores para o campo." />
-          <Section title={`Suplentes (${subs.length})`} rows={subs} kind="sub" empty="Sem suplentes." />
-          <Section title={`Não convocados (${out.length})`} rows={out} kind="out" empty="Todo o plantel está convocado." />
+          <Section title={t('Titulares ({{n}}/{{max}})', { n: starters.length, max: maxStarters })} rows={starters} kind="starter" empty={t('Arraste jogadores para o campo.')} />
+          <Section title={t('Suplentes ({{n}})', { n: subs.length })} rows={subs} kind="sub" empty={t('Sem suplentes.')} />
+          <Section title={t('Não convocados ({{n}})', { n: out.length })} rows={out} kind="out" empty={t('Todo o plantel está convocado.')} />
         </tbody>
       </table>
     </div>

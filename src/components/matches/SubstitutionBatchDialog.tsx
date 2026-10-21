@@ -18,6 +18,7 @@ import {
   validateSubstitutionBatch,
 } from '@/lib/substitution-batch-service';
 import type { MatchEventForCalc } from '@/lib/match-playing-time';
+import { useT } from '@/lib/i18n/ui';
 
 export interface BatchPlayer {
   id: string;
@@ -57,6 +58,7 @@ interface SubstitutionBatchDialogProps {
 }
 
 export function SubstitutionBatchDialog(props: SubstitutionBatchDialogProps) {
+  const t = useT();
   const isMobile = useIsMobile();
   const Container = isMobile ? Sheet : Dialog;
   const Content = isMobile ? SheetContent : DialogContent;
@@ -101,12 +103,13 @@ function BatchBody({
   sportType,
   playerPlayTimes,
   onCommit,
-  title = 'Substituições',
+  title,
   initialSubstitutions,
   availableSlots,
   currentSlotByPlayerId,
   Header, Title, Description, Footer,
 }: BodyProps) {
+  const t = useT();
   const [draft, setDraft] = useState<SubstitutionBatchDraft>(() => createSubstitutionDraft(matchId));
   const [minute, setMinute] = useState<number>(defaultMinute);
   const [committing, setCommitting] = useState(false);
@@ -224,22 +227,22 @@ function BatchBody({
       <Header className="pb-2">
         <Title className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-2">
-            <ArrowRightLeft className="w-4 h-4" /> {title}
+            <ArrowRightLeft className="w-4 h-4" /> {title ?? t('Substituições')}
           </span>
           <Badge variant="outline" className="font-mono">{minute}'</Badge>
         </Title>
         <Description className="flex items-center gap-2 text-xs flex-wrap">
-          <span>Em campo: {currentOnFieldIds.length}/{maxOnField}</span>
+          <span>{t('Em campo: {{n}}/{{max}}', { n: currentOnFieldIds.length, max: maxOnField })}</span>
           <span>•</span>
-          <span>Reentrada: {reentryAllowed ? 'Sim' : 'Não'}</span>
+          <span>{t('Reentrada')}: {reentryAllowed ? t('Sim') : t('Não')}</span>
           <span>•</span>
-          <span>{draft.substitutions.length} linha(s) pendentes</span>
+          <span>{t('{{n}} linha(s) pendentes', { n: draft.substitutions.length })}</span>
         </Description>
       </Header>
 
       {editableMinute && (
         <div className="mb-3">
-          <Label className="text-xs">Minuto do lote</Label>
+          <Label className="text-xs">{t('Minuto do lote')}</Label>
           <Input
             type="number"
             min={0}
@@ -269,12 +272,12 @@ function BatchBody({
                 <Badge variant="outline" className="mt-1.5 shrink-0">#{idx + 1}</Badge>
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[10px] uppercase text-muted-foreground">Sai</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground">{t('Sai')}</Label>
                     <Select
                       value={row.playerOutId || undefined}
                       onValueChange={(v) => handleUpdateRow(row.tempId, { playerOutId: v })}
                     >
-                      <SelectTrigger className="h-9"><SelectValue placeholder="Quem sai" /></SelectTrigger>
+                      <SelectTrigger className="h-9"><SelectValue placeholder={t('Quem sai')} /></SelectTrigger>
                       <SelectContent>
                         {outOptions.map(p => (
                           <SelectItem key={p.player_id} value={p.player_id}>
@@ -286,12 +289,12 @@ function BatchBody({
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-[10px] uppercase text-muted-foreground">Entra</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground">{t('Entra')}</Label>
                     <Select
                       value={row.playerInId || undefined}
                       onValueChange={(v) => handleUpdateRow(row.tempId, { playerInId: v })}
                     >
-                      <SelectTrigger className="h-9"><SelectValue placeholder="Quem entra" /></SelectTrigger>
+                      <SelectTrigger className="h-9"><SelectValue placeholder={t('Quem entra')} /></SelectTrigger>
                       <SelectContent>
                         {inOptions.map(p => (
                           <SelectItem key={p.player_id} value={p.player_id}>
@@ -303,7 +306,7 @@ function BatchBody({
                   </div>
                   {availableSlots && availableSlots.length > 0 && (
                     <div className="sm:col-span-2">
-                      <Label className="text-[10px] uppercase text-muted-foreground">Slot destino</Label>
+                      <Label className="text-[10px] uppercase text-muted-foreground">{t('Slot destino')}</Label>
                       <Select
                         value={row.slotId || undefined}
                         onValueChange={(v) => {
@@ -312,7 +315,7 @@ function BatchBody({
                         }}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="(manter slot do que sai)" />
+                          <SelectValue placeholder={t('(manter slot do que sai)')} />
                         </SelectTrigger>
                         <SelectContent>
                           {availableSlots.map(s => (
@@ -330,7 +333,7 @@ function BatchBody({
                   size="icon"
                   className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
                   onClick={() => handleRemoveRow(row.tempId)}
-                  aria-label="Remover linha"
+                  aria-label={t('Remover linha')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -343,8 +346,8 @@ function BatchBody({
               )}
               {row.playerOutId && row.playerInId && rowIssues.length === 0 && (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  Sai <span className="font-medium text-foreground">{findPlayer(row.playerOutId)?.player.name ?? '—'}</span>
-                  {' '}/ Entra <span className="font-medium text-foreground">{findPlayer(row.playerInId)?.player.name ?? '—'}</span>
+                  {t('Sai')} <span className="font-medium text-foreground">{findPlayer(row.playerOutId)?.player.name ?? '—'}</span>
+                  {' '}/ {t('Entra')} <span className="font-medium text-foreground">{findPlayer(row.playerInId)?.player.name ?? '—'}</span>
                 </div>
               )}
             </div>
@@ -358,7 +361,7 @@ function BatchBody({
           className="w-full"
           onClick={handleAddRow}
         >
-          <Plus className="w-4 h-4 mr-1" /> Adicionar outra substituição
+          <Plus className="w-4 h-4 mr-1" /> {t('Adicionar outra substituição')}
         </Button>
       </div>
 
@@ -371,10 +374,10 @@ function BatchBody({
 
       <Footer className="gap-2 sm:gap-2">
         <Button variant="outline" onClick={handleCancelClick} disabled={committing}>
-          <X className="w-4 h-4 mr-1" /> Cancelar
+          <X className="w-4 h-4 mr-1" /> {t('Cancelar')}
         </Button>
         <Button onClick={handleConfirm} disabled={!validation.valid || committing}>
-          <Check className="w-4 h-4 mr-1" /> {committing ? 'A confirmar…' : 'OK'}
+          <Check className="w-4 h-4 mr-1" /> {committing ? t('A confirmar…') : 'OK'}
         </Button>
       </Footer>
     </>

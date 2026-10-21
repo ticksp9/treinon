@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 // Match type configurations
 
 export const MATCH_TYPES = {
@@ -49,11 +50,11 @@ export const COMMON_DURATION_OPTIONS = [
  * Get the part label for display (e.g., "1ª Parte", "2ª Parte")
  */
 export function getPartLabel(partNumber: number, totalParts: number): string {
-  if (totalParts === 1) return 'Período Único';
+  if (totalParts === 1) return tx('Período Único');
   if (totalParts === 2) {
-    return partNumber === 1 ? '1ª Parte' : '2ª Parte';
+    return partNumber === 1 ? tx('1ª Parte') : tx('2ª Parte');
   }
-  return `${partNumber}ª Parte`;
+  return tx('{{n}}ª Parte', { n: partNumber });
 }
 
 /**
@@ -61,12 +62,12 @@ export function getPartLabel(partNumber: number, totalParts: number): string {
  */
 export function getEndPartLabel(currentPart: number, totalParts: number): string {
   if (currentPart >= totalParts) {
-    return 'Terminar Jogo';
+    return tx('Terminar Jogo');
   }
   if (totalParts === 2) {
-    return currentPart === 1 ? 'Terminar 1ª Parte' : 'Terminar 2ª Parte';
+    return currentPart === 1 ? tx('Terminar 1ª Parte') : tx('Terminar 2ª Parte');
   }
-  return `Terminar ${currentPart}ª Parte`;
+  return tx('Terminar {{n}}ª Parte', { n: currentPart });
 }
 
 /**
@@ -74,9 +75,9 @@ export function getEndPartLabel(currentPart: number, totalParts: number): string
  */
 export function getStartPartLabel(nextPart: number, totalParts: number): string {
   if (totalParts === 2) {
-    return `Iniciar ${nextPart === 2 ? '2ª' : '1ª'} Parte`;
+    return nextPart === 2 ? tx('Iniciar 2ª Parte') : tx('Iniciar 1ª Parte');
   }
-  return `Iniciar ${nextPart}ª Parte`;
+  return tx('Iniciar {{n}}ª Parte', { n: nextPart });
 }
 
 /**

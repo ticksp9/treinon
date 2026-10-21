@@ -24,6 +24,7 @@ import { fitScore, type LiveTactics, tacticsFormation } from '@/lib/live-tactics
 import { formatClock } from '@/lib/playing-time-seconds';
 import { cn } from '@/lib/utils';
 import { ratingBg } from '@/lib/player-card';
+import { useT } from '@/lib/i18n/ui';
 
 const NEW_FORMATION = '__new__';
 
@@ -111,6 +112,7 @@ const FIT_CLASS: Record<ReturnType<typeof positionFit>, string> = {
 };
 
 export function LivePitch({ sportType, tactics, players, bench, disabled, mode = 'live', onFillSlot, onBench, onAbsent, absentable, teamTactics, onKeepTactic, onMoveSlot, onResetPositions, onSelectPlayer, selectionResetKey, onFormationChange, onSwap, onSubstitute, onEvent }: Props) {
+  const t = useT();
   const setup = mode === 'setup';
   const [sel, setSel] = useState<Selection>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number; label: string } | null>(null);
@@ -223,10 +225,10 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
   });
 
   const hint = !sel
-    ? (onMoveSlot ? 'Arraste um jogador: para outro (troca), ou para um espaço livre (muda a posição).' : 'Arraste um jogador, ou toque para o selecionar.')
+    ? (onMoveSlot ? t('Arraste um jogador: para outro (troca), ou para um espaço livre (muda a posição).') : t('Arraste um jogador, ou toque para o selecionar.'))
     : sel.kind === 'pitch'
-      ? 'Toque noutra posição para trocar, ou num suplente para substituir.'
-      : setup ? 'Toque no titular a trocar, ou numa posição livre.' : 'Toque no jogador em campo que vai sair.';
+      ? t('Toque noutra posição para trocar, ou num suplente para substituir.')
+      : setup ? t('Toque no titular a trocar, ou numa posição livre.') : t('Toque no jogador em campo que vai sair.');
 
   return (
     <div className="space-y-3">
@@ -238,41 +240,41 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             {!formations.some((f) => f.code === tactics.formation) && !inMyTactics && <SelectItem value={tactics.formation}>{tactics.formation}</SelectItem>}
             {myTactics.length > 0 && (
               <SelectGroup>
-                <SelectLabel>As nossas táticas</SelectLabel>
+                <SelectLabel>{t('As nossas táticas')}</SelectLabel>
                 {myTactics.map((f) => <SelectItem key={f.code} value={f.code}>{f.isDefault ? '★ ' : ''}{f.label}</SelectItem>)}
               </SelectGroup>
             )}
             <SelectGroup>
-              {myTactics.length > 0 && <SelectLabel>Outras formações</SelectLabel>}
+              {myTactics.length > 0 && <SelectLabel>{t('Outras formações')}</SelectLabel>}
               {otherFormations.map((f) => <SelectItem key={f.code} value={f.code}>{f.name}</SelectItem>)}
             </SelectGroup>
-            <SelectItem value={NEW_FORMATION} className="font-medium text-primary">+ Nova formação…</SelectItem>
+            <SelectItem value={NEW_FORMATION} className="font-medium text-primary">{t('+ Nova formação…')}</SelectItem>
           </SelectContent>
         </Select>
         {setup && !disabled && teamTactics?.default && tactics.formation !== teamTactics.default && (
           <button type="button" className="flex shrink-0 items-center gap-1 rounded border border-primary bg-primary/10 px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
-            onClick={() => onFormationChange(teamTactics.default!)} title="Mudar este jogo para a tática da equipa">
-            <Star className="h-3.5 w-3.5 fill-current" />Usar a nossa tática: {teamTactics.default}
+            onClick={() => onFormationChange(teamTactics.default!)} title={t('Mudar este jogo para a tática da equipa')}>
+            <Star className="h-3.5 w-3.5 fill-current" />{t('Usar a nossa tática: {{code}}', { code: teamTactics.default })}
           </button>
         )}
         {onResetPositions && !disabled && tactics.layout && Object.keys(tactics.layout).length > 0 && (
-          <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted" onClick={onResetPositions} title="Voltar às posições da formação">
-            Repor posições
+          <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted" onClick={onResetPositions} title={t('Voltar às posições da formação')}>
+            {t('Repor posições')}
           </button>
         )}
         {onKeepTactic && !disabled && !isDefaultTactic && (
           <button type="button" className="flex shrink-0 items-center gap-1 rounded border px-2 py-1.5 text-xs font-medium hover:bg-muted"
             onClick={() => onKeepTactic(tactics.formation, inMyTactics)}
-            title={inMyTactics ? 'Os próximos jogos abrem com esta tática' : 'Juntar esta formação às táticas da equipa'}>
-            <Star className="h-3.5 w-3.5" />{inMyTactics ? 'Tornar a nossa tática por defeito' : 'Guardar nas nossas táticas'}
+            title={inMyTactics ? t('Os próximos jogos abrem com esta tática') : t('Juntar esta formação às táticas da equipa')}>
+            <Star className="h-3.5 w-3.5" />{inMyTactics ? t('Tornar a nossa tática por defeito') : t('Guardar nas nossas táticas')}
           </button>
         )}
         {customFormationCodes(sportType).includes(tactics.formation) && !disabled && (
-          <button type="button" className="shrink-0 rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label={`Apagar a formação ${tactics.formation} da lista`} title="Apagar esta formação da minha lista"
+          <button type="button" className="shrink-0 rounded p-1.5 text-muted-foreground hover:text-destructive" aria-label={t('Apagar a formação {{code}} da lista', { code: tactics.formation })} title={t('Apagar esta formação da minha lista')}
             onClick={async () => {
-              if (!window.confirm(`Apagar a formação ${tactics.formation} da sua lista? Este jogo continua com ela até escolher outra.`)) return;
+              if (!window.confirm(t('Apagar a formação {{code}} da sua lista? Este jogo continua com ela até escolher outra.', { code: tactics.formation }))) return;
               await removeCustomFormation((await supabase.auth.getUser()).data.user?.id, sportType, tactics.formation);
-              toast.success(`Formação ${tactics.formation} apagada da lista.`);
+              toast.success(t('Formação {{code}} apagada da lista.', { code: tactics.formation }));
             }}>
             <ListX className="h-4 w-4" />
           </button>
@@ -303,7 +305,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                   !p && sel && 'animate-pulse',
                 )}
                 style={{ left: `${slot.x * 100}%`, bottom: `${slot.y * 100}%`, touchAction: 'none' }}
-                aria-label={p ? `${p.name}, ${slot.label}` : `${slot.label} livre`}
+                aria-label={p ? `${p.name}, ${slot.label}` : t('{{pos}} livre', { pos: slot.label })}
               >
                 <span
                   className={cn(
@@ -315,7 +317,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                 >
                   {p ? (p.number ?? '•') : slot.label}
                   {p?.tags?.includes('C') && (
-                    <span className="absolute -bottom-1 -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-accent-foreground" title="Capitão">C</span>
+                    <span className="absolute -bottom-1 -left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[9px] font-bold text-accent-foreground" title={t('Capitão')}>{t('C')}</span>
                   )}
                   {p && (p.goals > 0 || p.yellow > 0 || p.red > 0) && (
                     <span className="absolute -right-2 -top-2 flex gap-0.5">
@@ -330,16 +332,16 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
                     <span className="flex items-center gap-0.5">
                       <span
                         className={cn('rounded px-1 text-[9px] font-bold leading-4', FIT_CLASS[fit])}
-                        title={fit === 'out' ? `Fora de posição (natural: ${p.position})` : p.position ? `Posição natural: ${p.position}` : 'Posição'}
+                        title={fit === 'out' ? t('Fora de posição (natural: {{pos}})', { pos: p.position }) : p.position ? t('Posição natural: {{pos}}', { pos: p.position }) : t('Posição')}
                       >
                         {slot.label}
                       </span>
                       {setup && p.ability != null && (
-                        <span className={cn('rounded px-1 font-mono text-[9px] font-bold leading-4', ratingBg(p.ability))} title="Nota da última avaliação">{p.ability.toFixed(1)}</span>
+                        <span className={cn('rounded px-1 font-mono text-[9px] font-bold leading-4', ratingBg(p.ability))} title={t('Nota da última avaliação')}>{p.ability.toFixed(1)}</span>
                       )}
                     </span>
                     {!setup && (
-                      <span className="h-1 w-10 overflow-hidden rounded bg-black/40" title={`Frescura estimada ${p.freshness}%`}>
+                      <span className="h-1 w-10 overflow-hidden rounded bg-black/40" title={t('Frescura estimada {{n}}%', { n: p.freshness })}>
                         <span className={cn('block h-full', freshnessColor(p.freshness))} style={{ width: `${p.freshness}%` }} />
                       </span>
                     )}
@@ -359,25 +361,25 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             {selectedPlayer.number ? `${selectedPlayer.number}. ` : ''}{selectedPlayer.name}
             <span className="ml-2 font-mono text-xs text-muted-foreground">
               {setup
-                ? `${selectedPlayer.position ?? '—'} · nota ${selectedPlayer.ability?.toFixed(1) ?? '—'} · forma ${selectedPlayer.formAvg?.toFixed(1) ?? '—'}`
-                : `${formatClock(selectedPlayer.seconds)} · frescura ${selectedPlayer.freshness}%`}
+                ? `${selectedPlayer.position ?? '—'} · ${t('nota')} ${selectedPlayer.ability?.toFixed(1) ?? '—'} · ${t('forma')} ${selectedPlayer.formAvg?.toFixed(1) ?? '—'}`
+                : `${formatClock(selectedPlayer.seconds)} · ${t('frescura')} ${selectedPlayer.freshness}%`}
             </span>
           </span>
           {sel?.kind === 'pitch' && setup && onBench && (
-            <Button size="sm" variant="outline" onClick={() => { onBench(sel.playerId); setSel(null); }}>Para o banco</Button>
+            <Button size="sm" variant="outline" onClick={() => { onBench(sel.playerId); setSel(null); }}>{t('Para o banco')}</Button>
           )}
           {sel?.kind === 'pitch' && !setup && (
             <>
-              <Button size="sm" variant="outline" onClick={() => { onEvent('goal', sel.playerId); setSel(null); }}>⚽ Golo</Button>
+              <Button size="sm" variant="outline" onClick={() => { onEvent('goal', sel.playerId); setSel(null); }}>{t('⚽ Golo')}</Button>
               <Button size="sm" variant="outline" onClick={() => { onEvent('yellow_card', sel.playerId); setSel(null); }}>
-                <span className="mr-1 inline-block h-3.5 w-2.5 rounded-sm bg-yellow-400" />Amarelo
+                <span className="mr-1 inline-block h-3.5 w-2.5 rounded-sm bg-yellow-400" />{t('Amarelo')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => { onEvent('red_card', sel.playerId); setSel(null); }}>
-                <span className="mr-1 inline-block h-3.5 w-2.5 rounded-sm bg-red-600" />Vermelho
+                <span className="mr-1 inline-block h-3.5 w-2.5 rounded-sm bg-red-600" />{t('Vermelho')}
               </Button>
             </>
           )}
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSel(null)} aria-label="Cancelar seleção"><X className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setSel(null)} aria-label={t('Cancelar seleção')}><X className="h-4 w-4" /></Button>
         </div>
       )}
 
@@ -387,10 +389,10 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
       <div data-drop="bencharea" className={cn('rounded-md', setup && 'border border-dashed p-2', beside && 'relative w-[8.75rem] shrink-0')}>
         <div className={cn(beside && 'absolute inset-0 flex flex-col', beside && setup && 'p-2')}>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <Repeat className="h-3.5 w-3.5 shrink-0" /> {beside ? `Banco (${bench.length})` : setup ? `Suplentes (${bench.length}) — arraste para o campo · ✕ = não veio` : 'Banco — menos minutos primeiro'}
+          <Repeat className="h-3.5 w-3.5 shrink-0" /> {beside ? t('Banco ({{n}})', { n: bench.length }) : setup ? t('Suplentes ({{n}}) — arraste para o campo · ✕ = não veio', { n: bench.length }) : t('Banco — menos minutos primeiro')}
         </p>
         <div className={cn('flex gap-2', beside ? 'min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-2 pt-2' : setup ? 'flex-wrap' : 'overflow-x-auto pb-1')}>
-          {bench.length === 0 && <span className="text-sm text-muted-foreground">Sem suplentes.</span>}
+          {bench.length === 0 && <span className="text-sm text-muted-foreground">{t('Sem suplentes.')}</span>}
           {bench.map((id, i) => {
             const p = players.get(id);
             if (!p) return null;
@@ -398,7 +400,7 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
             return (
               <div key={id} className={cn('relative shrink-0', beside && 'w-full')}>
               {onAbsent && (setup || absentable?.has(id)) && (
-                <button type="button" onClick={() => onAbsent(id)} aria-label={`${p.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                <button type="button" onClick={() => onAbsent(id)} aria-label={t('{{name}} está ausente: retirar do jogo', { name: p.name })} title={t('Não veio ao jogo: retirar')}
                   className="absolute -right-1.5 -top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full border bg-background text-destructive shadow-sm hover:bg-destructive hover:text-destructive-foreground">
                   <UserX className="h-3.5 w-3.5" />
                 </button>
@@ -448,8 +450,8 @@ export function LivePitch({ sportType, tactics, players, bench, disabled, mode =
 
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
         <ArrowLeftRight className="h-3 w-3" /> {setup
-          ? 'Etiqueta verde = posição natural; amarela = fora de posição. Nota = última avaliação (1–10).'
-          : 'A barra de frescura é uma estimativa pelo tempo seguido em campo e no banco.'}
+          ? t('Etiqueta verde = posição natural; amarela = fora de posição. Nota = última avaliação (1–10).')
+          : t('A barra de frescura é uma estimativa pelo tempo seguido em campo e no banco.')}
       </p>
 
       {ghost && (

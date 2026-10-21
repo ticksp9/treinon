@@ -9,12 +9,13 @@ import { Loader2, Sparkles, Scale, ClipboardList, AlertTriangle, CheckCircle2, I
 import type { Candidate, AssistantNote, PickMode } from '@/lib/team-selection';
 import type { SetPieceRoles } from '@/lib/live-tactics';
 import { cn } from '@/lib/utils';
+import { useT, tr } from '@/lib/i18n/ui';
 
 const ROLES: { key: keyof SetPieceRoles; label: string }[] = [
-  { key: 'captain', label: 'Capitão' },
-  { key: 'penalties', label: 'Penáltis' },
-  { key: 'corners', label: 'Cantos' },
-  { key: 'free_kicks', label: 'Livres' },
+  { key: 'captain', label: tr('Capitão') },
+  { key: 'penalties', label: tr('Penáltis') },
+  { key: 'corners', label: tr('Cantos') },
+  { key: 'free_kicks', label: tr('Livres') },
 ];
 
 const NONE = '__none__';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function PreMatchPanel({ squad, roles, notes, onAutoPick, onRolesChange }: Props) {
+  const t = useT();
   const [busy, setBusy] = useState<PickMode | null>(null);
   const pick = async (mode: PickMode) => {
     setBusy(mode);
@@ -39,29 +41,29 @@ export function PreMatchPanel({ squad, roles, notes, onAutoPick, onRolesChange }
     <div className="mt-4 space-y-4 border-t pt-4">
       {/* Automatic selection */}
       <div>
-        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Seleção automática</p>
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Seleção automática')}</p>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={() => pick('best')} disabled={!!busy}>
             {busy === 'best' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            Melhor onze
+            {t('Melhor onze')}
           </Button>
           <Button variant="outline" onClick={() => pick('fair')} disabled={!!busy}>
             {busy === 'fair' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Scale className="mr-2 h-4 w-4" />}
-            Minutos justos
+            {t('Minutos justos')}
           </Button>
         </div>
         <p className="mt-1 text-[11px] text-muted-foreground">
-          Melhor onze: nota, forma e posição. Minutos justos: começa quem jogou menos esta época.
+          {t('Melhor onze: nota, forma e posição. Minutos justos: começa quem jogou menos esta época.')}
         </p>
       </div>
 
       {/* Captain and set pieces */}
       <div>
-        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Capitão e bolas paradas</p>
+        <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('Capitão e bolas paradas')}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {ROLES.map((r) => (
             <div key={r.key} className="space-y-1">
-              <span className="text-xs text-muted-foreground">{r.label}</span>
+              <span className="text-xs text-muted-foreground">{t(r.label)}</span>
               <Select
                 value={roles[r.key] ?? NONE}
                 onValueChange={(v) => onRolesChange({ ...roles, [r.key]: v === NONE ? null : v })}
@@ -80,7 +82,7 @@ export function PreMatchPanel({ squad, roles, notes, onAutoPick, onRolesChange }
       {/* Assistant report */}
       <div>
         <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <ClipboardList className="h-3.5 w-3.5" /> Relatório do adjunto
+          <ClipboardList className="h-3.5 w-3.5" /> {t('Relatório do adjunto')}
         </p>
         <ul className="space-y-1">
           {notes.map((n, i) => (

@@ -1,3 +1,4 @@
+import { tx } from '@/lib/i18n/ui';
 import { supabase } from '@/integrations/supabase/client';
 
 export type ReportEntryMode = 'live' | 'post_game' | 'hybrid';
@@ -350,14 +351,14 @@ export async function getReportAuditLogs(matchId: string): Promise<any[]> {
 }
 
 export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
-  draft: 'Rascunho',
-  in_progress: 'Em Progresso',
-  pending_completion: 'Pendente',
-  pending_review: 'Em Revisão',
-  finalized: 'Finalizado',
-  reopened: 'Reaberto',
-  corrected: 'Corrigido',
-  locked: 'Bloqueado',
+  get draft() { return tx('Rascunho'); },
+  get in_progress() { return tx('Em Progresso'); },
+  get pending_completion() { return tx('Pendente'); },
+  get pending_review() { return tx('Em Revisão'); },
+  get finalized() { return tx('Finalizado'); },
+  get reopened() { return tx('Reaberto'); },
+  get corrected() { return tx('Corrigido'); },
+  get locked() { return tx('Bloqueado'); },
 };
 
 export const ENTRY_MODE_LABELS: Record<ReportEntryMode, string> = {

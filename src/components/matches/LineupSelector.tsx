@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { Users, Play, Star, UserMinus, UserX } from 'lucide-react';
 import { getSportFormatRules } from '@/lib/match-playing-time';
+import { useT, tr } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -49,14 +50,15 @@ const POSITION_CATEGORIES = {
 };
 
 const POSITION_CATEGORY_LABELS: Record<string, string> = {
-  goalkeeper: 'Guarda-Redes',
-  defense: 'Defesas',
-  midfield: 'Médios',
-  attack: 'Atacantes',
-  other: 'Outros',
+  goalkeeper: tr('Guarda-Redes'),
+  defense: tr('Defesas'),
+  midfield: tr('Médios'),
+  attack: tr('Atacantes'),
+  other: tr('Outros'),
 };
 
 export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onStartMatch, isHalftime = false, isEditing = false, sportType, onAbsent, absentable }: LineupSelectorProps) {
+  const t = useT();
   const { user } = useAuth();
   const [selectedStarters, setSelectedStarters] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -109,7 +111,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
       const newIsStarter = !selectedStarters.has(playerId);
 
       if (newIsStarter && selectedStarters.size >= sportRules.playersOnField) {
-        toast.error(`Escalação inválida: máximo de ${sportRules.playersOnField} jogadores titulares no ${sportRules.label}.`);
+        toast.error(t('Escalação inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: sportRules.playersOnField, fmt: sportRules.label }));
         return;
       }
 
@@ -132,7 +134,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
 
       onLineupsChange();
     } catch (error) {
-      toast.error('Erro ao atualizar');
+      toast.error(t('Erro ao atualizar'));
     } finally {
       setSaving(false);
     }
@@ -143,7 +145,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
     setSaving(true);
     try {
       if (playerIds.length > sportRules.playersOnField) {
-        toast.error(`Escalação inválida: máximo de ${sportRules.playersOnField} jogadores titulares no ${sportRules.label}.`);
+        toast.error(t('Escalação inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: sportRules.playersOnField, fmt: sportRules.label }));
         return;
       }
 
@@ -158,9 +160,9 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
       }
       setSelectedStarters(new Set(playerIds));
       onLineupsChange();
-      toast.success('Titulares definidos!');
+      toast.success(t('Titulares definidos!'));
     } catch (error) {
-      toast.error('Erro ao definir titulares');
+      toast.error(t('Erro ao definir titulares'));
     } finally {
       setSaving(false);
     }
@@ -179,7 +181,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
       setSelectedStarters(new Set());
       onLineupsChange();
     } catch (error) {
-      toast.error('Erro ao limpar titulares');
+      toast.error(t('Erro ao limpar titulares'));
     } finally {
       setSaving(false);
     }
@@ -194,17 +196,17 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Selecionar Titulares e Suplentes
+          {t('Selecionar Titulares e Suplentes')}
         </CardTitle>
         <CardDescription>
-          Clique num jogador para alternar entre titular e suplente · Máximo em campo: {sportRules.playersOnField}
+          {t('Clique num jogador para alternar entre titular e suplente · Máximo em campo: {{n}}', { n: sportRules.playersOnField })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {lineups.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            Nenhum jogador convocado para este jogo.
-            Vá à secção de Treino &gt; Convocatórias para adicionar jogadores.
+            {t('Nenhum jogador convocado para este jogo.')}
+            {t('Vá a Treinos → Convocatória para adicionar jogadores.')}
           </p>
         ) : (
           <>
@@ -213,11 +215,11 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
               <div className="flex gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-primary" />
-                  <span className="font-medium">Titulares: {starterCount}</span>
+                  <span className="font-medium">{t('Titulares: {{n}}', { n: starterCount })}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-secondary" />
-                  <span className="font-medium">Suplentes: {substituteCount}</span>
+                  <span className="font-medium">{t('Suplentes: {{n}}', { n: substituteCount })}</span>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -227,7 +229,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                   onClick={clearStarters}
                   disabled={saving || starterCount === 0}
                 >
-                  Limpar
+                  {t('Limpar')}
                 </Button>
               </div>
             </div>
@@ -254,7 +256,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{lineup.player?.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {lineup.player?.position || 'Sem posição'}
+                          {lineup.player?.position || t('Sem posição')}
                         </div>
                       </div>
                       <Star className="w-4 h-4 text-primary" />
@@ -263,7 +265,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
               </div>
               {starterCount === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4 bg-muted/30 rounded-lg">
-                  Clique nos jogadores abaixo para os definir como titulares
+                  {t('Clique nos jogadores abaixo para os definir como titulares')}
                 </p>
               )}
             </div>
@@ -285,7 +287,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                   return (
                     <div key={category} className="space-y-2">
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        {POSITION_CATEGORY_LABELS[category]}
+                        {t(POSITION_CATEGORY_LABELS[category])}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {subs.map(lineup => (
@@ -300,7 +302,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{lineup.player?.name}</div>
                               <div className="text-xs text-muted-foreground">
-                                {lineup.player?.position || 'Sem posição'}
+                                {lineup.player?.position || t('Sem posição')}
                               </div>
                             </div>
                             {onAbsent && (!absentable || absentable.has(lineup.player_id)) && (
@@ -308,7 +310,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                                 type="button" size="icon" variant="ghost"
                                 className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                                 onClick={(e) => { e.stopPropagation(); onAbsent(lineup.player_id); }}
-                                aria-label={`${lineup.player?.name ?? 'Jogador'} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                                aria-label={t('{{name}} está ausente: retirar do jogo', { name: lineup.player?.name ?? t('Jogador') })} title={t('Não veio ao jogo: retirar')}
                               >
                                 <UserX className="h-4 w-4" />
                               </Button>
@@ -331,10 +333,10 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
             >
               <Play className="w-5 h-5 mr-2" />
               {isEditing
-                ? `Confirmar Alterações (${starterCount} titulares)`
+                ? t('Confirmar Alterações ({{n}} titulares)', { n: starterCount })
                 : isHalftime
-                  ? `Iniciar 2ª Parte (${starterCount} titulares, ${substituteCount} suplentes)`
-                  : `Iniciar Jogo (${starterCount} titulares, ${substituteCount} suplentes)`
+                  ? t('Iniciar 2ª Parte ({{s}} titulares, {{b}} suplentes)', { s: starterCount, b: substituteCount })
+                  : t('Iniciar Jogo ({{s}} titulares, {{b}} suplentes)', { s: starterCount, b: substituteCount })
               }
             </Button>
           </>

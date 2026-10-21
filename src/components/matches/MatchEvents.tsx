@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Trash2, UserMinus, UserPlus } from 'lucide-react';
+import { useT, tx } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -40,24 +41,25 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
 };
 
 const EVENT_LABELS: Record<string, string> = {
-  goal: 'Golo',
-  own_goal: 'Auto-golo',
-  yellow_card: 'Cartão Amarelo',
-  red_card: 'Cartão Vermelho',
-  substitution_in: 'Entrou',
-  substitution_out: 'Saiu',
+  get goal() { return tx('Golo'); },
+  get own_goal() { return tx('Auto-golo'); },
+  get yellow_card() { return tx('Cartão Amarelo'); },
+  get red_card() { return tx('Cartão Vermelho'); },
+  get substitution_in() { return tx('Entrou'); },
+  get substitution_out() { return tx('Saiu'); },
 };
 
 export function MatchEvents({ events, onDeleteEvent, canEdit }: MatchEventsProps) {
+  const t = useT();
   if (events.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Incidências</CardTitle>
+          <CardTitle>{t('Incidências')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-center text-muted-foreground py-4">
-            Sem incidências registadas
+            {t('Sem incidências registadas')}
           </p>
         </CardContent>
       </Card>

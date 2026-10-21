@@ -15,6 +15,7 @@ import { ReportReviewScreen } from './ReportReviewScreen';
 import { getHalfDurationForCategory } from '@/lib/constants';
 import { isEditableReportStatus, REPORT_STATUS_LABELS, type ReportStatus } from '@/lib/match-report-service';
 import { useTeamBranding } from '@/hooks/useTeamBranding';
+import { dateLocale, useT } from '@/lib/i18n/ui';
 
 interface Player {
   id: string;
@@ -86,6 +87,7 @@ function getInitialTab(reportStatus: string | undefined): string {
 }
 
 export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }: MatchResultsViewProps) {
+  const t = useT();
   // the team crest goes on the report PDF
   const { crestUrl } = useTeamBranding(teamId);
   // the tactics of the match, for the drawing of the starting line-up
@@ -200,9 +202,9 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
   const getResultBadge = (match: Match) => {
     const goalsFor = match.goals_for ?? 0;
     const goalsAgainst = match.goals_against ?? 0;
-    if (goalsFor > goalsAgainst) return <Badge className="bg-green-600">V</Badge>;
-    if (goalsFor < goalsAgainst) return <Badge variant="destructive">D</Badge>;
-    return <Badge variant="secondary">E</Badge>;
+    if (goalsFor > goalsAgainst) return <Badge className="bg-green-600">{t('V')}</Badge>;
+    if (goalsFor < goalsAgainst) return <Badge variant="destructive">{t('D')}</Badge>;
+    return <Badge variant="secondary">{t('E')}</Badge>;
   };
 
   const halfDuration = getHalfDurationForCategory(team?.category || null);
@@ -212,8 +214,8 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
       <Card>
         <CardContent className="py-12 text-center">
           <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Sem Resultados</h3>
-          <p className="text-muted-foreground">Ainda não há jogos terminados.</p>
+          <h3 className="text-lg font-semibold mb-2">{t('Sem Resultados')}</h3>
+          <p className="text-muted-foreground">{t('Ainda não há jogos terminados.')}</p>
         </CardContent>
       </Card>
     );
@@ -225,7 +227,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5" />
-            Resultados ({completedMatches.length})
+            {t('Resultados ({{n}})', { n: completedMatches.length })}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -240,18 +242,18 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
               >
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                   <div className="text-center min-w-[52px] shrink-0">
-                    <div className="text-sm font-medium">{format(new Date(match.match_date), 'dd MMM', { locale: pt })}</div>
+                    <div className="text-sm font-medium">{format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}</div>
                     <div className="text-xs text-muted-foreground">{format(new Date(match.match_date), 'yyyy')}</div>
                   </div>
                   {getResultBadge(match)}
                   <div className="min-w-0">
                     <div className="font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
-                        {match.is_home ? 'CASA' : 'FORA'}
+                        {match.is_home ? t('CASA') : t('FORA')}
                       </Badge>
                       {match.is_home
-                        ? `${team?.name || 'Equipa'} vs ${match.opponent_name}`
-                        : `${match.opponent_name} vs ${team?.name || 'Equipa'}`}
+                        ? `${team?.name || t('Equipa')} vs ${match.opponent_name}`
+                        : `${match.opponent_name} vs ${team?.name || t('Equipa')}`}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-1">
                       {match.competition && <span>{match.competition}</span>}
@@ -267,10 +269,10 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
                   <div className="whitespace-nowrap text-2xl font-bold">
                     {match.is_home ? `${goalsFor} - ${goalsAgainst}` : `${goalsAgainst} - ${goalsFor}`}
                   </div>
-                  <Button variant="ghost" size="sm"><Eye className="w-4 h-4 mr-1" />Ver</Button>
+                  <Button variant="ghost" size="sm"><Eye className="w-4 h-4 mr-1" />{t('Ver')}</Button>
                   {onDelete && canDelete?.(match) && (
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={(e) => { e.stopPropagation(); onDelete(match); }} title="Eliminar este jogo (amigável/teste): os minutos deixam de contar" aria-label="Eliminar jogo">
+                      onClick={(e) => { e.stopPropagation(); onDelete(match); }} title={t('Eliminar este jogo (amigável/teste): os minutos deixam de contar')} aria-label={t('Eliminar jogo')}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   )}
@@ -295,8 +297,8 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
             <DialogTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />Relatório do Jogo
               {selectedMatch && (
-                <Button size="sm" variant="outline" className="ml-auto mr-6" onClick={() => setQuickEntryId(selectedMatch.id)} title="Corrigir minutos, golos e cartões de forma simples">
-                  Registo rápido
+                <Button size="sm" variant="outline" className="ml-auto mr-6" onClick={() => setQuickEntryId(selectedMatch.id)} title={t('Corrigir minutos, golos e cartões de forma simples')}>
+                  {t('Registo rápido')}
                 </Button>
               )}
             </DialogTitle>
@@ -304,14 +306,14 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
           {loading ? (
             <div className="py-12 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">A carregar...</p>
+              <p className="text-muted-foreground">{t('A carregar...')}</p>
             </div>
           ) : selectedMatch && (
             <Tabs value={activeDialogTab} onValueChange={setActiveDialogTab}>
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="report"><Eye className="w-4 h-4 mr-1" />Relatório</TabsTrigger>
-                <TabsTrigger value="edit"><Pencil className="w-4 h-4 mr-1" />Editar</TabsTrigger>
-                <TabsTrigger value="review"><FileSearch className="w-4 h-4 mr-1" />Revisão</TabsTrigger>
+                <TabsTrigger value="report"><Eye className="w-4 h-4 mr-1" />{t('Relatório')}</TabsTrigger>
+                <TabsTrigger value="edit"><Pencil className="w-4 h-4 mr-1" />{t('Editar')}</TabsTrigger>
+                <TabsTrigger value="review"><FileSearch className="w-4 h-4 mr-1" />{t('Revisão')}</TabsTrigger>
               </TabsList>
               <TabsContent value="report">
                 <MatchReport

@@ -6,8 +6,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Timer } from 'lucide-react';
 import { formatClock, liveClockSeconds, readLiveClock, type LiveClockSnapshot } from '@/lib/live-clock';
+import { useT } from '@/lib/i18n/ui';
 
 export function LiveMatchBar() {
+  const t = useT();
   const [snap, setSnap] = useState<LiveClockSnapshot | null>(null);
   const [, setTick] = useState(0);
 
@@ -25,7 +27,7 @@ export function LiveMatchBar() {
 
   if (!snap) return null;
   const paused = snap.phase === 'playing' && !snap.isTimerRunning;
-  const label = snap.phase === 'interval' ? 'Intervalo' : `${snap.currentPart}.ª parte${paused ? ' · em pausa' : ''}`;
+  const label = snap.phase === 'interval' ? t('Intervalo') : t('{{n}}.ª parte', { n: snap.currentPart }) + (paused ? ' · ' + t('em pausa') : '');
 
   return (
     <Link
@@ -33,9 +35,9 @@ export function LiveMatchBar() {
       className="flex items-center gap-2 border-b border-accent/40 bg-accent/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent/25 sm:px-4"
     >
       <Timer className="h-4 w-4 shrink-0 text-accent" />
-      <span className="truncate">Jogo a decorrer{snap.opponent ? ` vs ${snap.opponent}` : ''} · {label}</span>
+      <span className="truncate">{t('Jogo a decorrer')}{snap.opponent ? ` vs ${snap.opponent}` : ''} · {label}</span>
       <span className="ml-auto font-mono text-base font-semibold tabular-nums">{formatClock(liveClockSeconds(snap))}</span>
-      <span className="hidden items-center sm:flex">Voltar ao jogo<ChevronRight className="h-4 w-4" /></span>
+      <span className="hidden items-center sm:flex">{t('Voltar ao jogo')}<ChevronRight className="h-4 w-4" /></span>
       <ChevronRight className="h-4 w-4 sm:hidden" />
     </Link>
   );

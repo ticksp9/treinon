@@ -55,6 +55,7 @@ import { MatchRulesPanel } from './MatchRulesPanel';
 import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { checkMatchConsistency, type ConsistencyIssue } from '@/lib/match-playing-time';
 import { cacheData, getCachedData, addPendingOperation, isNetworkError } from '@/lib/offlineStorage';
+import { useT, tr } from '@/lib/i18n/ui';
 
 const LIVE_DATA_KEY = (matchId: string) => `live_match_data_${matchId}`;
 
@@ -150,6 +151,7 @@ const SPORT_LABELS: Record<string, string> = {
 export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const { user } = useAuth();
   const { isOnline } = useOnlineStatus();
+  const t = useT();
   const isMobile = useIsMobile();
   const { crestUrl } = useTeamBranding(teamId);
   const [match, setMatch] = useState<Match | null>(null);
@@ -607,9 +609,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         setEvents(prev => (prev.length > 0 ? prev : cached.events));
         setPartsCount(cached.match.parts_count || 2);
         setPartDurationMinutes(cached.match.part_duration_minutes || getHalfDurationForCategory(cached.team?.category));
-        toast.warning('Sem rede: a usar a cópia do jogo guardada neste aparelho.');
+        toast.warning(t('Sem rede: a usar a cópia do jogo guardada neste aparelho.'));
       } else {
-        toast.error('Erro ao carregar dados do jogo');
+        toast.error(t('Erro ao carregar dados do jogo'));
       }
     } finally {
       setLoading(false);
@@ -676,13 +678,13 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const handlePrepareStartMatch = () => {
     const starters = lineups.filter(l => l.is_starter);
     if (starters.length === 0) {
-      toast.error('Selecione pelo menos um jogador titular');
+      toast.error(t('Selecione pelo menos um jogador titular'));
       return;
     }
 
     const starterValidation = validateStarterCount(starters.length, matchSport);
     if (!starterValidation.allowed) {
-      toast.error(starterValidation.reason || 'Escalação inválida');
+      toast.error(starterValidation.reason || t('Escalação inválida'));
       return;
     }
 
@@ -708,12 +710,12 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
       const starterValidation = validateStarterCount(starterPlayerIds.length, matchSport);
       if (!starterValidation.allowed) {
-        toast.error(starterValidation.reason || 'Escalação inválida');
+        toast.error(starterValidation.reason || t('Escalação inválida'));
         logConflictAlert({
           matchId,
           alertType: 'invalid_lineup',
           severity: 'blocking',
-          message: starterValidation.reason || 'Escalação inválida',
+          message: starterValidation.reason || t('Escalação inválida'),
           metadata: { starterCount: starterPlayerIds.length, sportType: matchSport },
         });
         return;
@@ -812,7 +814,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       toast.success(`${getPartLabel(1, config.partsCount)} iniciada!`);
     } catch (error) {
       console.error('[LiveMatch] Error starting match:', error);
-      toast.error('Erro ao iniciar jogo');
+      toast.error(t('Erro ao iniciar jogo'));
     }
   };
 
@@ -853,7 +855,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       // Save state
       await saveCurrentState();
 
-      toast.info(`${getPartLabel(currentPart, partsCount)} terminada: ${Math.floor(partSeconds / 60)}'`);
+      toast.info(t('{{part}} terminada: {{min}}', { part: getPartLabel(currentPart, partsCount), min: `${Math.floor(partSeconds / 60)}'` }));
     }
   };
 
@@ -863,7 +865,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const startersNow = lineups.filter(l => l.is_starter);
     const starterValidation = validateStarterCount(startersNow.length, matchSport);
     if (!starterValidation.allowed) {
-      toast.error(starterValidation.reason || 'Escalação inválida');
+      toast.error(starterValidation.reason || t('Escalação inválida'));
       return;
     }
 
@@ -989,10 +991,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         goals_for: goalsFor,
         goals_against: goalsAgainst
       } : null);
-      toast.success('Jogo terminado!');
+      toast.success(t('Jogo terminado!'));
     } catch (error) {
       console.error('[LiveMatch] Error finishing match:', error);
-      toast.error('Erro ao terminar jogo');
+      toast.error(t('Erro ao terminar jogo'));
     }
   };
 
@@ -1050,10 +1052,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       owner_id: user.id,
     };
     const eventLabels: Record<string, string> = {
-      goal: 'Golo registado',
-      own_goal: 'Auto-golo registado',
-      yellow_card: 'Cartão amarelo registado',
-      red_card: 'Cartão vermelho registado',
+      goal: t('Golo registado'),
+      own_goal: t('Auto-golo registado'),
+      yellow_card: t('Cartão amarelo registado'),
+      red_card: t('Cartão vermelho registado'),
     };
 
     try {
@@ -1087,11 +1089,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
       setEvents(prev => [...prev, formattedEvent].sort((a, b) => a.minute - b.minute));
 
-      toast.success(eventLabels[eventType] || 'Evento registado');
+      toast.success(eventLabels[eventType] || t('Evento registado'));
     } catch (error) {
       if (!isNetworkError(error)) {
         console.error('[LiveMatch] Error recording event:', error);
-        toast.error('Erro ao registar evento');
+        toast.error(t('Erro ao registar evento'));
         return;
       }
       // No network: keep the event on this device and sync it later.
@@ -1105,7 +1107,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       };
       setEvents(prev => [...prev, localEvent].sort((a, b) => a.minute - b.minute));
       setSyncStatus('pending');
-      toast.success(`${eventLabels[eventType] || 'Evento registado'} (sem rede — será enviado depois)`);
+      toast.success(t('{{what}} (sem rede — será enviado depois)', { what: eventLabels[eventType] || t('Evento registado') }));
     }
   };
 
@@ -1130,15 +1132,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const projectedOnField = new Set(lineups.filter(l => l.is_starter).map(l => l.player_id));
       for (const sub of substitutions) {
         if (!projectedOnField.has(sub.playerOutId)) {
-          toast.error('Substituição inválida: jogador que sai não está em campo.');
+          toast.error(t('Substituição inválida: jogador que sai não está em campo.'));
           return;
         }
         if (projectedOnField.has(sub.playerInId)) {
-          toast.error('Substituição inválida: jogador que entra já está em campo.');
+          toast.error(t('Substituição inválida: jogador que entra já está em campo.'));
           return;
         }
         if (!lineupByPlayer.has(sub.playerOutId) || !lineupByPlayer.has(sub.playerInId)) {
-          toast.error('Substituição inválida: jogador não pertence à convocatória.');
+          toast.error(t('Substituição inválida: jogador não pertence à convocatória.'));
           return;
         }
         projectedOnField.delete(sub.playerOutId);
@@ -1194,8 +1196,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
       toast.success(
         substitutions.length === 1
-          ? 'Substituição confirmada.'
-          : `${substitutions.length} substituições confirmadas.`,
+          ? t('Substituição confirmada.')
+          : t('{{n}} substituições confirmadas.', { n: substitutions.length }),
       );
 
       await refreshLineupsAndEvents();
@@ -1203,7 +1205,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       await saveCurrentState();
     } catch (error) {
       console.error('[LiveMatch] Error committing substitution batch:', error);
-      toast.error('Erro ao guardar substituições. Tente novamente.');
+      toast.error(t('Erro ao guardar substituições. Tente novamente.'));
     }
   };
 
@@ -1249,21 +1251,21 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
 
   const handleDeleteEvent = async (eventId: string) => {
     if (eventId.startsWith('local-')) {
-      toast.error('Esta substituição ainda não foi enviada. Poderá corrigi-la quando houver rede.');
+      toast.error(t('Esta substituição ainda não foi enviada. Poderá corrigi-la quando houver rede.'));
       return;
     }
     try {
       const { error } = await supabase.from('match_events').delete().eq('id', eventId);
       if (error) throw error;
       setEvents(prev => prev.filter(e => e.id !== eventId));
-      toast.success('Evento removido');
+      toast.success(t('Evento removido'));
     } catch (error) {
       if (isNetworkError(error)) {
         await addPendingOperation('match_events', 'delete', { id: eventId });
         setEvents(prev => prev.filter(e => e.id !== eventId));
         toast.success('Evento removido (sem rede — será sincronizado depois)');
       } else {
-        toast.error('Erro ao remover evento');
+        toast.error(t('Erro ao remover evento'));
       }
     }
   };
@@ -1307,7 +1309,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   const keepTactic = async (code: string, asDefault: boolean) => {
     if (!matchSport) return;
     const ok = await saveTeamTactics(asDefault ? setDefaultTactic(teamTacticsMap, matchSport, code) : upsertTactic(teamTacticsMap, matchSport, code));
-    if (ok) toast.success(asDefault ? `${code} é agora a tática por defeito da equipa.` : `${code} guardada nas táticas da equipa.`);
+    if (ok) toast.success(asDefault ? t('{{code}} é agora a tática por defeito da equipa.', { code }) : t('{{code}} guardada nas táticas da equipa.', { code }));
   };
   const pitchTactics = matchSport
     ? reconcileTactics(matchSport, match?.live_tactics ?? null, starters.map(l => ({ player_id: l.player_id, position: l.player?.position })), teamTactics.default)
@@ -1355,7 +1357,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       if (pitchTactics) await saveTactics(applySubstitution(pitchTactics, outId, inId));
       await setStarter(outId, false);
       await setStarter(inId, true);
-    } catch { toast.error('Não foi possível alterar o onze.'); }
+    } catch { toast.error(t('Não foi possível alterar o onze.')); }
     fetchMatchData();
   };
   // Before kick-off: convocatória right on the preparation screen
@@ -1363,7 +1365,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const { data: { user: me } } = await supabase.auth.getUser();
     if (!me) return;
     const { error } = await supabase.from('match_lineups').insert({ match_id: matchId, player_id: playerId, owner_id: me.id, is_starter: false });
-    if (error) toast.error('Não foi possível convocar: ' + error.message);
+    if (error) toast.error(t('Não foi possível convocar: {{msg}}', { msg: error.message }));
     else if (playerId in absences) {
       // he came after all
       const rest = { ...absences };
@@ -1382,7 +1384,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     await updateMatchRecord(type === 'friendly'
       ? { match_type: 'friendly', competition: 'Amigável', tournament_locked: false }
       : { match_type: 'championship', competition: 'Campeonato', tournament_locked: false, sport_type: null, live_tactics: null });
-    toast.success(type === 'friendly' ? 'Jogo marcado como amigável.' : 'Jogo marcado como campeonato.');
+    toast.success(type === 'friendly' ? t('Jogo marcado como amigável.') : t('Jogo marcado como campeonato.'));
   };
   // Player tapped on the pitch: the buttons of the top bar record the goal/card for him at once
   const [pitchSelected, setPitchSelected] = useState<string | null>(null);
@@ -1419,7 +1421,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     const row = lineups.find(l => l.player_id === playerId);
     if (!row) return;
     if (phase !== 'setup' && !neverPlayed.has(playerId)) {
-      toast.error('Este jogador já entrou no jogo: não pode ser retirado.');
+      toast.error(t('Este jogador já entrou no jogo: não pode ser retirado.'));
       return;
     }
     try {
@@ -1431,9 +1433,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const { error } = await supabase.from('match_lineups').delete().eq('id', row.id);
       if (error) throw error;
       await updateMatchRecord({ absences: { ...absences, [playerId]: reason } });
-      toast.success(`${row.player?.name ?? 'Jogador'} retirado do jogo${reason ? ` (${reason})` : ''}`);
+      toast.success(t('{{name}} retirado do jogo', { name: row.player?.name ?? t('Jogador') }) + (reason ? ` (${reason})` : ''));
     } catch (e) {
-      toast.error('Não foi possível retirar: ' + ((e as Error)?.message ?? ''));
+      toast.error(t('Não foi possível retirar: {{msg}}', { msg: (e as Error)?.message ?? '' }));
     }
     fetchMatchData();
   };
@@ -1445,19 +1447,19 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         await saveTactics({ ...pitchTactics, slots });
       }
       await setStarter(playerId, false);
-    } catch { toast.error('Não foi possível alterar o onze.'); }
+    } catch { toast.error(t('Não foi possível alterar o onze.')); }
     fetchMatchData();
   };
 
   const handleSetupFill = async (slotId: string, playerId: string) => {
     if (starters.length >= sportRules.playersOnField) {
-      toast.error(`Já tem ${sportRules.playersOnField} titulares (${sportRules.label}). Troque com um jogador em campo${matchType === 'championship' ? '; se for um amigável com outro formato, mude o tipo de jogo em cima.' : ' ou escolha outra modalidade em cima.'}`);
+      toast.error(matchType === 'championship' ? t('Já tem {{n}} titulares ({{fmt}}). Troque com um jogador em campo; se for um amigável com outro formato, mude o tipo de jogo em cima.', { n: sportRules.playersOnField, fmt: sportRules.label }) : t('Já tem {{n}} titulares ({{fmt}}). Troque com um jogador em campo ou escolha outra modalidade em cima.', { n: sportRules.playersOnField, fmt: sportRules.label }));
       return;
     }
     try {
       if (pitchTactics) await saveTactics({ ...pitchTactics, slots: { ...pitchTactics.slots, [slotId]: playerId } });
       await setStarter(playerId, true);
-    } catch { toast.error('Não foi possível alterar o onze.'); }
+    } catch { toast.error(t('Não foi possível alterar o onze.')); }
     fetchMatchData();
   };
 
@@ -1485,8 +1487,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       for (const l of lineups) {
         if (l.is_starter !== want.has(l.player_id)) await setStarter(l.player_id, want.has(l.player_id));
       }
-      toast.success(mode === 'best' ? 'Melhor onze escolhido.' : 'Onze com quem tem menos minutos.');
-    } catch { toast.error('Não foi possível alterar o onze.'); }
+      toast.success(mode === 'best' ? t('Melhor onze escolhido.') : t('Onze com quem tem menos minutos.'));
+    } catch { toast.error(t('Não foi possível alterar o onze.')); }
     fetchMatchData();
   };
   const saveRoles = (roles: NonNullable<LiveTactics['roles']>) => { if (pitchTactics) saveTactics({ ...pitchTactics, roles }); };
@@ -1530,7 +1532,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <div className="animate-pulse">A carregar...</div>
+          <div className="animate-pulse">{t('A carregar...')}</div>
         </CardContent>
       </Card>
     );
@@ -1542,7 +1544,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         <div className="flex items-center justify-between">
           <Button variant="outline" onClick={onExit}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
+            {t('Voltar')}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -1550,24 +1552,24 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               onClick={() => {
                 const scorers = events
                   .filter(e => e.event_type === 'goal' && !e.is_opponent)
-                  .map(e => `⚽ ${e.player?.name ?? 'Golo'} ${e.minute}'`);
+                  .map(e => `⚽ ${e.player?.name ?? t('Golo')} ${e.minute}'`);
                 const home = match.is_home;
-                const us = team?.name ?? 'Nós';
+                const us = team?.name ?? t('Nós');
                 const text = [
-                  `🏁 *Resultado final*`,
+                  `🏁 *${t('Resultado final')}*`,
                   home ? `${us} ${goalsFor} – ${goalsAgainst} ${match.opponent_name}` : `${match.opponent_name} ${goalsAgainst} – ${goalsFor} ${us}`,
                   ...(scorers.length ? ['', ...scorers] : []),
                   '',
-                  'Registado com TreinON',
+                  t('Registado com TreinON'),
                 ].join('\n');
-                shareText(text, 'Resultado');
+                shareText(text, t('Resultado'));
               }}
             >
               <Share2 className="w-4 h-4 mr-2" />
-              Partilhar resultado
+              {t('Partilhar resultado')}
             </Button>
             <Badge variant="outline" className="text-lg px-4 py-2">
-              Terminado
+              {t('Terminado')}
             </Badge>
           </div>
         </div>
@@ -1619,7 +1621,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           onPauseResume={() => (timer.isRunning ? timer.pauseTimer() : timer.startTimer())}
           onEndPart={() => {
             const last = currentPart >= partsCount;
-            if (window.confirm(last ? 'Terminar o jogo? Depois já não pode registar mais nada em direto.' : `${getEndPartLabel(currentPart, partsCount)}? O relógio pára e segue-se o intervalo.`)) handleEndPart();
+            if (window.confirm(last ? t('Terminar o jogo? Depois já não pode registar mais nada em direto.') : t('{{action}}? O relógio pára e segue-se o intervalo.', { action: getEndPartLabel(currentPart, partsCount) }))) handleEndPart();
           }}
           onStartNextPart={handleStartNextPart}
           onGoal={() => recordFromBar('goal')}
@@ -1637,7 +1639,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Button variant="outline" size={isMobile ? 'sm' : 'default'} onClick={onExit}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              {t('Voltar')}
             </Button>
             <div className="flex items-center gap-2 flex-wrap">
               {ruleSnapshot && (
@@ -1645,11 +1647,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               )}
               {!ruleSnapshot && (
                 <Badge variant="secondary" className="text-sm">
-                  {team?.category || 'Escalão'} ({partsCount}x{partDurationMinutes}')
+                  {team?.category || t('Escalão')} ({partsCount}x{partDurationMinutes}')
                 </Badge>
               )}
               <Badge variant="outline" className="text-lg px-4 py-2">
-                Preparação
+                {t('Preparação')}
               </Badge>
             </div>
           </div>
@@ -1667,17 +1669,17 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p className="text-sm font-medium">Tipo de jogo</p>
+                <p className="text-sm font-medium">{t('Tipo de jogo')}</p>
                 <p className="text-xs text-muted-foreground">
                   {matchType === 'friendly'
-                    ? 'Amigável: sem limites de idade na convocatória e com o formato que quiser.'
-                    : matchType === 'tournament' ? 'Torneio: conforme o regulamento do torneio.'
-                    : 'Campeonato: aplicam-se as regras do escalão. Se for um amigável, mude aqui.'}
+                    ? t('Amigável: sem limites de idade na convocatória e com o formato que quiser.')
+                    : matchType === 'tournament' ? t('Torneio: conforme o regulamento do torneio.')
+                    : t('Campeonato: aplicam-se as regras do escalão. Se for um amigável, mude aqui.')}
                 </p>
               </div>
               <div className="flex gap-1">
-                {([['championship', 'Campeonato'], ['friendly', 'Amigável']] as const).map(([value, label]) => (
-                  <Button key={value} size="sm" variant={matchType === value ? 'default' : 'outline'} onClick={() => changeMatchType(value)}>{label}</Button>
+                {([['championship', tr('Campeonato')], ['friendly', tr('Amigável')]] as const).map(([value, label]) => (
+                  <Button key={value} size="sm" variant={matchType === value ? 'default' : 'outline'} onClick={() => changeMatchType(value)}>{t(label)}</Button>
                 ))}
               </div>
             </CardContent>
@@ -1688,10 +1690,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           <Card>
             <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div>
-                <p className="text-sm font-medium">Modalidade deste jogo</p>
+                <p className="text-sm font-medium">{t('Modalidade deste jogo')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {matchType === 'friendly' ? 'Amigável: escolha livremente (ex.: 11 contra 11).' : 'Torneio: conforme o regulamento do torneio.'}
-                  {team?.sport_type && ` A equipa joga ${SPORT_LABELS[team.sport_type] ?? team.sport_type}.`}
+                  {matchType === 'friendly' ? t('Amigável: escolha livremente (ex.: 11 contra 11).') : t('Torneio: conforme o regulamento do torneio.')}
+                  {team?.sport_type && ' ' + t('A equipa joga {{fmt}}.', { fmt: t(SPORT_LABELS[team.sport_type] ?? team.sport_type) })}
                 </p>
               </div>
               <div className="flex flex-wrap gap-1">
@@ -1714,10 +1716,10 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         {phase === 'setup' && pitchTactics && matchSport && (
           <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-3 px-4">
-              <CardTitle className="text-base">Preparação do jogo</CardTitle>
+              <CardTitle className="text-base">{t('Preparação do jogo')}</CardTitle>
               <Button onClick={handleStartMatch} disabled={starters.length === 0}>
                 <Play className="w-4 h-4 mr-2" />
-                Iniciar jogo ({starters.length}/{sportRules.playersOnField} titulares · {lineups.length - starters.length} suplentes)
+                {t('Iniciar jogo ({{s}}/{{max}} titulares · {{b}} suplentes)', { s: starters.length, max: sportRules.playersOnField, b: lineups.length - starters.length })}
               </Button>
             </CardHeader>
             <CardContent className="p-3 pt-0">
@@ -1785,7 +1787,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             {match?.opponent_name && <MatchPlanCard matchId={matchId} opponentName={match.opponent_name} sportType={matchSport} hideWhenEmpty />}
             <Button variant="outline" size="lg" className="w-full h-12" onClick={() => setBoardOpen(true)}>
               <PenTool className="w-5 h-5 mr-2" />
-              Quadro tático para a palestra
+              {t('Quadro tático para a palestra')}
             </Button>
             <LineupSelector
               matchId={matchId}
@@ -1808,11 +1810,11 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             <div className="grid grid-cols-3 gap-1 rounded-md border bg-muted/40 p-1">
               {(['pitch', 'list'] as const).map(v => (
                 <Button key={v} type="button" size="sm" variant={liveView === v ? 'default' : 'ghost'} onClick={() => setLiveView(v)}>
-                  {v === 'pitch' ? 'Campo' : 'Lista'}
+                  {v === 'pitch' ? t('Campo') : t('Lista')}
                 </Button>
               ))}
               <Button type="button" size="sm" variant="ghost" onClick={() => setBoardOpen(true)}>
-                <PenTool className="w-4 h-4 mr-1" />Quadro
+                <PenTool className="w-4 h-4 mr-1" />{t('Quadro')}
               </Button>
             </div>
 
@@ -1846,18 +1848,18 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               <CardHeader className="py-3 px-4">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2">
-                    <span>Em Campo</span>
+                    <span>{t('Em Campo')}</span>
                     <FieldPlayerCounter current={starters.length} max={sportRules.playersOnField} />
                   </div>
                   {!isMobile && (
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => setEditLineupOpen(true)}>
                         <Pencil className="w-4 h-4 mr-1" />
-                        Editar
+                        {t('Editar')}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => setSubstitutionOpen(true)}>
                         <UserMinus className="w-4 h-4 mr-1" />
-                        Substituir
+                        {t('Substituir')}
                       </Button>
                     </div>
                   )}
@@ -1896,7 +1898,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                             size="sm" variant="ghost"
                             className="h-8 w-8 p-0 hover:bg-green-100"
                             onClick={(e) => { e.stopPropagation(); setAssistFor({ scorerId: lineup.player_id, clock: getClockSeconds() }); }}
-                            title="Golo"
+                            title={t('Golo')}
                           >
                             <span className="text-lg">⚽</span>
                           </Button>
@@ -1904,7 +1906,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                             size="sm" variant="ghost"
                             className="h-8 w-8 p-0 hover:bg-yellow-100"
                             onClick={(e) => { e.stopPropagation(); handleEvent('yellow_card', lineup.player_id); }}
-                            title="Cartão Amarelo"
+                            title={t('Cartão Amarelo')}
                           >
                             <div className="w-4 h-5 bg-yellow-400 rounded-sm shadow-sm border border-yellow-500" />
                           </Button>
@@ -1912,7 +1914,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                             size="sm" variant="ghost"
                             className="h-8 w-8 p-0 hover:bg-red-100"
                             onClick={(e) => { e.stopPropagation(); handleEvent('red_card', lineup.player_id); }}
-                            title="Cartão Vermelho"
+                            title={t('Cartão Vermelho')}
                           >
                             <div className="w-4 h-5 bg-red-600 rounded-sm shadow-sm border border-red-700" />
                           </Button>
@@ -1928,7 +1930,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             {/* Substitutes */}
             <Card>
               <CardHeader className="py-3 px-4">
-                <CardTitle className="text-base">Suplentes ({substitutes.length})</CardTitle>
+                <CardTitle className="text-base">{t('Suplentes ({{n}})', { n: substitutes.length })}</CardTitle>
               </CardHeader>
               <CardContent className="px-3 pb-3 space-y-1.5">
                 {substitutes.map((lineup, idx) => {
@@ -1944,8 +1946,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           <span className="text-sm truncate block">{lineup.player.name}</span>
                           <span className={`text-[11px] flex items-center gap-1 ${idx === 0 ? 'text-accent font-semibold' : 'text-muted-foreground'}`}>
                             <Clock className="w-3 h-3" />
-                            <span className="font-mono tabular-nums">{playTime}</span> jogados
-                            {idx === 0 && ' · jogou menos'}
+                            <span className="font-mono tabular-nums">{playTime}</span> {t('jogados')}
+                            {idx === 0 && ' · ' + t('jogou menos')}
                           </span>
                         </div>
                       </div>
@@ -1954,7 +1956,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           size="icon" variant="ghost"
                           className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                           onClick={() => setAbsentFor(lineup.player_id)}
-                          aria-label={`${lineup.player.name} está ausente: retirar do jogo`} title="Não veio ao jogo: retirar"
+                          aria-label={t('{{name}} está ausente: retirar do jogo', { name: lineup.player.name })} title={t('Não veio ao jogo: retirar')}
                         >
                           <UserX className="h-4 w-4" />
                         </Button>
@@ -1964,7 +1966,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                 })}
                 {substitutes.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    Sem suplentes disponíveis
+                    {t('Sem suplentes disponíveis')}
                   </p>
                 )}
               </CardContent>
@@ -1979,7 +1981,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             <CardContent className="py-3 text-center">
               <div className="flex items-center justify-center gap-2">
                 <Clock className="w-5 h-5 text-muted-foreground" />
-                <span className="font-semibold">Intervalo</span>
+                <span className="font-semibold">{t('Intervalo')}</span>
                 <span className="text-muted-foreground">
                   • {getPartLabel(currentPart, partsCount)}: {Math.floor((partElapsedSeconds[currentPart - 1] || 0) / 60)}'
                 </span>
@@ -2040,9 +2042,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             <div className="flex min-h-full items-start justify-center p-4">
               <div className="w-full max-w-4xl bg-background rounded-lg border shadow-lg">
                 <div className="flex items-center justify-between p-4 border-b">
-                  <h2 className="text-lg font-semibold">Editar Equipa</h2>
+                  <h2 className="text-lg font-semibold">{t('Editar Equipa')}</h2>
                   <Button variant="ghost" size="sm" onClick={() => setEditLineupOpen(false)}>
-                    Fechar
+                    {t('Fechar')}
                   </Button>
                 </div>
                 <div className="p-4">
@@ -2081,14 +2083,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
         />
       )}
       <AssistDialog
-        scorerName={assistFor ? (lineups.find(l => l.player_id === assistFor.scorerId)?.player?.name ?? 'jogador') : null}
+        scorerName={assistFor ? (lineups.find(l => l.player_id === assistFor.scorerId)?.player?.name ?? t('jogador')) : null}
         minute={assistFor ? Math.floor(assistFor.clock / 60) : 0}
         teammates={assistFor ? starters.filter(l => l.player_id !== assistFor.scorerId).map(l => ({ id: l.player_id, name: l.player?.name ?? '', number: l.player?.number ?? null })) : []}
         onConfirm={confirmGoal}
         onCancelGoal={() => setAssistFor(null)}
       />
       <AbsenceDialog
-        playerName={absentFor ? (lineups.find(l => l.player_id === absentFor)?.player?.name ?? 'jogador') : null}
+        playerName={absentFor ? (lineups.find(l => l.player_id === absentFor)?.player?.name ?? t('jogador')) : null}
         onConfirm={(reason) => absentFor && handleAbsent(absentFor, reason)}
         onClose={() => setAbsentFor(null)}
       />

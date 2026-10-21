@@ -13,9 +13,11 @@ import { TrainingWeeklyCalendar } from '@/components/trainings/TrainingWeeklyCal
 import { TrainingLoadView } from '@/components/trainings/TrainingLoadView';
 import { TrainingDashboard } from '@/components/trainings/TrainingDashboard';
 import { PageLoading } from '@/components/ui/page-states';
+import { useT } from '@/lib/i18n/ui';
 
 export default function Trainings() {
   const { user, loading } = useAuth();
+  const t = useT();
   const [params, setParams] = useSearchParams();
   const [activeTab, setActiveTabState] = useState(params.get('tab') || 'dashboard');
   const setActiveTab = (t: string) => {
@@ -25,18 +27,18 @@ export default function Trainings() {
 
   if (loading) {
     return (
-      <AppLayout title="Treinos">
+      <AppLayout title={t('Treinos')}>
         <PageLoading />
       </AppLayout>
     );
   }
 
   return (
-    <AppLayout title="Treinos">
+    <AppLayout title={t('Treinos')}>
       <div className="space-y-6">
         <PageHeader
-          title="Gestão de Treinos"
-          description="Planear, registar presenças, monitorizar carga e gerar convocatórias"
+          title={t('Gestão de Treinos')}
+          description={t('Planear, registar presenças, monitorizar carga e gerar convocatórias')}
           icon={<Calendar className="w-6 h-6 text-primary" />}
         />
 
@@ -44,31 +46,31 @@ export default function Trainings() {
           <TabsList className="flex flex-wrap h-auto gap-1">
             <TabsTrigger value="dashboard" className="flex items-center gap-1.5">
               <LayoutDashboard className="w-4 h-4" />
-              <span>Painel</span>
+              <span>{t('Painel')}</span>
             </TabsTrigger>
             <TabsTrigger value="calendar" className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
-              <span>Calendário</span>
+              <span>{t('Calendário')}</span>
             </TabsTrigger>
             <TabsTrigger value="exercicios" className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4" />
-              <span>Exercícios</span>
+              <span>{t('Exercícios')}</span>
             </TabsTrigger>
             <TabsTrigger value="builder" className="flex items-center gap-1.5">
               <ClipboardList className="w-4 h-4" />
-              <span>Criar Treinos</span>
+              <span>{t('Criar Treinos')}</span>
             </TabsTrigger>
             <TabsTrigger value="attendance" className="flex items-center gap-1.5">
               <Users className="w-4 h-4" />
-              <span>Presenças</span>
+              <span>{t('Presenças')}</span>
             </TabsTrigger>
             <TabsTrigger value="load" className="flex items-center gap-1.5">
               <Activity className="w-4 h-4" />
-              <span>Carga</span>
+              <span>{t('Carga')}</span>
             </TabsTrigger>
             <TabsTrigger value="callup" className="flex items-center gap-1.5">
               <FileText className="w-4 h-4" />
-              <span>Convocatória</span>
+              <span>{t('Convocatória')}</span>
             </TabsTrigger>
           </TabsList>
 

@@ -5,8 +5,9 @@
  */
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useT, tr } from '@/lib/i18n/ui';
 
-export const ABSENCE_REASONS = ['Doença', 'Lesão', 'Não compareceu', 'Motivo pessoal'] as const;
+export const ABSENCE_REASONS = [tr('Doença'), tr('Lesão'), tr('Não compareceu'), tr('Motivo pessoal')] as const;
 
 interface Props {
   playerName: string | null;
@@ -15,21 +16,22 @@ interface Props {
 }
 
 export function AbsenceDialog({ playerName, onConfirm, onClose }: Props) {
+  const t = useT();
   return (
     <Dialog open={playerName != null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Retirar {playerName} do jogo</DialogTitle>
+          <DialogTitle>{t('Retirar {{name}} do jogo', { name: playerName })}</DialogTitle>
           <DialogDescription>
-            Sai da convocatória deste jogo e não aparece no banco. Pode voltar a convocá-lo na lista "Não convocados".
+            {t('Sai da convocatória deste jogo e não aparece no banco. Pode voltar a convocá-lo na lista "Não convocados".')}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-2">
           {ABSENCE_REASONS.map((r) => (
-            <Button key={r} variant="outline" className="h-12" onClick={() => onConfirm(r)}>{r}</Button>
+            <Button key={r} variant="outline" className="h-12" onClick={() => onConfirm(r)}>{t(r)}</Button>
           ))}
         </div>
-        <Button variant="ghost" onClick={() => onConfirm('')}>Retirar sem indicar motivo</Button>
+        <Button variant="ghost" onClick={() => onConfirm('')}>{t('Retirar sem indicar motivo')}</Button>
       </DialogContent>
     </Dialog>
   );

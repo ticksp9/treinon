@@ -20,6 +20,7 @@ import { MatchResultsView } from '@/components/matches/MatchResultsView';
 import { ChampionshipManager } from '@/components/matches/ChampionshipManager';
 import { toast } from 'sonner';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
+import { dateLocale, isEnglish, tx, useT } from '@/lib/i18n/ui';
 
 interface Team {
   id: string;
@@ -51,9 +52,9 @@ interface Match {
 type Logistics = { meet_time?: string; meet_place?: string; transport?: string; kit?: string; info?: string } | null | undefined;
 /** What the coordinator set for the match: meeting time/place, transport, kit, other info. */
 const logisticsLine = (l: Logistics) => !l ? '' : [
-  l.meet_time && `Concentração ${l.meet_time}${l.meet_place ? ` · ${l.meet_place}` : ''}`,
+  l.meet_time && tx('Concentração {{time}}', { time: l.meet_time }) + (l.meet_place ? ` · ${l.meet_place}` : ''),
   l.transport,
-  l.kit && `Equipamento: ${l.kit}`,
+  l.kit && tx('Equipamento: {{kit}}', { kit: l.kit }),
   l.info,
 ].filter(Boolean).join(' · ');
 
@@ -62,6 +63,7 @@ export default function Matches() {
   // switching team at the top of the screen re-scopes this page
   useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user, loading: authLoading } = useAuth();
+  const t = useT();
   const [searchParams] = useSearchParams();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>('');
@@ -170,7 +172,7 @@ export default function Matches() {
   const handleStartMatch = (match: Match) => {
     // Check if there's already a game in progress
     if (inProgressMatch && inProgressMatch.id !== match.id) {
-      toast.error('Já existe um jogo a decorrer. Termina ou finaliza o jogo atual antes de iniciar outro.');
+      toast.error(t('Já existe um jogo a decorrer. Termina ou finaliza o jogo atual antes de iniciar outro.'));
       return;
     }
     // Pass isResume=false to indicate this is a fresh start
@@ -193,13 +195,13 @@ export default function Matches() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'scheduled':
-        return <Badge variant="outline">Agendado</Badge>;
+        return <Badge variant="outline">{t('Agendado')}</Badge>;
       case 'in_progress':
-        return <Badge className="bg-green-500">Em Curso</Badge>;
+        return <Badge className="bg-green-500">{t('Em Curso')}</Badge>;
       case 'completed':
-        return <Badge variant="secondary">Terminado</Badge>;
+        return <Badge variant="secondary">{t('Terminado')}</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">Cancelado</Badge>;
+        return <Badge variant="destructive">{t('Cancelado')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -210,7 +212,7 @@ export default function Matches() {
   const deleteTestMatches = async () => {
     if (!user || testMatchesCount === 0) return;
 
-    const confirmed = confirm(`Vais eliminar ${testMatchesCount} jogo${testMatchesCount === 1 ? '' : 's'} de teste. Continuar?`);
+    const confirmed = confirm(t('Vais eliminar {{n}} jogo(s) de teste. Continuar?', { n: testMatchesCount }));
     if (!confirmed) return;
 
     try {
@@ -228,10 +230,10 @@ export default function Matches() {
 
       if (error) throw error;
 
-      toast.success(`${testMatchesCount} jogo${testMatchesCount === 1 ? '' : 's'} de teste eliminado${testMatchesCount === 1 ? '' : 's'}!`);
+      toast.success(t('{{n}} jogo(s) de teste eliminado(s)!', { n: testMatchesCount }));
       fetchMatches();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(t('Erro ao eliminar: {{msg}}', { msg: error.message }));
     }
   };
 
@@ -272,11 +274,11 @@ export default function Matches() {
       clearLiveClock(deleteDialogMatch.id);
       try { if (localStorage.getItem('tacticaflow_active_match_id') === deleteDialogMatch.id) localStorage.removeItem('tacticaflow_active_match_id'); } catch { /* ignore */ }
 
-      toast.success('Jogo eliminado!');
+      toast.success(t('Jogo eliminado!'));
       setDeleteDialogMatch(null);
       fetchMatches();
     } catch (error: any) {
-      toast.error('Erro ao eliminar: ' + error.message);
+      toast.error(t('Erro ao eliminar: {{msg}}', { msg: error.message }));
     }
   };
 
@@ -295,10 +297,10 @@ export default function Matches() {
 
       if (error) throw error;
 
-      toast.success('Jogo restaurado!');
+      toast.success(t('Jogo restaurado!'));
       fetchMatches();
     } catch (error: any) {
-      toast.error('Erro ao restaurar: ' + error.message);
+      toast.error(t('Erro ao restaurar: {{msg}}', { msg: error.message }));
     }
   };
 
@@ -343,9 +345,9 @@ export default function Matches() {
           <Card>
             <CardContent className="py-12 text-center">
               <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Sessão Necessária</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('Sessão Necessária')}</h3>
               <p className="text-muted-foreground">
-                Faça login para aceder aos jogos.
+                {t('Faça login para aceder aos jogos.')}
               </p>
             </CardContent>
           </Card>
@@ -358,9 +360,9 @@ export default function Matches() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Gestão de Jogos</h1>
+          <h1 className="text-2xl font-display font-bold">{t('Gestão de Jogos')}</h1>
           <p className="text-muted-foreground">
-            Gerir jogos, resultados e classificação do campeonato
+            {t('Gerir jogos, resultados e classificação do campeonato')}
           </p>
         </div>
 
@@ -369,15 +371,15 @@ export default function Matches() {
           <TabsList className="mb-6">
             <TabsTrigger value="list" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Jogos
+              {t('Jogos')}
             </TabsTrigger>
             <TabsTrigger value="results" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
-              Resultados
+              {t('Resultados')}
             </TabsTrigger>
             <TabsTrigger value="championship" className="flex items-center gap-2">
               <TableIcon className="w-4 h-4" />
-              Campeonato
+              {t('Campeonato')}
             </TabsTrigger>
             {deletedMatches.length > 0 && (
               <TabsTrigger value="deleted" className="flex items-center gap-2">
@@ -388,7 +390,7 @@ export default function Matches() {
             {selectedMatch && (
               <TabsTrigger value="live" className="flex items-center gap-2">
                 <Play className="w-4 h-4" />
-                Jogo ao Vivo
+                {t('Jogo ao Vivo')}
               </TabsTrigger>
             )}
           </TabsList>
@@ -399,13 +401,13 @@ export default function Matches() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Equipa
+                  {t('Equipa')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                   <SelectTrigger className="max-w-xs">
-                    <SelectValue placeholder="Selecione uma equipa" />
+                    <SelectValue placeholder={t('Selecione uma equipa')} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map(team => (
@@ -422,9 +424,9 @@ export default function Matches() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Sem Equipas</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('Sem Equipas')}</h3>
                   <p className="text-muted-foreground">
-                    Crie uma equipa primeiro para gerir jogos.
+                    {t('Crie uma equipa primeiro para gerir jogos.')}
                   </p>
                 </CardContent>
               </Card>
@@ -432,9 +434,9 @@ export default function Matches() {
               <Card>
                 <CardContent className="py-12 text-center">
                   <Trophy className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Sem Jogos</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('Sem Jogos')}</h3>
                   <p className="text-muted-foreground">
-                    Crie jogos na secção de Treinos → Convocatória
+                    {t('Crie jogos na secção de Treinos → Convocatória')}
                   </p>
                 </CardContent>
               </Card>
@@ -450,7 +452,7 @@ export default function Matches() {
                           {testMatchesCount} jogo{testMatchesCount === 1 ? '' : 's'} de teste
                         </p>
                         <p className="text-xs text-amber-600 dark:text-amber-300">
-                          Jogos de teste não contam para estatísticas
+                          {t('Jogos de teste não contam para estatísticas')}
                         </p>
                       </div>
                     </div>
@@ -461,7 +463,7 @@ export default function Matches() {
                       className="border-amber-500 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
                     >
                       <Trash2 className="w-4 h-4 mr-1" />
-                      Apagar jogos de teste
+                      {t('Apagar jogos de teste')}
                     </Button>
                   </div>
                 )}
@@ -472,7 +474,7 @@ export default function Matches() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
                         <Play className="w-5 h-5 fill-current" />
-                        Jogo a Decorrer
+                        {t('Jogo a Decorrer')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -484,7 +486,7 @@ export default function Matches() {
                           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                             <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
-                                {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
+                                {format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {format(new Date(match.match_date), 'HH:mm')}
@@ -495,11 +497,11 @@ export default function Matches() {
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
-                                    TESTE
+                                    {t('TESTE')}
                                   </Badge>
                                 )}
                                 <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
-                                  {match.is_home ? 'CASA' : 'FORA'}
+                                  {match.is_home ? t('CASA') : t('FORA')}
                                 </Badge>
                                 {match.opponent_name}
                               </div>
@@ -512,7 +514,7 @@ export default function Matches() {
                           </div>
                           <Button size="sm" onClick={() => handleContinueMatch(match)} className="bg-green-600 hover:bg-green-700">
                             <Play className="w-4 h-4 mr-1 fill-current" />
-                            Continuar Jogo
+                            {t('Continuar Jogo')}
                           </Button>
                         </div>
                       ))}
@@ -526,10 +528,10 @@ export default function Matches() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Calendar className="w-5 h-5" />
-                        Próximos Jogos
+                        {t('Próximos Jogos')}
                       </CardTitle>
                       <CardDescription>
-                        Jogos agendados para as próximas semanas
+                        {t('Jogos agendados para as próximas semanas')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -545,7 +547,7 @@ export default function Matches() {
                           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                             <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
-                                {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
+                                {format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {format(new Date(match.match_date), 'HH:mm')}
@@ -556,11 +558,11 @@ export default function Matches() {
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
-                                    TESTE
+                                    {t('TESTE')}
                                   </Badge>
                                 )}
                                 <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
-                                  {match.is_home ? 'CASA' : 'FORA'}
+                                  {match.is_home ? t('CASA') : t('FORA')}
                                 </Badge>
                                 {match.opponent_name}
                               </div>
@@ -581,11 +583,11 @@ export default function Matches() {
                               <>
                                 <Button size="sm" onClick={() => handleContinueMatch(match)}>
                                   <Play className="w-4 h-4 mr-1 fill-current" />
-                                  Continuar
+                                  {t('Continuar')}
                                 </Button>
                                 {canDeleteAnytime(match) && (
                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                                    onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }} title="Eliminar este jogo (amigável/teste)" aria-label="Eliminar jogo">
+                                    onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }} title={t('Eliminar este jogo (amigável/teste)')} aria-label={t('Eliminar jogo')}>
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 )}
@@ -596,21 +598,21 @@ export default function Matches() {
                                   size="sm"
                                   onClick={() => handleStartMatch(match)}
                                   disabled={!!inProgressMatch}
-                                  title={inProgressMatch ? 'Já existe um jogo a decorrer' : ''}
+                                  title={inProgressMatch ? t('Já existe um jogo a decorrer') : ''}
                                 >
                                   <Play className="w-4 h-4 mr-1" />
-                                  Iniciar Jogo
+                                  {t('Iniciar Jogo')}
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title="Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo">
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title={t('Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo')}>
                                   <ClipboardEdit className="w-4 h-4 mr-1" />
-                                  Registar depois
+                                  {t('Registar depois')}
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }}
-                                  title="Eliminar jogo"
+                                  title={t('Eliminar jogo')}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -629,10 +631,10 @@ export default function Matches() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Clock className="w-5 h-5" />
-                        Jogos Pendentes
+                        {t('Jogos Pendentes')}
                       </CardTitle>
                       <CardDescription>
-                        Jogos passados ainda não terminados
+                        {t('Jogos passados ainda não terminados')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -648,7 +650,7 @@ export default function Matches() {
                           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                             <div className="text-center min-w-[52px] shrink-0">
                               <div className="text-sm font-medium">
-                                {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
+                                {format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {format(new Date(match.match_date), 'yyyy')}
@@ -659,11 +661,11 @@ export default function Matches() {
                                 {match.is_test && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                     <FlaskConical className="w-3 h-3 mr-0.5" />
-                                    TESTE
+                                    {t('TESTE')}
                                   </Badge>
                                 )}
                                 <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
-                                  {match.is_home ? 'CASA' : 'FORA'}
+                                  {match.is_home ? t('CASA') : t('FORA')}
                                 </Badge>
                                 {match.opponent_name}
                               </div>
@@ -679,7 +681,7 @@ export default function Matches() {
                             {match.status === 'in_progress' ? (
                               <Button size="sm" onClick={() => handleContinueMatch(match)}>
                                 <Play className="w-4 h-4 mr-1 fill-current" />
-                                Continuar
+                                {t('Continuar')}
                               </Button>
                             ) : (
                               <>
@@ -688,21 +690,21 @@ export default function Matches() {
                                   size="sm"
                                   onClick={() => handleStartMatch(match)}
                                   disabled={!!inProgressMatch}
-                                  title={inProgressMatch ? 'Já existe um jogo a decorrer' : ''}
+                                  title={inProgressMatch ? t('Já existe um jogo a decorrer') : ''}
                                 >
                                   <Play className="w-4 h-4 mr-1" />
-                                  Iniciar Jogo
+                                  {t('Iniciar Jogo')}
                                 </Button>
-                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title="Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo">
+                                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setQuickEntryId(match.id); }} title={t('Não deu para fazer ao vivo? Registe minutos, golos e cartões depois do jogo')}>
                                   <ClipboardEdit className="w-4 h-4 mr-1" />
-                                  Registar depois
+                                  {t('Registar depois')}
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-destructive hover:text-destructive"
                                   onClick={(e) => { e.stopPropagation(); handleDeleteMatch(match); }}
-                                  title="Eliminar jogo"
+                                  title={t('Eliminar jogo')}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -721,12 +723,12 @@ export default function Matches() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Trophy className="w-5 h-5" />
-                        {completedMatches.length > 0 ? 'Todos os Jogos Terminados' : 'Sem Jogos Ativos'}
+                        {completedMatches.length > 0 ? t('Todos os Jogos Terminados') : t('Sem Jogos Ativos')}
                       </CardTitle>
                       <CardDescription>
                         {completedMatches.length > 0
-                          ? `${completedMatches.length} jogo${completedMatches.length !== 1 ? 's' : ''} terminado${completedMatches.length !== 1 ? 's' : ''}. Crie novos jogos em Treinos → Convocatória.`
-                          : 'Não existem jogos agendados. Crie novos jogos em Treinos → Convocatória.'
+                          ? t('{{n}} jogo(s) terminado(s). Crie novos jogos em Treinos → Convocatória.', { n: completedMatches.length })
+                          : t('Não existem jogos agendados. Crie novos jogos em Treinos → Convocatória.')
                         }
                       </CardDescription>
                     </CardHeader>
@@ -739,9 +741,9 @@ export default function Matches() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Trophy className="w-5 h-5" />
-                        Resultados ({completedMatches.length})
+                        {t('Resultados ({{n}})', { n: completedMatches.length })}
                       </CardTitle>
-                      <CardDescription>Últimos jogos terminados</CardDescription>
+                      <CardDescription>{t('Últimos jogos terminados')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {completedMatches.slice(0, 5).map(match => (
@@ -752,16 +754,16 @@ export default function Matches() {
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="text-center min-w-[50px] shrink-0">
                               <div className="text-xs font-medium">
-                                {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
+                                {format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}
                               </div>
                             </div>
                             <div className="min-w-0">
                               <div className="text-sm font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 {match.is_test && (
-                                  <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500 text-amber-600">TESTE</Badge>
+                                  <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-500 text-amber-600">{t('TESTE')}</Badge>
                                 )}
                                 <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-[10px]">
-                                  {match.is_home ? 'C' : 'F'}
+                                  {(match.is_home ? t('CASA') : t('FORA')).charAt(0)}
                                 </Badge>
                                 {match.opponent_name}
                               </div>
@@ -773,7 +775,7 @@ export default function Matches() {
                             </div>
                             {canDeleteAnytime(match) && (
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteMatch(match)} title="Eliminar este jogo (amigável/teste): os minutos deixam de contar" aria-label="Eliminar jogo">
+                                onClick={() => handleDeleteMatch(match)} title={t('Eliminar este jogo (amigável/teste): os minutos deixam de contar')} aria-label={t('Eliminar jogo')}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             )}
@@ -793,13 +795,13 @@ export default function Matches() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Equipa
+                  {t('Equipa')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                   <SelectTrigger className="max-w-xs">
-                    <SelectValue placeholder="Selecione uma equipa" />
+                    <SelectValue placeholder={t('Selecione uma equipa')} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map(team => (
@@ -827,13 +829,13 @@ export default function Matches() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Equipa
+                  {t('Equipa')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                   <SelectTrigger className="max-w-xs">
-                    <SelectValue placeholder="Selecione uma equipa" />
+                    <SelectValue placeholder={t('Selecione uma equipa')} />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.map(team => (
@@ -859,13 +861,13 @@ export default function Matches() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Archive className="w-5 h-5" />
-                  Jogos Eliminados
+                  {t('Jogos Eliminados')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {deletedMatches.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    Sem jogos eliminados.
+                    {t('Sem jogos eliminados.')}
                   </p>
                 ) : (
                   deletedMatches.map(match => (
@@ -876,7 +878,7 @@ export default function Matches() {
                       <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                         <div className="text-center min-w-[52px] shrink-0">
                           <div className="text-sm font-medium">
-                            {format(new Date(match.match_date), 'dd MMM', { locale: pt })}
+                            {format(new Date(match.match_date), 'dd MMM', { locale: dateLocale() })}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             {format(new Date(match.match_date), 'HH:mm')}
@@ -887,17 +889,17 @@ export default function Matches() {
                             {match.is_test && (
                               <Badge variant="outline" className="text-[10px] px-1 py-0 border-amber-500 text-amber-600 dark:text-amber-400">
                                 <FlaskConical className="w-3 h-3 mr-0.5" />
-                                TESTE
+                                {t('TESTE')}
                               </Badge>
                             )}
                             <Badge variant={match.is_home ? 'default' : 'secondary'} className="text-xs">
-                              {match.is_home ? 'CASA' : 'FORA'}
+                              {match.is_home ? t('CASA') : t('FORA')}
                             </Badge>
                             {match.opponent_name}
                           </div>
                           {match.deleted_at && (
                             <div className="text-xs text-muted-foreground mt-1">
-                              Eliminado em {format(new Date(match.deleted_at), 'dd/MM/yyyy HH:mm', { locale: pt })}
+                              {t('Eliminado em')} {format(new Date(match.deleted_at), 'dd/MM/yyyy HH:mm', { locale: dateLocale() })}
                             </div>
                           )}
                         </div>
@@ -908,7 +910,7 @@ export default function Matches() {
                         onClick={() => restoreMatch(match.id)}
                       >
                         <RotateCcw className="w-4 h-4 mr-1" />
-                        Restaurar
+                        {t('Restaurar')}
                       </Button>
                     </div>
                   ))
@@ -935,36 +937,35 @@ export default function Matches() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
-                Eliminar Jogo
+                {t('Eliminar Jogo')}
               </DialogTitle>
               <DialogDescription>
-                Tens a certeza que queres eliminar este jogo?
+                {t('Tens a certeza que queres eliminar este jogo?')}
               </DialogDescription>
             </DialogHeader>
             {deleteDialogMatch && (
               <div className="py-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <div className="font-medium">
-                    {deleteDialogMatch.is_home ? 'Casa' : 'Fora'} vs {deleteDialogMatch.opponent_name}
+                    {deleteDialogMatch.is_home ? t('Casa') : t('Fora')} vs {deleteDialogMatch.opponent_name}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {format(new Date(deleteDialogMatch.match_date), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
+                    {format(new Date(deleteDialogMatch.match_date), isEnglish() ? "d MMMM yyyy, HH:mm" : "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: dateLocale() })}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">
-                  {deleteDialogMatch.status === 'in_progress' && 'O jogo está a decorrer: o relógio pára e o jogo fica cancelado. '}
-                  Os minutos, golos, cartões e notas deste jogo deixam de contar nas fichas dos jogadores.
-                  O jogo fica em "Eliminados" e pode ser restaurado mais tarde.
+                  {deleteDialogMatch.status === 'in_progress' && t('O jogo está a decorrer: o relógio pára e o jogo fica cancelado.') + ' '}
+                  {t('Os minutos, golos, cartões e notas deste jogo deixam de contar nas fichas dos jogadores. O jogo fica em "Eliminados" e pode ser restaurado mais tarde.')}
                 </p>
               </div>
             )}
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogMatch(null)}>
-                Cancelar
+                {t('Cancelar')}
               </Button>
               <Button variant="destructive" onClick={confirmDeleteMatch}>
                 <Trash2 className="w-4 h-4 mr-1" />
-                Eliminar
+                {t('Eliminar')}
               </Button>
             </DialogFooter>
           </DialogContent>

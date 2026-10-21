@@ -10,6 +10,7 @@ import { pt } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useSelectedSeasonId } from '@/hooks/useSeasonContext';
 import { useAuth } from '@/lib/auth';
+import { dateLocale, useT } from '@/lib/i18n/ui';
 
 interface TrainingSession {
   id: string;
@@ -78,6 +79,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
   // switching team at the top of the screen re-scopes this page
   useEffect(() => { if (activeTeamId) fetchTeams(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [activeTeamId]);
   const { user } = useAuth();
+  const t = useT();
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -159,22 +161,22 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <h3 className="text-sm font-semibold min-w-[180px] text-center">
-            {format(currentWeek, "dd MMM", { locale: pt })} — {format(weekEnd, "dd MMM yyyy", { locale: pt })}
+            {format(currentWeek, "dd MMM", { locale: dateLocale() })} — {format(weekEnd, "dd MMM yyyy", { locale: dateLocale() })}
           </h3>
           <Button variant="outline" size="icon" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCurrentWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}>
-            Hoje
+            {t('Hoje')}
           </Button>
         </div>
         {teams.length > 1 && (
           <Select value={selectedTeam} onValueChange={setSelectedTeam}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Todas as equipas" />
+              <SelectValue placeholder={t('Todas as equipas')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as equipas</SelectItem>
+              <SelectItem value="all">{t('Todas as equipas')}</SelectItem>
               {teams.map(t => (
                 <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
               ))}
@@ -199,7 +201,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
               }`}
             >
               <div className={`w-14 shrink-0 text-xs font-medium sm:mb-1 sm:w-auto ${today ? 'text-primary' : 'text-muted-foreground'}`}>
-                {format(day, 'EEE', { locale: pt })}
+                {format(day, 'EEE', { locale: dateLocale() })}
                 <span className="ml-1 font-bold">{format(day, 'd')}</span>
               </div>
               <div className="min-w-0 flex-1">
@@ -209,7 +211,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
                 <div key={m.id} className="mb-1 p-1.5 rounded bg-destructive/10 border border-destructive/20 text-xs">
                   <div className="font-semibold text-destructive flex items-center gap-1">
                     <Dumbbell className="h-3 w-3" />
-                    Jogo
+                    {t('Jogo')}
                   </div>
                   {m.opponent_name && <div className="truncate">{m.opponent_name}</div>}
                   <div className="text-muted-foreground">{format(new Date(m.match_date), 'HH:mm')}</div>
@@ -225,7 +227,7 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
                     INTENSITY_COLORS[s.intensity || 'medium'] || INTENSITY_COLORS.medium
                   }`}
                 >
-                  <div className="font-medium truncate">{s.title || 'Treino'}</div>
+                  <div className="font-medium truncate">{s.title || t('Treino')}</div>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-2.5 w-2.5" />
                     {format(new Date(s.date), 'HH:mm')}
@@ -250,15 +252,15 @@ export function TrainingWeeklyCalendar({ onSessionSelect }: TrainingWeeklyCalend
       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
           <Calendar className="h-4 w-4" />
-          {sessions.length} treino{sessions.length !== 1 ? 's' : ''}
+          {sessions.length === 1 ? t('1 treino') : t('{{n}} treinos', { n: sessions.length })}
         </div>
         <div className="flex items-center gap-1">
           <Dumbbell className="h-4 w-4" />
-          {matches.length} jogo{matches.length !== 1 ? 's' : ''}
+          {matches.length === 1 ? t('1 jogo') : t('{{n}} jogos', { n: matches.length })}
         </div>
         {sessions.filter(s => s.status === 'completed').length > 0 && (
           <Badge variant="outline">
-            {sessions.filter(s => s.status === 'completed').length} concluído{sessions.filter(s => s.status === 'completed').length !== 1 ? 's' : ''}
+            {t('{{n}} concluído(s)', { n: sessions.filter(s => s.status === 'completed').length })}
           </Badge>
         )}
       </div>

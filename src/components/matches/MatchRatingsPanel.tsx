@@ -10,6 +10,7 @@ import { Minus, Plus, Star, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizeRating, playerOfTheMatch, ratingBg } from '@/lib/player-card';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n/ui';
 
 interface Row {
   id: string;
@@ -20,6 +21,7 @@ interface Row {
 }
 
 export function MatchRatingsPanel({ matchId }: { matchId: string }) {
+  const t = useT();
   const [rows, setRows] = useState<Row[]>([]);
   const [draft, setDraft] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
@@ -60,9 +62,9 @@ export function MatchRatingsPanel({ matchId }: { matchId: string }) {
         if (error) throw error;
       }
       setRows((prev) => prev.map((r) => ({ ...r, rating: draft[r.id] ?? null })));
-      toast.success('Notas guardadas — já contam para a forma de cada jogador.');
+      toast.success(t('Notas guardadas — já contam para a forma de cada jogador.'));
     } catch (e) {
-      toast.error('Não foi possível guardar: ' + (e as Error).message);
+      toast.error(t('Não foi possível guardar: {{msg}}', { msg: (e as Error).message }));
     } finally {
       setSaving(false);
     }
@@ -75,9 +77,9 @@ export function MatchRatingsPanel({ matchId }: { matchId: string }) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Star className="h-4 w-4 text-accent" /> Notas do jogo
+          <Star className="h-4 w-4 text-accent" /> {t('Notas do jogo')}
         </CardTitle>
-        <CardDescription>1 a 10, como no Football Manager. Toque em + para começar em 6.0.</CardDescription>
+        <CardDescription>{t('1 a 10, como no Football Manager. Toque em + para começar em 6.0.')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-1.5">
         {rows.map((r) => {
@@ -87,14 +89,14 @@ export function MatchRatingsPanel({ matchId }: { matchId: string }) {
               <span className="w-6 text-center font-mono text-xs text-muted-foreground">{r.player?.number ?? '–'}</span>
               <span className="flex-1 truncate text-sm font-medium">
                 {r.player?.name ?? '—'}
-                {motm === r.id && <span className="ml-2 text-xs font-semibold text-accent">★ Melhor em campo</span>}
+                {motm === r.id && <span className="ml-2 text-xs font-semibold text-accent">{t('★ Melhor em campo')}</span>}
               </span>
               <span className="hidden font-mono text-xs text-muted-foreground sm:inline">{r.minutes_played}'</span>
-              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => step(r.id, -0.5)} disabled={v == null} aria-label="Baixar nota">
+              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => step(r.id, -0.5)} disabled={v == null} aria-label={t('Baixar nota')}>
                 <Minus className="h-3.5 w-3.5" />
               </Button>
               <span className={cn('w-11 rounded py-1 text-center font-mono text-sm font-bold', ratingBg(v))}>{v == null ? '—' : v.toFixed(1)}</span>
-              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => step(r.id, +0.5)} aria-label="Subir nota">
+              <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => step(r.id, +0.5)} aria-label={t('Subir nota')}>
                 <Plus className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -103,7 +105,7 @@ export function MatchRatingsPanel({ matchId }: { matchId: string }) {
         <div className="flex justify-end pt-2">
           <Button onClick={save} disabled={!changed || saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Guardar notas
+            {t('Guardar notas')}
           </Button>
         </div>
       </CardContent>

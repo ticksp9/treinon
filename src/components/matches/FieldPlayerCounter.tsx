@@ -5,6 +5,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Users, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useT } from '@/lib/i18n/ui';
 
 interface FieldPlayerCounterProps {
   current: number;
@@ -13,6 +14,7 @@ interface FieldPlayerCounterProps {
 }
 
 export function FieldPlayerCounter({ current, max, className }: FieldPlayerCounterProps) {
+  const t = useT();
   const percentage = max > 0 ? (current / max) * 100 : 0;
   const isAtLimit = current >= max;
   const isOverLimit = current > max;
@@ -32,7 +34,7 @@ export function FieldPlayerCounter({ current, max, className }: FieldPlayerCount
       {isOverLimit && (
         <Badge variant="destructive" className="text-[10px] px-1.5 py-0 gap-0.5">
           <AlertTriangle className="w-3 h-3" />
-          Excesso
+          {t('Excesso')}
         </Badge>
       )}
     </div>
