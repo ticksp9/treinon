@@ -293,3 +293,53 @@ DO $$ BEGIN
   ASSERT (SELECT amount FROM public.get_coordinator_alerts() WHERE kind = 'payment') = 35, 'the coordinator page shows the same debt';
 END $$;
 RESET ROLE;
+
+-- ── Chat moderation: report, block, managers delete ──────────────────────────
+-- the parent in the group writes; the head coach (manages the group) deals with it
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+INSERT INTO public.communication_messages (id, channel_id, sender_id, content)
+VALUES ('98000000-0000-0000-0000-000000000001', '99000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000011', 'mensagem ofensiva');
+RESET ROLE;
+
+-- a coach of the group reports it, and blocks the author
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', false);
+INSERT INTO public.communication_message_reports (message_id, reason) VALUES ('98000000-0000-0000-0000-000000000001', 'ofensivo');
+INSERT INTO public.user_blocks (blocked_id) VALUES ('a0000000-0000-0000-0000-000000000011');
+DO $$ BEGIN
+  ASSERT (SELECT reported_user_id FROM communication_message_reports) = 'a0000000-0000-0000-0000-000000000011', 'author filled from the message';
+  ASSERT (SELECT message_content FROM communication_message_reports) = 'mensagem ofensiva', 'copy of the message kept';
+  ASSERT (SELECT count(*) FROM user_blocks) = 1, 'own block saved';
+END $$;
+RESET ROLE;
+
+-- someone outside the group cannot report it, and sees nobody's blocks or reports
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.communication_message_reports (message_id) VALUES ('98000000-0000-0000-0000-000000000001');
+    RAISE EXCEPTION 'outsider reported a message he cannot read';
+  EXCEPTION WHEN insufficient_privilege OR raise_exception THEN
+    IF SQLERRM = 'outsider reported a message he cannot read' THEN RAISE; END IF;
+  END;
+  ASSERT (SELECT count(*) FROM communication_message_reports) = 0, 'outsider sees no reports';
+  ASSERT (SELECT count(*) FROM user_blocks) = 0, 'outsider sees no blocks';
+END $$;
+RESET ROLE;
+
+-- the group manager sees the report, deletes the message and closes the report
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM communication_message_reports WHERE status = 'open') = 1, 'manager sees the report';
+END $$;
+DELETE FROM public.communication_messages WHERE id = '98000000-0000-0000-0000-000000000001';
+UPDATE public.communication_message_reports SET status = 'resolved', resolved_at = now();
+DO $$ BEGIN
+  ASSERT NOT EXISTS (SELECT 1 FROM communication_messages WHERE id = '98000000-0000-0000-0000-000000000001'), 'manager deleted the message';
+  ASSERT (SELECT status FROM communication_message_reports) = 'resolved', 'report closed';
+  ASSERT (SELECT message_content FROM communication_message_reports) = 'mensagem ofensiva', 'the report keeps the copy';
+END $$;
+RESET ROLE;

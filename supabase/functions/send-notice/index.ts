@@ -404,6 +404,29 @@ Deno.serve(async (req) => {
           fresh.map((r) => ({ kind: "absence", player_id: r.player_id, ref_key: r.last_absence, club_id: team.club_id, emailed_at: new Date().toISOString() })),
           { onConflict: "kind,player_id,ref_key" });
       };
+    } else if (body.kind === "message_report") {
+      // a message reported in the chat: support and whoever created the group are told
+      const { data: r } = await db.from("communication_message_reports").select("*").eq("id", body.report_id).maybeSingle();
+      if (!r || r.reporter_id !== user.id) return json({ error: "Denúncia não encontrada" }, 404);
+      const { data: ch } = await db.from("communication_channels").select("name, created_by, club_id").eq("id", r.channel_id).maybeSingle();
+      const { data: author } = await db.from("profiles").select("display_name, full_name").eq("id", r.reported_user_id).maybeSingle();
+      const authorName = author?.display_name || author?.full_name || "";
+      const support = (Deno.env.get("SUPPORT_EMAIL") || "treinon.apoio@gmail.com").trim();
+      const to = [support, ...(ch?.created_by ? await profileEmails(db, [ch.created_by]) : [])];
+      const lines = [
+        `Grupo: ${ch?.name ?? "—"}`,
+        `Autor da mensagem: ${authorName || "—"}`,
+        `Denunciada por: ${senderName || user.email || "—"}`,
+        `Motivo: ${r.reason || "—"}`,
+        "",
+        `Mensagem: ${r.message_content ?? ""}`,
+      ];
+      batches.push({ group: "denuncia", to, mail: {
+        subject: `Mensagem denunciada · ${ch?.name ?? "TreinON"}`,
+        text: [...lines, "", `${appUrl}/communication`].join("\n"),
+        html: layout("Mensagem denunciada", lines.map((l) => `<p>${esc(l)}</p>`).join(""), `${appUrl}/communication`,
+          "Quem gere o grupo pode apagar a mensagem no chat (menu da mensagem → Apagar)."),
+      } });
     } else {
       return json({ error: "Pedido inválido" }, 400);
     }

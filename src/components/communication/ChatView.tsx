@@ -13,7 +13,10 @@ import {
   DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Send, MessageSquare, Loader2, Pin, MoreVertical, Paperclip, Users, Hash, AlertTriangle, BellOff } from 'lucide-react';
+import { Send, MessageSquare, Loader2, Pin, MoreVertical, Paperclip, Users, Hash, AlertTriangle, Flag, Ban, Trash2, ShieldAlert } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { useBlockedUsers, useBlockUser, useChannelReports, useDeleteMessage, useReportMessage, useResolveReport } from '@/hooks/useChatModeration';
 import { format, isToday, isYesterday } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { uploadCommunicationFile } from '@/hooks/useCommunicationPhase2';
@@ -32,8 +35,8 @@ interface ChatViewProps {
 
 function formatDateSeparator(dateStr: string): string {
   const date = new Date(dateStr);
-  if (isToday(date)) return 'Hoje';
-  if (isYesterday(date)) return 'Ontem';
+  if (isToday(date)) return tx('Hoje');
+  if (isYesterday(date)) return tx('Ontem');
   return longDate(date, 'date');
 }
 
@@ -47,6 +50,17 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
   const [text, setText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: blocked = [] } = useBlockedUsers();
+  const blockUser = useBlockUser();
+  const reportMessage = useReportMessage();
+  const deleteMessage = useDeleteMessage(channelId);
+  const { data: reports = [] } = useChannelReports(channelId, canManage);
+  const resolveReport = useResolveReport();
+  const [reporting, setReporting] = useState<CommunicationMessage | null>(null);
+  const [reason, setReason] = useState('');
+  // messages of people this user blocked are not shown
+  const visible = useMemo(() => messages.filter((m) => !blocked.includes(m.sender_id)), [messages, blocked]);
 
   const senderIds = useMemo(() => messages.map(m => m.sender_id), [messages]);
   const { data: senderNames } = useSenderProfiles(senderIds);
@@ -99,6 +113,33 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const nameOf = (id: string | null | undefined) => (id && senderNames?.get(id)) || tx('Utilizador');
+
+  const handleReport = () => {
+    if (!reporting) return;
+    reportMessage.mutate({ messageId: reporting.id, reason: reason.trim() }, {
+      onSuccess: () => { toast.success(tx('Denúncia enviada. Quem gere o grupo e a equipa TreinON vão analisá-la.')); setReporting(null); setReason(''); },
+      onError: (e) => toast.error(tx('Não foi possível enviar a denúncia: {{msg}}', { msg: (e as Error).message })),
+    });
+  };
+
+  const handleBlock = (userId: string, block: boolean) => {
+    blockUser.mutate({ userId, block }, {
+      onSuccess: () => toast.success(block
+        ? tx('{{name}} bloqueado: deixa de ver as mensagens desta pessoa.', { name: nameOf(userId) })
+        : tx('{{name}} desbloqueado.', { name: nameOf(userId) })),
+      onError: (e) => toast.error((e as Error).message),
+    });
+  };
+
+  const handleDelete = (messageId: string) => {
+    if (!window.confirm(tx('Apagar esta mensagem para todos?'))) return;
+    deleteMessage.mutate(messageId, {
+      onSuccess: () => toast.success(tx('Mensagem apagada.')),
+      onError: (e) => toast.error((e as Error).message),
+    });
+  };
+
   const handlePin = (messageId: string) => {
     pinMessage.mutate(
       { channelId, messageId },
@@ -110,7 +151,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
   const groupedMessages = useMemo(() => {
     const groups: { date: string; messages: CommunicationMessage[] }[] = [];
     let currentDate = '';
-    messages.forEach(msg => {
+    visible.forEach(msg => {
       const msgDate = format(new Date(msg.created_at), 'yyyy-MM-dd');
       if (msgDate !== currentDate) {
         currentDate = msgDate;
@@ -120,7 +161,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
       }
     });
     return groups;
-  }, [messages]);
+  }, [visible]);
 
   return (
     <div className="flex flex-col h-full">
@@ -143,6 +184,22 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
               {channelType.replace(/_/g, ' ')}
             </Badge>
           )}
+          {blocked.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-6 gap-1 px-2 text-xs">
+                  <Ban className="h-3 w-3" />{tx('Bloqueados ({{n}})', { n: blocked.length })}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {blocked.map((id) => (
+                  <DropdownMenuItem key={id} onClick={() => handleBlock(id, false)}>
+                    {tx('Desbloquear {{name}}', { name: nameOf(id) })}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Badge variant="secondary" className="text-xs gap-1">
             <Users className="h-3 w-3" />
             {memberCount}
@@ -152,6 +209,33 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
 
       {/* Pinned messages */}
       <PinnedMessages channelId={channelId} canManage={canManage} />
+
+      {/* Reported messages: only the group's managers see them */}
+      {canManage && reports.length > 0 && (
+        <div className="border-b bg-destructive/5 px-4 py-2 space-y-2">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+            <ShieldAlert className="h-3.5 w-3.5" />{tx('Mensagens denunciadas ({{n}})', { n: reports.length })}
+          </p>
+          {reports.map((r) => (
+            <div key={r.id} className="rounded-md border bg-background p-2 text-xs space-y-1">
+              <p className="break-words"><span className="font-medium">{nameOf(r.reported_user_id)}:</span> {r.message_content}</p>
+              {r.reason && <p className="text-muted-foreground">{tx('Motivo:')} {r.reason}</p>}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {r.message_id && (
+                  <Button size="sm" variant="destructive" className="h-7 text-xs" disabled={resolveReport.isPending}
+                    onClick={() => resolveReport.mutate({ report: r, deleteMessage: true }, { onSuccess: () => toast.success(tx('Mensagem apagada.')) })}>
+                    <Trash2 className="mr-1 h-3 w-3" />{tx('Apagar mensagem')}
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="h-7 text-xs" disabled={resolveReport.isPending}
+                  onClick={() => resolveReport.mutate({ report: r, deleteMessage: false })}>
+                  {tx('Manter (resolvida)')}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-4" ref={scrollRef}>
@@ -166,7 +250,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
               </div>
             ))}
           </div>
-        ) : messages.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
             <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="h-8 w-8 opacity-40" />
@@ -194,7 +278,7 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
                   const attachmentName = msgAny.attachment_name as string | undefined;
                   const isPinned = msgAny.is_pinned as boolean | undefined;
                   const msgPriority = msgAny.priority_level as string | undefined;
-                  const displayName = senderNames?.get(msg.sender_id) || msg.sender_name || 'Utilizador';
+                  const displayName = senderNames?.get(msg.sender_id) || msg.sender_name || tx('Utilizador');
 
                   const prevMsg = idx > 0 ? group.messages[idx - 1] : null;
                   const isSameSender = prevMsg?.sender_id === msg.sender_id;
@@ -245,23 +329,38 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
                             {format(new Date(msg.created_at), 'HH:mm', { locale: pt })}
                           </p>
                         </div>
-                        {/* Actions */}
-                        {canManage && (
-                          <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="secondary" size="icon" className="h-6 w-6 rounded-full shadow-sm">
-                                  <MoreVertical className="h-3 w-3" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                        {/* Actions: always visible on touch screens, on hover with a mouse */}
+                        <div className={cn('absolute -top-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100', isOwn ? '-left-7' : '-right-7')}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" aria-label={tx('Opções da mensagem')}>
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align={isOwn ? 'start' : 'end'}>
+                              {canManage && (
                                 <DropdownMenuItem onClick={() => handlePin(msg.id)}>
                                   <Pin className="h-3.5 w-3.5 mr-2" /> {tx('Fixar mensagem')}
                                 </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        )}
+                              )}
+                              {!isOwn && (
+                                <DropdownMenuItem onClick={() => { setReason(''); setReporting(msg); }}>
+                                  <Flag className="h-3.5 w-3.5 mr-2" /> {tx('Denunciar mensagem')}
+                                </DropdownMenuItem>
+                              )}
+                              {!isOwn && (
+                                <DropdownMenuItem onClick={() => handleBlock(msg.sender_id, true)}>
+                                  <Ban className="h-3.5 w-3.5 mr-2" /> {tx('Bloquear {{name}}', { name: displayName })}
+                                </DropdownMenuItem>
+                              )}
+                              {(isOwn || canManage) && (
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(msg.id)}>
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> {tx('Apagar mensagem')}
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                     </div>
                   );
@@ -311,6 +410,29 @@ export function ChatView({ channelId, channelName, canManage = false, channelTyp
           </Button>
         </div>
       </div>
+
+      <Dialog open={!!reporting} onOpenChange={(o) => { if (!o) setReporting(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{tx('Denunciar mensagem')}</DialogTitle>
+            <DialogDescription>{tx('Quem gere o grupo e a equipa TreinON recebem a denúncia e analisam-na em 24 horas. Quem escreveu não sabe quem denunciou.')}</DialogDescription>
+          </DialogHeader>
+          {reporting && <p className="rounded-md bg-muted p-2 text-sm whitespace-pre-wrap break-words">{reporting.content}</p>}
+          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={500}
+            placeholder={tx('O que se passa? (ofensivo, assédio, spam…) — opcional')} />
+          <DialogFooter className="gap-2">
+            {reporting && (
+              <Button variant="outline" onClick={() => handleBlock(reporting.sender_id, true)}>
+                <Ban className="mr-1.5 h-4 w-4" />{tx('Bloquear também')}
+              </Button>
+            )}
+            <Button variant="destructive" onClick={handleReport} disabled={reportMessage.isPending}>
+              {reportMessage.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Flag className="mr-1.5 h-4 w-4" />}
+              {tx('Enviar denúncia')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

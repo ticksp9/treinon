@@ -17,7 +17,8 @@ export type NoticeRequest =
   | { kind: 'callup'; match_id: string; player_ids: string[]; message?: string; to?: CallupTargets; /** sending again by hand: the coordinator already got it when it was saved */ resend?: boolean }
   | { kind: 'absence_alert'; team_id: string }
   | { kind: 'event_reminder'; event_id: string }
-  | { kind: 'event'; event_id: string };
+  | { kind: 'event'; event_id: string }
+  | { kind: 'message_report'; report_id: string };
 
 export async function sendNotice(body: NoticeRequest): Promise<NoticeResult> {
   try {
