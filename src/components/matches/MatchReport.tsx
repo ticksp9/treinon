@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { OpponentMatchNotes, useMatchOpponentObservation } from './OpponentMatchNotes';
 import { OurPlayerNotes, orderForNotes, useMatchPlayerNotes } from './OurPlayerNotes';
+import { MatchReviewCard, reviewIsEmpty, useMatchReview } from './MatchReviewCard';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import jsPDF from 'jspdf';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
@@ -110,6 +111,10 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
   // the PDF often goes to parents: the notes about our players only go in when the coach says so
   const [ourNotesInPdf, setOurNotesInPdf] = useState(() => { try { return localStorage.getItem('treinon_pdf_player_notes') === '1'; } catch { return false; } });
   const chooseOurNotesInPdf = (v: boolean) => { setOurNotesInPdf(v); try { localStorage.setItem('treinon_pdf_player_notes', v ? '1' : '0'); } catch { /* private mode */ } };
+  // the written review of the match: also only in the PDF when the coach says so
+  const { data: review } = useMatchReview(match.id);
+  const [reviewInPdf, setReviewInPdf] = useState(() => { try { return localStorage.getItem('treinon_pdf_match_review') === '1'; } catch { return false; } });
+  const chooseReviewInPdf = (v: boolean) => { setReviewInPdf(v); try { localStorage.setItem('treinon_pdf_match_review', v ? '1' : '0'); } catch { /* private mode */ } };
   const t = useT();
   // read ahead, so the PDF is made the moment the coach asks for it
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
@@ -506,6 +511,21 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         }
       }
 
+      // ── The coach's review of the match (only when the coach chose to put it in the PDF) ──
+      if (reviewInPdf && review && !reviewIsEmpty(review)) {
+        addSection(tx('BALANÇO DO JOGO'));
+        const w = pageWidth - 32;
+        ([[tx('O que correu bem'), review.positives], [tx('O que temos de melhorar'), review.improve], [tx('O que vamos treinar a seguir'), review.next_focus]] as [string, string | null][])
+          .filter(([, v]) => v?.trim())
+          .forEach(([label, v]) => {
+            ensureSpace(10);
+            doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text(label, 14, y); y += 4.6;
+            doc.setFont('helvetica', 'normal');
+            doc.splitTextToSize(v ?? '', w).forEach((line: string) => { ensureSpace(6); doc.text(line, 18, y); y += 4.6; });
+            y += 1.4;
+          });
+      }
+
       // ── Notes about our players (only when the coach chose to put them in the PDF) ──
       const noteOf = new Map(ourNotes.map((n) => [n.player_id, n.note]));
       const withNotes = orderForNotes(lineups).filter((l) => noteOf.get(l.player_id));
@@ -676,6 +696,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
 
       {/* The coach's notes about each of our players (coaching staff only) */}
       <OurPlayerNotes matchId={match.id} lineups={lineups} includeInPdf={ourNotesInPdf} onIncludeInPdf={chooseOurNotesInPdf} />
+
+      {/* The coach's written review of the match (coaching staff only) */}
+      <MatchReviewCard matchId={match.id} includeInPdf={reviewInPdf} onIncludeInPdf={chooseReviewInPdf} />
 
       {/* Per-part starters */}
       <Card>

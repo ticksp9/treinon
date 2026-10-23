@@ -18,12 +18,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Clock, Dumbbell, MapPin, Pencil, Plus, Share2, Trash2, Trophy, Bus } from 'lucide-react';
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Clock, Dumbbell, FileDown, MapPin, Pencil, Plus, Share2, Table2, Trash2, Trophy, Bus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
 import { useUserRole } from '@/hooks/useUserRole';
 import { shareText } from '@/lib/share';
-import { addDays, findClashes, fixturesText, hhmm, timetableText, weekStart, WEEKDAYS, type MapMatch, type MatchLogistics, type TrainingSlot } from '@/lib/club-map';
+import { addDays, findClashes, fixturesText, hhmm, SLOT_SPACES, spaceLabel, timetableText, typicalMap, weekStart, WEEKDAYS, type MapMatch, type MatchLogistics, type SlotSpace, type TrainingSlot } from '@/lib/club-map';
+import { ageOfCategory } from '@/lib/guidelines';
+import { downloadTypicalMapPdf } from '@/lib/typical-map-pdf';
 import { cn } from '@/lib/utils';
 import { useClubCoordinators } from '@/components/club/CoordinatorsPanel';
 import { tx, intlLocale } from '@/lib/i18n/ui';
@@ -84,6 +86,8 @@ export default function ClubMap() {
     },
   });
   const clashes = useMemo(() => findClashes(slots), [slots]);
+  const typical = useMemo(() => typicalMap(slots, teams, ageOfCategory), [slots, teams]);
+  const noFullPitch = typical.filter((r) => r.needsFullPitch);
 
   const { data: matches = [] } = useQuery({
     queryKey: ['map-matches', clubId, teamIds.join(','), week.toISOString()],
@@ -105,7 +109,7 @@ export default function ClubMap() {
     const f = slotForm!;
     if (!f.team_id || !f.start_time || !f.end_time) return toast.error(tx('Escolha a equipa e as horas.'));
     if (f.end_time <= f.start_time) return toast.error(tx('A hora de fim tem de ser depois do início.'));
-    const base = { team_id: f.team_id, start_time: f.start_time, end_time: f.end_time, location: f.location?.trim() || null, notes: f.notes?.trim() || null };
+    const base = { team_id: f.team_id, start_time: f.start_time, end_time: f.end_time, location: f.location?.trim() || null, notes: f.notes?.trim() || null, space: f.space || null };
     const days = f.id ? [f.weekday!] : (f.days?.length ? f.days : []);
     if (days.length === 0) return toast.error(tx('Escolha pelo menos um dia.'));
     const q = supabase.from('team_training_slots' as never);
@@ -262,6 +266,7 @@ export default function ClubMap() {
                             <p className="font-mono font-semibold">{hhmm(s.start_time)}–{hhmm(s.end_time)}</p>
                             <p className="text-sm font-semibold">{teamName(s.team_id)}</p>
                             {s.location && <p className="flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{s.location}</p>}
+                            {s.space && <p className="text-muted-foreground">{spaceLabel(s.space)}</p>}
                             {s.notes && <p className="text-muted-foreground">{s.notes}</p>}
                             {clashes.has(s.id) && <p className="font-semibold text-red-600">{tx('Campo ocupado')}</p>}
                           </button>
@@ -271,6 +276,38 @@ export default function ClubMap() {
                   );
                 })}
               </div>
+
+              {/* FPF "mapa-tipo": sessions a week, length and space of each team */}
+              <Card>
+                <CardContent className="space-y-3 pt-5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="flex items-center gap-2 font-semibold"><Table2 className="h-4 w-4" />{tx('Mapa-tipo (FPF)')}</p>
+                      <p className="text-xs text-muted-foreground">{tx('Treinos por semana, duração e espaço de cada equipa. É o mapa de ocupação que a FPF pede no dossier.')}</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => downloadTypicalMapPdf(clubName, typical)}><FileDown className="mr-1.5 h-4 w-4" />{tx('Descarregar PDF')}</Button>
+                  </div>
+                  {noFullPitch.length > 0 && (
+                    <p className="flex items-start gap-1.5 rounded-md border border-amber-500/50 bg-amber-500/10 px-2 py-1.5 text-xs text-amber-800 dark:text-amber-200">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      {tx('Sub-15 a Sub-19 devem treinar pelo menos uma vez por semana em campo inteiro: {{teams}}.', { teams: noFullPitch.map((r) => r.name).join(', ') })}
+                    </p>
+                  )}
+                  <div className="space-y-1.5">
+                    {typical.map((r) => (
+                      <div key={r.team_id} className="rounded-md border px-3 py-2 text-sm">
+                        <p className="flex flex-wrap items-baseline gap-x-2">
+                          <b>{r.name}</b>
+                          {r.category && <span className="text-xs text-muted-foreground">{r.category}</span>}
+                          <span className="ml-auto text-xs">{r.sessions ? tx('{{n}}× por semana · {{m}} min em média', { n: r.sessions, m: r.avg }) : tx('Sem horário')}</span>
+                        </p>
+                        {r.days && <p className="mt-0.5 text-xs text-muted-foreground">{r.days}</p>}
+                      </div>
+                    ))}
+                  </div>
+                  {slots.some((s) => !s.space) && <p className="text-xs text-muted-foreground">{tx('Toque num horário para indicar o espaço (campo inteiro, meio campo…).')}</p>}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         )}
@@ -312,6 +349,16 @@ export default function ClubMap() {
                 <div className="space-y-1.5"><Label>{tx('Fim')}</Label><Input type="time" value={slotForm.end_time ?? ''} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} /></div>
               </div>
               <div className="space-y-1.5"><Label>{tx('Campo / local')}</Label><Input value={slotForm.location ?? ''} onChange={(e) => setSlotForm({ ...slotForm, location: e.target.value })} placeholder={tx('Ex.: Campo 1 (metade)')} /></div>
+              <div className="space-y-1.5">
+                <Label>{tx('Espaço usado')}</Label>
+                <Select value={slotForm.space ?? 'none'} onValueChange={(v) => setSlotForm({ ...slotForm, space: v === 'none' ? null : (v as SlotSpace) })}>
+                  <SelectTrigger aria-label={tx('Espaço usado')}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{tx('Por indicar')}</SelectItem>
+                    {SLOT_SPACES.map((sp) => <SelectItem key={sp.value} value={sp.value}>{sp.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label>{tx('Notas')}</Label><Input value={slotForm.notes ?? ''} onChange={(e) => setSlotForm({ ...slotForm, notes: e.target.value })} placeholder={tx('Opcional')} /></div>
               <div className="flex justify-between gap-2 pt-1">
                 {slotForm.id ? <Button variant="ghost" className="text-destructive" onClick={() => deleteSlot(slotForm.id!)}><Trash2 className="mr-1.5 h-4 w-4" />{tx('Apagar')}</Button> : <span />}

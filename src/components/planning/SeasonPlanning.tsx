@@ -3,12 +3,13 @@
  *   1. Objectives of the age group + annual plan (periods with priority and control)
  *   2. Mesocycles (blocks of weeks)
  *   3. Weeks (microcycles): objective, contents, intensity, the week's sessions and matches, review
+ *   4. Materials of the team in the season
  * Sessions are recorded in Presenças (SessionRecordCard); each week links there.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpenCheck, CalendarRange, ChevronDown, ChevronUp, Layers, Loader2, Pencil, Plus, Target, Trash2 } from 'lucide-react';
+import { BookOpenCheck, CalendarRange, ChevronDown, ChevronUp, Layers, Lightbulb, Loader2, Package, Pencil, Plus, Target, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,9 +28,12 @@ import {
 } from '@/lib/training-plan';
 import { MesocycleDialog } from './MesocycleDialog';
 import { MicrocycleDialog } from './MicrocycleDialog';
+import { ObjectivesEditor } from '@/components/dossier/ObjectivesEditor';
+import { materialSuggestion } from '@/lib/guidelines';
 
 const db = supabase as any; // newer than the generated types
 
+export interface SeasonPlanRow { id: string; objectives: string | null; periods: PlanPeriod[]; materials?: string | null }
 export interface PlanMatch { id: string; match_date: string; opponent_name: string; is_home: boolean | null; status: string | null }
 
 /** Everything the planning screens need for one team and season. */
@@ -49,7 +53,7 @@ export function useSeasonPlan(teamId: string | null, season: { id: string; start
           .gte('match_date', from).lte('match_date', `${to}T23:59:59`).order('match_date'),
       ]);
       return {
-        plan: (plan.data ?? null) as { id: string; objectives: string | null; periods: PlanPeriod[] } | null,
+        plan: (plan.data ?? null) as SeasonPlanRow | null,
         mesos: (mesos.data ?? []) as Mesocycle[],
         micros: (micros.data ?? []) as Microcycle[],
         sessions: (sessions.data ?? []) as PlanSession[],
@@ -83,6 +87,7 @@ export function SeasonPlanning() {
       <ObjectivesAndPeriods teamId={teamId} season={season} plan={data.plan} />
       <MesocyclesCard teamId={teamId} season={season} mesos={data.mesos} />
       <WeeksCard teamId={teamId} season={season} data={data} />
+      <MaterialsCard teamId={teamId} season={season} plan={data.plan} team={activeTeam!} />
     </div>
   );
 }
@@ -90,7 +95,7 @@ export function SeasonPlanning() {
 // ── 1. objectives + annual plan ───────────────────────────────────────────
 function ObjectivesAndPeriods({ teamId, season, plan }: {
   teamId: string; season: { id: string; start_date: string; end_date: string };
-  plan: { id: string; objectives: string | null; periods: PlanPeriod[] } | null;
+  plan: SeasonPlanRow | null;
 }) {
   const qc = useQueryClient();
   const [objectives, setObjectives] = useState(plan?.objectives ?? '');
@@ -123,6 +128,12 @@ function ObjectivesAndPeriods({ teamId, season, plan }: {
           <Label htmlFor="plan-objectives">{tx('Objetivos do escalão para esta época')}</Label>
           <Textarea id="plan-objectives" rows={4} maxLength={8000} value={objectives} onChange={(e) => setObjectives(e.target.value)}
             placeholder={tx('Ex.: 1. Melhorar o passe e a receção orientada com os dois pés. 2. Oferecer duas linhas de passe ao portador. 3. Reagir logo à perda da bola.')} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>{tx('Objetivos com meta e prazo')}</Label>
+          <p className="text-xs text-muted-foreground">{tx('Para o controlo pedido pela FPF: o indicador, a meta, até quando e, no fim, se foi atingido. Guardam-se logo.')}</p>
+          <ObjectivesEditor teamId={teamId} seasonId={season.id} />
         </div>
 
         <div className="space-y-2">
@@ -267,6 +278,49 @@ function WeeksCard({ teamId, season, data }: {
           micro={microBy.get(open) ?? null} previous={microBy.get(weeks[weeks.indexOf(open) - 1] ?? '') ?? null}
           meso={mesoFor(data.mesos, open) ?? mesoFor(data.mesos, weekEnd(open))} sessions={data.sessions} matches={data.matches} onClose={() => setOpen(null)} />
       )}
+    </Card>
+  );
+}
+
+// ── 4. materials ──────────────────────────────────────────────────────────
+function MaterialsCard({ teamId, season, plan, team }: {
+  teamId: string; season: { id: string }; plan: SeasonPlanRow | null; team: { category: string | null; sport_type: string | null };
+}) {
+  const qc = useQueryClient();
+  const [materials, setMaterials] = useState(plan?.materials ?? '');
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setMaterials(plan?.materials ?? ''); }, [plan]);
+  const save = async () => {
+    setSaving(true);
+    try {
+      const { error } = plan
+        ? await db.from('team_season_plans').update({ materials: materials.trim() || null }).eq('id', plan.id)
+        : await db.from('team_season_plans').insert({ team_id: teamId, season_id: season.id, materials: materials.trim() || null });
+      if (error) throw error;
+      await qc.invalidateQueries({ queryKey: ['season-plan'] });
+      toast.success(tx('Material guardado.'));
+    } catch (e) {
+      toast.error(tx('Não foi possível guardar: {{msg}}', { msg: (e as Error).message }));
+    } finally { setSaving(false); }
+  };
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base"><Package className="h-4 w-4" />{tx('4. Material e equipamento')}</CardTitle>
+        <CardDescription>{tx('O material que a equipa tem para treinar nesta época, adequado ao escalão.')}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Textarea id="plan-materials" rows={3} maxLength={4000} value={materials} onChange={(e) => setMaterials(e.target.value)}
+          placeholder={tx('Ex.: 20 bolas n.º 4, 30 sinalizadores, 20 coletes, 4 mini-balizas')} />
+        <div className="flex flex-wrap gap-2">
+          {!materials.trim() && (
+            <Button type="button" size="sm" variant="outline" onClick={() => setMaterials(materialSuggestion(team))}>
+              <Lightbulb className="mr-1.5 h-4 w-4" />{tx('Sugerir para o escalão')}
+            </Button>
+          )}
+          <Button onClick={save} disabled={saving || materials.trim() === (plan?.materials ?? '')}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tx('Guardar')}</Button>
+        </div>
+      </CardContent>
     </Card>
   );
 }
