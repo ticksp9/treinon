@@ -1,0 +1,157 @@
+/**
+ * The team's training dossier as one PDF, with an index and the same structure for every team
+ * (what the FPF assessor asks to see at the technical visit).
+ */
+import jsPDF from 'jspdf';
+import { format } from 'date-fns';
+import { deliverPdf } from '@/lib/native-files';
+import { inPdfLanguage, longDate, tx } from '@/lib/i18n/ui';
+import { dossierScore, type DossierSection } from '@/lib/dossier';
+import { activeWeeks, intensityLabel, mesoKindLabel, seasonWeeks, weekNumber, weekRangeLabel, weekStartOf } from '@/lib/training-plan';
+import type { DossierData } from '@/components/dossier/useDossierData';
+
+const d = (s: string) => format(new Date(s.length === 10 ? `${s}T12:00:00` : s), 'dd/MM/yyyy');
+
+export function downloadDossierPdf(data: DossierData, sections: DossierSection[]) {
+  return inPdfLanguage(() => {
+    const doc = new jsPDF();
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    const L = 14, R = W - 14, width = R - L;
+    let y = 20;
+    const space = (n: number) => { if (y + n > H - 18) { doc.addPage(); y = 20; } };
+    const text = (s: string, x = L, w = width, size = 10, style: 'normal' | 'bold' = 'normal', gray = false) => {
+      doc.setFontSize(size); doc.setFont('helvetica', style); doc.setTextColor(gray ? 110 : 0, gray ? 110 : 0, gray ? 110 : 0);
+      for (const line of doc.splitTextToSize(s, w) as string[]) { space(6); doc.text(line, x, y); y += size * 0.46; }
+      doc.setTextColor(0, 0, 0);
+    };
+    const section = (n: number, title: string) => {
+      doc.addPage(); y = 20;
+      doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 102, 204);
+      doc.text(`${n}. ${title}`, L, y); y += 2;
+      doc.setDrawColor(0, 102, 204); doc.line(L, y, R, y); y += 8;
+      doc.setTextColor(0, 0, 0);
+    };
+    const row = (cells: string[], widths: number[], bold = false) => {
+      doc.setFontSize(9); doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      const lines = cells.map((c, i) => doc.splitTextToSize(c || '—', widths[i] - 2) as string[]);
+      const h = Math.max(...lines.map((l) => l.length)) * 4.2 + 1.5;
+      space(h + 1);
+      let x = L;
+      const base = y;
+      lines.forEach((l, i) => { doc.text(l, x, base); x += widths[i]; });
+      y = base + h;
+      // header: a line just under the text, then room before the first row
+      if (bold) { doc.setDrawColor(180, 180, 180); doc.line(L, base + 1.8, R, base + 1.8); y += 1.5; }
+    };
+    const empty = (s = tx('Sem registos.')) => text(s, L, width, 10, 'normal', true);
+
+    // ── cover + index ──
+    doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.text(tx('DOSSIER DE TREINO'), W / 2, y, { align: 'center' }); y += 10;
+    doc.setFontSize(14); doc.text(data.team.name, W / 2, y, { align: 'center' }); y += 7;
+    doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+    doc.text([data.team.club_name, data.team.category, tx('Época {{name}}', { name: data.season.name })].filter(Boolean).join(' · '), W / 2, y, { align: 'center' }); y += 6;
+    doc.setTextColor(110, 110, 110);
+    doc.text(tx('Gerado a {{d}} · completo a {{p}}%', { d: longDate(new Date(), 'dateTime'), p: dossierScore(sections) }), W / 2, y, { align: 'center' }); y += 6;
+    const last = data.reviews[0];
+    doc.text(last ? tx('Revisto pelo coordenador: {{who}}, {{d}}', { who: last.reviewer || '—', d: d(last.created_at) }) : tx('Ainda não revisto pelo coordenador.'), W / 2, y, { align: 'center' });
+    doc.setTextColor(0, 0, 0); y += 14;
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(tx('Índice'), L, y); y += 7;
+    const index = [tx('Plantel'), tx('Fichas individuais e avaliações'), tx('Objetivos do escalão'), tx('Planeamento anual'), tx('Mesociclos'), tx('Microciclos (semanas)'), tx('Unidades de treino'), tx('Convocatórias e avaliação dos jogos'), tx('Revisões do coordenador')];
+    index.forEach((t, i) => text(`${i + 1}. ${t}`, L + 2));
+    y += 6;
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); space(10); doc.text(tx('Estado de cada parte'), L, y); y += 7;
+    const mark = { done: tx('Completo'), partial: tx('Incompleto'), missing: tx('Em falta'), info: tx('Não se aplica ainda') };
+    sections.forEach((s) => row([s.title, mark[s.state], s.detail], [80, 32, width - 112]));
+
+    // 1. squad
+    section(1, tx('Plantel'));
+    row([tx('N.º'), tx('Nome'), tx('Posição'), tx('Nascimento')], [14, 90, 40, width - 144], true);
+    data.players.forEach((p) => row([p.number != null ? String(p.number) : '', p.name, p.position ?? '', p.birth_date ? d(p.birth_date) : ''], [14, 90, 40, width - 144]));
+    if (!data.players.length) empty();
+
+    // 2. evaluations
+    section(2, tx('Fichas individuais e avaliações'));
+    text(tx('Última avaliação de cada jogador nesta época. Comportamento e desempenho de 1 a 10.'), L, width, 9, 'normal', true); y += 2;
+    row([tx('Jogador'), tx('Data'), tx('Momento'), tx('Comportamento'), tx('Desempenho')], [62, 26, 42, 28, width - 158], true);
+    data.players.forEach((p) => {
+      const e = data.evaluations.find((x) => x.player_id === p.id);
+      row([p.name, e ? d(e.evaluation_date) : tx('Sem avaliação'), e?.period_label ?? '', e?.behaviour != null ? e.behaviour.toFixed(1) : '—', e?.performance != null ? e.performance.toFixed(1) : '—'], [62, 26, 42, 28, width - 158]);
+    });
+
+    // 3. objectives
+    section(3, tx('Objetivos do escalão'));
+    data.objectives?.trim() ? text(data.objectives) : empty(tx('Por definir.'));
+
+    // 4. annual plan
+    section(4, tx('Planeamento anual'));
+    if (data.periods.length) {
+      row([tx('Período'), tx('Datas'), tx('Prioridade'), tx('Controlo')], [38, 40, 64, width - 142], true);
+      data.periods.forEach((p) => row([p.label, [p.from && d(p.from), p.to && d(p.to)].filter(Boolean).join(' – '), p.priority, p.control], [38, 40, 64, width - 142]));
+    } else empty(tx('Por definir.'));
+
+    // 5. mesocycles
+    section(5, tx('Mesociclos'));
+    if (data.mesos.length) {
+      row([tx('Mesociclo'), tx('Tipo'), tx('Datas'), tx('Prioridades')], [36, 26, 42, width - 104], true);
+      data.mesos.forEach((m) => row([m.name, mesoKindLabel(m.kind), `${d(m.start_date)} – ${d(m.end_date)}`, m.focus ?? ''], [36, 26, 42, width - 104]));
+    } else empty(tx('Por definir.'));
+
+    // 6. microcycles
+    section(6, tx('Microciclos (semanas)'));
+    const microBy = new Map(data.micros.map((m) => [m.week_start, m]));
+    const working = activeWeeks(data.sessions, data.matches);
+    const weeks = seasonWeeks(data.season.start_date.slice(0, 10), data.season.end_date.slice(0, 10)).filter((w) => microBy.has(w) || (w <= weekStartOf(new Date()) && working.has(w)));
+    if (!weeks.length) empty();
+    weeks.forEach((w) => {
+      const m = microBy.get(w);
+      const games = data.matches.filter((g) => weekStartOf(g.match_date) === w).map((g) => g.opponent_name);
+      space(16);
+      text(`${tx('Semana {{n}}', { n: weekNumber(data.season.start_date, w) })} · ${weekRangeLabel(w)}${m?.intensity ? ` · ${tx('Intensidade')}: ${intensityLabel(m.intensity)}` : ''}${games.length ? ` · ${tx('Jogo')}: ${games.join(', ')}` : ''}`, L, width, 10, 'bold');
+      text(`${tx('Objetivos')}: ${m?.objectives?.trim() || '—'}`, L + 2, width - 2, 9);
+      if (m?.contents?.trim()) text(`${tx('Conteúdos')}: ${m.contents}`, L + 2, width - 2, 9);
+      text(`${tx('Balanço')}: ${m?.review?.trim() || '—'}`, L + 2, width - 2, 9);
+      y += 2;
+    });
+
+    // 7. sessions
+    section(7, tx('Unidades de treino'));
+    const done = data.sessions.filter((s) => s.date <= new Date().toISOString());
+    if (!done.length) empty();
+    done.forEach((s) => {
+      space(16);
+      const mins = s.actual_minutes ?? s.duration_minutes;
+      const head = [longDate(new Date(s.date), 'weekdayTime'), mins ? `${mins}'` : '', s.marked ? tx('{{a}}/{{b}} presentes', { a: s.present, b: s.marked }) : '', s.session_rating ? `${s.session_rating}/5` : '', s.closed_at ? tx('fechado') : ''].filter(Boolean).join(' · ');
+      text(head, L, width, 10, 'bold');
+      text(`${tx('Objetivo')}: ${s.objectives?.trim() || '—'}`, L + 2, width - 2, 9);
+      text(`${tx('Conteúdos')}: ${s.exercises?.trim() || '—'}`, L + 2, width - 2, 9);
+      if (s.notes?.trim()) text(`${tx('Observações')}: ${s.notes}`, L + 2, width - 2, 9);
+      y += 2;
+    });
+
+    // 8. matches
+    section(8, tx('Convocatórias e avaliação dos jogos'));
+    if (!data.matches.length) empty();
+    data.matches.forEach((m) => {
+      space(14);
+      const score = m.goals_for != null && m.goals_against != null ? (m.is_home ? `${m.goals_for}-${m.goals_against}` : `${m.goals_against}-${m.goals_for}`) : '';
+      text(`${d(m.match_date)} · ${m.is_home ? `${data.team.name} vs ${m.opponent_name}` : `${m.opponent_name} vs ${data.team.name}`} ${score}`, L, width, 10, 'bold');
+      text([tx('{{n}} convocados', { n: m.called }), m.avgRating != null ? tx('nota média {{v}}', { v: m.avgRating.toFixed(1) }) : '', m.playerNotes ? tx('{{n}} notas sobre jogadores', { n: m.playerNotes }) : ''].filter(Boolean).join(' · '), L + 2, width - 2, 9);
+      if (m.opponentNotes) text(`${tx('Sobre o adversário')}: ${m.opponentNotes}`, L + 2, width - 2, 9);
+      y += 2;
+    });
+
+    // 9. reviews
+    section(9, tx('Revisões do coordenador'));
+    if (!data.reviews.length) empty(tx('Ainda não revisto pelo coordenador.'));
+    data.reviews.forEach((r) => { text(`${d(r.created_at)} · ${r.reviewer || '—'}`, L, width, 10, 'bold'); if (r.note) text(r.note, L + 2, width - 2, 9); y += 2; });
+
+    // footer
+    const n = doc.getNumberOfPages();
+    for (let i = 1; i <= n; i++) {
+      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150, 150, 150);
+      doc.text(`${data.team.name} · ${tx('Dossier de treino')} · ${data.season.name} · ${tx('Página {{i}} de {{n}}', { i, n })}`, W / 2, H - 8, { align: 'center' });
+    }
+    const file = `dossier_${data.team.name.replace(/\s+/g, '_').toLowerCase()}_${data.season.name.replace(/\//g, '-')}.pdf`;
+    return deliverPdf(doc, file, { title: tx('Dossier de treino') });
+  });
+}

@@ -28,6 +28,9 @@ import {
   categoryRounded,
   overallAverage,
   roundedOverall,
+  BEHAVIOUR_CATEGORY,
+  EVALUATION_MOMENTS,
+  type ScoreCategory,
 } from '@/lib/player-attributes';
 import { tx, longDate } from '@/lib/i18n/ui';
 
@@ -176,7 +179,7 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
     setDialogOpen(true);
   };
 
-  const updateAttr = (cat: AttributeCategory, key: string, value: number) => {
+  const updateAttr = (cat: ScoreCategory, key: string, value: number) => {
     setForm((f) => ({
       ...f,
       attributes: {
@@ -252,6 +255,14 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                       onChange={(e) => setForm({ ...form, period_label: e.target.value })}
                       placeholder={tx('Ex: 1ª volta')}
                     />
+                    <div className="flex flex-wrap gap-1">
+                      {EVALUATION_MOMENTS.map((m) => (
+                        <Button key={m.label} type="button" size="sm" variant={form.period_label === m.label ? 'default' : 'outline'}
+                          className="h-7 px-2 text-xs" onClick={() => setForm({ ...form, period_label: m.label })}>
+                          {m.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -262,14 +273,42 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                   </span>
                 </div>
 
-                <Tabs defaultValue="technical">
-                  <TabsList className="grid grid-cols-4 w-full">
+                <Tabs defaultValue="behaviour">
+                  <TabsList className="flex h-auto w-full flex-wrap">
+                    <TabsTrigger value="behaviour">{BEHAVIOUR_CATEGORY.label}</TabsTrigger>
                     {ATTRIBUTE_CATALOG.map((c) => (
                       <TabsTrigger key={c.key} value={c.key}>
                         {c.label}
                       </TabsTrigger>
                     ))}
                   </TabsList>
+                  <TabsContent value="behaviour" className="space-y-4">
+                    <p className="text-xs text-muted-foreground">
+                      {tx('Pedido pela FPF em todos os escalões. Não entra na média global (técnica, tática, física e mental).')}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">{tx('Média')}{' '}{BEHAVIOUR_CATEGORY.label}</span>
+                      <span className={`font-semibold ${ratingTone(categoryAverage(form.attributes, 'behaviour'))}`}>
+                        {categoryAverage(form.attributes, 'behaviour')?.toFixed(1) ?? '—'}/10
+                      </span>
+                    </div>
+                    {BEHAVIOUR_CATEGORY.attributes.map((a) => {
+                      const set = form.attributes.behaviour?.[a.key];
+                      const v = set ?? 5;
+                      return (
+                        <div key={a.key} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">{a.label}</Label>
+                            <span className={`text-sm font-semibold ${set == null ? 'text-muted-foreground' : ratingTone(v)}`}>
+                              {set == null ? tx('por avaliar') : `${v}/10`}
+                            </span>
+                          </div>
+                          <Slider value={[v]} onValueChange={([nv]) => updateAttr('behaviour', a.key, nv)} min={1} max={10} step={1}
+                            className={set == null ? 'opacity-50' : undefined} />
+                        </div>
+                      );
+                    })}
+                  </TabsContent>
                   {ATTRIBUTE_CATALOG.map((cat) => {
                     const avg = categoryAverage(form.attributes, cat.key);
                     return (
@@ -402,7 +441,13 @@ export function PlayerEvaluations({ playerId }: PlayerEvaluationsProps) {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {categoryAverage(scores, 'behaviour') != null && (
+                      <div className="rounded-md border p-2 flex items-center justify-between">
+                        <span className="text-xs">{BEHAVIOUR_CATEGORY.label}</span>
+                        <span className={`font-semibold ${ratingTone(categoryAverage(scores, 'behaviour'))}`}>{categoryAverage(scores, 'behaviour')!.toFixed(1)}</span>
+                      </div>
+                    )}
                     {ATTRIBUTE_CATALOG.map((cat) => {
                       const v =
                         Object.keys(scores).length > 0

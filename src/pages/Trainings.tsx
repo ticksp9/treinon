@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { LibraryBrowser } from '@/components/library/LibraryBrowser';
 import { useAuth } from '@/lib/auth';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClipboardList, Users, FileText, Calendar, Activity, LayoutDashboard, BookOpen } from 'lucide-react';
+import { ClipboardList, Users, FileText, Calendar, Activity, LayoutDashboard, BookOpen, CalendarRange } from 'lucide-react';
+import { SeasonPlanning } from '@/components/planning/SeasonPlanning';
 import { TrainingBuilder } from '@/components/coaches/TrainingBuilder';
 import { TrainingAttendance } from '@/components/trainings/TrainingAttendance';
 import { MatchCallup } from '@/components/trainings/MatchCallup';
@@ -24,6 +25,10 @@ export default function Trainings() {
     setActiveTabState(t);
     setParams(t === 'dashboard' ? {} : { tab: t }, { replace: true });
   };
+
+  // links like /training?tab=attendance&session=… (from Planeamento) switch the tab
+  const tabParam = params.get('tab');
+  useEffect(() => { setActiveTabState(tabParam || 'dashboard'); }, [tabParam]);
 
   if (loading) {
     return (
@@ -51,6 +56,10 @@ export default function Trainings() {
             <TabsTrigger value="calendar" className="flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
               <span>{t('Calendário')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="planeamento" className="flex items-center gap-1.5">
+              <CalendarRange className="w-4 h-4" />
+              <span>{t('Planeamento')}</span>
             </TabsTrigger>
             <TabsTrigger value="exercicios" className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4" />
@@ -80,6 +89,10 @@ export default function Trainings() {
 
           <TabsContent value="calendar" className="mt-6">
             <TrainingWeeklyCalendar />
+          </TabsContent>
+
+          <TabsContent value="planeamento" className="mt-6">
+            <SeasonPlanning />
           </TabsContent>
 
           <TabsContent value="exercicios" className="mt-6">

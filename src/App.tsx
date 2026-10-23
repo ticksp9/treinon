@@ -74,6 +74,7 @@ const GuardianPortal = lazy(() => import("./pages/GuardianPortal"));
 const PlayerPortal = lazy(() => import("./pages/PlayerPortal"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const CoordinatorAlerts = lazy(() => import("./pages/coordination/CoordinatorAlerts"));
+const TeamDossier = lazy(() => import("./pages/TeamDossier"));
 // Youth Coordination
 const YouthCoordinationDashboard = lazy(() => import("./pages/coordination/YouthCoordinationDashboard"));
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite"));
@@ -146,6 +147,7 @@ function AppContent() {
           <Route path="/players/:id" element={<RoleProtectedRoute><PlayerDetail /></RoleProtectedRoute>} />
           <Route path="/matches" element={<RoleProtectedRoute><Matches /></RoleProtectedRoute>} />
           <Route path="/training" element={<RoleProtectedRoute><Trainings /></RoleProtectedRoute>} />
+          <Route path="/dossier" element={<RoleProtectedRoute><TeamDossier /></RoleProtectedRoute>} />
           <Route path="/tactical-board" element={<RoleProtectedRoute><TacticalBoard /></RoleProtectedRoute>} />
           <Route path="/scouting" element={<RoleProtectedRoute><Scouting /></RoleProtectedRoute>} />
           <Route path="/scouting/adversarios/:id" element={<RoleProtectedRoute><ScoutingOpponent /></RoleProtectedRoute>} />

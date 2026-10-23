@@ -103,6 +103,14 @@ try {
   }
   Write-Host "OK: departamento medico" -ForegroundColor Green
 
+  $out = & $psql[0] $psql[1..($psql.Length-1)] -d treinon_test -f (Join-Path $PSScriptRoot "dossier-smoke.sql") 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "FALHOU: dossier de treino" -ForegroundColor Red
+    $out | Select-Object -Last 12 | ForEach-Object { Write-Host "  $_" }
+    exit 1
+  }
+  Write-Host "OK: dossier de treino" -ForegroundColor Green
+
   $out = & $psql[0] $psql[1..($psql.Length-1)] -d treinon_test -f (Join-Path $PSScriptRoot "account-smoke.sql") 2>&1
   if ($LASTEXITCODE -ne 0) {
     Write-Host "FALHOU: apagar conta" -ForegroundColor Red

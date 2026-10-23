@@ -76,6 +76,31 @@ export const ATTRIBUTE_CATALOG: CategoryDef[] = [
   },
 ];
 
+/**
+ * Behaviour (FPF: every age group's individual file has a behavioural evaluation). Kept apart from
+ * the performance categories above: it does not enter the overall rating, the radar or the FM card.
+ */
+export const BEHAVIOUR_CATEGORY: { key: 'behaviour'; label: string; color: string; attributes: AttributeDef[] } = {
+  key: 'behaviour',
+  get label() { return tx('Comportamento'); },
+  color: 'text-sky-600',
+  attributes: [
+    { key: 'attendance', get label() { return tx('Assiduidade'); } },
+    { key: 'punctuality', get label() { return tx('Pontualidade'); } },
+    { key: 'effort', get label() { return tx('Empenho no treino'); } },
+    { key: 'respect', get label() { return tx('Respeito (colegas, treinadores, árbitros)'); } },
+    { key: 'team_spirit', get label() { return tx('Espírito de equipa'); } },
+    { key: 'rules', get label() { return tx('Cumprimento das regras'); } },
+  ],
+};
+
+/** Quick names for the evaluation moments of the annual plan. */
+export const EVALUATION_MOMENTS = [
+  { get label() { return tx('Avaliação inicial'); } },
+  { get label() { return tx('Avaliação intermédia'); } },
+  { get label() { return tx('Avaliação final'); } },
+];
+
 export const EVALUATION_CONTEXTS: { value: string; label: string }[] = [
   { value: 'training', get label() { return tx('Treino'); } },
   { value: 'match', get label() { return tx('Jogo'); } },
@@ -94,8 +119,9 @@ export const PLAYER_STATUS_OPTIONS: { value: string; label: string; tone: string
 ];
 
 // Score 1-10 per attribute, stored as { [category]: { [attr_key]: number } }
+export type ScoreCategory = AttributeCategory | 'behaviour';
 export type AttributeScores = Partial<
-  Record<AttributeCategory, Record<string, number>>
+  Record<ScoreCategory, Record<string, number>>
 >;
 
 export function getCategory(key: AttributeCategory): CategoryDef | undefined {
@@ -116,7 +142,7 @@ export function emptyAttributeScores(): AttributeScores {
 /** Average of a single category (returns null if no scores). */
 export function categoryAverage(
   scores: AttributeScores,
-  category: AttributeCategory,
+  category: ScoreCategory,
 ): number | null {
   const bag = scores[category];
   if (!bag) return null;

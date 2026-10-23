@@ -17,6 +17,8 @@ import { format, addDays, startOfWeek, parse } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AttendanceSheetPanel } from './AttendanceSheetPanel';
+import { SessionRecordCard } from './SessionRecordCard';
+import { useSearchParams } from 'react-router-dom';
 import { cleanSchedule, plannedTrainings } from '@/lib/attendance-sheet';
 import { tx, longDate } from '@/lib/i18n/ui';
 
@@ -74,6 +76,12 @@ export function TrainingAttendance() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<string>('');
+  // ?session=… opens that session (e.g. "Registar" from the week in Planeamento)
+  const [params] = useSearchParams();
+  const wantedSession = params.get('session');
+  useEffect(() => {
+    if (wantedSession && sessions.some((x) => x.id === wantedSession)) setSelectedSession(wantedSession);
+  }, [wantedSession, sessions]);
   const [attendance, setAttendance] = useState<Record<string, Attendance>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -159,11 +167,11 @@ export function TrainingAttendance() {
       // prevention_warmup is newer than the generated types
       const list = (data ?? []) as unknown as TrainingSession[];
       setSessions(list);
-      if (list.length > 0) {
-        setSelectedSession(list[0].id);
-      } else {
-        setSelectedSession('');
-      }
+      // the session asked for, else the last one that already happened (not a future one), else the next
+      const now = Date.now();
+      const wanted = wantedSession ? list.find((x) => x.id === wantedSession) : undefined;
+      const lastDone = list.find((x) => Date.parse(x.date) <= now);
+      setSelectedSession((wanted ?? lastDone ?? list[list.length - 1])?.id ?? '');
     } catch (error) {
       console.error('Error fetching sessions:', error);
     }
@@ -597,6 +605,10 @@ export function TrainingAttendance() {
           )}
         </CardContent>
       </Card>
+
+      {selectedTeam && selectedSession && (
+        <SessionRecordCard sessionId={selectedSession} teamId={selectedTeam} />
+      )}
 
       {selectedTeam && (
         <AttendanceSheetPanel

@@ -52,6 +52,7 @@ import {
   MapPin,
   Mail,
   ChevronDown,
+  BookOpenCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -63,6 +64,7 @@ const staffMenuItems = [
   { title: tr('Início'), icon: LayoutDashboard, path: '/dashboard' },
   { title: tr('Jogos'), icon: Trophy, path: '/matches' },
   { title: tr('Treinos'), icon: Calendar, path: '/training' },
+  { title: tr('Dossier de treino'), icon: BookOpenCheck, path: '/dossier' },
   { title: tr('Mapa do clube'), icon: CalendarRange, path: '/mapa' },
   { title: tr('Eventos'), icon: CalendarDays, path: '/eventos' },
   { title: tr('Alertas'), icon: BellRing, path: '/coordenacao/alertas' },
@@ -87,6 +89,7 @@ const clubMenuGroups = [
       { title: tr('Épocas'), icon: CalendarRange, path: '/seasons' },
       { title: tr('Transição de época'), icon: ArrowUpRight, path: '/season-transition' },
       { title: tr('Coordenação jovens'), icon: Users, path: '/club/coordination' },
+      { title: tr('Dossiers de treino'), icon: BookOpenCheck, path: '/dossier' },
       { title: tr('Alertas (faltas e mensalidades)'), icon: BellRing, path: '/coordenacao/alertas' },
       { title: tr('Treinadores'), icon: UserCog, path: '/coaches' },
       { title: tr('Formação & academia'), icon: BookOpen, path: '/erp/academy' },
