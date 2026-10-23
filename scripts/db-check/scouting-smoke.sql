@@ -180,3 +180,34 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 SELECT 'crest smoke: OK' AS result;
+
+-- ── notes about the opponent written in the match report (one observation per match) ──
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.scout_opponent_observations (opponent_id, match_id, notes, formation, player_notes)
+SELECT '5c000000-0000-0000-0000-000000000002', id, 'Sobem muito o lateral', '3-3-2',
+       '[{"number":"10","name":"","note":"remata de longe","key":true}]'::jsonb
+FROM public.matches ORDER BY created_at LIMIT 1;
+DO $$ BEGIN
+  ASSERT (SELECT player_notes->0->>'note' FROM scout_opponent_observations WHERE match_id IS NOT NULL) = 'remata de longe', 'player notes saved';
+  -- the same match cannot get a second observation
+  BEGIN
+    INSERT INTO public.scout_opponent_observations (opponent_id, match_id)
+    SELECT '5c000000-0000-0000-0000-000000000002', match_id FROM scout_opponent_observations WHERE match_id IS NOT NULL;
+    RAISE EXCEPTION 'FAIL: two observations for one match';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+  -- player notes must be a list
+  BEGIN
+    UPDATE public.scout_opponent_observations SET player_notes = '{"x":1}'::jsonb WHERE match_id IS NOT NULL;
+    RAISE EXCEPTION 'FAIL: player notes accepted something that is not a list';
+  EXCEPTION WHEN check_violation THEN NULL;
+  END;
+END $$;
+-- an outsider does not see these notes
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM scout_opponent_observations WHERE match_id IS NOT NULL) = 0, 'outsider does not see the match notes';
+END $$;
+RESET ROLE;
+SELECT 'match opponent notes smoke: OK' AS result;

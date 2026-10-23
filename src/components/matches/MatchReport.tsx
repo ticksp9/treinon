@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { OpponentMatchNotes } from './OpponentMatchNotes';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import jsPDF from 'jspdf';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
@@ -608,6 +609,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           </div>
         </CardContent>
       </Card>
+
+      {/* What the coach saw of the opponent (also kept in their Scouting sheet) */}
+      <OpponentMatchNotes matchId={match.id} />
 
       {/* Per-part starters */}
       <Card>

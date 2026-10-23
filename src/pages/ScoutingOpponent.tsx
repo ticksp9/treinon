@@ -333,6 +333,14 @@ export default function ScoutingOpponent() {
                     </span>
                   </div>
                   {o.notes && <p className="whitespace-pre-line text-sm">{o.notes}</p>}
+                  {!!o.player_notes?.length && (
+                    <ul className="space-y-0.5 text-sm">
+                      {o.player_notes.map((p, k) => (
+                        <li key={k}>{p.key && <Star className="mr-1 inline h-3 w-3 fill-current text-amber-500" />}<span className="font-medium">{[p.number && '#' + p.number, p.name].filter(Boolean).join(' ')}</span>{p.note ? ': ' + p.note : ''}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {o.match_id && <p className="text-xs text-muted-foreground">{tx('Escrito no relatório do nosso jogo.')}</p>}
                 </CardContent>
               </Card>
             ))}

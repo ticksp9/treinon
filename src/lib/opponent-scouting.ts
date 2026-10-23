@@ -25,6 +25,9 @@ export interface OpponentScheme {
 export interface OpponentObservation {
   id: string; opponent_id: string; observed_on: string; against: string | null; result: string | null;
   formation: string | null; notes: string | null;
+  /** set when the observation was written in our match report against them */
+  match_id?: string | null;
+  player_notes?: OpponentPlayerNote[] | null;
 }
 
 /** The moments of the game, always from the opponent's point of view. */
@@ -145,3 +148,29 @@ export function nextMatchAgainst<T extends PlayedMatch>(matches: T[], opponentNa
 export function plannedSchemes(schemes: OpponentScheme[], ids: string[]): OpponentScheme[] {
   return ids.map((id) => schemes.find((s) => s.id === id)).filter((s): s is OpponentScheme => !!s);
 }
+
+// ── notes about the opponent written in our match report ──────────────────
+/** A note about one of their players: shirt number and/or name. */
+export interface OpponentPlayerNote { number: string; name: string; note: string; key: boolean }
+export const MAX_PLAYER_NOTES = 40;
+
+/** Rows with neither number nor name are dropped; texts trimmed and capped. */
+export function cleanPlayerNotes(rows: OpponentPlayerNote[]): OpponentPlayerNote[] {
+  return rows
+    .map((r) => ({ number: r.number.replace(/\D/g, '').slice(0, 3), name: r.name.trim().slice(0, 120), note: r.note.trim().slice(0, 1000), key: !!r.key }))
+    .filter((r) => r.number || r.name)
+    .slice(0, MAX_PLAYER_NOTES);
+}
+
+/** The squad row a note refers to: same shirt number, otherwise same name. */
+export function findSquadPlayer<T extends Pick<OpponentPlayer, 'shirt_number' | 'name'>>(squad: T[], n: Pick<OpponentPlayerNote, 'number' | 'name'>): T | undefined {
+  if (n.number) {
+    const byNumber = squad.find((p) => (p.shirt_number ?? '').trim() === n.number);
+    if (byNumber) return byNumber;
+  }
+  return n.name ? squad.find((p) => sameTeam(p.name, n.name)) : undefined;
+}
+
+/** Score as the opponent sheet reads it: their goals first. */
+export const opponentResult = (goalsFor: number | null | undefined, goalsAgainst: number | null | undefined) =>
+  goalsFor == null || goalsAgainst == null ? null : `${goalsAgainst}-${goalsFor}`;

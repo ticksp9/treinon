@@ -168,6 +168,13 @@ export default function ScoutingReport() {
                 <div key={o.id} className="break-inside-avoid text-sm">
                   <p className="font-semibold"><span className="font-mono">{day(o.observed_on)}</span>{o.against ? ` · vs ${o.against}` : ''}{o.result ? ` · ${o.result}` : ''}{o.formation ? ` · ${o.formation}` : ''}</p>
                   {o.notes && <p className="whitespace-pre-line text-slate-700">{o.notes}</p>}
+                  {!!o.player_notes?.length && (
+                    <ul className="text-slate-700">
+                      {o.player_notes.map((p, k) => (
+                        <li key={k}>{p.key ? '★ ' : ''}<b>{[p.number && '#' + p.number, p.name].filter(Boolean).join(' ')}</b>{p.note ? ': ' + p.note : ''}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </div>
