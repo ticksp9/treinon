@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { OpponentMatchNotes } from './OpponentMatchNotes';
+import { OpponentMatchNotes, useMatchOpponentObservation } from './OpponentMatchNotes';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import jsPDF from 'jspdf';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
@@ -103,6 +103,8 @@ const MODALITY_LABELS: Record<string, string> = {
 
 export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups, events, teamName, partElapsedSeconds, halfDuration = 45, partRegulationMinutes, partStartersByIndex, partsCount, sportType, ruleSnapshot, secondHalfStarterIds, halfTimes }: MatchReportProps) {
   const [generating, setGenerating] = useState(false);
+  // what the coach wrote about the opponent, for the PDF
+  const { data: opponentNotes } = useMatchOpponentObservation(match.id);
   const t = useT();
   // read ahead, so the PDF is made the moment the coach asks for it
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
@@ -461,6 +463,42 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
           doc.text(`${pair.minute}' (${pair.part}) - ${tx('Saiu')}: ${pair.outName} --> ${tx('Entrou')}: ${pair.inName}`, 14, y);
           y += 5;
         });
+      }
+
+      // ── About the opponent (written in the report) ──
+      const oppPlayers = (opponentNotes?.player_notes ?? []).filter((p) => p.number || p.name);
+      if (opponentNotes && (opponentNotes.notes || opponentNotes.formation || oppPlayers.length)) {
+        addSection(tx('SOBRE O ADVERSARIO: {{name}}', { name: match.opponent_name.toUpperCase() }));
+        const width = pageWidth - 28;
+        const paragraph = (text: string, x = 14, w = width) => {
+          doc.splitTextToSize(text, w).forEach((line: string) => { ensureSpace(6); doc.text(line, x, y); y += 4.6; });
+        };
+        doc.setFontSize(10);
+        if (opponentNotes.formation) {
+          ensureSpace(6);
+          doc.setFont('helvetica', 'bold'); doc.text(`${tx('Formação deles')}: `, 14, y);
+          const lw = doc.getTextWidth(`${tx('Formação deles')}: `);
+          doc.setFont('helvetica', 'normal'); doc.text(opponentNotes.formation, 14 + lw, y);
+          y += 6;
+        }
+        if (opponentNotes.notes) { paragraph(opponentNotes.notes); y += 2; }
+        if (oppPlayers.length) {
+          ensureSpace(8);
+          doc.setFont('helvetica', 'bold'); doc.text(tx('Notas sobre jogadores deles'), 14, y); y += 5;
+          doc.setFont('helvetica', 'normal');
+          oppPlayers.forEach((p) => {
+            const who = [p.number && `#${p.number}`, p.name].filter(Boolean).join(' ') + (p.key ? ` (${tx('Jogador-chave')})` : '');
+            ensureSpace(6);
+            doc.setFont('helvetica', 'bold'); doc.text(`- ${who}${p.note ? ':' : ''}`, 14, y);
+            const indent = 14 + doc.getTextWidth(`- ${who}: `);
+            doc.setFont('helvetica', 'normal');
+            if (p.note) {
+              // short notes stay on the same line, long ones go below
+              if (indent < 14 + width * 0.45 && doc.getTextWidth(p.note) <= 14 + width - indent) { doc.text(p.note, indent, y); y += 5; }
+              else { y += 4.6; paragraph(p.note, 18, width - 4); y += 0.6; }
+            } else y += 5;
+          });
+        }
       }
 
       // ── Player Statistics Table ──

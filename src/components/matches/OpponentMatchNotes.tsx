@@ -25,6 +25,18 @@ import {
 const db = supabase as any; // newer than the generated types
 const emptyRow = (): OpponentPlayerNote => ({ number: '', name: '', note: '', key: false });
 
+/** The notes about the opponent saved for a match (the report's PDF reads them). */
+export function useMatchOpponentObservation(matchId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['match-opponent-observation', matchId],
+    enabled: !!user && !!matchId,
+    queryFn: async () =>
+      ((await db.from('scout_opponent_observations').select('notes, formation, player_notes').eq('match_id', matchId).maybeSingle()).data ?? null) as
+        Pick<OpponentObservation, 'notes' | 'formation' | 'player_notes'> | null,
+  });
+}
+
 interface MatchInfo {
   id: string; opponent_name: string; match_date: string; goals_for: number | null; goals_against: number | null;
   sport_type: string | null;
@@ -124,6 +136,7 @@ export function OpponentMatchNotes({ matchId }: { matchId: string }) {
       }
       setDirty(false);
       await qc.invalidateQueries({ queryKey: ['match-opponent-notes', matchId] });
+      qc.invalidateQueries({ queryKey: ['match-opponent-observation', matchId] });
       qc.invalidateQueries({ queryKey: ['scout-observations', opponentId] });
       toast.success(tx('Notas sobre o adversário guardadas. Também ficam na ficha de {{name}} em Scouting.', { name: match.opponent_name }));
     } catch (e) {
