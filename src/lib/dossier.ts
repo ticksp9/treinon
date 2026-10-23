@@ -33,6 +33,12 @@ export interface DossierCounts {
   needsFullPitch?: boolean;         // Sub-15 to Sub-19 without a full-pitch session
   hasMaterials?: boolean;
   matchesReviewed?: number;         // matches with the coach's written review
+  // phase 3
+  transitionPlan?: boolean;         // the club's transition plan is written (criteria and how)
+  transitionRecords?: number;       // records of this team's players with another team, this season
+  transitionUnevaluated?: number;   // …without "how it went"
+  staffTrainingActions?: number;    // the club's training actions for coaches this season
+  staffTrainingAllStaff?: number;   // …with all the coaching staffs
 }
 
 export interface DossierSection {
@@ -112,6 +118,19 @@ export function dossierSections(c: DossierCounts): DossierSection[] {
     {
       key: 'materials', title: tx('Material e equipamento'), hint: tx('O material da equipa, adequado ao escalão.'),
       state: c.hasMaterials ? 'done' : 'missing', detail: c.hasMaterials ? tx('Registado') : tx('Por registar'), link: '/training?tab=planeamento',
+    },
+    {
+      key: 'transition', title: tx('Plano de transição'), hint: tx('Como os jogadores sobem de escalão e o registo de quem treinou ou jogou acima (obrigatório).'),
+      state: !c.transitionPlan ? 'missing' : (c.transitionUnevaluated ?? 0) > 0 ? 'partial' : 'done',
+      detail: [c.transitionPlan ? tx('Plano escrito') : tx('Plano por escrever'), tx('{{n}} registos de jogadores noutro escalão', { n: c.transitionRecords ?? 0 }),
+        (c.transitionUnevaluated ?? 0) > 0 ? tx('{{n}} por avaliar', { n: c.transitionUnevaluated }) : ''].filter(Boolean).join(' · '),
+      link: '/documento-orientador?tab=transicao',
+    },
+    {
+      key: 'staffTraining', title: tx('Formação da equipa técnica'), hint: tx('Ações de formação internas do clube, com todas as equipas técnicas.'),
+      state: (c.staffTrainingAllStaff ?? 0) > 0 ? 'done' : (c.staffTrainingActions ?? 0) > 0 ? 'partial' : 'missing',
+      detail: tx('{{a}} ações nesta época · {{b}} com todas as equipas técnicas', { a: c.staffTrainingActions ?? 0, b: c.staffTrainingAllStaff ?? 0 }),
+      link: '/documento-orientador?tab=formacao',
     },
     {
       key: 'matches', title: tx('Convocatórias e avaliação dos jogos'), hint: tx('Não só estatísticas: notas dos jogadores e reflexão do jogo.'),

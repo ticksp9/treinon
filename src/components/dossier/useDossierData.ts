@@ -8,6 +8,7 @@ import { objectiveStats, type DossierObjective } from '@/lib/objectives';
 import { ageOfCategory, formatOfTeam, guidelinesProgress, MODEL_FIELDS, type GameFormat, type Guidelines } from '@/lib/guidelines';
 import { typicalMap, type TrainingSlot, type TypicalRow } from '@/lib/club-map';
 import type { MatchReview } from '@/components/matches/MatchReviewCard';
+import { actionStats, inSeason, transitionStats, type PlayerTransition, type TrainingAction } from '@/lib/transitions';
 
 const db = supabase as any; // newer than the generated types
 
@@ -33,6 +34,9 @@ export interface DossierData {
   slots: TrainingSlot[];
   typical: TypicalRow | null;
   materials: string | null;
+  /** this season: the team's players with another team, and the club's training actions for coaches */
+  transitions: (PlayerTransition & { to_name: string })[];
+  trainingActions: TrainingAction[];
   periods: PlanPeriod[];
   mesos: Mesocycle[];
   micros: Microcycle[];
@@ -76,7 +80,8 @@ export function useDossierData(teamId: string | null, season: { id: string; name
       const pastSessions = sessionList.filter((s) => s.date <= nowIso);
       const finished = ((matches.data ?? []) as any[]).filter((m) => m.status === 'completed' || m.status === 'finished' || (m.goals_for != null && m.match_date <= nowIso));
 
-      const [evals, attendance, lineups, notes, oppObs, reviewers, matchReviews, guidelines] = await Promise.all([
+      const actionsQ = db.from('club_training_actions').select('*').gte('action_date', from).lte('action_date', to).order('action_date');
+      const [evals, attendance, lineups, notes, oppObs, reviewers, matchReviews, guidelines, transitions, actions] = await Promise.all([
         playerList.length ? supabase.from('player_evaluations').select('player_id, evaluation_date, period_label, attributes')
           .in('player_id', playerList.map((p) => p.id)).gte('evaluation_date', from).lte('evaluation_date', to).order('evaluation_date', { ascending: false }) : { data: [] },
         pastSessions.length ? supabase.from('training_attendance').select('session_id, present').in('session_id', pastSessions.map((s) => s.id)) : { data: [] },
@@ -86,6 +91,8 @@ export function useDossierData(teamId: string | null, season: { id: string; name
         (reviews.data ?? []).length ? supabase.from('profiles').select('id, display_name, full_name').in('id', (reviews.data as any[]).map((r) => r.reviewed_by).filter(Boolean)) : { data: [] },
         finished.length ? db.from('match_reviews').select('match_id, positives, improve, next_focus').in('match_id', finished.map((m) => m.id)) : { data: [] },
         (t?.club_id ? guidelinesQ.eq('club_id', t.club_id) : guidelinesQ.eq('owner_id', userId)).maybeSingle(),
+        db.from('player_transitions').select('*, to_team:teams!player_transitions_to_team_id_fkey(name)').eq('team_id', teamId).gte('event_date', from).lte('event_date', to).order('event_date'),
+        t?.club_id ? actionsQ.eq('club_id', t.club_id) : actionsQ.eq('owner_id', userId),
       ]);
 
       const evaluations: DossierEvaluation[] = ((evals.data ?? []) as any[]).map((e) => {
@@ -136,6 +143,11 @@ export function useDossierData(teamId: string | null, season: { id: string; name
       const format = formatOfTeam({ category: t?.category, sport_type: t?.sport_type });
       const model = format ? gl?.models?.[format] : undefined;
       const slotList = (slots.data ?? []) as TrainingSlot[];
+      const transitionList = ((transitions.data ?? []) as (PlayerTransition & { to_team: { name: string } | null })[])
+        .filter((x) => inSeason(x.event_date, season!))
+        .map(({ to_team, ...x }) => ({ ...x, to_name: to_team?.name ?? x.to_team_name ?? '—' }));
+      const actionList = ((actions.data ?? []) as TrainingAction[]).filter((a) => inSeason(a.action_date, season!));
+      const trStats = transitionStats(transitionList), acStats = actionStats(actionList);
       const typical = slotList.length ? typicalMap(slotList, [{ id: teamId!, name: t?.name ?? '', category: t?.category ?? null }], ageOfCategory)[0] : null;
 
       return {
@@ -146,6 +158,8 @@ export function useDossierData(teamId: string | null, season: { id: string; name
         guidelines: gl, format,
         slots: slotList, typical,
         materials: plan.data?.materials ?? null,
+        transitions: transitionList,
+        trainingActions: actionList,
         periods,
         mesos: (mesos.data ?? []) as Mesocycle[],
         micros: microList,
@@ -181,6 +195,11 @@ export function useDossierData(teamId: string | null, season: { id: string; name
           needsFullPitch: !!typical?.needsFullPitch,
           hasMaterials: !!plan.data?.materials?.trim(),
           matchesReviewed: matchList.filter((m) => m.review).length,
+          transitionPlan: guidelinesProgress(gl).hasTransition,
+          transitionRecords: trStats.records,
+          transitionUnevaluated: trStats.withoutEvaluation,
+          staffTrainingActions: acStats.total,
+          staffTrainingAllStaff: acStats.withAllStaff,
         },
       };
     },

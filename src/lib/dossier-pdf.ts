@@ -9,7 +9,8 @@ import { inPdfLanguage, longDate, tx } from '@/lib/i18n/ui';
 import { dossierScore, type DossierSection } from '@/lib/dossier';
 import { activeWeeks, intensityLabel, mesoKindLabel, seasonWeeks, weekNumber, weekRangeLabel, weekStartOf } from '@/lib/training-plan';
 import { objectiveStatusLabel, type DossierObjective } from '@/lib/objectives';
-import { GAME_FORMATS, MODEL_FIELDS, STAGE_FIELDS } from '@/lib/guidelines';
+import { GAME_FORMATS, MODEL_FIELDS, STAGE_FIELDS, TRANSITION_FIELDS } from '@/lib/guidelines';
+import { actionKindLabel, durationLabel, transitionKindLabel } from '@/lib/transitions';
 import { SLOT_SPACES } from '@/lib/club-map';
 import type { DossierData } from '@/components/dossier/useDossierData';
 
@@ -70,7 +71,7 @@ export function downloadDossierPdf(data: DossierData, sections: DossierSection[]
     doc.setTextColor(0, 0, 0); y += 14;
     doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.text(tx('Índice'), L, y); y += 7;
     const index = [tx('Documento orientador (resumo)'), tx('Plantel'), tx('Fichas individuais e avaliações'), tx('Objetivos do escalão'), tx('Planeamento anual'), tx('Mesociclos'), tx('Microciclos (semanas)'),
-      tx('Unidades de treino'), tx('Espaço e material'), tx('Convocatórias e avaliação dos jogos'), tx('Revisões do coordenador')];
+      tx('Unidades de treino'), tx('Espaço e material'), tx('Plano de transição'), tx('Formação da equipa técnica'), tx('Convocatórias e avaliação dos jogos'), tx('Revisões do coordenador')];
     index.forEach((t, i) => text(`${i + 1}. ${t}`, L + 2));
     y += 6;
     doc.setFontSize(12); doc.setFont('helvetica', 'bold'); space(10); doc.text(tx('Estado de cada parte'), L, y); y += 7;
@@ -182,6 +183,31 @@ export function downloadDossierPdf(data: DossierData, sections: DossierSection[]
     } else empty(tx('Sem horário no mapa do clube'));
     sub(tx('Material e equipamento'));
     data.materials?.trim() ? text(data.materials) : empty(tx('Por registar'));
+
+    // transition plan (the club's) + this team's players who trained or played with another team
+    section(tx('Plano de transição'));
+    const tp = data.guidelines?.transition;
+    if (!TRANSITION_FIELDS.some((f) => tp?.[f.key]?.trim())) empty(tx('O clube ainda não escreveu o plano de transição.'));
+    TRANSITION_FIELDS.forEach((f) => { if (tp?.[f.key]?.trim()) { text(f.label, L, width, 10, 'bold'); text(tp[f.key]!, L + 2, width - 2, 9); y += 1.5; } });
+    sub(tx('Jogadores noutro escalão'));
+    if (data.transitions.length) {
+      const name = new Map(data.players.map((p) => [p.id, p.name]));
+      const widths = [22, 36, 30, 34, width - 122];
+      row([tx('Data'), tx('Jogador'), tx('Equipa'), tx('O que foi'), tx('Observações')], widths, true);
+      data.transitions.forEach((t) => row([d(t.event_date), name.get(t.player_id) ?? '', t.to_name, transitionKindLabel(t.kind), [t.note, t.evaluation].filter(Boolean).join(' — ')], widths));
+    } else empty();
+
+    // the club's training actions for its coaches, this season
+    section(tx('Formação da equipa técnica'));
+    if (!data.trainingActions.length) empty();
+    data.trainingActions.forEach((a) => {
+      space(14);
+      text(`${d(a.action_date)} · ${a.title}`, L, width, 10, 'bold');
+      text([actionKindLabel(a.kind), durationLabel(a.duration_minutes), a.trainer && `${tx('Formador')}: ${a.trainer}`, a.all_staff && tx('Todas as equipas técnicas')].filter(Boolean).join(' · '), L + 2, width - 2, 9);
+      if (a.topics?.trim()) text(`${tx('Temas')}: ${a.topics}`, L + 2, width - 2, 9);
+      if (a.attendees?.trim()) text(`${tx('Presentes')}: ${a.attendees}`, L + 2, width - 2, 9);
+      y += 2;
+    });
 
     // matches
     section(tx('Convocatórias e avaliação dos jogos'));

@@ -39,6 +39,32 @@ export interface Guidelines {
   stages?: Stage[];
   /** how the club models the game: the training action with all the coaches, meetings… */
   process?: string;
+  /** the transition plan (FPF criterion 4.3): how players move up to the next stage and to the seniors */
+  transition?: TransitionPlan;
+}
+
+export interface TransitionPlan { criteria?: string; process?: string; followUp?: string; seniors?: string }
+export const TRANSITION_FIELDS: { key: keyof TransitionPlan; readonly label: string; readonly hint: string }[] = [
+  { key: 'criteria', get label() { return tx('Quem sobe e com que critérios'); }, get hint() { return tx('Ex.: jogadores com avaliação de desempenho alta e maturidade para o escalão acima; decidido pelo coordenador com os dois treinadores.'); } },
+  { key: 'process', get label() { return tx('Como se faz a passagem'); }, get hint() { return tx('Ex.: 1 treino por semana com o escalão acima durante um mês; depois, jogos de forma gradual.'); } },
+  { key: 'followUp', get label() { return tx('Acompanhamento e avaliação'); }, get hint() { return tx('Ex.: o treinador que recebe escreve como correu; reavaliação no fim de cada período.'); } },
+  { key: 'seniors', get label() { return tx('Passagem aos seniores'); }, get hint() { return tx('Ex.: juniores do último ano treinam com os seniores a partir de janeiro.'); } },
+];
+
+/** A start for the transition plan (the club changes everything). */
+export const exampleTransitionPlan = (): TransitionPlan => Object.fromEntries(TRANSITION_FIELDS.map((f) => {
+  const t = f.hint.replace(/^(Ex\.:|E\.g\.|Ej\.:|Ex\. :)\s*/, '');
+  return [f.key, t.charAt(0).toUpperCase() + t.slice(1)];
+})) as TransitionPlan;
+
+/** The team of the next age group up (the usual place a player moves to), else null. */
+export function nextAgeTeam<T extends { id: string; category: string | null }>(teams: T[], fromCategory: string | null): T | null {
+  const from = ageOfCategory(fromCategory);
+  if (from == null) return null;
+  return teams
+    .map((t) => ({ t, age: ageOfCategory(t.category) }))
+    .filter((x): x is { t: T; age: number } => x.age != null && x.age > from)
+    .sort((a, b) => a.age - b.age)[0]?.t ?? null;
 }
 
 const emptyStage = (name: string, ages: string, game = ''): Stage => ({ name, ages, game, motor: '', psych: '', positions: '', coach: '' });
@@ -70,7 +96,9 @@ export function cleanGuidelines(g: Guidelines): Guidelines {
   const stages = (g.stages ?? []).slice(0, 12)
     .map((s) => ({ name: str(s.name, 120).trim(), ages: str(s.ages, 120).trim(), game: str(s.game, 4000).trim(), motor: str(s.motor, 4000).trim(), psych: str(s.psych, 4000).trim(), positions: str(s.positions, 4000).trim(), coach: str(s.coach, 4000).trim() }))
     .filter((s) => Object.values(s).some(Boolean));
-  return { vision: str(g.vision, 6000).trim(), models, stages, process: str(g.process, 4000).trim() };
+  const transition: TransitionPlan = {};
+  for (const f of TRANSITION_FIELDS) { const v = str(g.transition?.[f.key], 4000).trim(); if (v) transition[f.key] = v; }
+  return { vision: str(g.vision, 6000).trim(), models, stages, process: str(g.process, 4000).trim(), transition };
 }
 
 /** How much of it is written: the FPF asks the model for 7, 9 and 11 and the objectives of each stage. */
@@ -80,7 +108,8 @@ export function guidelinesProgress(g: Guidelines | null | undefined) {
     return !!m && MODEL_FIELDS.filter((k) => k.key !== 'setPieces').every((k) => !!m[k.key]?.trim());
   }).length;
   const stages = (g?.stages ?? []).filter((s) => s.game?.trim()).length;
-  return { formats, stages, hasVision: !!g?.vision?.trim(), total: g?.stages?.length ?? 0 };
+  const hasTransition = !!g?.transition?.criteria?.trim() && !!g?.transition?.process?.trim();
+  return { formats, stages, hasVision: !!g?.vision?.trim(), total: g?.stages?.length ?? 0, hasTransition };
 }
 
 /** Age of a team from its category ("Sub-13", "Infantis", "Seniores"…); null when unknown. */

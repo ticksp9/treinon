@@ -2,9 +2,10 @@
 import jsPDF from 'jspdf';
 import { deliverPdf } from '@/lib/native-files';
 import { inPdfLanguage, longDate, tx } from '@/lib/i18n/ui';
-import { GAME_FORMATS, MODEL_FIELDS, STAGE_FIELDS, type Guidelines } from '@/lib/guidelines';
+import { GAME_FORMATS, MODEL_FIELDS, STAGE_FIELDS, TRANSITION_FIELDS, type Guidelines } from '@/lib/guidelines';
+import { actionKindLabel, durationLabel, type TrainingAction } from '@/lib/transitions';
 
-export function downloadGuidelinesPdf(clubName: string, g: Guidelines) {
+export function downloadGuidelinesPdf(clubName: string, g: Guidelines, actions: TrainingAction[] = []) {
   return inPdfLanguage(() => {
     const doc = new jsPDF();
     const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
@@ -51,7 +52,24 @@ export function downloadGuidelinesPdf(clubName: string, g: Guidelines) {
       STAGE_FIELDS.forEach((f) => field(f.label, s[f.key]));
     });
 
-    if (g.process?.trim()) { heading(`4. ${tx('Como o clube trabalha o modelo')}`); text(g.process); }
+    heading(`4. ${tx('Como o clube trabalha o modelo')}`);
+    g.process?.trim() ? text(g.process) : text(tx('Por definir.'));
+
+    heading(`5. ${tx('Plano de transição')}`);
+    if (!TRANSITION_FIELDS.some((f) => g.transition?.[f.key]?.trim())) text(tx('Por definir.'));
+    TRANSITION_FIELDS.forEach((f) => field(f.label, g.transition?.[f.key]));
+
+    heading(`6. ${tx('Formação dos treinadores')}`);
+    if (!actions.length) text(tx('Sem registos.'));
+    actions.forEach((a) => {
+      space(14);
+      const d = `${a.action_date.slice(8, 10)}/${a.action_date.slice(5, 7)}/${a.action_date.slice(0, 4)}`;
+      text(`${d} · ${a.title}`, L, width, 10, 'bold');
+      text([actionKindLabel(a.kind), durationLabel(a.duration_minutes), a.trainer && `${tx('Formador')}: ${a.trainer}`, a.all_staff && tx('Todas as equipas técnicas')].filter(Boolean).join(' · '), L + 2, width - 2, 9);
+      if (a.topics?.trim()) text(`${tx('Temas')}: ${a.topics}`, L + 2, width - 2, 9);
+      if (a.attendees?.trim()) text(`${tx('Presentes')}: ${a.attendees}`, L + 2, width - 2, 9);
+      y += 2;
+    });
 
     const n = doc.getNumberOfPages();
     for (let i = 1; i <= n; i++) {

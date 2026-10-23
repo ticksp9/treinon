@@ -20,6 +20,7 @@ import {
 } from '@/components/players/PlayerProfileTabs';
 import { PlayerDevelopmentPlanTab, PlayerObservationsTab } from '@/components/players/PlayerDevelopment';
 import { PlayerObjectivesCard } from '@/components/dossier/ObjectivesEditor';
+import { PlayerTransitionsCard } from '@/components/dossier/PlayerTransitions';
 import { PlayerAnalyticsTab } from '@/components/players/PlayerAnalyticsTab';
 import { PlayerFMCard } from '@/components/players/PlayerFMCard';
 import { PlayerStrengthsPanel, PlayerImprovementPanel } from '@/components/players/PlayerStrengthsPanel';
@@ -795,6 +796,7 @@ export default function PlayerDetail() {
             <ErrorBoundary label={tx('tab Plano Individual')}>
             <div className="space-y-4">
               <PlayerObjectivesCard playerId={player.id} teamId={player.team_id ?? null} seasonId={selectedSeasonId} />
+              <PlayerTransitionsCard playerId={player.id} teamId={player.team_id ?? null} clubId={clubId} />
               <PlayerDevelopmentPlanTab playerId={player.id} clubId={clubId} />
             </div>
             </ErrorBoundary>

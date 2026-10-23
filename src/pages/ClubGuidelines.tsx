@@ -3,8 +3,11 @@
  * the game model for 7, 9 and 11 (and futsal), and what each stage of development learns.
  * The club's admins and coordinators write it; the club's coaches read it. A coach without a club
  * keeps their own. Each team's dossier shows the part that concerns it.
+ * Three tabs: the document, the transition plan (criterion 4.3, with the players' records) and the
+ * internal training actions for the coaches.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp, FileDown, Loader2, Plus, ScrollText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +30,9 @@ import {
   type GameFormat, type GameModel, type Guidelines, type Stage,
 } from '@/lib/guidelines';
 import { downloadGuidelinesPdf } from '@/lib/guidelines-pdf';
+import { exampleTransitionPlan, TRANSITION_FIELDS } from '@/lib/guidelines';
+import { ClubTransitionsList } from '@/components/dossier/ClubTransitionsList';
+import { TrainingActionsPanel, useTrainingActions } from '@/components/dossier/TrainingActionsPanel';
 
 const db = supabase as any; // newer than the generated types
 
@@ -54,10 +60,14 @@ export default function ClubGuidelines() {
   const clubName = activeTeam?.club_name ?? null;
   const qc = useQueryClient();
   const { data: saved, isLoading } = useGuidelines(clubId);
+  const { data: actions = [] } = useTrainingActions(clubId);
   const [g, setG] = useState<Guidelines>({});
   const [format, setFormat] = useState<GameFormat>('7');
   const [open, setOpen] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const tab = ['documento', 'transicao', 'formacao'].includes(params.get('tab') ?? '') ? params.get('tab')! : 'documento';
+  const setTab = (v: string) => setParams((p) => { p.set('tab', v); return p; }, { replace: true });
   useEffect(() => { setG(saved?.content ?? {}); }, [saved]);
   const progress = useMemo(() => guidelinesProgress(g), [g]);
   const dirty = JSON.stringify(cleanGuidelines(g)) !== JSON.stringify(cleanGuidelines(saved?.content ?? {}));
@@ -101,11 +111,19 @@ export default function ClubGuidelines() {
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge variant="outline" className={progress.formats === 3 ? 'border-emerald-500 text-emerald-700' : ''}>{tx('Modelo de jogo: {{n}} de 3 formatos (7, 9 e 11)', { n: progress.formats })}</Badge>
               <Badge variant="outline" className={progress.stages > 0 && progress.stages === progress.total ? 'border-emerald-500 text-emerald-700' : ''}>{tx('Etapas com objetivos: {{a}} de {{b}}', { a: progress.stages, b: progress.total })}</Badge>
-              <Button size="sm" variant="outline" className="ml-auto" onClick={() => downloadGuidelinesPdf(clubName ?? tx('As minhas equipas'), cleanGuidelines(g))}>
+              <Badge variant="outline" className={progress.hasTransition ? 'border-emerald-500 text-emerald-700' : ''}>{progress.hasTransition ? tx('Plano de transição escrito') : tx('Plano de transição por escrever')}</Badge>
+              <Button size="sm" variant="outline" className="ml-auto" onClick={() => downloadGuidelinesPdf(clubName ?? tx('As minhas equipas'), cleanGuidelines(g), actions)}>
                 <FileDown className="mr-1.5 h-4 w-4" />{tx('Descarregar PDF')}
               </Button>
             </div>
 
+            <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="flex h-auto flex-wrap">
+              <TabsTrigger value="documento">{tx('Documento')}</TabsTrigger>
+              <TabsTrigger value="transicao">{tx('Plano de transição')}</TabsTrigger>
+              <TabsTrigger value="formacao">{tx('Formação interna')}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="documento" className="mt-4 space-y-6">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">{tx('1. Visão e filosofia de formação')}</CardTitle>
@@ -206,7 +224,35 @@ export default function ClubGuidelines() {
               </CardContent>
             </Card>
 
-            {canEdit && (
+            </TabsContent>
+
+            <TabsContent value="transicao" className="mt-4 space-y-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">{tx('Plano de transição')}</CardTitle>
+                  <CardDescription>{tx('Como os jogadores passam para o escalão seguinte e para os seniores. A FPF pede-o documentado em todas as estrelas.')}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {canEdit && !Object.values(g.transition ?? {}).some((v) => v?.trim()) && (
+                    <Button size="sm" variant="outline" onClick={() => setG((x) => ({ ...x, transition: exampleTransitionPlan() }))}>{tx('Começar com um exemplo')}</Button>
+                  )}
+                  {TRANSITION_FIELDS.map((f) => (
+                    <div key={f.key} className="space-y-1.5">
+                      <Label htmlFor={`tp-${f.key}`}>{f.label}</Label>
+                      {area(`tp-${f.key}`, g.transition?.[f.key], (v) => setG((x) => ({ ...x, transition: { ...x.transition, [f.key]: v } })), f.hint)}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+              <ClubTransitionsList clubId={clubId} />
+            </TabsContent>
+
+            <TabsContent value="formacao" className="mt-4">
+              <TrainingActionsPanel clubId={clubId} canEdit={canEdit} />
+            </TabsContent>
+            </Tabs>
+
+            {canEdit && tab !== 'formacao' && (
               <div className="sticky bottom-3 z-10 flex justify-end">
                 <Button onClick={save} disabled={!dirty || saving} className="shadow-lg">
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{tx('Guardar documento')}

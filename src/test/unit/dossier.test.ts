@@ -6,13 +6,14 @@ const full: DossierCounts = {
   weeksSoFar: 8, weeksPlanned: 8, weeksOver: 7, weeksReviewed: 7, sessionsDone: 20, sessionsRecorded: 20, matchesPlayed: 5, matchesEvaluated: 5,
   teamObjectives: 3, teamObjectivesMeasurable: 3, teamObjectivesEvaluated: 1, playersWithObjectives: 16,
   guidelinesModel: true, guidelinesStages: 5, slots: 3, slotsWithSpace: 3, needsFullPitch: false, hasMaterials: true, matchesReviewed: 5,
+  transitionPlan: true, transitionRecords: 2, transitionUnevaluated: 0, staffTrainingActions: 2, staffTrainingAllStaff: 1,
 };
 const state = (c: DossierCounts, key: string) => dossierSections(c).find((s) => s.key === key)!.state;
 
 describe('training dossier', () => {
   it('has the same parts for every team, in the FPF order', () => {
     expect(dossierSections(full).map((s) => s.key)).toEqual([
-      'guidelines', 'squad', 'behaviour', 'performance', 'objectives', 'individual', 'annual', 'meso', 'micro', 'sessions', 'space', 'materials', 'matches',
+      'guidelines', 'squad', 'behaviour', 'performance', 'objectives', 'individual', 'annual', 'meso', 'micro', 'sessions', 'space', 'materials', 'transition', 'staffTraining', 'matches',
     ]);
     expect(dossierScore(dossierSections(full))).toBe(100);
   });
@@ -46,6 +47,14 @@ describe('training dossier', () => {
     expect(state({ ...full, slotsWithSpace: 1 }, 'space')).toBe('partial');
     expect(state({ ...full, needsFullPitch: true }, 'space')).toBe('partial');
     expect(state({ ...full, hasMaterials: false }, 'materials')).toBe('missing');
+  });
+
+  it('asks for the transition plan and a training action with all the coaching staffs', () => {
+    expect(state({ ...full, transitionPlan: false }, 'transition')).toBe('missing');
+    expect(state({ ...full, transitionUnevaluated: 1 }, 'transition')).toBe('partial');
+    expect(state({ ...full, transitionRecords: 0 }, 'transition')).toBe('done'); // no player moved up yet is fine
+    expect(state({ ...full, staffTrainingAllStaff: 0 }, 'staffTraining')).toBe('partial');
+    expect(state({ ...full, staffTrainingActions: 0, staffTrainingAllStaff: 0 }, 'staffTraining')).toBe('missing');
   });
 
   it('keeps working with the counts of phase 1 only', () => {
