@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { OpponentMatchNotes, useMatchOpponentObservation } from './OpponentMatchNotes';
+import { OurPlayerNotes, orderForNotes, useMatchPlayerNotes } from './OurPlayerNotes';
 import { imageAsDataUrl } from '@/lib/team-branding';
 import jsPDF from 'jspdf';
 import type { MatchRuleSnapshot } from '@/lib/match-rules-service';
@@ -105,6 +106,10 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
   const [generating, setGenerating] = useState(false);
   // what the coach wrote about the opponent, for the PDF
   const { data: opponentNotes } = useMatchOpponentObservation(match.id);
+  const { data: ourNotes = [] } = useMatchPlayerNotes(match.id);
+  // the PDF often goes to parents: the notes about our players only go in when the coach says so
+  const [ourNotesInPdf, setOurNotesInPdf] = useState(() => { try { return localStorage.getItem('treinon_pdf_player_notes') === '1'; } catch { return false; } });
+  const chooseOurNotesInPdf = (v: boolean) => { setOurNotesInPdf(v); try { localStorage.setItem('treinon_pdf_player_notes', v ? '1' : '0'); } catch { /* private mode */ } };
   const t = useT();
   // read ahead, so the PDF is made the moment the coach asks for it
   const [crest, setCrest] = useState<{ dataUrl: string; ratio: number } | null>(null);
@@ -501,6 +506,24 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
         }
       }
 
+      // ── Notes about our players (only when the coach chose to put them in the PDF) ──
+      const noteOf = new Map(ourNotes.map((n) => [n.player_id, n.note]));
+      const withNotes = orderForNotes(lineups).filter((l) => noteOf.get(l.player_id));
+      if (ourNotesInPdf && withNotes.length) {
+        addSection(tx('NOTAS SOBRE OS NOSSOS JOGADORES'));
+        doc.setFontSize(10);
+        const w = pageWidth - 32;
+        withNotes.forEach((l) => {
+          ensureSpace(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text([l.player?.number != null && `#${l.player.number}`, l.player?.name].filter(Boolean).join(' '), 14, y);
+          y += 4.6;
+          doc.setFont('helvetica', 'normal');
+          doc.splitTextToSize(noteOf.get(l.player_id) ?? '', w).forEach((line: string) => { ensureSpace(6); doc.text(line, 18, y); y += 4.6; });
+          y += 1.4;
+        });
+      }
+
       // ── Player Statistics Table ──
       addSection(tx('ESTATISTICAS DOS JOGADORES'));
       doc.setFontSize(9);
@@ -650,6 +673,9 @@ export function MatchReport({ crestUrl, liveTactics, partTactics, match, lineups
 
       {/* What the coach saw of the opponent (also kept in their Scouting sheet) */}
       <OpponentMatchNotes matchId={match.id} />
+
+      {/* The coach's notes about each of our players (coaching staff only) */}
+      <OurPlayerNotes matchId={match.id} lineups={lineups} includeInPdf={ourNotesInPdf} onIncludeInPdf={chooseOurNotesInPdf} />
 
       {/* Per-part starters */}
       <Card>

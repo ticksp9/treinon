@@ -292,7 +292,7 @@ export function MatchResultsView({ teamId, matches, team, onDelete, canDelete }:
         <QuickMatchEntry matchId={quickEntryId} open onClose={() => setQuickEntryId(null)} onSaved={() => selectedMatch && fetchMatchDetails(selectedMatch.id)} />
       )}
       <Dialog open={!!selectedMatch} onOpenChange={() => setSelectedMatch(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto [&>*]:min-w-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Trophy className="w-5 h-5" />{tx('Relatório do Jogo')}

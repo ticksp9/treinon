@@ -343,3 +343,29 @@ DO $$ BEGIN
   ASSERT (SELECT message_content FROM communication_message_reports) = 'mensagem ofensiva', 'the report keeps the copy';
 END $$;
 RESET ROLE;
+
+-- ── Notes about our players in the match report: coaching staff only ─────────
+SET ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', false);
+INSERT INTO public.match_player_notes (match_id, player_id, note)
+VALUES ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'tem de trabalhar o pe esquerdo');
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM match_player_notes) = 1, 'the coach sees his note';
+END $$;
+-- the parent of that player can read his lineup row, but not the coach's note
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000011', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM match_player_notes) = 0, 'a parent does not see the coach notes';
+  BEGIN
+    INSERT INTO public.match_player_notes (match_id, player_id, note)
+    VALUES ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'x');
+    RAISE EXCEPTION 'FAIL: a parent wrote a coach note';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+END $$;
+-- someone outside the club neither
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000004', false);
+DO $$ BEGIN
+  ASSERT (SELECT count(*) FROM match_player_notes) = 0, 'an outsider does not see the coach notes';
+END $$;
+RESET ROLE;
