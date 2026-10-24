@@ -48,22 +48,22 @@ export interface Formation {
 const EN_SHORT: Record<string, string> = {
   GR: 'GK', DC: 'CB', DCE: 'LCB', DCD: 'RCB', DE: 'LB', DD: 'RB', LE: 'LB', LD: 'RB', ALE: 'LWB', ALD: 'RWB',
   MDC: 'DM', MDE: 'LDM', MDD: 'RDM', MC: 'CM', MCE: 'LCM', MCD: 'RCM', MOC: 'AM', MOE: 'LAM', MOD: 'RAM',
-  ME: 'LM', MD: 'RM', EE: 'LW', ED: 'RW', PL: 'ST', PLE: 'LS', PLD: 'RS', 'Ala E': 'Wing L', 'Ala D': 'Wing R', 'Pivô': 'Pivot',
+  ME: 'LM', MD: 'RM', EE: 'LW', ED: 'RW', PL: 'ST', PLE: 'LS', PLD: 'RS', AC: 'CF', 'Ala E': 'Wing L', 'Ala D': 'Wing R', 'Pivot': 'Pivot',
 };
 const ES_SHORT: Record<string, string> = {
   GR: 'POR', DC: 'DFC', DCE: 'DFC', DCD: 'DFC', DE: 'LI', DD: 'LD', LE: 'LI', LD: 'LD', ALE: 'CAI', ALD: 'CAD',
   MDC: 'MCD', MDE: 'MCD', MDD: 'MCD', MC: 'MC', MCE: 'MC', MCD: 'MC', MOC: 'MCO', MOE: 'MCO', MOD: 'MCO',
-  ME: 'MI', MD: 'MD', EE: 'EI', ED: 'ED', PL: 'DC', PLE: 'DC', PLD: 'DC', 'Ala E': 'Ala I', 'Ala D': 'Ala D', 'Pivô': 'Pívot',
+  ME: 'MI', MD: 'MD', EE: 'EI', ED: 'ED', PL: 'DC', PLE: 'DC', PLD: 'DC', AC: 'DC', 'Ala E': 'Ala I', 'Ala D': 'Ala D', 'Pivot': 'Pívot',
 };
 const DE_SHORT: Record<string, string> = {
   GR: 'TW', DC: 'IV', DCE: 'IV', DCD: 'IV', DE: 'LV', DD: 'RV', LE: 'LV', LD: 'RV', ALE: 'LAV', ALD: 'RAV',
   MDC: 'ZDM', MDE: 'ZDM', MDD: 'ZDM', MC: 'ZM', MCE: 'ZM', MCD: 'ZM', MOC: 'ZOM', MOE: 'ZOM', MOD: 'ZOM',
-  ME: 'LM', MD: 'RM', EE: 'LA', ED: 'RA', PL: 'ST', PLE: 'ST', PLD: 'ST', 'Ala E': 'Flügel L', 'Ala D': 'Flügel R', 'Pivô': 'Pivot',
+  ME: 'LM', MD: 'RM', EE: 'LA', ED: 'RA', PL: 'ST', PLE: 'ST', PLD: 'ST', AC: 'MS', 'Ala E': 'Flügel L', 'Ala D': 'Flügel R', 'Pivot': 'Pivot',
 };
 const FR_SHORT: Record<string, string> = {
   GR: 'G', DC: 'DC', DCE: 'DC', DCD: 'DC', DE: 'DG', DD: 'DD', LE: 'DG', LD: 'DD', ALE: 'DLG', ALD: 'DLD',
   MDC: 'MDC', MDE: 'MDC', MDD: 'MDC', MC: 'MC', MCE: 'MC', MCD: 'MC', MOC: 'MOC', MOE: 'MOC', MOD: 'MOC',
-  ME: 'MG', MD: 'MD', EE: 'AG', ED: 'AD', PL: 'BU', PLE: 'BU', PLD: 'BU', 'Ala E': 'Ailier G', 'Ala D': 'Ailier D', 'Pivô': 'Pivot',
+  ME: 'MG', MD: 'MD', EE: 'AG', ED: 'AD', PL: 'BU', PLE: 'BU', PLD: 'BU', AC: 'AC', 'Ala E': 'Ailier G', 'Ala D': 'Ailier D', 'Pivot': 'Pivot',
 };
 // Chinese football apps use the English abbreviations
 const SHORT: Record<string, Record<string, string>> = { en: EN_SHORT, es: ES_SHORT, fr: FR_SHORT, de: DE_SHORT, zh: EN_SHORT };
@@ -81,10 +81,10 @@ const F11: Formation[] = [
     code: '4-3-3', name: '4-3-3', sport_type: 'football_11',
     slots: [
       s('GK',  'goalkeeper',          'GR',  0.50, 0.05),
-      s('LB',  'defender_left',       'LD',  0.15, 0.25),
+      s('LB',  'defender_left',       'DE',  0.15, 0.25),
       s('LCB', 'defender_center_left','DCE', 0.37, 0.20),
       s('RCB', 'defender_center_right','DCD',0.63, 0.20),
-      s('RB',  'defender_right',      'LE',  0.85, 0.25),
+      s('RB',  'defender_right',      'DD',  0.85, 0.25),
       s('LCM', 'midfielder_center_left',  'MCE', 0.30, 0.50),
       s('CM',  'midfielder_center',   'MC',  0.50, 0.45),
       s('RCM', 'midfielder_center_right', 'MCD', 0.70, 0.50),
@@ -97,10 +97,10 @@ const F11: Formation[] = [
     code: '4-4-2', name: '4-4-2', sport_type: 'football_11',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.15,0.25),
+      s('LB','defender_left','DE',0.15,0.25),
       s('LCB','defender_center_left','DCE',0.37,0.20),
       s('RCB','defender_center_right','DCD',0.63,0.20),
-      s('RB','defender_right','LE',0.85,0.25),
+      s('RB','defender_right','DD',0.85,0.25),
       s('LM','midfielder_left','ME',0.15,0.55),
       s('LCM','midfielder_center_left','MCE',0.37,0.50),
       s('RCM','midfielder_center_right','MCD',0.63,0.50),
@@ -145,10 +145,10 @@ const F11: Formation[] = [
     code: '4-2-3-1', name: '4-2-3-1', sport_type: 'football_11',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.15,0.25),
+      s('LB','defender_left','DE',0.15,0.25),
       s('LCB','defender_center_left','DCE',0.37,0.20),
       s('RCB','defender_center_right','DCD',0.63,0.20),
-      s('RB','defender_right','LE',0.85,0.25),
+      s('RB','defender_right','DD',0.85,0.25),
       s('LDM','midfielder_defensive','MDE',0.37,0.40),
       s('RDM','midfielder_defensive','MDD',0.63,0.40),
       s('LAM','midfielder_attacking','MOE',0.20,0.65),
@@ -161,11 +161,11 @@ const F11: Formation[] = [
     code: '5-3-2', name: '5-3-2', sport_type: 'football_11',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LWB','defender_left','LD',0.10,0.30),
+      s('LWB','defender_left','DE',0.10,0.30),
       s('LCB','defender_center_left','DCE',0.30,0.20),
       s('CB','defender_center','DC',0.50,0.18),
       s('RCB','defender_center_right','DCD',0.70,0.20),
-      s('RWB','defender_right','LE',0.90,0.30),
+      s('RWB','defender_right','DD',0.90,0.30),
       s('LCM','midfielder_center_left','MCE',0.30,0.55),
       s('CM','midfielder_center','MC',0.50,0.50),
       s('RCM','midfielder_center_right','MCD',0.70,0.55),
@@ -181,9 +181,9 @@ const F9: Formation[] = [
     code: '3-3-2', name: '3-3-2', sport_type: 'football_9',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.20,0.22),
+      s('LB','defender_left','DE',0.20,0.22),
       s('CB','defender_center','DC',0.50,0.18),
-      s('RB','defender_right','LE',0.80,0.22),
+      s('RB','defender_right','DD',0.80,0.22),
       s('LM','midfielder_center_left','MCE',0.25,0.55),
       s('CM','midfielder_center','MC',0.50,0.50),
       s('RM','midfielder_center_right','MCD',0.75,0.55),
@@ -195,9 +195,9 @@ const F9: Formation[] = [
     code: '3-2-3', name: '3-2-3', sport_type: 'football_9',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.20,0.22),
+      s('LB','defender_left','DE',0.20,0.22),
       s('CB','defender_center','DC',0.50,0.18),
-      s('RB','defender_right','LE',0.80,0.22),
+      s('RB','defender_right','DD',0.80,0.22),
       s('LDM','midfielder_defensive','MDE',0.35,0.45),
       s('RDM','midfielder_defensive','MDD',0.65,0.45),
       s('LW','winger_left','EE',0.20,0.80),
@@ -209,9 +209,9 @@ const F9: Formation[] = [
     code: '3-4-1', name: '3-4-1', sport_type: 'football_9',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.20,0.22),
+      s('LB','defender_left','DE',0.20,0.22),
       s('CB','defender_center','DC',0.50,0.18),
-      s('RB','defender_right','LE',0.80,0.22),
+      s('RB','defender_right','DD',0.80,0.22),
       s('LM','midfielder_left','ME',0.15,0.55),
       s('LCM','midfielder_center_left','MCE',0.38,0.50),
       s('RCM','midfielder_center_right','MCD',0.62,0.50),
@@ -239,9 +239,9 @@ const F7: Formation[] = [
     code: '3-2-1', name: '3-2-1', sport_type: 'football_7',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.22,0.22),
+      s('LB','defender_left','DE',0.22,0.22),
       s('CB','defender_center','DC',0.50,0.20),
-      s('RB','defender_right','LE',0.78,0.22),
+      s('RB','defender_right','DD',0.78,0.22),
       s('LM','midfielder_center_left','MCE',0.35,0.55),
       s('RM','midfielder_center_right','MCD',0.65,0.55),
       s('ST','striker','PL',0.50,0.85),
@@ -263,9 +263,9 @@ const F7: Formation[] = [
     code: '3-1-2', name: '3-1-2', sport_type: 'football_7',
     slots: [
       s('GK','goalkeeper','GR',0.50,0.05),
-      s('LB','defender_left','LD',0.22,0.22),
+      s('LB','defender_left','DE',0.22,0.22),
       s('CB','defender_center','DC',0.50,0.20),
-      s('RB','defender_right','LE',0.78,0.22),
+      s('RB','defender_right','DD',0.78,0.22),
       s('CM','midfielder_center','MC',0.50,0.50),
       s('LST','forward_left','PLE',0.35,0.85),
       s('RST','forward_right','PLD',0.65,0.85),
@@ -316,7 +316,7 @@ const FUTSAL: Formation[] = [
       s('FIXO','fixo','Fixo',0.50,0.25),
       s('ALE','ala_left','Ala E',0.20,0.55),
       s('ALD','ala_right','Ala D',0.80,0.55),
-      s('PIV','pivot','Pivô',0.50,0.85),
+      s('PIV','pivot','Pivot',0.50,0.85),
     ],
   },
   {
@@ -336,7 +336,7 @@ const FUTSAL: Formation[] = [
       s('FIXO','fixo','Fixo',0.50,0.25),
       s('ALE','ala_left','Ala E',0.25,0.50),
       s('ALD','ala_right','Ala D',0.75,0.50),
-      s('PIV','pivot','Pivô',0.50,0.85),
+      s('PIV','pivot','Pivot',0.50,0.85),
     ],
   },
   {
@@ -345,7 +345,7 @@ const FUTSAL: Formation[] = [
       s('GK','goalkeeper','GR',0.50,0.05),
       s('FIXO','fixo','Fixo',0.50,0.25),
       s('ALE','ala_left','Ala E',0.25,0.75),
-      s('PIV','pivot','Pivô',0.50,0.80),
+      s('PIV','pivot','Pivot',0.50,0.80),
       s('ALD','ala_right','Ala D',0.75,0.75),
     ],
   },
@@ -431,7 +431,7 @@ const ROLE_SHORT: Partial<Record<SlotRole, string>> = {
   midfielder_defensive: 'MDC', midfielder_center: 'MC', midfielder_center_left: 'MC', midfielder_center_right: 'MC',
   midfielder_left: 'ME', midfielder_right: 'MD', midfielder_attacking: 'MOC',
   winger_left: 'EE', winger_right: 'ED', forward_left: 'PL', forward_right: 'PL', forward_center: 'PL', striker: 'PL',
-  fixo: 'Fixo', ala_left: 'Ala E', ala_right: 'Ala D', pivot: 'Pivô',
+  fixo: 'Fixo', ala_left: 'Ala E', ala_right: 'Ala D', pivot: 'Pivot',
 };
 
 /**
@@ -562,8 +562,8 @@ export const ROLE_LABELS_PT: Record<string, string> = {
   defender_center: tr('Defesa Central'),
   defender_center_left: tr('Defesa Central Esq.'),
   defender_center_right: tr('Defesa Central Dir.'),
-  defender_left: tr('Lateral Esquerdo'),
-  defender_right: tr('Lateral Direito'),
+  defender_left: tr('Defesa Esquerdo'),
+  defender_right: tr('Defesa Direito'),
   sweeper: tr('Líbero'),
   midfielder_defensive: tr('Médio Defensivo'),
   midfielder_center: tr('Médio Centro'),
@@ -578,7 +578,7 @@ export const ROLE_LABELS_PT: Record<string, string> = {
   forward_right: tr('Avançado Direito'),
   forward_center: tr('Avançado Centro'),
   striker: tr('Ponta de Lança'),
-  pivot: tr('Pivô'),
+  pivot: tr('Pivot'),
   ala_left: tr('Ala Esquerda'),
   ala_right: tr('Ala Direita'),
   fixo: tr('Fixo'),

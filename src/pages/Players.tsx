@@ -409,6 +409,7 @@ export default function Players() {
                     name: editingPlayer.name,
                     number: editingPlayer.number,
                     position: editingPlayer.position || '',
+                    secondary_positions: ((editingPlayer as { secondary_positions?: string[] | null }).secondary_positions ?? []),
                     birth_date: editingPlayer.birth_date || '',
                     team_id: editingPlayer.team_id,
                   } : undefined}

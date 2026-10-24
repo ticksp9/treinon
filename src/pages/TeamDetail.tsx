@@ -35,6 +35,7 @@ import {
   removePlayerFromTeam,
 } from '@/lib/season-roster-service';
 import { tx } from '@/lib/i18n/ui';
+import { positionName } from '@/lib/player-constants';
 
 interface Player {
   id: string;
@@ -507,7 +508,7 @@ export default function TeamDetail() {
                             <span className="font-medium truncate">{player.name}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {player.position && <span>{player.position}</span>}
+                            {player.position && <span>{positionName(player.position)}</span>}
                             {age !== null && <span>• {tx('{{n}} anos', { n: age })}</span>}
                           </div>
                         </div>

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Users, Play, Star, UserMinus, UserX } from 'lucide-react';
 import { getSportFormatRules } from '@/lib/match-playing-time';
 import { useT, tr, tx } from '@/lib/i18n/ui';
+import { positionName } from '@/lib/player-constants';
 
 interface Player {
   id: string;
@@ -35,6 +36,8 @@ interface LineupSelectorProps {
   isHalftime?: boolean;
   isEditing?: boolean;
   sportType?: string | null;
+  /** players that must be on the pitch to start (the full team, less those sent off); default: the format's */
+  startersNeeded?: number;
   /** the substitute did not come to the match: take him out (asks the reason) */
   onAbsent?: (playerId: string) => void;
   /** who can still be taken out; omitted = every substitute (before kick-off) */
@@ -53,16 +56,19 @@ const POSITION_CATEGORY_LABELS: Record<string, string> = {
   goalkeeper: tr('Guarda-Redes'),
   defense: tr('Defesas'),
   midfield: tr('Médios'),
-  attack: tr('Atacantes'),
+  attack: tr('Avançados'),
   other: tr('Outros'),
 };
 
-export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onStartMatch, isHalftime = false, isEditing = false, sportType, onAbsent, absentable }: LineupSelectorProps) {
+export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onStartMatch, isHalftime = false, isEditing = false, sportType, startersNeeded, onAbsent, absentable }: LineupSelectorProps) {
   const t = useT();
   const { user } = useAuth();
   const [selectedStarters, setSelectedStarters] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const sportRules = getSportFormatRules(sportType);
+  const needed = startersNeeded ?? sportRules.playersOnField;
+  // futsal: a substitute replaces the sent-off player after the penalty, so up to the full team may start
+  const maxOnPitch = sportType === 'futsal' ? sportRules.playersOnField : needed;
 
   useEffect(() => {
     // Initialize starters from lineups
@@ -110,8 +116,8 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
     try {
       const newIsStarter = !selectedStarters.has(playerId);
 
-      if (newIsStarter && selectedStarters.size >= sportRules.playersOnField) {
-        toast.error(t('Escalação inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: sportRules.playersOnField, fmt: sportRules.label }));
+      if (newIsStarter && selectedStarters.size >= maxOnPitch) {
+        toast.error(t('Equipa inicial inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: maxOnPitch, fmt: sportRules.label }));
         return;
       }
 
@@ -144,8 +150,8 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
     if (!user) return;
     setSaving(true);
     try {
-      if (playerIds.length > sportRules.playersOnField) {
-        toast.error(t('Escalação inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: sportRules.playersOnField, fmt: sportRules.label }));
+      if (playerIds.length > maxOnPitch) {
+        toast.error(t('Equipa inicial inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: maxOnPitch, fmt: sportRules.label }));
         return;
       }
 
@@ -199,7 +205,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
           {t('Selecionar Titulares e Suplentes')}
         </CardTitle>
         <CardDescription>
-          {t('Clique num jogador para alternar entre titular e suplente · Máximo em campo: {{n}}', { n: sportRules.playersOnField })}
+          {t('Clique num jogador para alternar entre titular e suplente · Em campo: {{n}}', { n: needed })}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -256,7 +262,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{lineup.player?.name}</div>
                         <div className="text-xs text-muted-foreground">
-                          {lineup.player?.position || t('Sem posição')}
+                          {positionName(lineup.player?.position) || t('Sem posição')}
                         </div>
                       </div>
                       <Star className="w-4 h-4 text-primary" />
@@ -302,7 +308,7 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{lineup.player?.name}</div>
                               <div className="text-xs text-muted-foreground">
-                                {lineup.player?.position || t('Sem posição')}
+                                {positionName(lineup.player?.position) || t('Sem posição')}
                               </div>
                             </div>
                             {onAbsent && (!absentable || absentable.has(lineup.player_id)) && (
@@ -325,11 +331,16 @@ export function LineupSelector({ matchId, teamId, lineups, onLineupsChange, onSt
 
             <Separator />
 
+            {!isEditing && starterCount < needed && (
+              <p className="text-center text-sm font-medium text-amber-700 dark:text-amber-300">
+                {((needed - starterCount) === 1 ? t('Falta 1 titular: têm de estar {{n}} em campo para começar.', { n: needed }) : t('Faltam {{m}} titulares: têm de estar {{n}} em campo para começar.', { m: needed - starterCount, n: needed }))}
+              </p>
+            )}
             <Button
               onClick={onStartMatch}
               className="w-full"
               size="lg"
-              disabled={starterCount === 0 || saving}
+              disabled={saving || (isEditing ? starterCount === 0 : starterCount < needed || starterCount > maxOnPitch)}
             >
               <Play className="w-5 h-5 mr-2" />
               {isEditing

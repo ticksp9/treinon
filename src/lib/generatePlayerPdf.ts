@@ -47,8 +47,8 @@ const ID_DOCUMENT_LABELS: Record<string, string> = {
 const POSITION_LABELS: Record<string, string> = {
   GK: tr('Guarda-Redes'),
   CB: tr('Defesa Central'),
-  LB: tr('Lateral Esquerdo'),
-  RB: tr('Lateral Direito'),
+  LB: tr('Defesa Esquerdo'),
+  RB: tr('Defesa Direito'),
   CDM: tr('Médio Defensivo'),
   CM: tr('Médio Centro'),
   CAM: tr('Médio Ofensivo'),

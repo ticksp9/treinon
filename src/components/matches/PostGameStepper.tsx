@@ -52,6 +52,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { SubstitutionBatchDialog } from './SubstitutionBatchDialog';
 import type { PendingSubstitution } from '@/lib/substitution-batch-service';
 import { tx, intlLocale } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 interface Player {
   id: string;
@@ -94,7 +95,7 @@ interface PostGameStepperProps {
 
 const STEPS = [
   { key: 'result', get label() { return tx('Resultado'); }, icon: Target, short: '1' },
-  { key: 'lineup', get label() { return tx('Escalação'); }, icon: Users, short: '2' },
+  { key: 'lineup', get label() { return tx('Equipa inicial'); }, icon: Users, short: '2' },
   { key: 'substitutions', get label() { return tx('Substituições'); }, icon: ArrowRightLeft, short: '3' },
   { key: 'events', get label() { return tx('Eventos'); }, icon: Clock, short: '4' },
   { key: 'review', get label() { return tx('Revisão'); }, icon: ListChecks, short: '5' },
@@ -349,10 +350,10 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
   const handleAddPlayerToLineup = async (playerId: string) => {
     if (!user || !isEditable) return;
     const exists = lineups.find(l => l.player_id === playerId);
-    if (exists) { toast.error(tx('Jogador já está na escalação.')); return; }
+    if (exists) { toast.error(tx('Jogador já está na equipa do jogo.')); return; }
     await supabase.from('match_lineups').insert({ match_id: matchId, player_id: playerId, is_starter: false, owner_id: user.id });
     await logReportAudit(matchId, null, user.id, 'player_added', null, { player_id: playerId });
-    toast.success(tx('Jogador adicionado à escalação.'));
+    toast.success(tx('Jogador adicionado à equipa do jogo.'));
     setIsDirty(true);
     await fetchData();
     onDataChanged?.();
@@ -883,7 +884,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> {tx('Escalação (')}{lineups.length})</span>
+                <span className="flex items-center gap-2"><Users className="w-4 h-4" /> {tx('Equipa inicial (')}{lineups.length})</span>
                 {isEditable && availableToAdd.length > 0 && (
                   <Select onValueChange={handleAddPlayerToLineup}>
                     <SelectTrigger className="w-auto h-8 text-xs gap-1">
@@ -902,7 +903,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
               {lineups.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-muted-foreground text-sm">{tx('Ainda não definiu a escalação.')}</p>
+                  <p className="text-muted-foreground text-sm">{tx('Ainda não definiu a equipa do jogo.')}</p>
                   {isEditable && availableToAdd.length > 0 && (
                     <p className="text-xs text-muted-foreground mt-1">{tx('Use "Adicionar jogador" acima para começar.')}</p>
                   )}
@@ -915,7 +916,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                     <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded bg-primary/5">
                       <Badge variant="secondary" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
                       <span className="text-sm flex-1">{l.player.name}</span>
-                      {l.player.position && <span className="text-xs text-muted-foreground">{l.player.position}</span>}
+                      {l.player.position && <span className="text-xs text-muted-foreground">{positionShort(l.player.position)}</span>}
                       {secondHalfStarters.has(l.player_id) && <Badge variant="outline" className="text-[10px]">2.ªP</Badge>}
                       {isEditable && (
                         <div className="flex gap-1">
@@ -970,7 +971,7 @@ export function PostGameStepper({ matchId, teamId, reportStatus, onStatusChange,
                         <div key={l.id} className="flex items-center gap-2 py-1.5 px-2 rounded">
                           <Badge variant="outline" className="min-w-[28px] justify-center text-xs">{l.player.number || '-'}</Badge>
                           <span className="text-sm flex-1">{l.player.name}</span>
-                          {l.player.position && <span className="text-xs text-muted-foreground">{l.player.position}</span>}
+                          {l.player.position && <span className="text-xs text-muted-foreground">{positionShort(l.player.position)}</span>}
                           {secondHalfStarters.has(l.player_id) && <Badge variant="outline" className="text-[10px]">2.ªP</Badge>}
                           {isEditable && (
                             <div className="flex gap-1">

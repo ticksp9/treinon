@@ -616,7 +616,7 @@ export const DRILLS: Drill[] = [
       'Fase 2: atacantes podem finalizar; defesa ganha ponto ao recuperar e passar para um mini-alvo.',
     ],
     coachingPoints: ['Distância entre defesas de 8–10 m', 'Lateral do lado contrário fecha por dentro', 'Subir quando a bola está pressionada, descer quando está livre'],
-    progressions: ['Juntar um médio defensivo à frente da linha', 'Atacantes com liberdade total'],
+    progressions: ['Juntar um médio defensivo à frente da linha', 'Avançados com liberdade total'],
     diagram: [
       { t: 'goal', at: [50, 64], side: 'bottom' }, { t: 'gk', at: [50, 60] },
       { t: 'd', at: [26, 44] }, { t: 'd', at: [42, 46] }, { t: 'd', at: [58, 46] }, { t: 'd', at: [74, 44] },
@@ -1006,7 +1006,7 @@ export const DRILLS: Drill[] = [
     objective: 'Organização defensiva simples em cantos contra.',
     setup: '3–4 defensores em zona (1.º poste, pequena área, marca de penálti), restantes em marcação individual aos melhores cabeceadores.',
     howTo: [
-      'Atacantes executam cantos variados; defesa tem de afastar e sair em bloco até à entrada da área.',
+      'Avançados executam cantos variados; defesa tem de afastar e sair em bloco até à entrada da área.',
       'Contar cantos defendidos sem remate enquadrado.',
     ],
     coachingPoints: ['Atacar a bola, não esperar por ela', 'Na marcação individual, ver bola e adversário', 'Depois de afastar, sair todos juntos'],

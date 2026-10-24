@@ -16,6 +16,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { tx } from '@/lib/i18n/ui';
+import { positionName } from '@/lib/player-constants';
 
 function usePlayerData(playerId: string | null) {
   return useQuery({
@@ -276,7 +277,7 @@ export default function PlayerPortal() {
             </div>
             <p className="text-muted-foreground text-sm">
               {playerData.name} · {(playerData as any).teams?.name || tx('Sem equipa')}
-              {playerData.position && <Badge variant="outline" className="ml-2 text-xs">{playerData.position}</Badge>}
+              {playerData.position && <Badge variant="outline" className="ml-2 text-xs">{positionName(playerData.position)}</Badge>}
             </p>
           </div>
         </div>

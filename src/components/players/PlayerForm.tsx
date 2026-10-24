@@ -19,6 +19,8 @@ const playerSchema = z.object({
     z.number().min(1).max(99).optional().nullable(),
   ),
   position: z.string().optional(),
+  // other positions the player can play (the main one is not repeated here)
+  secondary_positions: z.array(z.string()).max(6).optional(),
   birth_date: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
   birth_place: z.string().optional(),
   nationality: z.string().optional(),
@@ -90,6 +92,7 @@ export function PlayerForm({
       name: '',
       number: null,
       position: '',
+      secondary_positions: [],
       birth_date: '',
       birth_place: '',
       nationality: '',
@@ -119,6 +122,7 @@ export function PlayerForm({
   });
 
   const position = watch('position');
+  const secondary = watch('secondary_positions') ?? [];
   const foot = watch('foot');
   const gender = watch('gender');
   const teamId = watch('team_id');
@@ -206,7 +210,7 @@ export function PlayerForm({
 
             <div className="space-y-2">
               <Label>{tx('Posição')}</Label>
-              <Select value={position || ''} onValueChange={(v) => setValue('position', v)}>
+              <Select value={position || ''} onValueChange={(v) => { setValue('position', v); setValue('secondary_positions', secondary.filter((x) => x !== v)); }}>
                 <SelectTrigger>
                   <SelectValue placeholder={tx('Selecionar')} />
                 </SelectTrigger>
@@ -218,6 +222,22 @@ export function PlayerForm({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <Label>{tx('Outras posições')} <span className="font-normal text-muted-foreground">({tx('opcional')})</span></Label>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label={tx('Outras posições')}>
+                {positions.filter((pos) => pos.value !== position).map((pos) => {
+                  const on = secondary.includes(pos.value);
+                  return (
+                    <Button key={pos.value} type="button" size="sm" variant={on ? 'default' : 'outline'} className="h-8" aria-pressed={on}
+                      onClick={() => setValue('secondary_positions', on ? secondary.filter((x) => x !== pos.value) : [...secondary, pos.value].slice(0, 6))}>
+                      {pos.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">{tx('Toque nas posições em que o jogador também pode jogar.')}</p>
             </div>
 
             <div className="space-y-2">

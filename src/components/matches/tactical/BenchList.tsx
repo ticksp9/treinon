@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { tx } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 export interface BenchPlayer {
   player_id: string;
@@ -91,7 +92,7 @@ export function BenchList({
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{p.name}</div>
                 {p.position && (
-                  <div className="text-[10px] text-muted-foreground truncate">{p.position}</div>
+                  <div className="text-[10px] text-muted-foreground truncate">{positionShort(p.position)}</div>
                 )}
               </div>
             </li>

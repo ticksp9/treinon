@@ -240,7 +240,7 @@ export function ReportReviewScreen({ matchId, reportStatus, onStatusChange, onCl
 
     if (a.goals_for !== b.goals_for) changes.push({ field: 'Golos a Favor', before: String(a.goals_for), after: String(b.goals_for) });
     if (a.goals_against !== b.goals_against) changes.push({ field: 'Golos Contra', before: String(a.goals_against), after: String(b.goals_against) });
-    if (JSON.stringify(a.lineups) !== JSON.stringify(b.lineups)) changes.push({ field: 'Escalação', before: `${a.lineups?.length || 0} jogadores`, after: `${b.lineups?.length || 0} jogadores` });
+    if (JSON.stringify(a.lineups) !== JSON.stringify(b.lineups)) changes.push({ field: 'Equipa inicial', before: `${a.lineups?.length || 0} jogadores`, after: `${b.lineups?.length || 0} jogadores` });
     if (JSON.stringify(a.events) !== JSON.stringify(b.events)) changes.push({ field: 'Eventos', before: `${a.events?.length || 0} eventos`, after: `${b.events?.length || 0} eventos` });
     if (a.notes !== b.notes) changes.push({ field: 'Notas', before: a.notes || '(vazio)', after: b.notes || '(vazio)' });
 

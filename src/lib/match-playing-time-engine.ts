@@ -220,7 +220,7 @@ export function buildInitialStateFromFirstHalfStarters(
   if (starters.length > mode.playersOnField) {
     state.inconsistencies.push({
       type: 'too_many_on_field',
-      message: tx('Escalação inicial com {{v0}} jogadores (máx {{v1}}).', { v0: starters.length, v1: mode.playersOnField }),
+      message: tx('Equipa inicial com {{v0}} jogadores (máx {{v1}}).', { v0: starters.length, v1: mode.playersOnField }),
     });
   }
   return state;

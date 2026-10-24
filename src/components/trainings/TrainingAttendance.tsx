@@ -21,6 +21,7 @@ import { SessionRecordCard } from './SessionRecordCard';
 import { useSearchParams } from 'react-router-dom';
 import { cleanSchedule, plannedTrainings } from '@/lib/attendance-sheet';
 import { tx, longDate } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 interface Team {
   id: string;
@@ -667,7 +668,7 @@ export function TrainingAttendance() {
                       <span className="font-medium">{player.name}</span>
                       {warned[player.id] && <Badge variant="outline" className="border-accent text-accent">{tx('Avisou')}</Badge>}
                       {player.position && (
-                        <span className="text-sm text-muted-foreground">({player.position})</span>
+                        <span className="text-sm text-muted-foreground">({positionShort(player.position)})</span>
                       )}
                     </div>
                   </div>

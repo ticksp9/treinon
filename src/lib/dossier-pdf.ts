@@ -12,6 +12,7 @@ import { objectiveStatusLabel, type DossierObjective } from '@/lib/objectives';
 import { GAME_FORMATS, MODEL_FIELDS, STAGE_FIELDS, TRANSITION_FIELDS } from '@/lib/guidelines';
 import { actionKindLabel, durationLabel, transitionKindLabel } from '@/lib/transitions';
 import { SLOT_SPACES } from '@/lib/club-map';
+import { positionName } from '@/lib/player-constants';
 import type { DossierData } from '@/components/dossier/useDossierData';
 
 const d = (s: string) => format(new Date(s.length === 10 ? `${s}T12:00:00` : s), 'dd/MM/yyyy');
@@ -103,7 +104,7 @@ export function downloadDossierPdf(data: DossierData, sections: DossierSection[]
     // squad
     section(tx('Plantel'));
     row([tx('N.º'), tx('Nome'), tx('Posição'), tx('Nascimento')], [14, 90, 40, width - 144], true);
-    data.players.forEach((p) => row([p.number != null ? String(p.number) : '', p.name, p.position ?? '', p.birth_date ? d(p.birth_date) : ''], [14, 90, 40, width - 144]));
+    data.players.forEach((p) => row([p.number != null ? String(p.number) : '', p.name, positionName(p.position), p.birth_date ? d(p.birth_date) : ''], [14, 90, 40, width - 144]));
     if (!data.players.length) empty();
 
     // evaluations + individual objectives

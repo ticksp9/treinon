@@ -20,7 +20,7 @@ import { FileText, Calendar, Clock, MapPin, Users, Printer, Trophy, Plus, Home, 
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
-import { POSITIONS } from '@/lib/player-constants';
+import { POSITIONS, positionShort } from '@/lib/player-constants';
 import { LiveMatch } from '@/components/matches/LiveMatch';
 import { CallupCommunication } from '@/components/communication/CallupCommunication';
 import { getDefaultRuleProfile, normalizeAgeGroupCode, buildSnapshotFromProfile, saveMatchRuleSnapshot, buildSnapshotFromFallback } from '@/lib/match-rules-service';
@@ -101,7 +101,7 @@ const POSITION_CATEGORY_LABELS: Record<string, string> = {
   goalkeeper: tr('Guarda-Redes'),
   defense: tr('Defesas'),
   midfield: tr('Médios'),
-  attack: tr('Atacantes'),
+  attack: tr('Avançados'),
   other: tr('Outros'),
 };
 
@@ -1145,7 +1145,7 @@ export function MatchCallup() {
                             <Checkbox checked={selectedPlayers.has(player.id)} />
                             <span className="text-sm">
                               {player.number && `${player.number}. `}{player.name}
-                              {player.position && <span className="text-muted-foreground ml-1">({player.position})</span>}
+                              {player.position && <span className="text-muted-foreground ml-1">({positionShort(player.position)})</span>}
                             </span>
                           </div>
                         ))}

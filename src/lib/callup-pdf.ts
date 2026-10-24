@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import { deliverPdf, isNativeApp } from '@/lib/native-files';
 import { dateLocale, tx, lang, inPdfLanguage } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 export interface CallupPlayer { name: string; number: number | null; position: string | null }
 export interface CallupGroup { label: string; players: CallupPlayer[] }
@@ -110,7 +111,7 @@ export function buildCallupPdf(s: CallupSheet): jsPDF {
         doc.setTextColor(15, 23, 42);
         doc.setFont('helvetica', 'bold'); doc.setFontSize(fontSize); doc.text(p.number != null ? String(p.number) : '–', x + 9, yy, { align: 'right' });
         doc.setFont('helvetica', 'normal'); doc.text(doc.splitTextToSize(p.name, colW - 30)[0], x + 13, yy);
-        if (p.position) { doc.setFontSize(fontSize * 0.8); doc.setTextColor(100, 116, 139); doc.text(p.position, x + colW - 2, yy, { align: 'right' }); }
+        if (p.position) { doc.setFontSize(fontSize * 0.8); doc.setTextColor(100, 116, 139); doc.text(positionShort(p.position), x + colW - 2, yy, { align: 'right' }); }
         doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.2); doc.line(x, yy + lineHeight * 0.3, x + colW, yy + lineHeight * 0.3);
         yy += lineHeight;
       }

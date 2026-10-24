@@ -48,7 +48,7 @@ import { usePlayerPresenceIntervals, PlayerPresenceMap } from '@/hooks/usePlayer
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getPartLabel, getEndPartLabel, getStartPartLabel, getDisplayMinute as calcDisplayMinute } from '@/lib/match-constants';
-import { getSportFormatRules, validateStarterCount } from '@/lib/match-playing-time';
+import { getSportFormatRules, requiredStarters, sentOffCount, validateStarterCount } from '@/lib/match-playing-time';
 import { getMatchRuleSnapshot, saveMatchRuleSnapshot, buildSnapshotFromFallback, getDefaultRuleProfile, normalizeAgeGroupCode, buildSnapshotFromProfile, logConflictAlert, type MatchRuleSnapshot } from '@/lib/match-rules-service';
 import { FieldPlayerCounter } from './FieldPlayerCounter';
 import { MatchRulesPanel } from './MatchRulesPanel';
@@ -56,6 +56,7 @@ import { ConflictAlertsPanel } from './ConflictAlertsPanel';
 import { checkMatchConsistency, type ConsistencyIssue } from '@/lib/match-playing-time';
 import { cacheData, getCachedData, addPendingOperation, isNetworkError } from '@/lib/offlineStorage';
 import { useT, tr, tx } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 const LIVE_DATA_KEY = (matchId: string) => `live_match_data_${matchId}`;
 
@@ -682,9 +683,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       return;
     }
 
-    const starterValidation = validateStarterCount(starters.length, matchSport);
+    const starterValidation = validateStarterCount(starters.length, matchSport, sentOffCount(events));
     if (!starterValidation.allowed) {
-      toast.error(starterValidation.reason || t('Escalação inválida'));
+      toast.error(starterValidation.reason || t('Equipa inicial inválida'));
       return;
     }
 
@@ -708,14 +709,14 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
       const currentBench = lineups.filter(l => !l.is_starter);
       const starterPlayerIds = currentStarters.map(l => l.player_id);
 
-      const starterValidation = validateStarterCount(starterPlayerIds.length, matchSport);
+      const starterValidation = validateStarterCount(starterPlayerIds.length, matchSport, sentOffCount(events));
       if (!starterValidation.allowed) {
-        toast.error(starterValidation.reason || t('Escalação inválida'));
+        toast.error(starterValidation.reason || t('Equipa inicial inválida'));
         logConflictAlert({
           matchId,
           alertType: 'invalid_lineup',
           severity: 'blocking',
-          message: starterValidation.reason || t('Escalação inválida'),
+          message: starterValidation.reason || t('Equipa inicial inválida'),
           metadata: { starterCount: starterPlayerIds.length, sportType: matchSport },
         });
         return;
@@ -863,9 +864,9 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
     // check the lineup BEFORE touching the clock: stopping here afterwards left the
     // match "playing" with the timer stopped at 00:00
     const startersNow = lineups.filter(l => l.is_starter);
-    const starterValidation = validateStarterCount(startersNow.length, matchSport);
+    const starterValidation = validateStarterCount(startersNow.length, matchSport, sentOffCount(events));
     if (!starterValidation.allowed) {
-      toast.error(starterValidation.reason || t('Escalação inválida'));
+      toast.error(starterValidation.reason || t('Equipa inicial inválida'));
       return;
     }
 
@@ -1283,6 +1284,8 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
   ).length;
   const isOvertime = timer.elapsedSeconds > currentPartRegulation * 60;
   const sportRules = getSportFormatRules(matchSport);
+  // the full team must start; only a sending-off lets the team play short
+  const startersNeeded = requiredStarters(matchSport, sentOffCount(events));
 
   // Playing time to the second, from the same calculation used for the final minutes
   const liveSeconds = currentPart > 0
@@ -1717,10 +1720,15 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
           <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 py-3 px-4">
               <CardTitle className="text-base">{t('Preparação do jogo')}</CardTitle>
-              <Button onClick={handleStartMatch} disabled={starters.length === 0}>
+              <Button onClick={handleStartMatch} disabled={starters.length !== startersNeeded}>
                 <Play className="w-4 h-4 mr-2" />
-                {t('Iniciar jogo ({{s}}/{{max}} titulares · {{b}} suplentes)', { s: starters.length, max: sportRules.playersOnField, b: lineups.length - starters.length })}
+                {t('Iniciar jogo ({{s}}/{{max}} titulares · {{b}} suplentes)', { s: starters.length, max: startersNeeded, b: lineups.length - starters.length })}
               </Button>
+              {starters.length < startersNeeded && (
+                <p className="w-full text-right text-xs font-medium text-amber-700 dark:text-amber-300">
+                  {((startersNeeded - starters.length) === 1 ? t('Falta 1 titular: têm de estar {{n}} em campo para começar.', { n: startersNeeded }) : t('Faltam {{m}} titulares: têm de estar {{n}} em campo para começar.', { m: startersNeeded - starters.length, n: startersNeeded }))}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="p-3 pt-0">
               <div className="grid gap-4 xl:grid-cols-2">
@@ -1778,6 +1786,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
             onAbsent={setAbsentFor}
             onStartMatch={handleStartMatch}
             sportType={matchSport}
+            startersNeeded={startersNeeded}
           />
         )}
 
@@ -1799,6 +1808,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
               onStartMatch={handleStartNextPart}
               isHalftime
               sportType={matchSport}
+              startersNeeded={startersNeeded}
             />
           </>
         )}
@@ -1887,7 +1897,7 @@ export function LiveMatch({ matchId, teamId, onExit }: LiveMatchProps) {
                           <span className="font-medium text-sm truncate block">{lineup.player.name}</span>
                           <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            <span className="font-mono tabular-nums">{playTime}</span> {lineup.player.position && `• ${lineup.player.position}`}
+                            <span className="font-mono tabular-nums">{playTime}</span> {lineup.player.position && `• ${positionShort(lineup.player.position)}`}
                           </span>
                         </div>
                       </div>

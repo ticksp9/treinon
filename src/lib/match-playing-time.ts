@@ -149,19 +149,60 @@ export function validateFieldCount(
   return { allowed: true };
 }
 
+/** Our players sent off so far (a red card, or two yellow cards): the team plays one short for each. */
+export function sentOffCount(events: Pick<MatchEventForCalc, 'event_type' | 'player_id' | 'is_opponent'>[]): number {
+  const out = new Set<string>();
+  const yellows = new Map<string, number>();
+  for (const e of events) {
+    if (e.is_opponent || !e.player_id) continue;
+    if (e.event_type === 'red_card') out.add(e.player_id);
+    if (e.event_type === 'yellow_card') {
+      const n = (yellows.get(e.player_id) ?? 0) + 1;
+      yellows.set(e.player_id, n);
+      if (n >= 2) out.add(e.player_id);
+    }
+  }
+  return out.size;
+}
+
+/** How many must be on the pitch when a match or part starts: the full team, less those sent off. */
+export function requiredStarters(sportType: string | null | undefined, sentOff = 0): number {
+  return Math.max(1, getSportFormatRules(sportType).playersOnField - Math.max(0, sentOff));
+}
+
 /**
- * Validate starter count before a match/part starts.
+ * Validate starter count before a match/part starts: exactly the format's players on the pitch
+ * (11, 9, 7 or 5). Only a sending-off lets the team play short; a sent-off player is not replaced,
+ * except in futsal, where a substitute comes in after the penalty, so the full team may start again.
  */
 export function validateStarterCount(
   starterCount: number,
-  sportType: string | null | undefined
+  sportType: string | null | undefined,
+  sentOff = 0,
 ): SubstitutionValidation {
   const rules = getSportFormatRules(sportType);
+  const min = requiredStarters(sportType, sentOff);
+  const max = sportType === 'futsal' ? rules.playersOnField : min;
 
-  if (starterCount > rules.playersOnField) {
+  if (starterCount > max) {
     return {
       allowed: false,
-      reason: `Escalação inválida: máximo de ${rules.playersOnField} jogadores titulares no ${rules.label}.`,
+      reason: max === rules.playersOnField
+        ? tx('Equipa inicial inválida: máximo de {{n}} jogadores titulares no {{fmt}}.', { n: rules.playersOnField, fmt: rules.label })
+        : tx('Equipa inicial inválida: com {{e}} expulso(s), só podem estar {{n}} jogadores em campo.', { e: sentOff, n: max }),
+    };
+  }
+  if (starterCount < min) {
+    const missing = min - starterCount;
+    return {
+      allowed: false,
+      reason: sentOff > 0
+        ? (missing === 1
+          ? tx('Falta 1 jogador: com {{e}} expulso(s), têm de estar {{n}} em campo.', { e: sentOff, n: min })
+          : tx('Faltam {{m}} jogadores: com {{e}} expulso(s), têm de estar {{n}} em campo.', { m: missing, e: sentOff, n: min }))
+        : (missing === 1
+          ? tx('Falta 1 jogador: no {{fmt}} o jogo começa com {{n}} em campo. Só se joga com menos quando há expulsões.', { fmt: rules.label, n: min })
+          : tx('Faltam {{m}} jogadores: no {{fmt}} o jogo começa com {{n}} em campo. Só se joga com menos quando há expulsões.', { m: missing, fmt: rules.label, n: min })),
     };
   }
 
@@ -880,7 +921,7 @@ export function checkMatchConsistency(
   if (onField.size > rules.playersOnField) {
     issues.push({
       type: 'error',
-      message: tx('Escalação inicial com {{v0}} jogadores em campo (máx: {{v1}})', { v0: onField.size, v1: rules.playersOnField }),
+      message: tx('Equipa inicial com {{v0}} jogadores em campo (máx: {{v1}})', { v0: onField.size, v1: rules.playersOnField }),
     });
   }
   

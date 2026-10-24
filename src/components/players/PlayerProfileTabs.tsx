@@ -32,6 +32,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { tx } from '@/lib/i18n/ui';
+import { positionShort } from '@/lib/player-constants';
 
 // ─────────────────────────────────────────── Resumo
 
@@ -376,7 +377,7 @@ export function PlayerMatchesTab({ playerId }: { playerId: string }) {
                 {row.match?.match_date
                   ? format(new Date(row.match.match_date), 'dd MMM yyyy', { locale: pt })
                   : ''}
-                {row.position_played && ` · ${row.position_played}`}
+                {row.position_played && ` · ${positionShort(row.position_played)}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
